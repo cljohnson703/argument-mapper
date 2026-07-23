@@ -1,0 +1,116 @@
+{
+  "generator": {
+    "prng": "mulberry32",
+    "seed": 990699,
+    "depth": 3,
+    "boxCount": "1 + floor(random * 4)",
+    "boxWidth": "50 + floor(random * 350)",
+    "boxHeight": "35 + floor(random * 400)",
+    "hasChildren": "depth > 0 && random > 0.2",
+    "childCount": "1 + floor(random * 4)",
+    "targets": "draw floor(random * boxCount) for each child, then numeric sort"
+  },
+  "mode": "compact",
+  "expectedFailureBeforeFix": {
+    "overlap": ["m699_0_3", "m699_1_0"],
+    "firstRect": { "x0": -25691.34668520005, "y0": 30777, "x1": -25268.34668520005, "y1": 31192 },
+    "secondRect": { "x0": -25299.396505350825, "y0": 30778, "x1": -24355.396505350825, "y1": 31157 }
+  },
+  "tree": {
+    "id": "m699",
+    "widths": [361],
+    "heights": [246],
+    "children": [
+      {
+        "id": "m699_0",
+        "widths": [139, 225, 313],
+        "heights": [314, 67, 431],
+        "targetIndex": 0,
+        "children": [
+          {
+            "id": "m699_0_0",
+            "widths": [369],
+            "heights": [366],
+            "targetIndex": 1,
+            "children": [
+              { "id": "m699_0_0_0", "widths": [241, 228], "heights": [315, 316], "targetIndex": 0, "children": [] },
+              { "id": "m699_0_0_1", "widths": [299, 389, 341], "heights": [141, 169, 105], "targetIndex": 0, "children": [] }
+            ]
+          },
+          {
+            "id": "m699_0_1",
+            "widths": [291],
+            "heights": [136],
+            "targetIndex": 1,
+            "children": [
+              { "id": "m699_0_1_0", "widths": [277, 300], "heights": [309, 260], "targetIndex": 0, "children": [] }
+            ]
+          },
+          {
+            "id": "m699_0_2",
+            "widths": [169, 302],
+            "heights": [252, 321],
+            "targetIndex": 2,
+            "children": [
+              { "id": "m699_0_2_0", "widths": [173, 245], "heights": [324, 260], "targetIndex": 1, "children": [] },
+              { "id": "m699_0_2_1", "widths": [88, 70, 393, 302], "heights": [156, 291, 414, 139], "targetIndex": 1, "children": [] },
+              { "id": "m699_0_2_2", "widths": [155, 387, 329, 216], "heights": [214, 175, 207, 301], "targetIndex": 1, "children": [] }
+            ]
+          },
+          { "id": "m699_0_3", "widths": [90, 229, 74], "heights": [377, 415, 184], "targetIndex": 2, "children": [] }
+        ]
+      },
+      {
+        "id": "m699_1",
+        "widths": [312, 136, 226],
+        "heights": [238, 46, 432],
+        "targetIndex": 0,
+        "children": [
+          {
+            "id": "m699_1_0",
+            "widths": [279, 241, 107, 272],
+            "heights": [107, 51, 372, 379],
+            "targetIndex": 0,
+            "children": [
+              { "id": "m699_1_0_0", "widths": [69, 362], "heights": [269, 140], "targetIndex": 1, "children": [] },
+              { "id": "m699_1_0_1", "widths": [295, 108, 73, 144], "heights": [317, 188, 204, 59], "targetIndex": 3, "children": [] },
+              { "id": "m699_1_0_2", "widths": [364, 248, 395], "heights": [380, 398, 350], "targetIndex": 3, "children": [] }
+            ]
+          },
+          {
+            "id": "m699_1_1",
+            "widths": [373, 238, 136],
+            "heights": [321, 297, 235],
+            "targetIndex": 1,
+            "children": [
+              { "id": "m699_1_1_0", "widths": [255, 287, 141, 133], "heights": [308, 251, 433, 194], "targetIndex": 0, "children": [] },
+              { "id": "m699_1_1_1", "widths": [334], "heights": [248], "targetIndex": 0, "children": [] },
+              { "id": "m699_1_1_2", "widths": [395, 388, 128, 341], "heights": [392, 428, 126, 209], "targetIndex": 1, "children": [] },
+              { "id": "m699_1_1_3", "widths": [153, 243, 247], "heights": [82, 415, 191], "targetIndex": 2, "children": [] }
+            ]
+          },
+          {
+            "id": "m699_1_2",
+            "widths": [181, 269, 91, 141],
+            "heights": [317, 138, 345, 133],
+            "targetIndex": 1,
+            "children": [
+              { "id": "m699_1_2_0", "widths": [215, 373, 163, 306], "heights": [115, 184, 280, 331], "targetIndex": 3, "children": [] }
+            ]
+          },
+          {
+            "id": "m699_1_3",
+            "widths": [202, 224, 54],
+            "heights": [93, 371, 400],
+            "targetIndex": 2,
+            "children": [
+              { "id": "m699_1_3_0", "widths": [398, 105, 173], "heights": [340, 338, 115], "targetIndex": 0, "children": [] },
+              { "id": "m699_1_3_1", "widths": [334], "heights": [228], "targetIndex": 0, "children": [] },
+              { "id": "m699_1_3_2", "widths": [126], "heights": [276], "targetIndex": 1, "children": [] }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

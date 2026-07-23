@@ -1,0 +1,100 @@
+{
+  // Firebase Realtime Database Security Rules for the Argument Mapper (r26).
+  // Deploy with:  npx firebase-tools deploy --only database
+  // (or paste into Firebase console -> Realtime Database -> Rules).
+  //
+  // NOTE: the same rules are embedded in argument-mapper-r26.html as
+  // COLLAB_RULES_TEXT (the in-app group-leader wizard's "Copy the rules"
+  // button). If you change these rules, change that copy too.
+  //
+  // Model:
+  //   rooms/$roomId/meta      owner + room settings (accessMode: open|closed)
+  //   rooms/$roomId/joinInfo  tiny preview (title, ownerName) shown on a join
+  //                           link BEFORE joining; readable by any signed-in
+  //                           user who knows the (high-entropy) room id
+  //   rooms/$roomId/invites   $token -> 'editor' | 'viewer'; owner-only
+  //   rooms/$roomId/members   $uid -> { role, displayName, joinedAt, viaToken }
+  //   rooms/$roomId/document  { version, content, updatedAt, updatedBy }
+  //   rooms/$roomId/presence  "$uid|$session" -> ephemeral cursor/heartbeat
+  //
+  // Invariants enforced here (not merely in the app):
+  //   * only the owner creates/deletes the room, manages invites and members;
+  //   * joining requires a live invite token whose role matches, while the
+  //     room's accessMode is 'open';
+  //   * only owner/editor can write the document; viewers cannot;
+  //   * document.version must increase by exactly 1 per write (the sync
+  //     engine's compare-and-swap transaction produces exactly that);
+  //   * presence entries can only be written by the user named in the key.
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$roomId": {
+        // The owner may write anything in the room: create it (one multi-path
+        // write of meta+joinInfo+invites+members+document), rotate invites,
+        // remove members, close joins, delete the whole room. Everyone else
+        // gets only the narrower child grants below.
+        ".write": "auth != null && ((!data.exists() && newData.child('meta').child('ownerUid').val() === auth.uid) || (data.exists() && data.child('meta').child('ownerUid').val() === auth.uid))",
+
+        "meta": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
+          ".validate": "newData.child('ownerUid').isString() && newData.child('accessMode').isString() && (newData.child('accessMode').val() === 'open' || newData.child('accessMode').val() === 'closed') && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && newData.child('ownerUid').val() === data.child('ownerUid').val()))"
+        },
+
+        "joinInfo": {
+          ".read": "auth != null",
+          ".validate": "newData.child('title').isString() && newData.child('title').val().length < 300"
+        },
+
+        "invites": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('meta').child('ownerUid').val() === auth.uid",
+          "$token": {
+            ".validate": "newData.isString() && (newData.val() === 'editor' || newData.val() === 'viewer')"
+          }
+        },
+
+        "members": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
+          "$uid": {
+            // Self-service: a user may CREATE their own membership (join) or
+            // DELETE it (leave). Everything else is owner-only (cascade above).
+            ".write": "auth != null && $uid === auth.uid && ((!data.exists() && newData.exists()) || (data.exists() && !newData.exists()))",
+            // Three legal shapes:
+            //  1. the owner's own record, written while the room's meta names
+            //     them owner (room creation is one write, so use the PROJECTED
+            //     room via newData.parent().parent());
+            //  2. a token join: role must equal the invite's role and the room
+            //     must be open to new joins;
+            //  3. an owner-authored role change (promote/demote).
+            ".validate": "newData.child('role').isString() && newData.child('displayName').isString() && newData.child('displayName').val().length < 120 && ((newData.child('role').val() === 'owner' && newData.parent().parent().child('meta').child('ownerUid').val() === $uid) || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && newData.child('viaToken').isString() && newData.parent().parent().child('invites').child(newData.child('viaToken').val()).val() === newData.child('role').val() && newData.parent().parent().child('meta').child('accessMode').val() === 'open') || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && root.child('rooms').child($roomId).child('meta').child('ownerUid').val() === auth.uid))"
+          }
+        },
+
+        "document": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
+          ".write": "auth != null && (root.child('rooms').child($roomId).child('members').child(auth.uid).child('role').val() === 'editor' || root.child('rooms').child($roomId).child('members').child(auth.uid).child('role').val() === 'owner')",
+          ".validate": "newData.child('version').isNumber() && newData.child('content').isString() && newData.child('content').val().length < 4194304 && newData.child('updatedBy').val() === auth.uid && newData.child('updatedAt').isNumber() && ((!data.exists() && newData.child('version').val() === 1) || (data.exists() && newData.child('version').val() === data.child('version').val() + 1))"
+        },
+
+        "backup": {
+          // Automatic rolling backup of the document (see the app's
+          // collabMaybeBackup/collabRestoreBackup). Owner-only; the write
+          // permission comes from the owner cascade above.
+          ".read": "auth != null && root.child('rooms').child($roomId).child('meta').child('ownerUid').val() === auth.uid",
+          ".validate": "newData.child('content').isString() && newData.child('savedAt').isNumber()"
+        },
+
+        "presence": {
+          ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
+          "$entry": {
+            // Key is "<uid>|<sessionId>": only that user writes (or removes)
+            // it, and only while they are a member. Viewers DO publish
+            // presence; onDisconnect().remove() cleans it up.
+            ".write": "auth != null && $entry.beginsWith(auth.uid + '|') && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
+            ".validate": "newData.child('displayName').isString() && newData.child('displayName').val().length < 120 && newData.child('ts').isNumber() && (!newData.child('sel').exists() || (newData.child('sel').isString() && newData.child('sel').val().length < 10000))"
+          }
+        }
+      }
+    }
+  }
+}

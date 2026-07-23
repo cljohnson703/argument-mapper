@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Generated build artifact. The repo publishes the SOURCE (which is what the
+# AGPL requires — the "preferred form for making modifications"); the minified
+# build is produced by `node build-public.js`. If you want people to download
+# a ready-to-run file, attach it to a GitHub Release rather than committing it.
+argument-mapper-public.html
+collab-site/
+
+# Your Firebase project id. Not a secret (the security rules are what protect
+# the data), but there is no reason for forks to inherit it — they should run
+# `firebase use --add` with their own project.
+.firebaserc
+
+# Local demo server state (serve.py writes this)
+demo-doc.json
+
+# Internal planning/decision notes — not part of the published work
+COLLABORATION-HANDOFF-r26.md
+
+# YOUR PRIVATE WORKING NOTES. Keep this rule: a bare `git add .` would
+# otherwise publish them to the world.
+*.docx
+*.doc
+*.pages
+
+# Firebase CLI deploy cache
+.firebase/
+
+# Superseded releases kept locally for reference. Only the current source
+# (argument-mapper-r27.html) is published; the repo's own commit history is
+# the record from here on.
+argument mapper deprecated/
+argument-mapper.html
+argument-mapper-r22.html
+argument-mapper-r23.html
+argument-mapper-r24.html
+argument-mapper-r25.html
+argument-mapper-r26.html
+*.zip
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/

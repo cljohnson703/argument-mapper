@@ -1,0 +1,21 @@
+{
+  "name": "argument-mapper",
+  "version": "27.0.0",
+  "description": "Argument mapping tool with optional live collaboration — a single self-contained HTML file.",
+  "license": "AGPL-3.0-or-later",
+  "author": "C. L. Johnson",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cljohnson703/argument-mapper.git"
+  },
+  "private": true,
+  "scripts": {
+    "build": "node build-public.js",
+    "test": "node run-all-tests.js"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "katex": "^0.16.11",
+    "terser": "^5.49.0"
+  }
+}
