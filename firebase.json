@@ -3,7 +3,7 @@
     "rules": "database.rules.json"
   },
   "hosting": {
-    "public": "collab-site",
+    "public": "docs",
     "ignore": ["firebase.json", "**/.*"],
     "headers": [
       {

@@ -74,19 +74,19 @@ with actual legal weight against wholesale copying.
 Whenever you change the app:
 
 ```
-# 1. edit the PRIVATE file only:  argument-mapper-r27.html
-
-# 2. build the public copy
-node build-public.js
-
-# 3. prove the build still works (both must pass)
-node xss-r26-render-test.js argument-mapper-r27.html
-node smoke-public-test.js argument-mapper-public.html
-
-# 4. deploy the PUBLIC copy
-copy argument-mapper-public.html collab-site\index.html
-npx firebase-tools deploy --only hosting
+node build-public.js     # 1. build  (writes docs/index.html)
+npm test                 # 2. verify (all 20 suites must pass)
+git add -A
+git commit -m "..."
+git push                 # 3. deploy — GitHub Pages publishes docs/ automatically
 ```
+
+That's the whole loop. **GitHub Pages is the host**, so pushing *is* deploying;
+there is no separate upload step and no file to copy into place.
+
+`firebase.json` points at the same `docs/` folder, so if you ever want the
+Firebase copy as well, `npx firebase-tools deploy --only hosting` publishes the
+identical artifact. Add `,database` only when you've changed the security rules.
 
 The build **refuses to emit output** if the vocabulary rename was incomplete —
 i.e. if any old class/id/variable name still survives where it would break
@@ -141,6 +141,42 @@ public build is validated by (a) the smoke test through the public surface and
 The build also self-checks: it refuses to write output if any known private
 comment marker survived, and the smoke test independently re-checks that the
 commentary is gone and that every inline handler still resolves.
+
+## One-time: turning on GitHub Pages
+
+Do this once, after the repo's first push.
+
+1. Repo → **Settings** → **Pages**.
+2. Under "Build and deployment", Source = **Deploy from a branch**; Branch =
+   **main**, folder = **/docs**. Save.
+3. Wait a minute or two. The app is then live at
+   **https://cljohnson703.github.io/argument-mapper/**
+
+**4. THE STEP THAT BREAKS SIGN-IN IF YOU SKIP IT.** Google will refuse to
+authenticate from a domain it doesn't know, with `auth/unauthorized-domain`.
+So in the [Firebase console](https://console.firebase.google.com) →
+**Authentication → Settings → Authorized domains → Add domain**, add:
+
+```
+cljohnson703.github.io
+```
+
+Solo use works without this; *collaboration* does not. Anyone who sets up their
+own backend must do the same for whatever domain they use — the in-app wizard's
+step 6 tells them, and fills in the exact hostname automatically.
+
+### Why Pages rather than Firebase Hosting
+
+Firebase Hosting's free tier allows **360 MB/day** of transfer. At roughly 1 MB
+per first-time visitor that is ~360 new visitors a day, after which the site
+stops serving until the quota resets (it cannot bill you — Spark has no payment
+method — so the failure is downtime, not a charge). GitHub Pages allows about
+100 GB/month, roughly 100,000 loads, and costs nothing. Cloudflare Pages is
+free and uncapped if you ever outgrow even that.
+
+Firebase then does only what it is good at here: sign-in and the shared
+database, whose limits are per-collaborator rather than per-visitor. Page loads
+never touch them — someone working solo consumes no database quota at all.
 
 ## Keeping KaTeX current
 

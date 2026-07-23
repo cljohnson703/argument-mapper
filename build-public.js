@@ -53,7 +53,10 @@ const MANGLE_TOPLEVEL = !process.argv.includes('--no-mangle-toplevel');
 // --rename-vocabulary if you ever want it.
 const RENAME_VOCAB = process.argv.includes('--rename-vocabulary');
 const SRC = path.resolve(args[0] || path.join(__dirname, 'argument-mapper-r27.html'));
-const OUT = path.resolve(args[1] || path.join(__dirname, 'argument-mapper-public.html'));
+// Output goes to docs/index.html, which is what GitHub Pages serves (repo
+// Settings → Pages → "main /docs"). firebase.json points at the same folder,
+// so ONE artifact feeds both hosts and there is no copy step to forget.
+const OUT = path.resolve(args[1] || path.join(__dirname, 'docs', 'index.html'));
 
 // Kept verbatim in the output. Under AGPL-3.0 §13 anyone who runs a modified
 // version over a network must offer its source to users — including us — so
@@ -483,7 +486,12 @@ function renameVocabulary(parts) {
         console.log('Vocabulary  : left intact (standard build; --rename-vocabulary to obfuscate it)');
     }
 
+    fs.mkdirSync(path.dirname(OUT), { recursive: true });
     fs.writeFileSync(OUT, out, 'utf8');
+    // GitHub Pages runs Jekyll by default, which skips files beginning with an
+    // underscore. Nothing here starts with one, but .nojekyll removes the whole
+    // class of surprise and costs nothing.
+    try { fs.writeFileSync(path.join(path.dirname(OUT), '.nojekyll'), ''); } catch (e) {}
 
     const before = html.length, after = out.length;
     console.log(`Output      : ${path.basename(OUT)} (${(after / 1024).toFixed(0)} KB, ${(100 - after / before * 100).toFixed(1)}% smaller)`);
@@ -496,5 +504,5 @@ function renameVocabulary(parts) {
     const leaked = leakMarkers.filter(s => out.includes(s));
     if (leaked.length) fail('private commentary survived the build: ' + leaked.join(', '));
     console.log('Comments    : stripped (JS, CSS, HTML)');
-    console.log('\nNext: node smoke-public-test.js ' + path.basename(OUT));
+    console.log('\nNext: npm test    (then commit — GitHub Pages serves docs/)');
 })();

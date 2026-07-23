@@ -73,14 +73,14 @@ arising from, out of or in connection with the software or its use.
 |---|---|
 | `argument-mapper-r27.html` | the source of truth — edit only this |
 | `build-public.js` | produces the deployable build (minified, KaTeX embedded) |
-| `argument-mapper-public.html` | generated artifact; **not** the preferred form for modification |
+| `docs/index.html` | generated artifact, served by GitHub Pages; **not** the preferred form for modification |
 | `database.rules.json` | Firebase security rules (the real access control) |
-| `*-test*.js` | the regression suites |
+| `*-test*.js`, `run-all-tests.js` | the regression suites |
 
 ```bash
-npm install                 # jsdom, terser, katex
-node build-public.js        # build the deployable file
-node smoke-public-test.js argument-mapper-public.html
+npm install      # jsdom, terser, katex
+npm run build    # writes docs/index.html
+npm test         # runs every suite against the source, then the build
 ```
 
 Run the full suite against the source before releasing — see

@@ -6,7 +6,7 @@
 // Run:  node smoke-public-test.js [argument-mapper-public.html]
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
-const FILE = process.argv[2] || (__dirname + '/argument-mapper-public.html');
+const FILE = process.argv[2] || (__dirname + '/docs/index.html');
 const HTML = fs.readFileSync(FILE, 'utf8');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));

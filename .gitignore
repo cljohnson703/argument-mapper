@@ -1,10 +1,13 @@
 # Dependencies
 node_modules/
 
-# Generated build artifact. The repo publishes the SOURCE (which is what the
-# AGPL requires — the "preferred form for making modifications"); the minified
-# build is produced by `node build-public.js`. If you want people to download
-# a ready-to-run file, attach it to a GitHub Release rather than committing it.
+# NOTE: docs/ is deliberately NOT ignored. It holds the built app, and GitHub
+# Pages serves the site from there. Committing a build artifact is normally
+# poor practice, but here the repo doubles as the host — and the full source
+# sits alongside it, so the AGPL's "preferred form for making modifications"
+# is unambiguously present.
+
+# Superseded output locations
 argument-mapper-public.html
 collab-site/
 

@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SOURCE = process.argv[2] || 'argument-mapper-r27.html';
-const BUILD = 'argument-mapper-public.html';
+const BUILD = path.join('docs', 'index.html');
 
 const SUITES = [
     'layout-r23-tests.js',
