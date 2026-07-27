@@ -4909,13 +4909,23 @@
         setTimeout(updateMinimap, 320);
     }
 
-    // Restore toolbar position on load
+    // Restore toolbar position on load. LEFT is the default: the group labels
+    // ("Add Nodes", "View", …) only show in the left layout, and a vertical
+    // strip leaves the canvas its full width. Only an explicit 'top' — set by
+    // the user via the ⇄ button — opts out, so the toolbar never silently
+    // moves for someone who already chose.
     try {
-        if (localStorage.getItem('argmap-toolbar-pos') === 'left') {
+        if (localStorage.getItem('argmap-toolbar-pos') !== 'top') {
             document.body.classList.add('toolbar-left');
             document.getElementById('toolbar-toggle').innerText = '◀';
         }
-    } catch (_) {}
+    } catch (_) {
+        // Storage blocked (some file:// contexts): still honour the default.
+        try {
+            document.body.classList.add('toolbar-left');
+            document.getElementById('toolbar-toggle').innerText = '◀';
+        } catch (__) {}
+    }
 
     // --- Mobile detection: force left-toolbar layout on small touch devices ---
     const _mobileQuery = window.matchMedia('(max-width: 600px), (pointer: coarse) and (max-height: 600px)');
@@ -4932,7 +4942,7 @@
             if (posBtn) posBtn.style.display = '';
             try {
                 const saved = localStorage.getItem('argmap-toolbar-pos');
-                if (saved !== 'left') {
+                if (saved === 'top') {   // left is the default; only explicit 'top' returns to the top bar
                     document.body.classList.remove('toolbar-left');
                     const isCollapsed = document.getElementById('toolbar-wrapper').classList.contains('collapsed');
                     toggle.innerText = isCollapsed ? '▼' : '▲';
