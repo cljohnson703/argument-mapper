@@ -18,6 +18,8 @@ const { JSDOM, VirtualConsole } = require('jsdom');
 const HTML = fs.readFileSync(process.argv[2] || (__dirname + '/argument-mapper-r26.html'), 'utf8');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+let _idish = 0;
+const collabRandIdish = () => 'x' + (++_idish);
 async function waitFor(fn, label, ms = 4000, step = 25) {
     const t0 = Date.now();
     for (;;) {
@@ -97,8 +99,10 @@ function createFakeCloud() {
             // Mirror of the guest clause: an anonymous joiner needs the
             // owner's permission for that role. Provider comes from the token,
             // not the client, so the app cannot lie about it.
+            // Missing field = the documented default: viewing allowed,
+            // editing not. Keeps pre-feature rooms working without migration.
             const guestOk = !isAnon
-                || (val && val.role === 'viewer' && meta.guestViewers === true)
+                || (val && val.role === 'viewer' && meta.guestViewers !== false)
                 || (val && val.role === 'editor' && meta.guestEditors === true);
             return !!val && invites[val.viaToken] === val.role
                 && meta.accessMode === 'open'
@@ -1009,6 +1013,46 @@ function ok(cond, label, detail) {
         catch (e) { code = e && e.code; }
         ok(code === 'guest-viewer-denied', 'guest: viewing refused when the owner turns guests off', String(code));
         await A.win.__argmap.collab.setGuestAccess('guestViewers', true);
+    }
+
+    // --- 32. LEGACY room: created before guest access existed ------------
+    // Regression: the first cut required meta.guestViewers === true, so every
+    // room made before the feature refused guests — while the owner's panel,
+    // reading a missing field as the default, showed guests as allowed. The
+    // rules now treat missing as the default too.
+    {
+        const legacyId = 'legacyroom' + collabRandIdish();
+        const now = Date.now();
+        const legacy = {
+            // NOTE: no guestViewers / guestEditors keys at all.
+            meta: { ownerUid: 't1', accessMode: 'open', createdAt: now },
+            joinInfo: { title: 'Legacy Map', ownerName: 'Prof. Turing' },
+            invites: { legacyviewtok: 'viewer', legacyedittok: 'editor' },
+            members: { t1: { role: 'owner', displayName: 'Prof. Turing', joinedAt: now } },
+            document: { version: 1, content: '{"name":"Legacy Map","trees":[]}', updatedAt: now, updatedBy: 't1' }
+        };
+        cloud.setPath('rooms/' + legacyId, legacy);
+        ok(cloud.getPath('rooms/' + legacyId + '/meta').guestViewers === undefined,
+            'legacy room: has no guest settings at all');
+
+        const GL = makeWin('guestlegacy', cloud, {});
+        wins.push(GL);
+        await sleep(340);
+        const fbL = await GL.win.__argmap.collab.firebase();
+        const gl = await GL.win.__argmap.collab.signIn(null, { guest: true });
+        const mem = await GL.win.__argmap.collab.joinRoom(fbL, gl, legacyId, 'legacyviewtok', 'v');
+        ok(mem && mem.role === 'viewer', 'legacy room: a guest can still VIEW without migration', JSON.stringify(mem));
+
+        // ...but editing still needs the owner's explicit opt-in.
+        const GL2 = makeWin('guestlegacy2', cloud, {});
+        wins.push(GL2);
+        await sleep(340);
+        const fbL2 = await GL2.win.__argmap.collab.firebase();
+        const gl2 = await GL2.win.__argmap.collab.signIn(null, { guest: true });
+        let code = null;
+        try { await GL2.win.__argmap.collab.joinRoom(fbL2, gl2, legacyId, 'legacyedittok', 'e'); }
+        catch (e) { code = e && e.code; }
+        ok(code === 'guest-editor-denied', 'legacy room: guest EDITING still refused by default', String(code));
     }
 
     // --- Runtime error audit ---------------------------------------------
