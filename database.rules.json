@@ -38,7 +38,7 @@
 
         "meta": {
           ".read": "auth != null && root.child('rooms').child($roomId).child('members').child(auth.uid).exists()",
-          ".validate": "newData.child('ownerUid').isString() && newData.child('accessMode').isString() && (newData.child('accessMode').val() === 'open' || newData.child('accessMode').val() === 'closed') && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && newData.child('ownerUid').val() === data.child('ownerUid').val()))"
+          ".validate": "newData.child('ownerUid').isString() && newData.child('accessMode').isString() && (newData.child('accessMode').val() === 'open' || newData.child('accessMode').val() === 'closed') && ((!data.exists() && newData.child('ownerUid').val() === auth.uid) || (data.exists() && newData.child('ownerUid').val() === data.child('ownerUid').val())) && (!newData.child('guestViewers').exists() || newData.child('guestViewers').isBoolean()) && (!newData.child('guestEditors').exists() || newData.child('guestEditors').isBoolean())"
         },
 
         "joinInfo": {
@@ -64,9 +64,14 @@
             //     them owner (room creation is one write, so use the PROJECTED
             //     room via newData.parent().parent());
             //  2. a token join: role must equal the invite's role and the room
-            //     must be open to new joins;
+            //     must be open to new joins. A GUEST (anonymous sign-in, no
+            //     Google account) may only take this route when the owner has
+            //     enabled it for that role — meta.guestViewers /
+            //     meta.guestEditors. Signed-in Google users are unaffected.
+            //     The provider is read from the ID token, so a guest cannot
+            //     claim otherwise by editing the client.
             //  3. an owner-authored role change (promote/demote).
-            ".validate": "newData.child('role').isString() && newData.child('displayName').isString() && newData.child('displayName').val().length < 120 && ((newData.child('role').val() === 'owner' && newData.parent().parent().child('meta').child('ownerUid').val() === $uid) || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && newData.child('viaToken').isString() && newData.parent().parent().child('invites').child(newData.child('viaToken').val()).val() === newData.child('role').val() && newData.parent().parent().child('meta').child('accessMode').val() === 'open') || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && root.child('rooms').child($roomId).child('meta').child('ownerUid').val() === auth.uid))"
+            ".validate": "newData.child('role').isString() && newData.child('displayName').isString() && newData.child('displayName').val().length < 120 && ((newData.child('role').val() === 'owner' && newData.parent().parent().child('meta').child('ownerUid').val() === $uid) || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && newData.child('viaToken').isString() && newData.parent().parent().child('invites').child(newData.child('viaToken').val()).val() === newData.child('role').val() && newData.parent().parent().child('meta').child('accessMode').val() === 'open' && (auth.token.firebase.sign_in_provider !== 'anonymous' || (newData.child('role').val() === 'viewer' && newData.parent().parent().child('meta').child('guestViewers').val() === true) || (newData.child('role').val() === 'editor' && newData.parent().parent().child('meta').child('guestEditors').val() === true))) || ((newData.child('role').val() === 'editor' || newData.child('role').val() === 'viewer') && root.child('rooms').child($roomId).child('meta').child('ownerUid').val() === auth.uid))"
           }
         },
 

@@ -77,7 +77,8 @@ function createFakeCloud() {
     const snap = v => ({ exists: () => v != null, val: () => v });
 
     // --- Mirror of database.rules.json (write side) ----------------------
-    cloud.ruleCheck = (uid, segs, val) => {
+    // isAnon mirrors auth.token.firebase.sign_in_provider === 'anonymous'.
+    cloud.ruleCheck = (uid, segs, val, isAnon) => {
         if (segs[0] === '.info') return false;            // client-local, never written
         if (segs[0] !== 'rooms') return false;
         const roomId = segs[1];
@@ -92,8 +93,16 @@ function createFakeCloud() {
         if (sect === 'members' && segs[3] === uid && segs.length === 4) {
             if (val === null) return !!(room.members || {})[uid];   // self-leave
             const invites = room.invites || {};
+            const meta = room.meta || {};
+            // Mirror of the guest clause: an anonymous joiner needs the
+            // owner's permission for that role. Provider comes from the token,
+            // not the client, so the app cannot lie about it.
+            const guestOk = !isAnon
+                || (val && val.role === 'viewer' && meta.guestViewers === true)
+                || (val && val.role === 'editor' && meta.guestEditors === true);
             return !!val && invites[val.viaToken] === val.role
-                && (room.meta && room.meta.accessMode) === 'open'
+                && meta.accessMode === 'open'
+                && guestOk
                 && !(room.members || {})[uid];
         }
         if (sect === 'document') {
@@ -133,12 +142,17 @@ function createFakeCloud() {
     return cloud;
 }
 
+// Anonymous uids are minted per BROWSER in real Firebase, so the counter must
+// live outside the per-window factory — otherwise two guest windows would
+// share one uid and "already a member" would masquerade as a guest refusal.
+let anonSeq = 0;
 // Per-window fake module set (own auth identity, shared cloud).
 function createFakeModules(cloud, initialUser) {
     const authObj = { currentUser: initialUser || null, popupUser: null, watchers: new Set() };
     const permErr = () => { const e = new Error('PERMISSION_DENIED: rules rejected the write'); e.code = 'PERMISSION_DENIED'; return e; };
     const netErr = () => { const e = new Error('network unavailable'); e.code = 'network-error'; return e; };
     const uidNow = () => authObj.currentUser ? authObj.currentUser.uid : null;
+    const anonNow = () => !!(authObj.currentUser && authObj.currentUser.isAnonymous);
 
     const appMod = { initializeApp: (cfg) => ({ cfg }) };
     const authMod = {
@@ -155,6 +169,18 @@ function createFakeModules(cloud, initialUser) {
             auth.watchers.forEach(cb => setTimeout(() => cb(auth.currentUser), 0));
             return Promise.resolve({ user: auth.currentUser });
         },
+        signInAnonymously: (auth) => {
+            if (auth.anonymousDisabled) {
+                const e = new Error('anonymous sign-in disabled'); e.code = 'auth/operation-not-allowed';
+                return Promise.reject(e);
+            }
+            // Real Firebase mints a fresh uid per anonymous sign-in and
+            // persists it per browser; the fake reuses one per window.
+            if (!auth.anonUser) auth.anonUser = { uid: 'anon' + (++anonSeq), isAnonymous: true, displayName: null, email: null };
+            auth.currentUser = auth.anonUser;
+            auth.watchers.forEach(cb => setTimeout(() => cb(auth.currentUser), 0));
+            return Promise.resolve({ user: auth.currentUser });
+        },
         signOut: (auth) => {
             auth.currentUser = null;
             auth.watchers.forEach(cb => setTimeout(() => cb(null), 0));
@@ -163,7 +189,7 @@ function createFakeModules(cloud, initialUser) {
     };
     const write = (segs, val) => {
         if (!cloud.connectedVal) return Promise.reject(netErr());
-        if (!cloud.ruleCheck(uidNow(), segs, val)) return Promise.reject(permErr());
+        if (!cloud.ruleCheck(uidNow(), segs, val, anonNow())) return Promise.reject(permErr());
         cloud._setAt(segs, val == null ? null : cloud._clone(val));
         if (segs[2] === 'document') cloud.docWrites.push({ path: segs.join('/'), uid: uidNow() });
         cloud._notify(segs);
@@ -211,7 +237,7 @@ function createFakeModules(cloud, initialUser) {
             const cur = cloud._clone(cloud._getAt(ref.segs));
             const next = fn(cur);
             if (next === undefined) return Promise.resolve({ committed: false, snapshot: cloud._snap(cur) });
-            if (!cloud.ruleCheck(uidNow(), ref.segs, next)) return Promise.reject(permErr());
+            if (!cloud.ruleCheck(uidNow(), ref.segs, next, anonNow())) return Promise.reject(permErr());
             cloud._setAt(ref.segs, cloud._clone(next));
             if (ref.segs[2] === 'document') cloud.docWrites.push({ path: ref.segs.join('/'), uid: uidNow() });
             cloud._notify(ref.segs);
@@ -909,6 +935,80 @@ function ok(cond, label, detail) {
         M.win.eval('render()');
         const u3 = M.win.eval('collectMapUsers()');
         ok(u3.indexOf('Ghost Author') >= 0, 'memoization: render() invalidates the cache (fresh authors appear)');
+    }
+
+    // --- 29. Guests: viewing with no Google account ----------------------
+    {
+        const meta0 = cloud.getPath('rooms/' + roomId + '/meta');
+        ok(meta0.guestViewers === true && meta0.guestEditors === false,
+            'guest defaults: viewing open to guests, editing is not', JSON.stringify(meta0));
+
+        const tokV2 = Object.keys(room().invites).find(t => room().invites[t] === 'viewer');
+        const linkV = A.win.__argmap.collab.buildLink(roomId, tokV2, 'viewer');
+        // No `user` and no popupUser: a Google sign-in in this window would
+        // fail outright, so anything that works here works WITHOUT an account.
+        const GV = makeWin('guestviewer', cloud, { hash: '#' + linkV.split('#')[1] });
+        wins.push(GV);
+        await sleep(400);
+        GV.win.__argmap.collab.confirmJoin('guest');
+        await waitFor(() => GV.win.__argmap.collab.session, 'guest viewer joins');
+        await waitFor(() => texts(GV) === texts(A), 'guest viewer adopts the shared doc');
+        ok(true, 'guest: joined a view link and can read, with no Google account');
+        ok(GV.win.__argmap.collab.readOnly() === true, 'guest: viewer is still read-only');
+        const guid = GV.win.__argmap.collab.session.user.uid;
+        const mem = room().members[guid];
+        ok(mem && mem.role === 'viewer' && mem.displayName === 'Guest',
+            'guest: member record is labelled Guest for the owner', JSON.stringify(mem));
+        ok(GV.win.eval('currentUser') === '',
+            'guest: no display name, so the app’s anonymous path applies');
+        await waitFor(() => A.win.__argmap.livePresence().some(p => p.anon && !p.me), 'owner sees an anonymous peer');
+        ok(true, 'guest: shows as “Anonymous” in everyone else’s roster');
+        // Live edits still reach a guest viewer.
+        addNode(A, 'root', 'nGuest', 'Visible to guests');
+        defocus(A);
+        await A.win.__argmap.engine.pushNow();
+        await waitFor(() => texts(GV).includes('Visible to guests'), 'guest viewer receives live edits');
+        ok(true, 'guest: receives collaborators’ edits live');
+    }
+
+    // --- 30. Guests may NOT edit unless the owner allows it --------------
+    {
+        const tokE4 = Object.keys(room().invites).find(t => room().invites[t] === 'editor');
+        const GE = makeWin('guesteditor', cloud, {});
+        wins.push(GE);
+        await sleep(340);
+        const fbG = await GE.win.__argmap.collab.firebase();
+        const gu = await GE.win.__argmap.collab.signIn(null, { guest: true });
+        ok(!!gu && gu.isAnonymous === true, 'guest: anonymous sign-in yields a real uid', gu && gu.uid);
+
+        let code = null;
+        try { await GE.win.__argmap.collab.joinRoom(fbG, gu, roomId, tokE4, 'e'); }
+        catch (e) { code = e && e.code; }
+        ok(code === 'guest-editor-denied', 'guest: editing refused by default, with a named reason', String(code));
+        ok(!room().members[gu.uid], 'guest: no member record written when refused');
+
+        await A.win.__argmap.collab.setGuestAccess('guestEditors', true);
+        await waitFor(() => cloud.getPath('rooms/' + roomId + '/meta').guestEditors === true, 'owner enables guest editing');
+        const m = await GE.win.__argmap.collab.joinRoom(fbG, gu, roomId, tokE4, 'e');
+        ok(m && m.role === 'editor', 'guest: may edit once the owner allows it', JSON.stringify(m));
+        await A.win.__argmap.collab.setGuestAccess('guestEditors', false);
+    }
+
+    // --- 31. Owner can close guest viewing too ---------------------------
+    {
+        await A.win.__argmap.collab.setGuestAccess('guestViewers', false);
+        await waitFor(() => cloud.getPath('rooms/' + roomId + '/meta').guestViewers === false, 'guest viewing disabled');
+        const tokV3 = Object.keys(room().invites).find(t => room().invites[t] === 'viewer');
+        const GX = makeWin('guestblocked', cloud, {});
+        wins.push(GX);
+        await sleep(340);
+        const fbX = await GX.win.__argmap.collab.firebase();
+        const gx = await GX.win.__argmap.collab.signIn(null, { guest: true });
+        let code = null;
+        try { await GX.win.__argmap.collab.joinRoom(fbX, gx, roomId, tokV3, 'v'); }
+        catch (e) { code = e && e.code; }
+        ok(code === 'guest-viewer-denied', 'guest: viewing refused when the owner turns guests off', String(code));
+        await A.win.__argmap.collab.setGuestAccess('guestViewers', true);
     }
 
     // --- Runtime error audit ---------------------------------------------

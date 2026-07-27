@@ -36,6 +36,10 @@ edits are kept for review rather than silently lost.
   sent it — will see your display name, whatever you write, and which boxes you
   have selected while you are there. Nothing is shared until you choose to join,
   and you can leave at any time.
+* **You don't need a Google account to view a shared map.** A view link opens
+  as a guest, listed to the others only as "Anonymous"; you share nothing but
+  your presence. Editing normally does require signing in, so that changes are
+  attributable — the map's owner can allow guest editing if they want to.
 * The map's owner can remove members, rotate invite links, or delete the map.
 
 ### A note on the Firebase key in the source

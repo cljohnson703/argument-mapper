@@ -31,10 +31,21 @@ their own fresh allowance. (Limits current as of July 2026.)
 2. **Create a project** → name it (e.g. `argument-mapper`) → turn Google
    Analytics **OFF** → Create.
 
-## A2. Turn on Google sign-in (≈2 min)
+## A2. Turn on Google sign-in — and guest access (≈3 min)
 
 Sidebar **Build → Authentication → Get started** → Sign-in method →
 **Google** → Enable → pick a support email → Save.
+
+Then, on the same Sign-in method screen, also enable **Anonymous**. That is
+what lets someone open a *view* link and start reading immediately without a
+Google account — they appear to the others simply as "Anonymous". It is not
+a security hole: guests still need a live invite link, they are still bound by
+the same Security Rules, and each map's owner can switch guest viewing or
+guest editing on and off from the Collaborate panel (guest **viewing** is on
+by default, guest **editing** is off).
+
+If you skip this, everything still works — people will just be asked to sign
+in with Google before they can view a shared map.
 
 ## A3. Create the Realtime Database (≈2 min)
 

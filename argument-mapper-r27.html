@@ -13626,7 +13626,7 @@
         '        ".write": "auth != null && ((!data.exists() && newData.child(\'meta\').child(\'ownerUid\').val() === auth.uid) || (data.exists() && data.child(\'meta\').child(\'ownerUid\').val() === auth.uid))",',
         '        "meta": {',
         '          ".read": "auth != null && root.child(\'rooms\').child($roomId).child(\'members\').child(auth.uid).exists()",',
-        '          ".validate": "newData.child(\'ownerUid\').isString() && newData.child(\'accessMode\').isString() && (newData.child(\'accessMode\').val() === \'open\' || newData.child(\'accessMode\').val() === \'closed\') && ((!data.exists() && newData.child(\'ownerUid\').val() === auth.uid) || (data.exists() && newData.child(\'ownerUid\').val() === data.child(\'ownerUid\').val()))"',
+        '          ".validate": "newData.child(\'ownerUid\').isString() && newData.child(\'accessMode\').isString() && (newData.child(\'accessMode\').val() === \'open\' || newData.child(\'accessMode\').val() === \'closed\') && ((!data.exists() && newData.child(\'ownerUid\').val() === auth.uid) || (data.exists() && newData.child(\'ownerUid\').val() === data.child(\'ownerUid\').val())) && (!newData.child(\'guestViewers\').exists() || newData.child(\'guestViewers\').isBoolean()) && (!newData.child(\'guestEditors\').exists() || newData.child(\'guestEditors\').isBoolean())"',
         '        },',
         '        "joinInfo": {',
         '          ".read": "auth != null",',
@@ -13642,7 +13642,7 @@
         '          ".read": "auth != null && root.child(\'rooms\').child($roomId).child(\'members\').child(auth.uid).exists()",',
         '          "$uid": {',
         '            ".write": "auth != null && $uid === auth.uid && ((!data.exists() && newData.exists()) || (data.exists() && !newData.exists()))",',
-        '            ".validate": "newData.child(\'role\').isString() && newData.child(\'displayName\').isString() && newData.child(\'displayName\').val().length < 120 && ((newData.child(\'role\').val() === \'owner\' && newData.parent().parent().child(\'meta\').child(\'ownerUid\').val() === $uid) || ((newData.child(\'role\').val() === \'editor\' || newData.child(\'role\').val() === \'viewer\') && newData.child(\'viaToken\').isString() && newData.parent().parent().child(\'invites\').child(newData.child(\'viaToken\').val()).val() === newData.child(\'role\').val() && newData.parent().parent().child(\'meta\').child(\'accessMode\').val() === \'open\') || ((newData.child(\'role\').val() === \'editor\' || newData.child(\'role\').val() === \'viewer\') && root.child(\'rooms\').child($roomId).child(\'meta\').child(\'ownerUid\').val() === auth.uid))"',
+        '            ".validate": "newData.child(\'role\').isString() && newData.child(\'displayName\').isString() && newData.child(\'displayName\').val().length < 120 && ((newData.child(\'role\').val() === \'owner\' && newData.parent().parent().child(\'meta\').child(\'ownerUid\').val() === $uid) || ((newData.child(\'role\').val() === \'editor\' || newData.child(\'role\').val() === \'viewer\') && newData.child(\'viaToken\').isString() && newData.parent().parent().child(\'invites\').child(newData.child(\'viaToken\').val()).val() === newData.child(\'role\').val() && newData.parent().parent().child(\'meta\').child(\'accessMode\').val() === \'open\' && (auth.token.firebase.sign_in_provider !== \'anonymous\' || (newData.child(\'role\').val() === \'viewer\' && newData.parent().parent().child(\'meta\').child(\'guestViewers\').val() === true) || (newData.child(\'role\').val() === \'editor\' && newData.parent().parent().child(\'meta\').child(\'guestEditors\').val() === true))) || ((newData.child(\'role\').val() === \'editor\' || newData.child(\'role\').val() === \'viewer\') && root.child(\'rooms\').child($roomId).child(\'meta\').child(\'ownerUid\').val() === auth.uid))"',
         '          }',
         '        },',
         '        "document": {',
@@ -13752,14 +13752,38 @@
             var off = fb.mods.auth.onAuthStateChanged(fb.auth, function (u) { off(); resolve(u || null); });
         });
     }
-    function collabSignIn(cfg) {   // call from a user gesture (popup blockers)
+    // opts.guest  -> sign in ANONYMOUSLY (no account, no popup). The uid is
+    //                real, so the Security Rules still apply and the invite
+    //                token is still required; the person simply has no name.
+    // opts.google -> force a Google account even if a guest session exists
+    //                (the "sign in properly instead" path). The guest identity
+    //                is dropped first: Firebase will not swap providers under
+    //                a live anonymous session.
+    function collabSignIn(cfg, opts) {   // call from a user gesture (popup blockers)
+        opts = opts || {};
         return collabFirebase(cfg).then(function (fb) {
             return collabWaitAuthReady(fb).then(function (u) {
+                if (u && u.isAnonymous && opts.google) {
+                    return Promise.resolve(fb.mods.auth.signOut(fb.auth)).then(function () { return null; });
+                }
+                return u;
+            }).then(function (u) {
                 if (u) return u;
+                if (opts.guest) {
+                    return fb.mods.auth.signInAnonymously(fb.auth).then(function (cred) { return cred.user; });
+                }
                 var provider = new fb.mods.auth.GoogleAuthProvider();
                 return fb.mods.auth.signInWithPopup(fb.auth, provider).then(function (cred) { return cred.user; });
             });
         });
+    }
+    // A guest has no display name at all. Returning '' (rather than a
+    // placeholder) is deliberate: it feeds the app's EXISTING anonymous path,
+    // so presence renders "Anonymous 1", "Anonymous 2" and comments are marked
+    // ownerless, exactly as for a signed-out local user.
+    function collabDisplayNameFor(user) {
+        if (!user || user.isAnonymous) return '';
+        return (user.displayName || (user.email || '').split('@')[0] || 'Signed in').slice(0, 40);
     }
     function collabSignOut() {
         var p = _collab ? collabLeaveSession({ keepCache: true }) : Promise.resolve();
@@ -14024,8 +14048,9 @@
             // Real display identity: Google name + stable uid. Viewers skip
             // the name-lease (they cannot push shared data anyway).
             try {
-                var nm = (user.displayName || (user.email || '').split('@')[0] || 'Signed in').slice(0, 40);
-                applySignIn(nm, user.uid, { lease: s.role !== 'viewer' });
+                var nm = collabDisplayNameFor(user);
+                // Guests take no name lease: they have no name to reserve.
+                applySignIn(nm, user.uid, { lease: !!nm && s.role !== 'viewer' });
             } catch (e) {}
             collabPublishPresence(true);
             collabReflectStatus();
@@ -14037,6 +14062,13 @@
     function collabWatchOwnerData() {
         var s = _collab; if (!s || s.role !== 'owner') return;
         var M = s.fb.mods.db;
+        // meta drives the owner's Access and Guests controls, so they show
+        // the room's REAL current state rather than a guess.
+        s.unsubs.push(M.onValue(M.ref(s.fb.db, 'rooms/' + s.roomId + '/meta'), function (snap) {
+            if (s !== _collab) return;
+            s.meta = snap.val() || {};
+            collabRenderPanelIfOpen();
+        }, function () {}));
         s.unsubs.push(M.onValue(M.ref(s.fb.db, 'rooms/' + s.roomId + '/members'), function (snap) {
             if (s !== _collab) return;
             s.members = snap.val() || {};
@@ -14142,7 +14174,12 @@
         var displayName = (user.displayName || '').slice(0, 100);
         var now = Date.now();
         var room = {
-            meta: { ownerUid: user.uid, accessMode: 'open', createdAt: now },
+            // Guest defaults: anyone with the VIEW link can read without an
+            // account (nothing they do can change the map, so there is no
+            // accountability cost), but editing requires a real Google
+            // identity unless the owner deliberately opens it up.
+            meta: { ownerUid: user.uid, accessMode: 'open', createdAt: now,
+                    guestViewers: true, guestEditors: false },
             joinInfo: { title: (state.name || 'Untitled Map').slice(0, 200), ownerName: displayName },
             invites: {}, members: {}, document: {
                 version: 1, content: collabWireContent(), updatedAt: now, updatedBy: user.uid
@@ -14177,13 +14214,23 @@
         var role = roleHint === 'e' ? 'editor' : 'viewer';
         var rec = {
             role: role,
-            displayName: (user.displayName || '').slice(0, 100),
+            // 'Guest' only labels the owner's member list; presence and
+            // attribution still treat them as anonymous (see
+            // collabDisplayNameFor).
+            displayName: (user.isAnonymous ? 'Guest' : (user.displayName || '')).slice(0, 100),
             joinedAt: Date.now(),
             viaToken: token
         };
         return Promise.resolve(M.set(M.ref(fb.db, 'rooms/' + roomId + '/members/' + user.uid), rec))
             .then(function () { return rec; }, function (e) {
-                // The rules reject for exactly three reasons; name them.
+                // Name the reason the rules refused. A GUEST rejection is the
+                // most likely and the most fixable, so check it first: the
+                // room simply does not allow this role without an account.
+                if (user.isAnonymous) {
+                    var ge = new Error('guest not allowed for this role');
+                    ge.code = (role === 'editor') ? 'guest-editor-denied' : 'guest-viewer-denied';
+                    return Promise.reject(ge);
+                }
                 return collabFetchJoinInfo(fb, roomId).then(function (info) {
                     var err;
                     if (!info) { err = new Error('This shared map no longer exists (or the link is wrong).'); err.code = 'not-found'; }
@@ -14254,6 +14301,14 @@
         });
         upd[fresh] = role;
         return Promise.resolve(M.update(M.ref(s.fb.db, 'rooms/' + s.roomId + '/invites'), upd));
+    }
+    // Guest access per role. Enforced by the Security Rules (which read the
+    // sign-in provider from the ID token), not merely by the join UI.
+    function collabSetGuestAccess(key, allowed) {
+        var s = _collab; if (!s || s.role !== 'owner') return Promise.resolve();
+        if (key !== 'guestViewers' && key !== 'guestEditors') return Promise.resolve();
+        var M = s.fb.mods.db;
+        return Promise.resolve(M.set(M.ref(s.fb.db, 'rooms/' + s.roomId + '/meta/' + key), !!allowed));
     }
     function collabSetAccessMode(mode) {
         var s = _collab; if (!s || s.role !== 'owner') return Promise.resolve();
@@ -14522,12 +14577,13 @@
             collabRenderPanelIfOpen();
         });
     }
-    function collabConfirmJoin() {
+    function collabConfirmJoin(mode) {
         var intent = _collabBootIntent;
         if (!intent || intent.kind !== 'join') return;
+        var guest = (mode === 'guest');
         collabSetError('');
-        collabSetStatus('Signing in…');
-        collabSignIn(intent.cfg).then(function (user) {
+        collabSetStatus(guest ? 'Joining as guest…' : 'Signing in…');
+        collabSignIn(intent.cfg, guest ? { guest: true } : { google: true }).then(function (user) {
             collabSetStatus('Joining…');
             return collabFirebase(intent.cfg).then(function (fb) {
                 return collabFetchOwnMembership(fb, intent.roomId, user.uid).then(function (m) {
@@ -14558,7 +14614,9 @@
         if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return 'Sign-in was cancelled. Click Sign in to try again.';
         if (code === 'auth/operation-not-supported-in-this-environment') return 'Google sign-in cannot run from a file opened directly on disk. Open the app from its web address (or a local server) instead.';
         if (code === 'auth/network-request-failed') return 'Could not reach Google to sign in. Check your internet connection and try again.';
-        if (code === 'auth/operation-not-allowed') return 'Google sign-in is not enabled in that Firebase project yet — wizard step 2 (Authentication → Sign-in method → Google → Enable).';
+        if (code === 'auth/operation-not-allowed') return 'That sign-in method is not enabled in the Firebase project. Google sign-in is wizard step 2 (Authentication → Sign-in method); guest access additionally needs the “Anonymous” provider enabled there.';
+        if (code === 'guest-editor-denied') return 'This map does not allow guests to edit. Choose “Sign in & join” to join with a Google account, or ask the owner to allow guest editing.';
+        if (code === 'guest-viewer-denied') return 'This map does not allow guests. Choose “Sign in with Google instead”, or ask the owner to allow guest viewing.';
         if (code === 'auth/unauthorized-domain') return 'This website (' + (location.hostname || 'this domain') + ') is not on that project’s Authorized domains list — wizard step 6 (Authentication → Settings → Authorized domains).';
         if (code === 'rules-missing') return 'That database currently allows public access — the security rules were not published. Do wizard step 4 (copy the rules, paste on the Rules tab, Publish), then verify again.';
         if (code === 'db-unreachable') return 'Could not reach that database. Check the databaseURL value in the pasted config (wizard steps 3 and 5) and your internet connection.';
@@ -14837,21 +14895,49 @@
                 body.appendChild(collabEl('div', 'collab-hint',
                     'Share the edit link only with people who may change the map. The link secret stays in the #fragment, which browsers do not send to other sites.'));
 
-                var closed = false;
-                // accessMode mirrors meta; owners read it via their meta access.
-                // We track it lazily from the last known invites/meta state:
-                // the toggle below simply writes the new mode.
+                var meta = s.meta || {};
+                var closed = meta.accessMode === 'closed';
                 body.appendChild(collabEl('div', 'collab-section-title', 'Access'));
+                body.appendChild(collabEl('div', 'collab-hint', closed
+                    ? 'This map is CLOSED to new members. Current members keep working normally.'
+                    : 'Anyone with a current invite link can join.'));
                 var acc = collabEl('div', 'collab-row');
-                acc.appendChild(collabBtn('Close to new members', function () {
-                    collabSetAccessMode('closed').then(function () { collabSetStatus('New joins are now closed. Existing members keep access.'); },
-                        function (e) { collabSetError(collabDescribeError(e)); });
-                }));
-                acc.appendChild(collabBtn('Reopen joining', function () {
-                    collabSetAccessMode('open').then(function () { collabSetStatus('New members can join again with a current link.'); },
-                        function (e) { collabSetError(collabDescribeError(e)); });
+                acc.appendChild(collabBtn(closed ? 'Reopen joining' : 'Close to new members', function () {
+                    collabSetAccessMode(closed ? 'open' : 'closed').then(function () {
+                        collabSetStatus(closed ? 'New members can join again with a current link.'
+                                               : 'New joins are now closed. Existing members keep access.');
+                    }, function (e) { collabSetError(collabDescribeError(e)); });
                 }));
                 body.appendChild(acc);
+
+                // Guests = people with no Google account, signed in
+                // anonymously. They still need a live invite link; the only
+                // question is whether they must also identify themselves.
+                body.appendChild(collabEl('div', 'collab-section-title', 'Guests (no Google account)'));
+                var mkGuestToggle = function (key, label, hint) {
+                    // Viewing defaults ON, editing defaults OFF — and an older
+                    // room created before this feature has neither field.
+                    var on = (key === 'guestViewers') ? meta[key] !== false : meta[key] === true;
+                    var row = collabEl('div', 'collab-row');
+                    var lab = document.createElement('label');
+                    lab.style.display = 'flex'; lab.style.alignItems = 'center'; lab.style.gap = '7px';
+                    var cb = document.createElement('input');
+                    cb.type = 'checkbox'; cb.checked = !!on;
+                    cb.onchange = function () {
+                        collabSetGuestAccess(key, cb.checked).then(function () {
+                            collabSetStatus(label + (cb.checked ? ' allowed.' : ' now require a Google sign-in.'));
+                        }, function (e) { cb.checked = !cb.checked; collabSetError(collabDescribeError(e)); });
+                    };
+                    lab.appendChild(cb);
+                    lab.appendChild(document.createTextNode(label));
+                    row.appendChild(lab);
+                    body.appendChild(row);
+                    body.appendChild(collabEl('div', 'collab-hint', hint));
+                };
+                mkGuestToggle('guestViewers', 'Guests may view',
+                    'A guest opening the view link starts reading immediately, with no sign-in. They cannot change anything.');
+                mkGuestToggle('guestEditors', 'Guests may edit',
+                    'Off by default: a guest’s edits appear as “Anonymous” and cannot be traced to a person, and their notes can be edited or deleted by anyone.');
 
                 body.appendChild(collabEl('div', 'collab-section-title', 'Safety'));
                 if (s.backupInfo === undefined) {
@@ -14951,18 +15037,38 @@
             // Informed consent BEFORE joining: the person clicking an invite
             // link is trusting a stranger's link, so spell out exactly what
             // the others in the room will and will not be able to see.
+            var isView = intent.roleHint !== 'e';
             body.appendChild(collabEl('div', 'collab-section-title', 'What joining shares'));
             body.appendChild(collabEl('div', 'collab-hint',
-                'Everyone in this map — including whoever sent you this link — will see your Google ' +
-                'display name, whatever you write, and which boxes you have selected while you are here.'));
+                isView
+                    ? 'As a guest you share nothing but your presence: the others can see that someone is ' +
+                      'viewing and which boxes you have selected, listed simply as “Anonymous”. Sign in with ' +
+                      'Google instead if you would rather they saw your name.'
+                    : 'Everyone in this map — including whoever sent you this link — will see your Google ' +
+                      'display name, whatever you write, and which boxes you have selected while you are here.'));
             body.appendChild(collabEl('div', 'collab-hint',
-                'Your password is never shared: you sign in through Google’s own window, not this app. ' +
-                'Your email address is not shown to the others. You can leave at any time, and nothing is ' +
+                'Signing in happens in Google’s own window, so this app never sees your password, and your ' +
+                'email address is not shown to the others. You can leave at any time, and nothing is ' +
                 'shared at all until you choose to join.'));
             var jr = collabEl('div', 'collab-row');
-            jr.appendChild(collabBtn('Sign in & join', collabConfirmJoin, 'primary'));
+            if (isView) {
+                // View links: guest is the default — a viewer cannot change
+                // anything, so there is nothing to hold them accountable for.
+                jr.appendChild(collabBtn('View as guest', function () { collabConfirmJoin('guest'); }, 'primary'));
+                jr.appendChild(collabBtn('Sign in with Google instead', function () { collabConfirmJoin('google'); }));
+            } else {
+                // Edit links: a real identity is the default, because edits
+                // are attributed and unattributed edits cannot be traced.
+                jr.appendChild(collabBtn('Sign in & join', function () { collabConfirmJoin('google'); }, 'primary'));
+                jr.appendChild(collabBtn('Join as guest', function () { collabConfirmJoin('guest'); }));
+            }
             jr.appendChild(collabBtn('Not now', function () { _collabBootIntent = null; collabRenderPanel(); }));
             body.appendChild(jr);
+            if (!isView) {
+                body.appendChild(collabEl('div', 'collab-hint',
+                    'Guest editing shows your changes as “Anonymous”, and notes you leave can be edited or ' +
+                    'deleted by anyone in the map. The owner may also have turned guest editing off.'));
+            }
             return;
         }
 
@@ -14973,7 +15079,10 @@
         shareRow.appendChild(collabBtn('Share this map…', function () {
             collabSetError('');
             collabSetStatus('Signing in…');
-            collabSignIn().then(function (user) {
+            // google:true — the OWNER of a map must be a real account. Without
+            // this, someone who had joined another map as a guest would create
+            // their own room under an anonymous identity they could lose.
+            collabSignIn(null, { google: true }).then(function (user) {
                 collabSetStatus('Creating the shared map…');
                 return collabFirebase().then(function (fb) {
                     return collabCreateRoom(fb, user).then(function (r) {
@@ -15181,7 +15290,7 @@
             });
         }).then(function () {
             report('Database looks right. Signing you in with Google…');
-            return collabSignIn(cfg);
+            return collabSignIn(cfg, { google: true });
         }).then(function (user) {
             report('Signed in. Testing the rules with a throwaway room…');
             var probeId = 'probe' + collabRandId(12);
@@ -15243,6 +15352,7 @@
         publishPresence: collabPublishPresence,
         rotateInvite: collabRotateInvite,
         setAccessMode: collabSetAccessMode,
+        setGuestAccess: collabSetGuestAccess,
         removeMember: collabRemoveMember,
         setMemberRole: collabSetMemberRole,
         detectBootIntent: collabDetectBootIntent,
