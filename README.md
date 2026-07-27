@@ -38,6 +38,23 @@ edits are kept for review rather than silently lost.
   and you can leave at any time.
 * The map's owner can remove members, rotate invite links, or delete the map.
 
+### A note on the Firebase key in the source
+
+`argument-mapper-r27.html` contains a `FIREBASE_CONFIG` block with an `apiKey`.
+**This is not a secret**, and it is not a mistake that it is committed. A
+Firebase *web* API key is a public project identifier, not a credential — it
+ships to every browser that loads any Firebase web app, by design. Access is
+controlled by the Security Rules in `database.rules.json` plus Google sign-in,
+never by hiding this value. (Automated secret scanners flag the `AIzaSy…`
+shape regardless, because they cannot distinguish a web key from a private
+service-account key.)
+
+The key is additionally restricted to this project's domains in the Google
+Cloud console, so it cannot be used to bill quota from elsewhere. If you fork
+this project, replace the whole block with your own project's config — or
+leave it and let each group use the in-app **"Set up my own free backend"**
+wizard.
+
 ## Running your own backend (optional)
 
 Collaboration needs a Firebase project. Anyone can create their own free one —
