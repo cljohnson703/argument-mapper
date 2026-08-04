@@ -37,6 +37,7 @@ const SUITES = [
     'shortcut-r25-free-node-test.js',
     'stringmode-r26-label-test.js',
     'xss-r26-render-test.js',
+    'export-r27-tests.js',
     'collab-r26-firebase-test.js',
 ];
 

@@ -1579,7 +1579,7 @@
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">File</span>
-            <button onclick="saveMap()" title="Download a copy of this map as a JSON file">Download <span class="hotkey">Ctrl+Shift+S</span></button>
+            <button onclick="saveMap()" title="Save this map to a file — you choose where (Chrome/Edge); other browsers put it in Downloads">Save to File… <span class="hotkey">Ctrl+Shift+S</span></button>
             <button id="collab-btn" onclick="toggleCollabPanel()" title="Share this map for live collaboration, or open a map someone shared with you">Collaborate</button>
             <label class="file-upload-label">
                 Open File... <span class="hotkey">JSON</span>
@@ -1761,7 +1761,7 @@
         <h2>Editing</h2>
         <p><kbd>Enter</kbd> Support &nbsp; <kbd>Shift+Enter</kbd> Objection &nbsp; <kbd>Ctrl+Enter</kbd> Rebuttal &nbsp; <kbd>Alt+Enter</kbd> Note &nbsp; <kbd>Tab</kbd> co-premise<br>
         <kbd>S</kbd>/<kbd>O</kbd>/<kbd>R</kbd>/<kbd>N</kbd>/<kbd>U</kbd> retag &nbsp; <kbd>E</kbd> evaluation &nbsp; <kbd>I</kbd> implicit &nbsp; <kbd>A</kbd> normal node &nbsp; <kbd>Shift+A</kbd> free node at cursor &nbsp; <kbd>[</kbd>/<kbd>]</kbd> overlap &nbsp; <kbd>Del</kbd> delete &nbsp; <kbd>Esc</kbd> cancel<br>
-        <kbd>Ctrl+Z</kbd>/<kbd>Y</kbd> undo/redo &nbsp; <kbd>Ctrl+X</kbd>/<kbd>C</kbd>/<kbd>V</kbd> cut/copy/paste &nbsp; <kbd>Ctrl+Shift+V</kbd> paste as co-premise &nbsp; <kbd>Ctrl+S</kbd> save to browser &nbsp; <kbd>Ctrl+Shift+S</kbd> download file &nbsp; <kbd>Ctrl+A</kbd> select all &nbsp; <kbd>Ctrl+Shift+L/E/R</kbd> align<br>
+        <kbd>Ctrl+Z</kbd>/<kbd>Y</kbd> undo/redo &nbsp; <kbd>Ctrl+X</kbd>/<kbd>C</kbd>/<kbd>V</kbd> cut/copy/paste &nbsp; <kbd>Ctrl+Shift+V</kbd> paste as co-premise &nbsp; <kbd>Ctrl+S</kbd> save to browser &nbsp; <kbd>Ctrl+Shift+S</kbd> save to a file &nbsp; <kbd>Ctrl+A</kbd> select all &nbsp; <kbd>Ctrl+Shift+L/E/R</kbd> align<br>
         <span class="hint"><kbd>Alt+S/O/R/N/U/C</kbd> retag or re-center without leaving the text field. <kbd>Esc</kbd> while editing discards that edit — the text reverts to what it was before you started.</span></p>
         <h2>Find</h2>
         <p><kbd>Ctrl+F</kbd> — map search after clicking the map; the browser's own find after clicking a panel or scrollbar.</p>
@@ -10480,12 +10480,28 @@
                 boxesOut.push(t);
             });
         });
+        // Connector lines. The live paths colour themselves with CSS custom
+        // properties (stroke="var(--color-support)"), which resolve against
+        // the page's :root — and a standalone .svg/.png file has no :root, so
+        // every line would silently paint nothing. (The ARROWHEADS still
+        // showed, because the <marker> defs carry literal hex fills and a
+        // marker renders even when its path's stroke is invalid — which is
+        // exactly what "arrows missing but arrowheads present" looked like.)
+        // Resolve each var() to the computed colour on the way out.
         const linesSvg = document.getElementById('lines-svg');
+        const rootStyle = getComputedStyle(document.documentElement);
+        const resolveVars = (markup) => String(markup).replace(
+            /var\(\s*(--[A-Za-z0-9-]+)\s*(?:,\s*([^)]*))?\)/g,
+            (whole, name, fallback) => {
+                const v = rootStyle.getPropertyValue(name).trim();
+                return v || (fallback ? fallback.trim() : '#888888');
+            });
+        const linesMarkup = linesSvg ? resolveVars(linesSvg.innerHTML) : '';
         const w0 = Math.max(1, maxX - minX) + PAD * 2, h0 = Math.max(1, maxY - minY) + PAD * 2;
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w0)}" height="${Math.ceil(h0)}"`
             + ` viewBox="${minX - PAD} ${minY - PAD} ${w0} ${h0}">`
             + `<rect x="${minX - PAD}" y="${minY - PAD}" width="${w0}" height="${h0}" fill="${EXPORT_THEME.bg}"/>`
-            + (linesSvg ? linesSvg.innerHTML : '')
+            + linesMarkup
             + boxesOut.join('')
             + `</svg>`;
     }
@@ -10495,10 +10511,42 @@
         a.href = url; a.download = name; a.click();
         setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
+    // Save with a REAL "Save As" dialog where the browser allows it, so the
+    // user picks the folder and filename like any desktop program — instead
+    // of the file landing silently in Downloads.
+    //
+    // showSaveFilePicker is Chromium-only (Chrome/Edge/Opera) and needs a
+    // secure context plus a user gesture. Everywhere else (Firefox, Safari)
+    // we fall back to the ordinary download, which is why this returns a
+    // promise describing what actually happened rather than assuming.
+    //   -> {saved:true, picked:true}  user chose a location
+    //   -> {saved:true, picked:false} browser downloaded it the old way
+    //   -> {saved:false}              user cancelled the dialog
+    function saveBlobAs(blob, suggestedName, typeLabel, mime, ext) {
+        const canPick = typeof window.showSaveFilePicker === 'function';
+        if (!canPick) { downloadBlob(blob, suggestedName); return Promise.resolve({ saved: true, picked: false }); }
+        const accept = {}; accept[mime] = [ext];
+        return window.showSaveFilePicker({
+            suggestedName: suggestedName,
+            types: [{ description: typeLabel, accept: accept }]
+        }).then(function (handle) {
+            return handle.createWritable().then(function (w) {
+                return w.write(blob).then(function () { return w.close(); });
+            }).then(function () { return { saved: true, picked: true }; });
+        }, function (err) {
+            // Cancelling the dialog is a normal outcome, not a failure.
+            if (err && (err.name === 'AbortError' || err.code === 20)) return { saved: false };
+            // Anything else (e.g. a sandbox that exposes the API but blocks
+            // it): fall back rather than leaving the user with nothing.
+            downloadBlob(blob, suggestedName);
+            return { saved: true, picked: false };
+        });
+    }
     function exportSVG() {
         const svg = buildExportSVG();
         if (!svg) { alert('Nothing to export.'); return; }
-        downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), 'ArgumentMap.svg');
+        saveBlobAs(new Blob([svg], { type: 'image/svg+xml' }), exportBaseName() + '.svg',
+            'SVG image', 'image/svg+xml', '.svg');
     }
     function exportPNG() {
         const svg = buildExportSVG();
@@ -10515,7 +10563,8 @@
                 cx.drawImage(img, 0, 0);
                 c.toBlob(b => {
                     URL.revokeObjectURL(url);
-                    if (b) downloadBlob(b, 'ArgumentMap.png'); else alert('PNG export failed.');
+                    if (b) saveBlobAs(b, exportBaseName() + '.png', 'PNG image', 'image/png', '.png');
+                    else alert('PNG export failed.');
                 }, 'image/png');
             } catch (err) { URL.revokeObjectURL(url); alert('PNG export failed: ' + err.message); }
         };
@@ -10523,16 +10572,23 @@
         img.src = url;
     }
 
+    // Filename offered in the save dialog: the map's own name, stripped of
+    // anything a filesystem would object to.
+    function exportBaseName() {
+        return (state.name || 'ArgumentMap').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'ArgumentMap';
+    }
     function saveMap() {
         // Stamp versions before saving so the exported file has
         // up-to-date version metadata for any future merge.
         diffAndStamp(state);
         const _exportable = Object.assign({}, state); delete _exportable._presence;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(_exportable, null, 2));
-        const dlAnchorElem = document.createElement('a');
-        const safeName = (state.name || 'ArgumentMap').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'ArgumentMap';
-        dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", safeName + ".json"); dlAnchorElem.click();
-        lastSaveTime = new Date(); updateSaveIndicator();
+        const blob = new Blob([JSON.stringify(_exportable, null, 2)], { type: 'application/json' });
+        saveBlobAs(blob, exportBaseName() + '.json', 'Argument map (JSON)', 'application/json', '.json')
+            .then(function (r) {
+                // Only count it as saved if a file was actually written —
+                // a cancelled dialog must not update "Last Saved".
+                if (r && r.saved) { lastSaveTime = new Date(); updateSaveIndicator(); }
+            });
     }
     function loadMap(event) {
         const file = event.target.files[0]; if (!file) return;
@@ -10906,11 +10962,8 @@
 
     function exportText() {
         const text = generateTextRepresentation();
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = 'ArgumentMap.txt'; a.click();
-        URL.revokeObjectURL(url);
+        saveBlobAs(new Blob([text], { type: 'text/plain' }), exportBaseName() + '.txt',
+            'Text file', 'text/plain', '.txt');
     }
 
     function parseTextToState(text) {
