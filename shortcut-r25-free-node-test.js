@@ -195,7 +195,10 @@ async function testFreshCursorUndoAndPersistence() {
             'redo restores the free flag and exact coordinates');
 
         win.autosaveNow();
-        const saved = JSON.parse(win.localStorage.getItem('argmap-autosave'));
+        // Maps are stored one slot per map (argmap-map:<id>) so that starting
+        // a new map cannot overwrite another; the old single 'argmap-autosave'
+        // slot is only read once, to migrate it.
+        const saved = JSON.parse(win.localStorage.getItem('argmap-map:' + win.__argmap.state._mapId));
         const persisted = saved.trees.find(node => node.id === freeId);
         ok(persisted && persisted.freePosition === true && persisted.x === 710 && persisted.y === 478,
             'autosave persists the free flag and coordinates');

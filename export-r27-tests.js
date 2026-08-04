@@ -313,32 +313,87 @@ const MAP = [{
         P.win.close();
     }
 
-    // --- 8. Guard against silently discarding unsaved local work ---------
+    // --- 8. Recent maps: New Map no longer destroys the previous one -----
+    // This replaces an earlier "warn before overwriting" guard: each map now
+    // has its own slot, so switching maps loses nothing and a warning would
+    // be false.
     {
-        const G = makeWin('guard', { beforeParse(win) { delete win.showSaveFilePicker; } });
+        const G = makeWin('recent', { beforeParse(win) { delete win.showSaveFilePicker; } });
         await sleep(360);
         const out = JSON.parse(G.win.eval(`
             (function () {
-                var asked = [];
-                window.confirm = function (m) { asked.push(m); return false; };   // user backs out
-                // Fresh boot placeholder: nothing stamped yet => nothing to lose.
-                var pristine = hasUnsavedLocalWork();
-                // Make a real edit so the map has content only in the browser.
+                window.confirm = function () { return true; };
+                localStorage.removeItem('argmap-maps');
+                localStorage.removeItem('argmap-autosave');
+                // Map one.
                 __argmap.state.trees = ${JSON.stringify(MAP)};
+                __argmap.state.name = 'First Map';
                 diffAndStamp(__argmap.state);
-                var dirty = hasUnsavedLocalWork();
-                var before = JSON.stringify(__argmap.state.trees).length;
-                newMap();                       // should be blocked by the confirm
-                var after = JSON.stringify(__argmap.state.trees).length;
-                return JSON.stringify({ pristine: pristine, dirty: dirty, asked: asked.length,
-                                        warned: asked.some(function(m){ return /never been saved to a file/.test(m); }),
-                                        unchanged: before === after });
+                autosaveNow(true);
+                var firstId = __argmap.state._mapId;
+                // Start a second map, then edit and store it too.
+                newMap();
+                __argmap.state.name = 'Second Map';
+                __argmap.state.trees[0].texts[0] = 'Totally different';
+                diffAndStamp(__argmap.state);
+                autosaveNow(true);
+                var secondId = __argmap.state._mapId;
+                var index = JSON.parse(localStorage.getItem('argmap-maps') || '[]');
+                var firstStillStored = !!localStorage.getItem('argmap-map:' + firstId);
+                // Switch back to the first map.
+                var reopened = openRecentMap(firstId);
+                return JSON.stringify({
+                    differentIds: firstId !== secondId,
+                    indexCount: index.length,
+                    names: index.map(function (e) { return e.name; }),
+                    firstStillStored: firstStillStored,
+                    reopened: reopened,
+                    nowShowing: __argmap.state.name,
+                    nowId: __argmap.state._mapId === firstId,
+                    contentBack: JSON.stringify(__argmap.state.trees).indexOf('Support one') >= 0
+                });
             })();
         `));
-        ok(out.pristine === false, 'guard: an untouched boot map is not treated as unsaved work');
-        ok(out.dirty === true, 'guard: an edited, never-saved map IS flagged');
-        ok(out.warned === true, 'guard: New Map warns that the map has never reached a file', JSON.stringify(out));
-        ok(out.unchanged === true, 'guard: cancelling leaves the map intact');
+        ok(out.differentIds === true, 'recent: a new map gets its own identity');
+        ok(out.indexCount === 2, 'recent: both maps are stored side by side', 'count=' + out.indexCount);
+        ok(out.names.indexOf('First Map') >= 0 && out.names.indexOf('Second Map') >= 0,
+            'recent: the index lists both by name', JSON.stringify(out.names));
+        ok(out.firstStillStored === true, 'recent: starting a new map did NOT destroy the previous one');
+        ok(out.reopened === true && out.nowShowing === 'First Map' && out.nowId === true,
+            'recent: the earlier map can be reopened', JSON.stringify(out));
+        ok(out.contentBack === true, 'recent: its full content comes back');
+
+        // Removing an entry drops both the index row and the stored copy.
+        const rm = JSON.parse(G.win.eval(`
+            (function () {
+                var list = JSON.parse(localStorage.getItem('argmap-maps') || '[]');
+                var victim = list.filter(function (e) { return e.name === 'Second Map'; })[0];
+                mapForget(victim.id);
+                var after = JSON.parse(localStorage.getItem('argmap-maps') || '[]');
+                return JSON.stringify({ gone: !localStorage.getItem('argmap-map:' + victim.id), left: after.length });
+            })();
+        `));
+        ok(rm.gone === true && rm.left === 1, 'recent: removing an entry clears its stored copy too', JSON.stringify(rm));
+
+        // The legacy single slot is folded in rather than abandoned.
+        const mig = JSON.parse(G.win.eval(`
+            (function () {
+                localStorage.removeItem('argmap-maps');
+                localStorage.setItem('argmap-autosave', JSON.stringify({
+                    name: 'Legacy Map', trees: [{ id: 'lg', type: 'contention', texts: ['Old work'], collapsed: [], children: [] }]
+                }));
+                migrateLegacyAutosave();
+                var list = JSON.parse(localStorage.getItem('argmap-maps') || '[]');
+                return JSON.stringify({
+                    migrated: list.length === 1 && list[0].name === 'Legacy Map',
+                    legacyCleared: localStorage.getItem('argmap-autosave') === null,
+                    contentKept: (localStorage.getItem('argmap-map:' + (list[0] || {}).id) || '').indexOf('Old work') >= 0
+                });
+            })();
+        `));
+        ok(mig.migrated === true, 'recent: an existing single-slot map is migrated into the list');
+        ok(mig.contentKept === true, 'recent: the migrated map keeps its content');
+        ok(mig.legacyCleared === true, 'recent: the old slot is cleared after migrating');
         G.win.close();
     }
 

@@ -804,14 +804,29 @@ function ok(cond, label, detail) {
         const L = makeWin('localsave', cloud, {});
         wins.push(L);
         await sleep(340);
+        // Maps are stored per-map now (argmap-map:<id>), indexed by
+        // argmap-maps — not in the old single argmap-autosave slot.
+        const storedText = () => L.win.eval(`
+            (function () {
+                var raw = localStorage.getItem('argmap-maps');
+                var list = raw ? JSON.parse(raw) : [];
+                return list.map(function (e) { return localStorage.getItem('argmap-map:' + e.id) || ''; }).join('|');
+            })();
+        `);
         L.win.eval('setAutosaveEnabled(false)');
-        L.win.localStorage.removeItem('argmap-autosave');
+        L.win.eval(`
+            (function () {
+                var raw = localStorage.getItem('argmap-maps');
+                (raw ? JSON.parse(raw) : []).forEach(function (e) { localStorage.removeItem('argmap-map:' + e.id); });
+                localStorage.removeItem('argmap-maps');
+                localStorage.removeItem('argmap-autosave');
+            })();
+        `);
         L.win.eval('state.trees[0].texts[0] = "Manual save test"; diffAndStamp(state); render();');
         await sleep(600);   // the (disabled) autosave debounce passes without writing
-        ok(L.win.localStorage.getItem('argmap-autosave') === null, 'manual save: autosave off writes nothing on its own');
+        ok(storedText().indexOf('Manual save test') === -1, 'manual save: autosave off writes nothing on its own');
         L.win.eval('manualLocalSave()');
-        const saved = L.win.localStorage.getItem('argmap-autosave');
-        ok(!!saved && saved.indexOf('Manual save test') >= 0, 'manual save: Save now persists with Autosave off');
+        ok(storedText().indexOf('Manual save test') >= 0, 'manual save: Save now persists with Autosave off');
     }
 
     // --- 25. Automatic backup + reversible restore ------------------------
