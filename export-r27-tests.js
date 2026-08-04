@@ -210,6 +210,138 @@ const MAP = [{
         F.win.close();
     }
 
+    // --- 6. Linked file: pick once, then write with no dialog ------------
+    {
+        const L = makeWin('linked', {
+            beforeParse(win) {
+                win.__writes = []; win.__pickerCalls = 0;
+                win.__makeHandle = function (name) {
+                    return {
+                        name: name,
+                        queryPermission: () => Promise.resolve(win.__perm || 'granted'),
+                        requestPermission: () => { win.__requested = (win.__requested || 0) + 1; return Promise.resolve(win.__grantOnRequest === false ? 'denied' : 'granted'); },
+                        createWritable: () => Promise.resolve({
+                            write: (b) => { win.__writes.push(b); return Promise.resolve(); },
+                            close: () => Promise.resolve()
+                        })
+                    };
+                };
+                win.showSaveFilePicker = function () {
+                    win.__pickerCalls++;
+                    return Promise.resolve(win.__makeHandle('Linked Map.json'));
+                };
+            }
+        });
+        await sleep(360);
+
+        const r1 = JSON.parse(await L.win.eval(`
+            (function () {
+                __argmap.state.trees = ${JSON.stringify(MAP)};
+                __argmap.state.name = 'Linked Map';
+                return saveMap().then(function () {
+                    return JSON.stringify({ picker: window.__pickerCalls, writes: window.__writes.length, name: linkedFileName() });
+                });
+            })();
+        `));
+        ok(r1.picker === 1 && r1.writes === 1, 'linked file: the first save asks where to put it', JSON.stringify(r1));
+        ok(r1.name === 'Linked Map.json', 'linked file: the map is now linked to that file', String(r1.name));
+
+        // Second save must NOT re-prompt.
+        const r2 = JSON.parse(await L.win.eval(`
+            saveMap().then(function () {
+                return JSON.stringify({ picker: window.__pickerCalls, writes: window.__writes.length });
+            });
+        `));
+        ok(r2.picker === 1, 'linked file: later saves do NOT open a dialog again', 'picker=' + r2.picker);
+        ok(r2.writes === 2, 'linked file: the file is written again', 'writes=' + r2.writes);
+
+        // The indicator must name the file rather than claim "browser only".
+        const ind = L.win.eval(`document.getElementById('save-indicator').textContent`);
+        ok(/Linked Map\.json/.test(ind), 'linked file: the indicator names the file', ind);
+        ok(!/browser only/i.test(ind), 'linked file: the indicator no longer says browser-only', ind);
+
+        // Autosave keeps the linked file current (debounced ~2.5s).
+        const before = L.win.eval('window.__writes.length');
+        L.win.eval(`__argmap.state.trees[0].texts[0] = 'Edited for autosave'; autosaveNow(true);`);
+        await sleep(3000);
+        const after = L.win.eval('window.__writes.length');
+        ok(after > before, 'linked file: Autosave writes through to the file too', before + ' -> ' + after);
+
+        // "Save As…" re-prompts and relinks.
+        const r3 = JSON.parse(await L.win.eval(`
+            saveMapAs().then(function () { return JSON.stringify({ picker: window.__pickerCalls }); });
+        `));
+        ok(r3.picker === 2, 'linked file: Save As… asks again', 'picker=' + r3.picker);
+        L.win.close();
+    }
+
+    // --- 7. After a reload the link is remembered but needs a gesture ----
+    {
+        const P = makeWin('perm', {
+            beforeParse(win) {
+                win.__requested = 0; win.__writes = [];
+                win.showSaveFilePicker = function () { return Promise.resolve({ name: 'x.json' }); };
+            }
+        });
+        await sleep(360);
+        const out = JSON.parse(await P.win.eval(`
+            (function () {
+                // Simulate a handle restored from IndexedDB whose permission
+                // has lapsed to 'prompt' (what a browser restart produces).
+                var h = {
+                    name: 'Restored.json',
+                    queryPermission: function(){ return Promise.resolve('prompt'); },
+                    requestPermission: function(){ window.__requested++; return Promise.resolve('granted'); },
+                    createWritable: function(){ return Promise.resolve({
+                        write: function(b){ window.__writes.push(b); return Promise.resolve(); },
+                        close: function(){ return Promise.resolve(); } }); }
+                };
+                setLinkedFile(h, 'prompt');
+                // A TIMER-driven autosave must never raise a permission prompt.
+                return writeLinkedFile(false).then(function (a) {
+                    // An explicit user save may, and then writes.
+                    return writeLinkedFile(true).then(function (b) {
+                        return JSON.stringify({ auto: a, manual: b, requested: window.__requested, writes: window.__writes.length });
+                    });
+                });
+            })();
+        `));
+        ok(out.auto.written === false && out.auto.reason === 'needs-permission',
+            'reconnect: a background autosave never prompts for permission', JSON.stringify(out.auto));
+        ok(out.requested === 1 && out.manual.written === true,
+            'reconnect: an explicit save re-requests permission, then writes', JSON.stringify(out.manual));
+        P.win.close();
+    }
+
+    // --- 8. Guard against silently discarding unsaved local work ---------
+    {
+        const G = makeWin('guard', { beforeParse(win) { delete win.showSaveFilePicker; } });
+        await sleep(360);
+        const out = JSON.parse(G.win.eval(`
+            (function () {
+                var asked = [];
+                window.confirm = function (m) { asked.push(m); return false; };   // user backs out
+                // Fresh boot placeholder: nothing stamped yet => nothing to lose.
+                var pristine = hasUnsavedLocalWork();
+                // Make a real edit so the map has content only in the browser.
+                __argmap.state.trees = ${JSON.stringify(MAP)};
+                diffAndStamp(__argmap.state);
+                var dirty = hasUnsavedLocalWork();
+                var before = JSON.stringify(__argmap.state.trees).length;
+                newMap();                       // should be blocked by the confirm
+                var after = JSON.stringify(__argmap.state.trees).length;
+                return JSON.stringify({ pristine: pristine, dirty: dirty, asked: asked.length,
+                                        warned: asked.some(function(m){ return /never been saved to a file/.test(m); }),
+                                        unchanged: before === after });
+            })();
+        `));
+        ok(out.pristine === false, 'guard: an untouched boot map is not treated as unsaved work');
+        ok(out.dirty === true, 'guard: an edited, never-saved map IS flagged');
+        ok(out.warned === true, 'guard: New Map warns that the map has never reached a file', JSON.stringify(out));
+        ok(out.unchanged === true, 'guard: cancelling leaves the map intact');
+        G.win.close();
+    }
+
     ok(W.errors.length === 0, 'no jsdom runtime errors', W.errors.slice(0, 2).join(' | '));
     console.log(`\n--- export-r27: ${pass} passed, ${fail} failed ---`);
     try { W.win.close(); } catch (e) {}

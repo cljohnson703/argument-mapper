@@ -1579,7 +1579,8 @@
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">File</span>
-            <button onclick="saveMap()" title="Save this map to a file — you choose where (Chrome/Edge); other browsers put it in Downloads">Save to File… <span class="hotkey">Ctrl+Shift+S</span></button>
+            <button onclick="saveMap()" title="Save to the linked file (or choose one the first time). Chrome/Edge write straight to your file; other browsers download a copy.">Save to File <span class="hotkey">Ctrl+Shift+S</span></button>
+            <button onclick="saveMapAs()" title="Choose a new file and location for this map">Save As…</button>
             <button id="collab-btn" onclick="toggleCollabPanel()" title="Share this map for live collaboration, or open a map someone shared with you">Collaborate</button>
             <label class="file-upload-label">
                 Open File... <span class="hotkey">JSON</span>
@@ -1782,6 +1783,11 @@
         <h2>Text Export &amp; String Mode</h2>
         <p>Export/import the whole map as structured text using complex labels; String Mode edits it live. Cross-references trail one per line as <strong>SOURCE &gt; TARGET</strong>.<br>
         Wrap a label in <strong>parentheses</strong> to mark that premise <strong>implicit</strong> (dashed border): <strong>(M1S1a): unstated assumption</strong>. Main contentions and notes are never implicit, so parentheses are ignored there.</p>
+        <h2>Saving</h2>
+        <p><strong>Two different things are called "saving":</strong><br>
+        <kbd>Ctrl+S</kbd> / <strong>Save now</strong> keeps a copy <strong>inside this browser</strong>. It survives closing the tab or rebooting, and it is what restores your map when you come back — but it is invisible to you, no backup will capture it, and it does not travel to another browser or computer.<br>
+        <kbd>Ctrl+Shift+S</kbd> / <strong>Save to File</strong> writes a real <strong>.json file</strong> where you choose. In Chrome and Edge the map then stays <em>linked</em> to that file: from that point Ctrl+Shift+S and Autosave write straight to it with no dialog, exactly like a desktop program — the indicator top-right names the file. Other browsers (Firefox, Safari) download a copy each time instead.<br>
+        <span class="hint">Until you save to a file, the indicator says <strong>“Saved in browser only”</strong>. Starting a new map or opening another one will warn you before it overwrites work that has never reached a file.</span></p>
         <h2>Your data</h2>
         <p>Used on your own — including the downloaded file — this app <strong>never sends anything anywhere</strong>: your maps stay in this browser (and in files you save). No account, no tracking, no analytics.<br>
         <strong>Only if you share a map</strong> does anything leave your device: the map itself, plus the Google display names of the people in it, are stored in a Google Firebase database so collaborators can see each other's edits. Signing in happens in Google's own window — this app never sees your password, and your email address is not shown to other collaborators. The owner can remove members or delete the map at any time.<br>
@@ -10268,6 +10274,20 @@
         try { localStorage.setItem(AUTOSAVE_KEY, serialized); lastAutosaveTime = new Date(); updateSaveIndicator(); } catch (e) {}
         // Mirror to IndexedDB for crash recovery
         saveToIDB(serialized).catch(() => {});
+        // ...and keep the LINKED FILE current too, so "Autosave" means what a
+        // desktop user expects. Debounced far more slowly than the in-browser
+        // save: this touches the disk, and 400 ms would thrash it.
+        if (_fileHandle && _filePermission === 'granted') scheduleFileAutosave();
+    }
+    let _fileAutosaveTimer = null;
+    const FILE_AUTOSAVE_MS = 2500;
+    function scheduleFileAutosave() {
+        if (_fileAutosaveTimer) clearTimeout(_fileAutosaveTimer);
+        _fileAutosaveTimer = setTimeout(function () {
+            _fileAutosaveTimer = null;
+            // interactive=false: never raise a permission prompt on a timer.
+            writeLinkedFile(false).catch(function () {});
+        }, FILE_AUTOSAVE_MS);
     }
     function manualLocalSave() {
         autosaveNow(true);
@@ -10370,7 +10390,9 @@
     function newMap() {
         // Shared: opens a new window and returns false (this document is kept).
         // Local: plain confirm, then replace this document as before.
+        if (!confirmDiscardUnsaved('Start a new map?')) return;
         if (!startNewDocumentHere('Start a new map? The current map stays in Undo history.')) return;
+        unlinkFile();   // the new map is not the old map's file
         pushHistory();
         state = { name: 'Untitled Map', trees: [{ id: generateId(), type: 'contention', texts: ['Main Contention'], collapsed: [], children: [], x: CENTER_X, y: CENTER_Y }], _clientId, _nodeVersions: {}, _deletions: {}, _conflicts: {}, _syncBase: {}, _commentDeletions: {}, _orphanComments: {} };
         document.getElementById('map-name').value = state.name;
@@ -10577,22 +10599,155 @@
     function exportBaseName() {
         return (state.name || 'ArgumentMap').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'ArgumentMap';
     }
+
+    // --- Linked file --------------------------------------------------------
+    // Once the user has chosen a file, the map stays LINKED to it: Ctrl+S and
+    // autosave write straight to that file with no dialog, the way a desktop
+    // program behaves. Browser storage keeps running underneath as the
+    // crash-recovery net — it is the only protection before a file is chosen,
+    // and the only auto-recovery browsers without the File System Access API
+    // can offer at all.
+    //
+    // The handle survives a reload (it is stored in IndexedDB), but the
+    // browser will not let a page WRITE to it after a restart without a fresh
+    // user gesture. So on boot the link is remembered but "unconfirmed": the
+    // next explicit save re-requests permission and then writes.
+    const IDB_FILE_KEY = 'linkedFile';
+    let _fileHandle = null;      // FileSystemFileHandle, or null
+    let _fileName = null;        // display name for the indicator
+    let _filePermission = 'granted';   // 'granted' | 'prompt' — write silently only when granted
+    function fileApiAvailable() { return typeof window.showSaveFilePicker === 'function'; }
+    function linkedFileName() { return _fileName; }
+
+    async function idbPut(key, val) {
+        try {
+            const db = await openIDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).put(val, key);
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => resolve(false);
+            });
+        } catch (_) { return false; }
+    }
+    async function idbGet(key) {
+        try {
+            const db = await openIDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction(IDB_STORE, 'readonly');
+                const req = tx.objectStore(IDB_STORE).get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => resolve(null);
+            });
+        } catch (_) { return null; }
+    }
+
+    function setLinkedFile(handle, permission) {
+        _fileHandle = handle || null;
+        _fileName = handle ? handle.name : null;
+        _filePermission = permission || 'granted';
+        try { idbPut(IDB_FILE_KEY, handle || null); } catch (e) {}
+        updateSaveIndicator();
+    }
+    function unlinkFile() {
+        _fileHandle = null; _fileName = null; _filePermission = 'granted';
+        try { idbPut(IDB_FILE_KEY, null); } catch (e) {}
+        updateSaveIndicator();
+    }
+    // Restore the remembered file on boot. Chromium keeps permission granted
+    // within a session, so a plain reload often reconnects with no prompt; a
+    // browser restart lands on 'prompt' and waits for the next save.
+    async function restoreLinkedFile() {
+        if (!fileApiAvailable()) return;
+        const handle = await idbGet(IDB_FILE_KEY);
+        if (!handle || typeof handle.queryPermission !== 'function') return;
+        let perm = 'prompt';
+        try { perm = await handle.queryPermission({ mode: 'readwrite' }); } catch (e) { perm = 'prompt'; }
+        if (perm === 'denied') { unlinkFile(); return; }
+        _fileHandle = handle; _fileName = handle.name; _filePermission = perm;
+        updateSaveIndicator();
+    }
+    // Write the current map to the linked file. `interactive` permits a
+    // permission prompt, so it must only be true on a real user gesture.
+    async function writeLinkedFile(interactive) {
+        if (!_fileHandle) return { written: false, reason: 'no-file' };
+        if (_filePermission !== 'granted') {
+            if (!interactive) return { written: false, reason: 'needs-permission' };
+            let perm = 'denied';
+            try { perm = await _fileHandle.requestPermission({ mode: 'readwrite' }); } catch (e) { perm = 'denied'; }
+            if (perm !== 'granted') return { written: false, reason: 'denied' };
+            _filePermission = 'granted';
+        }
+        try {
+            diffAndStamp(state);
+            const copy = Object.assign({}, state); delete copy._presence;
+            const w = await _fileHandle.createWritable();
+            await w.write(new Blob([JSON.stringify(copy, null, 2)], { type: 'application/json' }));
+            await w.close();
+            lastSaveTime = new Date();
+            updateSaveIndicator();
+            return { written: true };
+        } catch (e) {
+            // The file may have been moved or deleted since it was picked.
+            return { written: false, reason: 'error', error: e };
+        }
+    }
+    // Ctrl+Shift+S / "Save to File". Writes STRAIGHT to the linked file when
+    // there is one — no dialog, like any desktop program — and only asks
+    // where to put it the first time (or via "Save As…").
     function saveMap() {
-        // Stamp versions before saving so the exported file has
-        // up-to-date version metadata for any future merge.
+        if (_fileHandle) {
+            return writeLinkedFile(true).then(function (r) {
+                if (r.written) return r;
+                if (r.reason === 'denied' || r.reason === 'needs-permission') {
+                    // Permission refused: fall back to choosing a location.
+                    return saveMapAs();
+                }
+                if (r.reason === 'error') {
+                    alert('Could not write to ' + (_fileName || 'the linked file') +
+                          '.\n\nIt may have been moved, renamed or deleted. Choose where to save it instead.');
+                    return saveMapAs();
+                }
+                return r;
+            });
+        }
+        return saveMapAs();
+    }
+    // Always asks where to put the file, then LINKS the map to it.
+    function saveMapAs() {
         diffAndStamp(state);
         const _exportable = Object.assign({}, state); delete _exportable._presence;
         const blob = new Blob([JSON.stringify(_exportable, null, 2)], { type: 'application/json' });
-        saveBlobAs(blob, exportBaseName() + '.json', 'Argument map (JSON)', 'application/json', '.json')
-            .then(function (r) {
-                // Only count it as saved if a file was actually written —
-                // a cancelled dialog must not update "Last Saved".
-                if (r && r.saved) { lastSaveTime = new Date(); updateSaveIndicator(); }
+        const name = exportBaseName() + '.json';
+        if (!fileApiAvailable()) {
+            // Firefox/Safari: no picker exists, so this is an ordinary
+            // download and there is no file to stay linked to.
+            downloadBlob(blob, name);
+            lastSaveTime = new Date(); updateSaveIndicator();
+            return Promise.resolve({ saved: true, picked: false });
+        }
+        return window.showSaveFilePicker({
+            suggestedName: name,
+            types: [{ description: 'Argument map (JSON)', accept: { 'application/json': ['.json'] } }]
+        }).then(function (handle) {
+            return handle.createWritable().then(function (w) {
+                return w.write(blob).then(function () { return w.close(); });
+            }).then(function () {
+                setLinkedFile(handle, 'granted');
+                lastSaveTime = new Date(); updateSaveIndicator();
+                return { saved: true, picked: true };
             });
+        }, function (err) {
+            if (err && (err.name === 'AbortError' || err.code === 20)) return { saved: false };
+            downloadBlob(blob, name);
+            lastSaveTime = new Date(); updateSaveIndicator();
+            return { saved: true, picked: false };
+        });
     }
     function loadMap(event) {
         const file = event.target.files[0]; if (!file) return;
         event.target.value = '';
+        if (!confirmDiscardUnsaved('Open a saved map?')) return;
         if (isSharedSession()) {
             // Read the file HERE (the File object cannot cross windows), hand the
             // text to a new local window, and leave the shared map alone.
@@ -10641,10 +10796,42 @@
     }
     function updateSaveIndicator() {
         const el = document.getElementById('save-indicator');
+        if (!el) return;
         const parts = [];
-        if (lastSaveTime) parts.push(`Last Saved ${formatSaveDate(lastSaveTime)}`);
-        if (lastAutosaveTime) parts.push(`Last Autosaved ${formatSaveDate(lastAutosaveTime)}`);
+        // Say plainly WHERE the map lives. "Autosaved" on its own reads like
+        // Word — as though a file were being kept up to date — when without a
+        // linked file it only means browser storage, which no backup captures.
+        if (_fileName) {
+            if (lastSaveTime) parts.push(`Saved to ${_fileName} ${formatSaveDate(lastSaveTime)}`);
+            else parts.push(`Linked to ${_fileName}`);
+            if (_filePermission !== 'granted') parts.push('reconnect on next save');
+        } else if (typeof _collab !== 'undefined' && _collab) {
+            // Shared maps: the server copy is the real one.
+            if (lastAutosaveTime) parts.push(`Offline copy ${formatSaveDate(lastAutosaveTime)}`);
+        } else {
+            if (lastSaveTime) parts.push(`Last Saved ${formatSaveDate(lastSaveTime)}`);
+            if (lastAutosaveTime) parts.push(`Saved in browser only ${formatSaveDate(lastAutosaveTime)}`);
+        }
         el.textContent = parts.length ? parts.join('  ·  ') : '';
+        el.title = _fileName
+            ? ('This map is linked to ' + _fileName + '. Ctrl+S writes straight to it.')
+            : 'Not linked to a file yet — your work is only in this browser. Use Save to File… to keep a real copy.';
+    }
+    // True when there is local work that exists ONLY in browser storage.
+    function hasUnsavedLocalWork() {
+        if (typeof _collab !== 'undefined' && _collab) return false;   // shared: server holds it
+        if (_fileHandle) return false;                                 // linked: file holds it
+        try {
+            return !!(state && state.trees && state.trees.length &&
+                Object.keys(state._nodeVersions || {}).length > 0);
+        } catch (e) { return false; }
+    }
+    // Shared guard for actions that REPLACE the document.
+    function confirmDiscardUnsaved(actionLabel) {
+        if (!hasUnsavedLocalWork()) return true;
+        return confirm(actionLabel + '\n\nThis map has never been saved to a file — it exists only in this ' +
+            'browser, and continuing will overwrite it.\n\nOK to continue anyway, or Cancel to go back and ' +
+            'use "Save to File…" first.');
     }
 
     // --- Node Search (Ctrl+F) ---
@@ -15494,6 +15681,8 @@
     }
     pushHistory(); render(); setTimeout(recenter, 100); syncCanvasTop();
     if (_collabBoot) { try { collabResumeFromBoot(); } catch (e) {} }
+    // Reconnect to the file this map was last linked to, if any.
+    try { restoreLinkedFile(); } catch (e) {}
 
     // Async IDB restore: if IndexedDB has a newer state than localStorage,
     // swap it in after the initial synchronous render. This ensures the
