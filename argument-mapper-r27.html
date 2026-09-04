@@ -201,6 +201,11 @@
     body.eval-overview-open #minimap-reopen { right: calc(267px + var(--scrollbar-width, 17px)); }
     #btn-fullscreen { /* now a regular labeled button — no special sizing */ }
     body.is-fullscreen #btn-fullscreen { background: var(--color-selected) !important; color: #fff !important; border-color: var(--color-selected) !important; }
+    /* Where the engine has no Fullscreen API at all (iPhone Safari exposes it
+       for <video> only), hide the controls instead of leaving a button that
+       silently does nothing. Set from JS by feature test, not by sniffing. */
+    body.no-fullscreen #btn-fullscreen,
+    body.no-fullscreen #fullscreen-indicator { display: none !important; }
     body.present-mode #present-indicator:hover { background: #0090dd; }
     body.bg-light #present-indicator { background: #d0d0d0; border-color: #999; }
     body.bg-light #present-indicator:hover { background: #bbb; }
@@ -1841,7 +1846,8 @@
         <span class="hint">Google sign-in cannot run from a file opened directly off your disk, so the downloaded copy is for solo/offline use; sharing requires opening the app from its web address.</span></p>
         <h2>Licence &amp; credit</h2>
         <p>Argument Mapper is free software under the <strong>GNU AGPL-3.0</strong>. You may use, study, share and modify it. If you run a modified version and let others use it over a network, you must offer them your version's source under the same licence, and preserve attribution to the original author.<br>
-        <span class="hint">Copyright © 2026 C. L. Johnson. Complete corresponding source: <a id="source-link" href="https://github.com/cljohnson703/argument-mapper" target="_blank" rel="noopener noreferrer">github.com/cljohnson703/argument-mapper</a> — the project name and branding are not licensed. Provided “as is”, without warranty of any kind.</span></p>
+        <span class="hint">Build <strong id="app-build">unknown</strong> — quote this when reporting a problem, and check it to confirm which version a device has actually loaded (phones and tablets cache aggressively).<br>
+        Copyright © 2026 C. L. Johnson. Complete corresponding source: <a id="source-link" href="https://github.com/cljohnson703/argument-mapper" target="_blank" rel="noopener noreferrer">github.com/cljohnson703/argument-mapper</a> — the project name and branding are not licensed. Provided “as is”, without warranty of any kind.</span></p>
     </div>
 </div>
 
@@ -1945,6 +1951,10 @@
     // who vanish (closed incognito windows, crashed browsers, ghosts).
     const NAME_LEASE_MS = 10 * 60 * 1000;
     try { console.log('%c[argmap] build ' + APP_BUILD, 'color:#6ab04c'); } catch (_) {}
+    // Surface the build in Help too: iOS has no console a student can reach,
+    // so this is the only way to confirm which version a phone or tablet
+    // actually loaded. Same string as the console line and __argmap.build.
+    try { document.getElementById('app-build').textContent = APP_BUILD; } catch (_) {}
 
     // =====================================================================
     //  Tree flattening / rebuilding — the bridge for merge operations.
@@ -11928,16 +11938,48 @@
         if (presentMode && document.activeElement && document.activeElement.tagName === 'TEXTAREA') document.activeElement.blur();
     }
 
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-            document.exitFullscreen().catch(() => {});
-        }
+    // Fullscreen across engines that disagree about the prefix. Safari only
+    // gained the unprefixed form in 16.4, so older iPadOS and macOS Safari
+    // offer webkitRequestFullscreen and nothing else; iPhone has never exposed
+    // the Fullscreen API for ordinary elements at all -- only <video>.
+    //
+    // Calling a missing method throws a synchronous TypeError, and .catch()
+    // cannot intercept that because no promise is ever created. That is why
+    // the button looked dead on iPhone rather than merely unsupported: the
+    // handler threw before the old .catch(() => {}) could run.
+    const _fsRequest = document.documentElement.requestFullscreen
+        || document.documentElement.webkitRequestFullscreen
+        || document.documentElement.webkitRequestFullScreen
+        || null;
+    const _fsExit = document.exitFullscreen
+        || document.webkitExitFullscreen
+        || document.webkitCancelFullScreen
+        || null;
+    function fullscreenSupported() { return !!_fsRequest; }
+    function currentFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
-    document.addEventListener('fullscreenchange', () => {
-        document.body.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+    function toggleFullscreen() {
+        if (!fullscreenSupported()) return;   // iPhone: there is nothing to call
+        try {
+            const inFs = !!currentFullscreenElement();
+            const p = inFs
+                ? (_fsExit && _fsExit.call(document))
+                : _fsRequest.call(document.documentElement);
+            if (p && typeof p.catch === 'function') p.catch(() => {});
+        } catch (_) { /* engine refused (permission, nested browsing context) */ }
+    }
+    // Prefixed engines fire only the prefixed event; without this the body
+    // class -- and so the button's active state -- desynchronised from
+    // reality the moment fullscreen was entered or left.
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach((evt) => {
+        document.addEventListener(evt, () => {
+            document.body.classList.toggle('is-fullscreen', !!currentFullscreenElement());
+        });
     });
+    if (!fullscreenSupported()) {
+        try { document.body.classList.add('no-fullscreen'); } catch (_) {}
+    }
 
     // --- Free Drop Mode (mobile Shift+drop substitute) ---
     let freeDropMode = false;
