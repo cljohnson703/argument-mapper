@@ -36,6 +36,21 @@
         --accent-note: #7d7020; --accent-note-border: #5c5318;
         --panel-bg: #ffffff; --panel-border: #d0d0d0; --panel-text: #1a1a1a;
     }
+
+    /* --- Scrollbars follow the theme -----------------------------------
+       Nothing ever told the browser this app is dark, so every scrollbar
+       (canvas, side panels, modals) painted in the platform's LIGHT default
+       and read as borrowed furniture against #1e1e1e.
+       color-scheme does the real work: it switches the NATIVE scrollbar
+       rendering, which means the width is untouched and the runtime
+       --scrollbar-width measurement (and everything positioned from it)
+       still holds. scrollbar-color then tints thumb/track to the panel
+       palette on engines that support it; the rest just inherit the dark
+       native look. Set on :root for the dark default, overridden on
+       body.bg-light -- it inherits, and every scrollable element in the app
+       is inside body, so the override reaches all of them. */
+    :root { color-scheme: dark; scrollbar-color: #4a4a50 #252528; }
+    body.bg-light { color-scheme: light; scrollbar-color: auto; }
     /* nodes-light: light node boxes, dark text (NO border/arrow color overrides) */
     body.nodes-light {
         --node-bg: #ffffff; --text-color: #1a1a1a;
@@ -290,6 +305,21 @@
     body.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator { left: 42px; }
     body.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator { left: 77px; }
     body.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator { left: 112px; }
+    /* When the fullscreen icon is hidden for want of an API (body.no-fullscreen),
+       slide the rest of the row down one slot so it starts flush instead of
+       opening with a hole. The row is positioned by explicit left offsets
+       rather than a flow, so each breakpoint needs its own shift; this is the
+       desktop one (35px step). The .no-fullscreen.toolbar-left pairs outrank
+       the plain .no-fullscreen rules above them, as they must. */
+    body.no-fullscreen #zoomfit-indicator { left: 7px; }
+    body.no-fullscreen #present-indicator { left: 42px; }
+    body.no-fullscreen #focus-indicator   { left: 77px; }
+    body.no-fullscreen.toolbar-left #zoomfit-indicator { left: 267px; }
+    body.no-fullscreen.toolbar-left #present-indicator { left: 302px; }
+    body.no-fullscreen.toolbar-left #focus-indicator   { left: 337px; }
+    body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator { left: 7px; }
+    body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator { left: 42px; }
+    body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator   { left: 77px; }
     #labels-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
     #depth-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
     #focus-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
@@ -1297,6 +1327,26 @@
         body.bg-light.freedrop-mode #freedrop-indicator { background: var(--color-selected); border-color: var(--color-selected); }
         body.toolbar-left #freedrop-indicator { left: 546px; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 286px; }
+
+        /* no-fullscreen: same one-slot shift at the touch step (46px). This is
+           the row iPhone LANDSCAPE uses -- it is wide enough to miss the
+           portrait block below, so without these the gap would close in
+           portrait only. All six survivors move up one place. */
+        body.no-fullscreen #undo-indicator     { left: 148px !important; }
+        body.no-fullscreen #redo-indicator     { left: 194px !important; }
+        body.no-fullscreen #freedrop-indicator { left: 240px !important; }
+        body.no-fullscreen.toolbar-left #zoomfit-indicator  { left: 270px !important; }
+        body.no-fullscreen.toolbar-left #present-indicator  { left: 316px !important; }
+        body.no-fullscreen.toolbar-left #focus-indicator    { left: 362px !important; }
+        body.no-fullscreen.toolbar-left #undo-indicator     { left: 408px !important; }
+        body.no-fullscreen.toolbar-left #redo-indicator     { left: 454px !important; }
+        body.no-fullscreen.toolbar-left #freedrop-indicator { left: 500px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator  { left: 10px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator  { left: 56px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator    { left: 102px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator     { left: 148px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator     { left: 194px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 240px !important; }
     }
 
     /* Mobile: toolbar close button (hidden on desktop) */
@@ -1481,6 +1531,32 @@
         #freedrop-indicator { left: 102px !important; bottom: 58px !important; }
         body.toolbar-left #freedrop-indicator { left: 102px !important; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 102px !important; }
+
+        /* no-fullscreen, PORTRAIT. Only the bottom row held the fullscreen
+           icon, so just that row shifts: 10/56/102, leaving three over three.
+           The undo/redo/freedrop lines below look redundant but are not --
+           they restate the portrait values at the SAME specificity as the
+           landscape rules above, which are more specific than this block's
+           plain `body.toolbar-left #undo-indicator` and would otherwise win
+           here regardless of media order and fling that row out to 408px. */
+        body.no-fullscreen #zoomfit-indicator { left: 10px !important; }
+        body.no-fullscreen #present-indicator { left: 56px !important; }
+        body.no-fullscreen #focus-indicator   { left: 102px !important; }
+        body.no-fullscreen.toolbar-left #zoomfit-indicator { left: 10px !important; }
+        body.no-fullscreen.toolbar-left #present-indicator { left: 56px !important; }
+        body.no-fullscreen.toolbar-left #focus-indicator   { left: 102px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator { left: 10px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator { left: 56px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator   { left: 102px !important; }
+        body.no-fullscreen #undo-indicator     { left: 10px !important; }
+        body.no-fullscreen #redo-indicator     { left: 56px !important; }
+        body.no-fullscreen #freedrop-indicator { left: 102px !important; }
+        body.no-fullscreen.toolbar-left #undo-indicator     { left: 10px !important; }
+        body.no-fullscreen.toolbar-left #redo-indicator     { left: 56px !important; }
+        body.no-fullscreen.toolbar-left #freedrop-indicator { left: 102px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator     { left: 10px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator     { left: 56px !important; }
+        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 102px !important; }
 
         /* --- Minimap: align with bottom icons in portrait --- */
         #minimap-container { bottom: 14px !important; }
