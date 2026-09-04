@@ -1939,7 +1939,7 @@
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-07-18 r27';
+    const APP_BUILD = '2026-09-03 r27.1';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5957,28 +5957,66 @@
         selectedIds = [`${ctx.node.id}-${firstPos}`]; render();
     }
 
+    // Switch one already-rendered box into edit mode. The single place that
+    // opens the editor -- shared by the desktop dblclick path, the touch
+    // double-tap path and the context menu -- so all three agree on the
+    // guards and on matching the rendered height (which prevents jitter).
+    // Callers must invoke this synchronously inside the user gesture: iOS
+    // only raises the on-screen keyboard for a focus() made there.
+    function enterEditMode(nodeEl) {
+        if (!nodeEl) return false;
+        if (presentMode || reviewMode || collabReadOnly()) return false;
+        const ta = nodeEl.querySelector('textarea');
+        const renderDiv = nodeEl.querySelector('.rendered-text');
+        if (!ta || !renderDiv) return false;
+        const targetH = renderDiv.offsetHeight;
+        renderDiv.style.display = 'none';
+        ta.style.display = '';
+        ta.readOnly = false; ta.style.cursor = 'text';
+        ta.style.height = targetH + 'px';
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        return true;
+    }
+
+    // Context-menu entry point (right-click on desktop, press-and-hold on
+    // touch). ctxAction hides the menu and calls straight through, so the
+    // focus inside enterEditMode still counts as gesture-initiated.
+    function editNodeText(nodeId, index) {
+        const host = document.querySelector('.node[data-node-id="' + cssEsc(nodeId) + '"][data-node-idx="' + (index || 0) + '"]');
+        enterEditMode(host);
+    }
+
     function focusTextarea(nodeId, index) {
         if (collabReadOnly()) return;   // one of the two readOnly=false gates
-        setTimeout(() => {
-            const tas = document.querySelectorAll(`[data-id="${nodeId}"]`); 
-            if (tas.length > index) {
-                const ta = tas[index];
-                // Switch to edit mode: hide rendered div, show textarea
-                const renderDiv = ta.parentElement.querySelector('.rendered-text');
-                if (renderDiv) {
-                    const targetH = renderDiv.offsetHeight;
-                    renderDiv.style.display = 'none';
-                    ta.style.display = '';
-                    ta.style.height = targetH + 'px';
-                } else {
-                    ta.style.display = '';
-                    ta.style.height = '0'; ta.style.height = ta.scrollHeight + 'px';
-                }
-                ta.readOnly = false;
-                ta.style.cursor = 'text';
-                ta.focus(); 
-            }
-        }, 50);
+        // render() builds the DOM synchronously, so the box is normally there
+        // already -- focus it in the same tick as the click that created it.
+        // A focus() deferred out of the gesture leaves iOS in edit mode with
+        // no keyboard. The timeout survives as a fallback for any caller that
+        // has not rendered yet.
+        if (tryFocusTextarea(nodeId, index)) return;
+        setTimeout(() => { tryFocusTextarea(nodeId, index); }, 50);
+    }
+
+    function tryFocusTextarea(nodeId, index) {
+        const tas = document.querySelectorAll(`[data-id="${nodeId}"]`);
+        if (tas.length <= index) return false;
+        const ta = tas[index];
+        // Switch to edit mode: hide rendered div, show textarea
+        const renderDiv = ta.parentElement.querySelector('.rendered-text');
+        if (renderDiv) {
+            const targetH = renderDiv.offsetHeight;
+            renderDiv.style.display = 'none';
+            ta.style.display = '';
+            ta.style.height = targetH + 'px';
+        } else {
+            ta.style.display = '';
+            ta.style.height = '0'; ta.style.height = ta.scrollHeight + 'px';
+        }
+        ta.readOnly = false;
+        ta.style.cursor = 'text';
+        ta.focus();
+        return true;
     }
 
     // --- Z-ordering for overlapping trees ---
@@ -6589,8 +6627,13 @@
                 if (reviewMode || collabReadOnly()) return; // structure frozen; tap-select still bubbles
                 if (e.target.tagName === 'TEXTAREA' && !e.target.readOnly) return;
                 if (e.target.closest('.node-link, .collapse-btn, .status-dot, .crossref-badge')) return;
-                // On touch, only drag from the drag handle
-                if (e.pointerType === 'touch' && !e.target.closest('.drag-handle')) return;
+                // On touch, only drag from the drag handle. An Apple Pencil
+                // reports pointerType 'pen', not 'touch', so on iPad it used to
+                // fall through to the desktop drag/resize path below -- whose
+                // preventDefault() then suppressed the tap entirely. An absent
+                // pointerType (jsdom) stays on the desktop path, as before.
+                const coarsePointer = e.pointerType === 'touch' || e.pointerType === 'pen';
+                if (coarsePointer && !e.target.closest('.drag-handle')) return;
                 // The bottom-right corner is the RESIZE GRIP. Yielding it to
                 // the browser's native resizer did not work; this takes
                 // the drag over entirely (preventDefault kills the native
@@ -6601,7 +6644,7 @@
                 // rigid by construction. Zone scales with zoomLevel because
                 // the grip paints inside the transformed #surface. Zero-size
                 // rects (jsdom) skip the zone: no layout, no grip.
-                if (e.pointerType !== 'touch') {
+                if (!coarsePointer) {
                     const nr = nodeDiv.getBoundingClientRect();
                     const grip = 18 * (typeof zoomLevel === 'number' ? zoomLevel : 1);
                     if ((nr.width || nr.height) &&
@@ -6776,17 +6819,9 @@
             });
 
             nodeDiv.ondblclick = (e) => {
-                if (presentMode || reviewMode || collabReadOnly()) return;
                 if (e.target.closest('.node-link')) return; // let link navigate
                 e.stopPropagation();
-                // Switch to edit mode — match rendered-text height exactly to prevent jitter
-                const targetH = renderDiv.offsetHeight;
-                renderDiv.style.display = 'none';
-                ta.style.display = '';
-                ta.readOnly = false; ta.style.cursor = 'text';
-                ta.style.height = targetH + 'px';
-                ta.focus();
-                ta.setSelectionRange(ta.value.length, ta.value.length);
+                enterEditMode(nodeDiv);   // guards and height matching live there
             };
 
             const autoResizeText = () => {
@@ -11984,6 +12019,12 @@
             const multiSel = selectedIds.length !== 1;
             const noClip = !clipboard || !clipboard.length;
             const dis = multiSel ? 'disabled' : '';
+            // --- Edit this box's text ---
+            // The third way into the editor, and the only one that depends on
+            // no gesture the platform might swallow. Targets the box the menu
+            // was opened on, so a multi-selection does not disable it.
+            html += `<button class="ctx-item" onclick="ctxAction(()=>editNodeText('${nodeId}', ${boxIdx || 0}))">Edit Text</button>`;
+            html += '<div class="ctx-divider"></div>';
             // --- Add children ---
             html += '<div class="ctx-label">Add Child</div>';
             html += `<button class="ctx-item" onclick="ctxAction(()=>addChild('support'))" ${dis}><span class="ctx-dot" style="background:var(--color-support)"></span>Support<span class="ctx-key">Enter</span></button>`;
@@ -12173,7 +12214,7 @@
     function cancelSurfaceLongPress() {
         if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     }
-    function armPostLongPressEater() {
+    function armPostGestureEater() {
         const eat = (ev) => { ev.preventDefault(); ev.stopImmediatePropagation(); };
         const disarm = () => {
             ['mousedown', 'mouseup', 'click'].forEach(t => document.removeEventListener(t, eat, true));
@@ -12195,7 +12236,7 @@
             longPressTimer = null;
             longPressFired = true;
             markHintSeen('touch-node-menu'); // using the gesture is proof of knowledge
-            armPostLongPressEater();
+            armPostGestureEater();
             if (nd) {
                 showContextMenu(cx, cy,
                     nd.getAttribute('data-node-id'),
@@ -12208,10 +12249,51 @@
     document.getElementById('surface').addEventListener('pointermove', (e) => {
         if (longPressTimer && Math.hypot(e.clientX - longPressX, e.clientY - longPressY) > 8) cancelSurfaceLongPress();
     });
+    // --- Touch double-tap to edit ----------------------------------------
+    // The desktop route into the editor is nodeDiv.ondblclick, and on iOS /
+    // iPadOS Safari that event never arrives for a finger double-tap: WebKit
+    // dispatches two independent clicks (each of which merely re-selected the
+    // node) and synthesizes no dblclick at all, so the keyboard never came up.
+    // Chrome does synthesize one, which is why Android was unaffected. Rather
+    // than depend on the platform pairing the taps, pair them here.
+    //
+    // enterEditMode runs synchronously inside this pointerup so the focus()
+    // stays inside the user gesture -- iOS raises the on-screen keyboard only
+    // for a focus() made there. The trailing compatibility mouse burst is
+    // eaten for the same reason it is after a long press: its mousedown would
+    // otherwise blur the textarea we just focused.
+    const DBL_TAP_MS = 350;    // WebKit's own double-tap window is about this
+    const DBL_TAP_SLOP = 28;   // px; generous, because a finger is not a mouse
+    let lastTapKey = null, lastTapAt = 0, lastTapX = 0, lastTapY = 0;
+    function handleTouchDoubleTap(e) {
+        if (presentMode || reviewMode || collabReadOnly()) return false;
+        // Controls that own their own tap semantics keep them.
+        if (e.target.closest('.node-link, .collapse-btn, .status-dot, .crossref-badge, .drag-handle, .node-action-btn')) return false;
+        const nd = e.target.closest('.node');
+        if (!nd) { lastTapKey = null; return false; }
+        if (e.target.tagName === 'TEXTAREA' && !e.target.readOnly) return false;   // already editing
+        // Key on the box, not the element: render() rebuilds node DOM, and the
+        // two taps must still count as landing on the same premise.
+        const key = nd.getAttribute('data-node-id') + '-' + (nd.getAttribute('data-node-idx') || '0');
+        const now = e.timeStamp;
+        if (key === lastTapKey && (now - lastTapAt) < DBL_TAP_MS &&
+            Math.abs(e.clientX - lastTapX) < DBL_TAP_SLOP &&
+            Math.abs(e.clientY - lastTapY) < DBL_TAP_SLOP) {
+            lastTapKey = null;
+            if (enterEditMode(nd)) { armPostGestureEater(); return true; }
+            return false;
+        }
+        lastTapKey = key; lastTapAt = now; lastTapX = e.clientX; lastTapY = e.clientY;
+        return false;
+    }
+
     document.getElementById('surface').addEventListener('pointerup', (e) => {
         const wasTap = !!longPressTimer; // released before the hold matured
         cancelSurfaceLongPress();
         if (longPressFired) { longPressFired = false; return; }
+        // Ahead of the hint below, so a second tap opens the editor instead of
+        // re-teaching the hold gesture.
+        if (wasTap && e.pointerType !== 'mouse' && handleTouchDoubleTap(e)) return;
         // First-touch discoverability: a plain tap on a node is the
         // demonstrated-interest moment to teach the hold gesture.
         if (wasTap && e.pointerType !== 'mouse' && e.target.closest('.node')) {
