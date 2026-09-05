@@ -8,25 +8,66 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <style>
+    /* Dark palette. These values were measured off the app running under the
+       Dark Reader extension (dynamic mode, brightness +50) — a look that reads
+       calmer than the original because it drops the pure-white node borders to
+       a mid grey and lifts the canvas and node grounds a step. Baking it in
+       means the extension is no longer needed, and the four things the
+       extension got wrong (below) are fixed rather than inherited:
+         * the main contention's outer ring was a literal #ffffff, which the
+           extension darkened to #242729 — all but the canvas colour — so the
+           ring simply vanished. It is a variable now.
+         * connector arrows are no longer tied to the node border colour, so
+           line weight can be tuned without dragging the borders along with it.
+           They stay white: the borders dropped to a mid grey, and a line at
+           that value all but vanishes against the canvas.
+         * every accent is held to a similar saturation so none of them shouts
+           over the others: objection s71, rebuttal s71, given s57, note s52.
+           Rebuttal was the outlier at s100 — fully saturated orange, which
+           read as much louder than its siblings at the same size.
+         * the toolbar's Rebuttal button read yellow and Note read white; both
+           now take their real accent.
+         * notes went to a muddy olive with white text; they are a warmer,
+           deeper amber with light amber text here.
+       The greys form a deliberate ladder by luminance: --color-neutral is the
+       quietest (an untyped New Node is a placeholder, so it should recede),
+       then --color-support, then --color-line, with the main contention's ring
+       brightest. The extension had support DARKER than neutral, which read
+       backwards — a typed premise looking fainter than an unassigned box. */
     :root {
-        --bg-color: #1e1e1e;
-        --grid-color: #2a2a2a;
-        --node-bg: #252526;
-        --text-color: #e0e0e0;
-        --color-support: #ffffff;
-        --color-objection: #f44336;
-        --color-rebuttal: #ff9800;
-        --color-neutral: #9e9e9e;
+        --bg-color: #232426;
+        --grid-color: #303336;
+        --node-bg: #2a2f30;
+        --text-color: #ffffff;
+        --color-support: #717b80;
+        --color-objection: #853b32;
+        --color-rebuttal: #915527;
+        /* Connectors run brighter than the borders they belong to. */
+        --line-objection: #ff6250;
+        --line-rebuttal: #ffb780;
+        --line-note: #f0e28c;
+        --color-neutral: #484e51;
         --color-selected: #00a8ff;
-        --color-given-bg: #1f3328;
-        --color-given: #4caf50;
-        --note-bg: #fdf2b3;
-        --note-border: #d4c875;
-        --note-text: #1a1a1a;
-        --accent-note: #d4c875;
+        /* The main contention's outer ring, and the connector lines. Both were
+           hardcoded #ffffff before; both are deliberately NOT --color-support,
+           which is too dark now to carry a thin line or a ring. */
+        --color-contention-ring: #a8b1b8;
+        --color-line: #ffffff;
+        --color-given-bg: #263e30;
+        --btn-given-bg: #2c5539;
+        --note-bg: #4a4118;
+        --note-border: #857a2c;
+        --note-text: #f2e6a8;
+        --accent-note: #e8d874;
         --accent-note-border: #847e4b;
         /* Chrome panels: presence bar chips, peer tags, roster dropdown */
-        --panel-bg: #2d2d30; --panel-border: #555; --panel-text: #e8e8e8;
+        --panel-bg: #35393b; --panel-border: #a89c8a; --panel-text: #ffffff;
+        /* Buttons across the app (toolbar, modals, popovers) */
+        --btn-bg: #484e51; --btn-border: #a89c8a;
+        /* Toggled state (Labels, Depth, Focus, Layout, Shortcuts). The border
+           is its own token rather than --color-selected: the measured toggle
+           ring is #00b1ff while node selection stays #00a8ff. */
+        --btn-active-bg: #0f6fa8; --btn-active-border: #00b1ff;
     }
 
     /* Light theme */
@@ -37,6 +78,15 @@
         --color-neutral: #888; --color-selected: #1565c0; --note-border: #b5a23d;
         --accent-note: #7d7020; --accent-note-border: #5c5318;
         --panel-bg: #ffffff; --panel-border: #d0d0d0; --panel-text: #1a1a1a;
+        /* The light theme drew its ring and lines from --color-support all
+           along; pinning the new variables to the same value keeps it
+           byte-identical to before this palette change. */
+        --color-contention-ring: #333; --color-line: #333;
+        /* The light theme drew connectors from the type colour and is left
+           exactly as it was. */
+        --line-objection: #c62828; --line-rebuttal: #ff9800; --line-note: #b5a23d;
+        --btn-bg: #ddd; --btn-border: #aaa;
+        --btn-active-bg: #0d5c8c; --btn-active-border: #1565c0;
     }
 
     /* --- Scrollbars follow the theme -----------------------------------
@@ -51,16 +101,18 @@
        native look. Set on :root for the dark default, overridden on
        body.bg-light -- it inherits, and every scrollable element in the app
        is inside body, so the override reaches all of them. */
-    :root { color-scheme: dark; scrollbar-color: #4a4a50 #252528; }
+    :root { color-scheme: dark; scrollbar-color: #a89c8a #35393b; }
     body.bg-light { color-scheme: light; scrollbar-color: auto; }
     /* nodes-light: light node boxes, dark text (NO border/arrow color overrides) */
     body.nodes-light {
         --node-bg: #ffffff; --text-color: #1a1a1a;
         --note-bg: #fff9c4; --note-text: #1a1a1a;
-        --color-given-bg: #e8f5ec; --color-given: #1b7a3e;
+        --color-given-bg: #c9e5d3;
+        --btn-given-bg: #aed9bd;
+        --note-border: #b5a23d;
     }
     body.nodes-light .type-neutral textarea, body.nodes-light .type-neutral .rendered-text { color: #666; }
-    body.nodes-light .node-label { color: #888; }
+    body.nodes-light .node-label { color: #555; }
     body.nodes-light .type-contention .node-label { color: #555; }
     /* Chrome overrides for light bg */
     body.bg-light #toolbar-wrapper { background: #f0f0f0; border-color: #ccc; }
@@ -125,11 +177,11 @@
     #present-indicator {
         position: fixed; bottom: 19px; left: 77px; z-index: 200;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #ffffff;
         display: flex; align-items: center; justify-content: center;
         transition: background 0.2s, border-color 0.2s;
     }
-    #present-indicator:hover { background: #3c3c3c; border-color: #888; }
+    #present-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
     #present-indicator svg { width: 16px; height: 16px; }
     body.present-mode #present-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.present-mode #present-indicator svg * { color: #fff; }
@@ -137,17 +189,17 @@
     #focus-indicator {
         position: fixed; bottom: 19px; left: 112px; z-index: 200;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #ffffff;
         display: flex; align-items: center; justify-content: center;
         transition: background 0.2s, border-color 0.2s;
     }
-    #focus-indicator:hover { background: #3c3c3c; border-color: #888; }
+    #focus-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
     #focus-indicator svg { width: 16px; height: 16px; }
     body.focus-mode #focus-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.focus-mode #focus-indicator svg * { color: #fff; }
     body.focus-mode #focus-indicator #focus-slash { display: none; }
     body.focus-mode #focus-indicator:hover { background: #0090dd; }
-    body.bg-light #focus-indicator { background: #d0d0d0; border-color: #999; }
+    body.bg-light #focus-indicator { background: #d0d0d0; border-color: #999; color: #333; }
     body.bg-light #focus-indicator:hover { background: #bbb; }
     body.bg-light.focus-mode #focus-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.bg-light.focus-mode #focus-indicator:hover { background: #0d47a1; }
@@ -159,27 +211,27 @@
     #help-icon-topleft {
         position: fixed; top: 7px; left: 7px; z-index: 200;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555; color: #999;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #fcf0e0;
         display: flex; align-items: center; justify-content: center;
         font-size: 15px; font-weight: bold; font-family: inherit;
         transition: background 0.2s, border-color 0.2s, top 0.2s, left 0.2s;
     }
-    #help-icon-topleft:hover { background: #3c3c3c; border-color: #888; color: #ccc; }
+    #help-icon-topleft:hover { background: var(--btn-bg); border-color: #c9c1b4; color: #fff; }
     body.bg-light #help-icon-topleft { background: #d0d0d0; border-color: #999; color: #555; }
     body.bg-light #help-icon-topleft:hover { background: #bbb; color: #222; }
     #fullscreen-indicator {
         position: fixed; bottom: 19px; left: 7px; z-index: 200;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #ffffff;
         display: flex; align-items: center; justify-content: center;
         transition: background 0.2s, border-color 0.2s;
     }
-    #fullscreen-indicator:hover { background: #3c3c3c; border-color: #888; }
+    #fullscreen-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
     #fullscreen-indicator svg { width: 16px; height: 16px; }
     body.is-fullscreen #fullscreen-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.is-fullscreen #fullscreen-indicator svg * { color: #fff; }
     body.is-fullscreen #fullscreen-indicator:hover { background: #0090dd; }
-    body.bg-light #fullscreen-indicator { background: #d0d0d0; border-color: #999; }
+    body.bg-light #fullscreen-indicator { background: #d0d0d0; border-color: #999; color: #333; }
     body.bg-light #fullscreen-indicator:hover { background: #bbb; }
     body.bg-light.is-fullscreen #fullscreen-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.bg-light.is-fullscreen #fullscreen-indicator:hover { background: #0d47a1; }
@@ -187,19 +239,19 @@
     #zoomfit-indicator {
         position: fixed; bottom: 19px; left: 42px; z-index: 200;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #ffffff;
         display: flex; align-items: center; justify-content: center;
         transition: background 0.2s, border-color 0.2s;
     }
-    #zoomfit-indicator:hover { background: #3c3c3c; border-color: #888; }
+    #zoomfit-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
     #zoomfit-indicator svg { width: 16px; height: 16px; }
-    body.bg-light #zoomfit-indicator { background: #d0d0d0; border-color: #999; }
+    body.bg-light #zoomfit-indicator { background: #d0d0d0; border-color: #999; color: #333; }
     body.bg-light #zoomfit-indicator:hover { background: #bbb; }
     /* Minimap close / reopen buttons */
     #minimap-close {
         position: absolute; top: 2px; right: 2px; z-index: 5;
-        background: rgba(30,30,30,0.8); border: 1px solid #555;
-        color: #aaa; font-size: 11px; padding: 1px 5px;
+        background: rgba(35,36,38,0.8); border: 1px solid var(--btn-border);
+        color: #fffff3; font-size: 11px; padding: 1px 5px;
         border-radius: 3px; cursor: pointer; line-height: 1;
     }
     #minimap-close:hover { color: #fff; background: rgba(60,60,60,0.9); }
@@ -208,12 +260,12 @@
     #minimap-reopen {
         position: fixed; bottom: 19px; right: calc(7px + var(--scrollbar-width, 17px)); z-index: 150;
         width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-        background: #2d2d30; border: 1px solid #555; color: #aaa;
+        background: var(--panel-bg); border: 1px solid var(--btn-border); color: #fffff3;
         font-size: 16px; display: none;
         align-items: center; justify-content: center;
         transition: right 0.25s;
     }
-    #minimap-reopen:hover { background: #3c3c3c; border-color: #888; }
+    #minimap-reopen:hover { background: var(--btn-bg); border-color: #c9c1b4; }
     body.bg-light #minimap-reopen { background: #d0d0d0; border-color: #999; color: #666; }
     body.bg-light #minimap-reopen:hover { background: #bbb; }
     body.eval-overview-open #minimap-reopen { right: calc(267px + var(--scrollbar-width, 17px)); }
@@ -225,7 +277,7 @@
     body.no-fullscreen #btn-fullscreen,
     body.no-fullscreen #fullscreen-indicator { display: none !important; }
     body.present-mode #present-indicator:hover { background: #0090dd; }
-    body.bg-light #present-indicator { background: #d0d0d0; border-color: #999; }
+    body.bg-light #present-indicator { background: #d0d0d0; border-color: #999; color: #333; }
     body.bg-light #present-indicator:hover { background: #bbb; }
     body.bg-light.present-mode #present-indicator { background: var(--color-selected); border-color: var(--color-selected); }
     body.bg-light.present-mode #present-indicator:hover { background: #0d47a1; }
@@ -235,12 +287,12 @@
     #toolbar-wrapper { position: absolute; top: 0; left: 0; width: 100%; z-index: 100; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     #toolbar-wrapper.collapsed { transform: translateY(-100%); }
     #toolbar {
-        background: #2d2d30; border-bottom: 1px solid #3f3f46; padding: 10px 20px;
+        background: var(--panel-bg, #2d2d30); border-bottom: 1px solid #3f3f46; padding: 10px 20px;
         display: flex; gap: 15px; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); user-select: none; flex-wrap: wrap;
     }
     #toolbar-toggle {
         position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
-        background: #2d2d30; color: #aaa; border: 1px solid #3f3f46; border-top: none;
+        background: var(--panel-bg, #2d2d30); color: #b5a895; border: 1px solid #3f3f46; border-top: none;
         padding: 0 16px 4px 16px; border-radius: 0 0 8px 8px; cursor: pointer;
         font-size: 12px; z-index: 101; display: flex; align-items: center; justify-content: center; height: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
@@ -250,15 +302,40 @@
     .toolbar-group:last-child { border: none; }
     .toolbar-group-label {
         font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
-        color: #777; user-select: none; white-space: nowrap; width: 100%;
+        color: #ecdecc; user-select: none; white-space: nowrap; width: 100%;
         padding-bottom: 2px; display: none; flex-basis: 100%;
     }
     body.toolbar-left .toolbar-group-label { display: block; }
     body.bg-light .toolbar-group-label { color: #999; }
-    #extra-toolbar { display: none; padding: 8px 15px; gap: 15px; background: #2d2d30; border-top: 1px solid #3e3e42; align-items: center; flex-wrap: wrap; }
+    #extra-toolbar { display: none; padding: 8px 15px; gap: 15px; background: var(--panel-bg, #2d2d30); border-top: 1px solid #3e3e42; align-items: center; flex-wrap: wrap; }
     #extra-toolbar.open { display: flex; }
     #extra-toolbar .toolbar-group:last-child { border: none; }
-    #shortcuts-btn.active { background: #0d5c8c !important; border-color: var(--color-selected) !important; color: #fff !important; }
+    #shortcuts-btn.active { background: var(--btn-active-bg) !important; border-color: var(--btn-active-border) !important; color: #fff !important; }
+
+    /* The two premise MODIFIERS sit with the type toggles and preview their
+       own effect, the way the type toggles preview theirs through colour:
+       Given wears the green it paints on the node, Implicit wears the dashed
+       border it applies. Both keep the standard button ground, so they still
+       read as part of the group rather than as tinted nodes. */
+    /* Scoped through #toolbar so it outranks body.bg-light #toolbar button,
+       which is (1,1,1) and would otherwise repaint this grey in light mode. */
+    #toolbar #btn-given { background: var(--btn-given-bg); }
+    #btn-implicit { border-style: dashed; }
+    /* No explicit line break separates the type toggles from the two
+       modifiers: at these label widths the group already wraps to
+       [Support|Objection] [Rebuttal|Note] [Implicit|Given] [Main] on its own.
+       A zero-height break item collects the container's row-gap on BOTH
+       sides, which pushed Main 8px out of the even 39px rhythm, and a
+       negative margin cannot pull it back — a flex line's cross size is
+       clamped at zero. */
+    /* 3. Main previews the contention's double ring. The 1px gap ring is painted
+       in the panel's own ground so the outer ring reads as separate, exactly
+       as .type-contention does against the canvas. */
+    #btn-main { box-shadow: 0 0 0 1px var(--panel-bg), 0 0 0 3px var(--color-contention-ring); }
+    /* Every button in the group starts at the same x, but Main's ring is drawn
+       3px OUTSIDE its border, so its visible left edge sat 3px proud of the
+       column. The margin puts the ring's outer edge on the shared line. */
+    body.toolbar-left #btn-main { margin-left: 3px; }
 
     /* Toolbar left-side layout */
     body.toolbar-left #toolbar-wrapper {
@@ -274,14 +351,14 @@
     body.toolbar-left #toolbar #map-name { max-width: 100%; }
     body.toolbar-left .toolbar-group {
         flex-wrap: wrap; border-right: none; padding-right: 0;
-        border-bottom: 1px solid #555; padding-bottom: 8px;
+        border-bottom: 1px solid var(--btn-border); padding-bottom: 8px;
     }
     body.toolbar-left .toolbar-group:last-child { border-bottom: none; padding-bottom: 0; }
     body.toolbar-left #extra-toolbar {
         flex-direction: column; padding: 8px 10px; gap: 8px;
         border-top: 1px solid #3e3e42; border-right: none;
     }
-    body.toolbar-left #extra-toolbar .toolbar-group { flex-wrap: wrap; border-right: none; padding-right: 0; border-bottom: 1px solid #555; padding-bottom: 8px; }
+    body.toolbar-left #extra-toolbar .toolbar-group { flex-wrap: wrap; border-right: none; padding-right: 0; border-bottom: 1px solid var(--btn-border); padding-bottom: 8px; }
     body.toolbar-left #extra-toolbar .toolbar-group:last-child { border-bottom: none; }
     body.toolbar-left #toolbar-content {
         height: 100vh; height: 100dvh; overflow-y: auto; overflow-x: hidden;
@@ -323,25 +400,25 @@
     body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator { left: 7px; }
     body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator { left: 42px; }
     body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator   { left: 77px; }
-    #labels-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
-    #depth-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
-    #focus-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
-    #layout-btn.active { background: #0d5c8c; border-color: var(--color-selected); color: #fff; }
+    #labels-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
+    #depth-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
+    #focus-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
+    #layout-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
     .autosave-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #ccc; cursor: pointer; user-select: none; }
     button, .file-upload-label {
-        background: #3e3e42; color: #fff; border: 1px solid #555; padding: 6px 12px;
+        background: var(--btn-bg, #3e3e42); color: #fff; border: 1px solid var(--btn-border, #555); padding: 6px 12px;
         border-radius: 4px; cursor: pointer; font-size: 13px; transition: 0.2s; font-family: inherit;
     }
     button:hover, .file-upload-label:hover { background: #505050; border-color: #888; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .hotkey { color: #aaa; font-size: 11px; margin-left: 5px; }
+    .hotkey { color: #fffff3; font-size: 11px; margin-left: 5px; }
     input[type="file"] { display: none; }
     .zoom-btn { padding: 4px 8px; font-size: 14px; font-weight: bold; }
 
     /* Editable zoom percentage — same "looks like text, edits on focus"
        treatment as #map-name, for a consistent interaction language. */
     #zoom-display {
-        font-size: 12px; color: #aaa; border: 1px solid transparent;
+        font-size: 12px; color: #fffff3; border: 1px solid transparent;
         background: transparent; padding: 3px 2px; border-radius: 4px; outline: none;
         width: 34px; font-family: inherit; text-align: center; cursor: text;
     }
@@ -401,11 +478,11 @@
     }
     
     .node.selected { outline: 2px solid var(--color-selected); outline-offset: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
-    .node.selected.type-contention { outline-offset: 7px; box-shadow: 0 0 0 3px var(--node-bg), 0 0 0 5px #ffffff, 0 5px 12px 6px rgba(0,0,0,0.6); }
+    .node.selected.type-contention { outline-offset: 7px; box-shadow: 0 0 0 3px var(--node-bg), 0 0 0 5px var(--color-contention-ring), 0 5px 12px 6px rgba(0,0,0,0.6); }
     
     .type-contention {
         border-color: var(--color-support);
-        box-shadow: 0 0 0 3px var(--node-bg), 0 0 0 5px #ffffff, 0 5px 12px 6px rgba(0,0,0,0.4);
+        box-shadow: 0 0 0 3px var(--node-bg), 0 0 0 5px var(--color-contention-ring), 0 5px 12px 6px rgba(0,0,0,0.4);
     }
     .type-support { border-color: var(--color-support); }
     .type-objection { border-color: var(--color-objection); }
@@ -429,9 +506,9 @@
     /* Node labels (P1, O2, R3, etc.) */
     .node-label {
         position: absolute; top: 3px; font-size: 10px; font-weight: 600;
-        color: #999; user-select: none; letter-spacing: 0.3px;
+        color: #ccc; user-select: none; letter-spacing: 0.3px;
     }
-    .type-note .node-label { color: #888; }
+    .type-note .node-label { color: #ccc; }
     .type-contention .node-label { color: #ccc; }
 
     /* Evaluation markers */
@@ -444,7 +521,8 @@
     .status-dot:hover { transform: scale(1.4); }
     .status-contested .status-dot { background: #ffc107; box-shadow: 0 0 4px rgba(255,193,7,0.5); }
     .status-rejected .status-dot { background: #f44336; box-shadow: 0 0 4px rgba(244,67,54,0.5); }
-    .status-has-notes .status-dot { background: #00bcd4; box-shadow: 0 0 4px rgba(0,188,212,0.5); }
+    .status-has-notes .status-dot,
+    .status-note .status-dot { background: #00bcd4; box-shadow: 0 0 4px rgba(0,188,212,0.5); }
 
     /* Evaluation note tooltip (hover) */
     .eval-tooltip {
@@ -484,7 +562,7 @@
        to coordinate width/position with either. */
     #eval-overview-panel {
         position: fixed; top: 0; right: 0; width: 260px; height: 100vh; height: 100dvh;
-        background: #252526; border-left: 1px solid #444; z-index: 300; box-sizing: border-box;
+        background: #2a2f30; border-left: 1px solid #b1a392; z-index: 300; box-sizing: border-box;
         display: flex; flex-direction: column;
         transform: translateX(100%); transition: transform 0.25s;
     }
@@ -496,7 +574,7 @@
     #eval-overview-toggle {
         position: fixed; right: var(--scrollbar-width, 17px); top: 50%;
         transform: translateY(-50%);
-        background: #2d2d30; color: #aaa;
+        background: var(--panel-bg, #2d2d30); color: #b5a895;
         border: 1px solid #3f3f46; border-right: none;
         padding: 14px 4px; border-radius: 8px 0 0 8px; cursor: pointer;
         font-size: 12px; z-index: 301; display: flex; align-items: center; justify-content: center;
@@ -508,48 +586,53 @@
     body.bg-light #eval-overview-toggle:hover { background: #e0e0e0; color: #333; }
     #eval-overview-header {
         display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-        border-bottom: 1px solid #444; flex-shrink: 0; flex-wrap: wrap;
+        border-bottom: 1px solid #b1a392; flex-shrink: 0; flex-wrap: wrap;
     }
     body.bg-light #eval-overview-header { border-color: #ccc; }
-    #eval-overview-title { font-size: 14px; font-weight: 600; color: #ddd; flex: 1; }
+    #eval-overview-title { font-size: 14px; font-weight: 600; color: #ffffff; flex: 1; }
     body.bg-light #eval-overview-title { color: #222; }
     /* Entry count sits in its own strip between the Sort row and the list */
-    #eval-overview-count { font-size: 11px; color: #888; padding: 6px 12px 2px; flex-shrink: 0; }
+    #eval-overview-count { font-size: 11px; color: #ecdecc; padding: 6px 12px 2px; flex-shrink: 0; }
+    body.bg-light #eval-overview-count { color: #666; }
     #eval-overview-count:empty { display: none; }
-    #eval-overview-close { background: none; border: none; color: #aaa; font-size: 16px; cursor: pointer; padding: 2px 6px; }
+    #eval-overview-close { background: none; border: none; color: #ffffff; font-size: 16px; cursor: pointer; padding: 2px 6px; }
     #eval-overview-close:hover { color: #fff; }
     body.bg-light #eval-overview-close:hover { color: #000; }
     #eval-overview-sort-row {
         display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-        border-bottom: 1px solid #444; flex-shrink: 0;
+        border-bottom: 1px solid #b5a895; flex-shrink: 0;
     }
     body.bg-light #eval-overview-sort-row { border-color: #ccc; }
     #eval-overview-sort-row label {
-        font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #777;
+        font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #ecdecc;
     }
     body.bg-light #eval-overview-sort-row label { color: #999; }
     #eval-overview-sort {
-        flex: 0 0 auto; min-width: 0; background: #1e1e1e; color: #ddd; border: 1px solid #444;
+        flex: 0 0 auto; min-width: 0; background: #232426; color: #ffffff; border: 1px solid #b5a895;
         border-radius: 4px; font-size: 11px; padding: 4px 6px; font-family: inherit; outline: none;
     }
+    /* The popup list is painted by the platform, so the options need the
+       colours spelled out rather than inherited from the closed control. */
+    #eval-overview-sort option { background: #232426; color: #ffffff; }
+    body.bg-light #eval-overview-sort option { background: #ffffff; color: #222; }
     #eval-overview-sort:focus { border-color: var(--color-selected); }
     body.bg-light #eval-overview-sort { background: #fff; color: #222; border-color: #bbb; }
     #eval-search-input {
-        flex: 1; min-width: 0; box-sizing: border-box; background: #1e1e1e; color: #ddd;
-        border: 1px solid #444; border-radius: 4px; font-size: 11px; padding: 4px 7px;
+        flex: 1; min-width: 0; box-sizing: border-box; background: #232426; color: #ffffff;
+        border: 1px solid #b5a895; border-radius: 4px; font-size: 11px; padding: 4px 7px;
         font-family: inherit; outline: none;
     }
     #eval-search-input:focus { border-color: var(--color-selected); }
-    #eval-search-input::placeholder { color: #666; }
+    #eval-search-input::placeholder { color: #8a8175; }
     body.bg-light #eval-search-input { background: #fff; color: #222; border-color: #bbb; }
     #eval-overview-notes-label {
         font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
-        color: #777; padding: 8px 12px 4px; flex-shrink: 0;
+        color: #ecdecc; padding: 8px 12px 4px; flex-shrink: 0;
     }
     body.bg-light #eval-overview-notes-label { color: #999; }
     #eval-overview-notes {
         flex-shrink: 0; width: 100%; box-sizing: border-box;
-        background: #1e1e1e; color: #ddd; border: none; border-bottom: 1px solid #444;
+        background: #232426; color: #ffffff; border: none; border-bottom: 1px solid #b5a895;
         padding: 6px 12px 12px; font-size: 12px; font-family: system-ui, sans-serif;
         resize: vertical; height: 100px; min-height: 50px; max-height: 50vh;
         line-height: 1.4; outline: none;
@@ -560,7 +643,7 @@
     body.bg-light #eval-overview-notes:focus { background: #f5f5f5; }
     /* --- Collaboration: comment threads --- */
     #eval-user-chip {
-        background: #2d2d30; border: 1px solid #555; color: #ccc; font-size: 11px;
+        background: #232426; border: 1px solid #b5a895; color: #ffffff; font-size: 11px;
         padding: 3px 8px; border-radius: 10px; cursor: pointer; max-width: 110px;
         overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -611,7 +694,7 @@
     .eval-comment-body { flex: 1; min-width: 0; }
     .eval-comment-head { font-size: 11.5px; font-weight: 600; color: #ddd; }
     body.bg-light .eval-comment-head { color: #222; }
-    .eval-comment-text { font-size: 12px; color: #ccc; white-space: pre-wrap; overflow-wrap: break-word; }
+    .eval-comment-text { font-size: 12px; color: #ffffff; white-space: pre-wrap; overflow-wrap: break-word; }
     body.bg-light .eval-comment-text { color: #333; }
     .eval-comment-text.deleted { color: #777; font-style: italic; }
     .eval-comment-time { font-size: 10px; color: #777; margin-top: 1px; }
@@ -628,17 +711,17 @@
        highlight rectangles show through under the real (visible) text. Any
        metric drift between the two layers misplaces highlights — keep
        font/line-height/padding/border in lockstep. */
-    .eval-composer-wrap { position: relative; margin-top: 6px; background: #1a1a1a; border-radius: 6px; }
+    .eval-composer-wrap { position: relative; margin-top: 6px; background: #232426; border-radius: 6px; }
     body.bg-light .eval-composer-wrap { background: #fff; }
     #eval-overview-composer-wrap { margin: 8px 12px; flex-shrink: 0; }
     .eval-composer {
         position: relative; z-index: 1; display: block;
-        width: 100%; box-sizing: border-box; background: transparent; color: #ddd;
-        caret-color: #ddd;
-        border: 1px solid #444; border-radius: 6px; padding: 6px 8px; font-size: 12px;
+        width: 100%; box-sizing: border-box; background: transparent; color: #ffffff;
+        caret-color: #ffffff;
+        border: 1px solid #b5a895; border-radius: 6px; padding: 6px 8px; font-size: 12px;
         font-family: inherit; line-height: 1.4; resize: none; margin: 0;
     }
-    .eval-composer::placeholder { color: #666; }
+    .eval-composer::placeholder { color: #8a8175; }
     body.bg-light .eval-composer { color: #222; caret-color: #222; border-color: #ccc; }
     .eval-composer-backdrop {
         position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
@@ -672,7 +755,8 @@
     #review-btn.active { background: var(--color-selected); color: #fff; }
     body.review-mode #canvas { cursor: default; }
     #eval-overview-list { overflow-y: auto; overflow-x: hidden; flex: 1; padding: 6px 8px; }
-    #eval-overview-empty { color: #888; font-size: 13px; padding: 20px 10px; text-align: center; }
+    #eval-overview-empty { color: #ecdecc; font-size: 13px; padding: 20px 10px; text-align: center; }
+    body.bg-light #eval-overview-empty { color: #555; }
     .eval-row {
         display: flex; flex-direction: column; gap: 6px; padding: 10px 6px;
         border-bottom: 1px solid #333; cursor: pointer; border-radius: 4px;
@@ -686,7 +770,8 @@
     .eval-row-dot.contested { background: #ffc107; box-shadow: 0 0 4px rgba(255,193,7,0.5); }
     .eval-row-dot.rejected { background: #f44336; box-shadow: 0 0 4px rgba(244,67,54,0.5); }
     .eval-row-dot.notes-only { background: #00bcd4; box-shadow: 0 0 4px rgba(0,188,212,0.5); }
-    .eval-row-source { flex: 1; min-width: 0; font-size: 11px; color: #888; line-height: 1.35; }
+    .eval-row-source { flex: 1; min-width: 0; font-size: 11px; color: #ecdecc; line-height: 1.35; }
+    body.bg-light .eval-row-source { color: #666; }
     .eval-row-orphan { border-left: 2px solid #c98a3a; }
     .eval-orphan-tag { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #c98a3a; border: 1px solid #c98a3a; border-radius: 3px; padding: 0 4px; margin-right: 4px; vertical-align: middle; }
     .eval-row-goto:disabled { opacity: .4; cursor: not-allowed; }
@@ -731,20 +816,10 @@
        the dark theme's text. These tints hold 10.2:1 (dark) and 15.5:1
        (light), against 11.6/17.4 for an untinted box, so marking a premise
        given costs essentially nothing in legibility.
-       The ::before bar restates the mark without relying on hue: green/red is
-       the worst colour-blind axis and the app already spends red and orange
-       on objection/rebuttal borders. It also survives greyscale printing.
-       Absolutely positioned children sit against the PADDING box, so the bar
-       lands just inside the role-coloured border, within the box's 12px
-       gutter (clear of the text), and the node's own overflow:hidden lets
-       border-radius round its ends. Both pseudo-elements were unused on
-       .node, and ::before is immune to the box-shadow that .selected and
-       .type-contention override wholesale. */
+       The tint carries the mark on its own; an earlier inner accent bar was
+       dropped as too busy. That does mean green is the only cue, so it leans
+       on hue where the rest of the palette does not. */
     .node.given { background: var(--color-given-bg); }
-    .node.given::before {
-        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-        background: var(--color-given); pointer-events: none;
-    }
 
     /* Node action buttons (MindMup-style inline add) */
     .node-action-container {
@@ -997,8 +1072,8 @@
     }
     body.eval-overview-open #depth-labels-container { right: 275px; }
     .depth-label {
-        position: absolute; right: 0; font-size: 13px; font-weight: 500; color: #777; display: flex;
-        align-items: center; border-left: 2px solid #555; padding-left: 10px; padding-right: 8px;
+        position: absolute; right: 0; font-size: 13px; font-weight: 500; color: #ecdecc; display: flex;
+        align-items: center; border-left: 2px solid #b5a895; padding-left: 10px; padding-right: 8px;
         pointer-events: none; user-select: none; white-space: nowrap;
     }
 
@@ -1075,11 +1150,12 @@
 
     /* Last saved indicator */
     #save-indicator {
-        position: fixed; top: 10px; right: 15px; font-size: 11px; color: #777;
-        z-index: 200; background: rgba(30,30,30,0.85); padding: 4px 10px;
-        border-radius: 4px; border: 1px solid #3a3a3a; pointer-events: none;
+        position: fixed; top: 10px; right: 15px; font-size: 11px; color: #ecdecc;
+        z-index: 200; background: rgba(35,36,38,0.85); padding: 4px 10px;
+        border-radius: 4px; border: 1px solid #b5a895; pointer-events: none;
         transition: opacity 0.4s, right 0.25s, top 0.3s cubic-bezier(0.4, 0, 0.2, 1); user-select: none;
     }
+    #save-indicator:empty { display: none; }
 
     /* Collaboration sync indicator (only visible while a transport is attached) */
     #sync-indicator {
@@ -1250,7 +1326,7 @@
     /* Minimap */
     #minimap-container {
         position: fixed; bottom: 19px; right: calc(7px + var(--scrollbar-width, 17px)); z-index: 150;
-        border: 1px solid #555; border-radius: 4px; background: rgba(30,30,30,0.9);
+        border: 1px solid var(--btn-border); border-radius: 4px; background: rgba(35,36,38,0.9);
         overflow: hidden; cursor: pointer; width: 200px; height: 130px;
     }
     #minimap { display: block; }
@@ -1261,7 +1337,7 @@
 
     /* Editable map name */
     #map-name {
-        font-size: 14px; font-weight: 600; color: #ddd; border: 1px solid transparent;
+        font-size: 14px; font-weight: 600; color: #ffffff; border: 1px solid transparent;
         background: transparent; padding: 3px 8px; border-radius: 4px; outline: none;
         min-width: 80px; max-width: 260px; font-family: system-ui, sans-serif;
         cursor: text; text-overflow: ellipsis;
@@ -1332,7 +1408,7 @@
         #undo-indicator { bottom: 19px; left: 194px; }
         #redo-indicator { bottom: 19px; left: 240px; }
         #undo-indicator svg, #redo-indicator svg { width: 20px; height: 20px; }
-        #undo-indicator:hover, #redo-indicator:hover { background: #3c3c3c; border-color: #888; }
+        #undo-indicator:hover, #redo-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
         body.bg-light #undo-indicator, body.bg-light #redo-indicator { background: #d0d0d0; border-color: #999; }
         body.bg-light #undo-indicator:hover, body.bg-light #redo-indicator:hover { background: #bbb; }
         body.toolbar-left #undo-indicator { left: 454px; }
@@ -1350,7 +1426,7 @@
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #freedrop-indicator svg { width: 20px; height: 20px; }
-        #freedrop-indicator:hover { background: #3c3c3c; border-color: #888; }
+        #freedrop-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
         body.freedrop-mode #freedrop-indicator { background: var(--color-selected); border-color: var(--color-selected); }
         body.freedrop-mode #freedrop-indicator svg * { color: #fff; }
         body.freedrop-mode #freedrop-indicator:hover { background: #0090dd; }
@@ -1428,7 +1504,7 @@
         #toolbar #map-name { max-width: 100% !important; }
         .toolbar-group {
             flex-wrap: wrap !important; border-right: none !important; padding-right: 0 !important;
-            border-bottom: 1px solid #555 !important; padding-bottom: 8px !important;
+            border-bottom: 1px solid var(--btn-border) !important; padding-bottom: 8px !important;
         }
         .toolbar-group:last-child { border-bottom: none !important; }
         #extra-toolbar {
@@ -1436,7 +1512,7 @@
             border-top: 1px solid #3e3e42 !important; border-right: none !important;
             display: flex !important; /* always show on mobile portrait */
         }
-        #extra-toolbar .toolbar-group { flex-wrap: wrap !important; border-right: none !important; padding-right: 0 !important; border-bottom: 1px solid #555; padding-bottom: 8px; }
+        #extra-toolbar .toolbar-group { flex-wrap: wrap !important; border-right: none !important; padding-right: 0 !important; border-bottom: 1px solid var(--btn-border); padding-bottom: 8px; }
         #extra-toolbar .toolbar-group:last-child { border-bottom: none; }
         #shortcuts-btn { display: none !important; } /* hide shortcuts toggle on mobile — always open */
 
@@ -1699,17 +1775,19 @@
             <button onclick="toggleNodePlacement()" title="Click, then click the canvas where the new node should go (Esc cancels). A uses normal placement; Shift+A pins a free node at the cursor.">New Node <span class="hotkey">A</span></button>
             <button id="btn-add-sup" onclick="addChild('support')">Add Support <span class="hotkey">Enter</span></button>
             <button id="btn-add-co" onclick="addCoPremise()">Add Co-Premise <span class="hotkey">Tab</span></button>
-            <button id="btn-add-obj" onclick="addChild('objection')" style="color:#f44336; border-color:#7a2a26;">Add Objection <span class="hotkey">Shift+Enter</span></button>
-            <button id="btn-add-reb" onclick="addChild('rebuttal')" style="color:#ff9800; border-color:#7a5a20;">Add Rebuttal <span class="hotkey">Ctrl+Enter</span></button>
+            <button id="btn-add-obj" onclick="addChild('objection')" style="color:#ff7563; border-color:#ed514a;">Add Objection <span class="hotkey">Shift+Enter</span></button>
+            <button id="btn-add-reb" onclick="addChild('rebuttal')" style="color:var(--line-rebuttal); border-color:var(--line-rebuttal);">Add Rebuttal <span class="hotkey">Ctrl+Enter</span></button>
             <button id="btn-add-not" onclick="addChild('note')" style="color:var(--accent-note); border-color:var(--accent-note-border);">Add Note <span class="hotkey">Alt+Enter</span></button>
         </div>
         <div class="toolbar-group" id="group-change-type">
             <span class="toolbar-group-label">Change Type</span>
-            <button onclick="changeSelectedTypes('support')">Toggle Support <span class="hotkey">S</span></button>
-            <button onclick="changeSelectedTypes('objection')" style="color:#f44336;">Toggle Objection <span class="hotkey">O</span></button>
-            <button onclick="changeSelectedTypes('rebuttal')" style="color:#ff9800;">Toggle Rebuttal <span class="hotkey">R</span></button>
-            <button onclick="changeSelectedTypes('note')" style="color:var(--accent-note);">Toggle Note <span class="hotkey">N</span></button>
-            <button onclick="changeSelectedTypes('contention')">Toggle Main <span class="hotkey">U</span></button>
+            <button id="btn-type-sup" onclick="changeSelectedTypes('support')" title="Change the selected premises to Support (S)">Support <span class="hotkey">S</span></button>
+            <button id="btn-type-obj" onclick="changeSelectedTypes('objection')" style="color:#ff7563;" title="Change the selected premises to Objection (O)">Objection <span class="hotkey">O</span></button>
+            <button id="btn-type-reb" onclick="changeSelectedTypes('rebuttal')" style="color:var(--line-rebuttal);" title="Change the selected premises to Rebuttal (R)">Rebuttal <span class="hotkey">R</span></button>
+            <button id="btn-type-note" onclick="changeSelectedTypes('note')" style="color:var(--accent-note);" title="Change the selected premises to Note (N)">Note <span class="hotkey">N</span></button>
+            <button id="btn-implicit" onclick="toggleImplicit()" title="Toggle implicit premise — dashed border (I)">Implicit <span class="hotkey">I</span></button>
+            <button id="btn-given" onclick="toggleGiven()" title="Toggle given / axiom — a premise taken as self-evident, receiving no further justification (G)">Given <span class="hotkey">G</span></button>
+            <button id="btn-main" onclick="changeSelectedTypes('contention')" title="Change the selected premises to a Main Contention (U)">Main <span class="hotkey">U</span></button>
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">View</span>
@@ -1720,9 +1798,7 @@
             <button id="labels-btn" onclick="cycleLabels()" title="Cycle label mode: none → simple → complex">Labels <span class="hotkey">L</span></button>
             <button id="depth-btn" onclick="toggleDepthLabels()" title="Toggle depth layer labels">Depth <span class="hotkey">D</span></button>
             <button onclick="toggleTheme()" title="Toggle light/dark theme">Theme <span class="hotkey">T</span></button>
-            <button onclick="cycleEvaluation()" title="Cycle evaluation: none → contested → rejected (E)">Evaluate <span class="hotkey">E</span></button>
-            <button id="btn-implicit" onclick="toggleImplicit()" title="Toggle implicit premise — dashed border (I)">Implicit <span class="hotkey">I</span></button>
-            <button id="btn-given" onclick="toggleGiven()" title="Toggle given / axiom — a premise taken as self-evident, receiving no further justification (G)">Given <span class="hotkey">G</span></button>
+            <button onclick="cycleEvaluation()" title="Cycle evaluation: none → Minor → Major (E)">Evaluate <span class="hotkey">E</span></button>
             <button id="minimap-btn" onclick="toggleMinimap()" title="Toggle minimap (M)">Minimap <span class="hotkey">M</span></button>
             <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every contested/rejected premise and evaluation note, click to jump to it (V)">Evaluations <span class="hotkey">V</span></button>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Toggle layout: Compact (cousins negotiate) vs Spread (parents make room) — B">Compact <span class="hotkey">B</span></button>
@@ -1737,7 +1813,7 @@
                 Open File... <span class="hotkey">JSON</span>
                 <input type="file" accept=".json" onchange="loadMap(event)">
             </label>
-            <button id="shortcuts-btn" onclick="toggleShortcutBar()" title="Keyboard shortcuts — click Help for full reference">&#9432; Shortcuts</button>
+            <button id="shortcuts-btn" onclick="toggleShortcutBar()" title="Advanced tools and keyboard shortcuts — click Help for the full reference">&#9432; Advanced</button>
             <button id="help-btn" onclick="toggleHelp()" title="Help (H)">Help <span class="hotkey">H</span></button>
             <button id="toolbar-position-btn" onclick="toggleToolbarPosition()" title="Move toolbar to left / top" style="font-size:14px; padding:4px 8px;">⇄</button>
         </div>
@@ -1799,10 +1875,10 @@
             <defs>
                 <marker id="arrow-contention" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#ffffff" /></marker>
                 <marker id="arrow-support" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#ffffff" /></marker>
-                <marker id="arrow-objection" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#f44336" /></marker>
-                <marker id="arrow-rebuttal" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#ff9800" /></marker>
-                <marker id="arrow-note" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#d4c875" /></marker>
-                <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#9e9e9e" /></marker>
+                <marker id="arrow-objection" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#ff6250" /></marker>
+                <marker id="arrow-rebuttal" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#ffb780" /></marker>
+                <marker id="arrow-note" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#f0e28c" /></marker>
+                <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0, 10 5, 0 10" fill="#484e51" /></marker>
             </defs>
         </svg>
         <div id="marquee"></div>
@@ -1864,52 +1940,52 @@
 <div id="help-icon-topleft" onclick="toggleHelp()" title="Help (H)">?</div>
 <div id="fullscreen-indicator" onclick="toggleFullscreen()" title="Toggle fullscreen (F11)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 3 21 3 21 9" style="color:#999"/>
-        <polyline points="9 21 3 21 3 15" style="color:#999"/>
-        <line x1="21" y1="3" x2="14" y2="10" style="color:#999"/>
-        <line x1="3" y1="21" x2="10" y2="14" style="color:#999"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <polyline points="9 21 3 21 3 15"/>
+        <line x1="21" y1="3" x2="14" y2="10"/>
+        <line x1="3" y1="21" x2="10" y2="14"/>
     </svg>
 </div>
 <div id="zoomfit-indicator" onclick="zoomToFit()" title="Zoom to fit (Z)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 3H5a2 2 0 0 0-2 2v3" style="color:#999"/>
-        <path d="M21 8V5a2 2 0 0 0-2-2h-3" style="color:#999"/>
-        <path d="M3 16v3a2 2 0 0 0 2 2h3" style="color:#999"/>
-        <path d="M16 21h3a2 2 0 0 0 2-2v-3" style="color:#999"/>
+        <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+        <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+        <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+        <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
     </svg>
 </div>
 <div id="present-indicator" onclick="togglePresentMode()" title="Presentation mode deactivated">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" style="color:#999"/>
-        <line x1="8" y1="21" x2="16" y2="21" style="color:#999"/>
-        <line x1="12" y1="17" x2="12" y2="21" style="color:#999"/>
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
         <line id="present-slash" x1="4" y1="20" x2="20" y2="4" stroke="#e55" stroke-width="2.5"/>
     </svg>
 </div>
 <div id="focus-indicator" onclick="toggleFocusMode()" title="Focus mode off (F)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" style="color:#999"/>
-        <circle cx="12" cy="12" r="3" style="color:#999"/>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/>
+        <circle cx="12" cy="12" r="3"/>
         <line id="focus-slash" x1="4" y1="20" x2="20" y2="4" stroke="#e55" stroke-width="2.5"/>
     </svg>
 </div>
 <div id="undo-indicator" onclick="undo()" title="Undo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="1 4 1 10 7 10" style="color:#999"/>
-        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" style="color:#999"/>
+        <polyline points="1 4 1 10 7 10"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
     </svg>
 </div>
 <div id="redo-indicator" onclick="redo()" title="Redo">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="23 4 23 10 17 10" style="color:#999"/>
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" style="color:#999"/>
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
     </svg>
 </div>
 <div id="freedrop-indicator" onclick="toggleFreeDrop()" title="Free drop — drop anywhere without snapping">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2L12 16" style="color:#999"/>
-        <polyline points="8 12 12 16 16 12" style="color:#999"/>
-        <line x1="5" y1="22" x2="19" y2="22" style="color:#999" stroke-dasharray="3 3"/>
+        <path d="M12 2L12 16"/>
+        <polyline points="8 12 12 16 16 12"/>
+        <line x1="5" y1="22" x2="19" y2="22" stroke-dasharray="3 3"/>
     </svg>
 </div>
 
@@ -1977,9 +2053,9 @@
     <div class="eval-composer-wrap" id="eval-overview-composer-wrap"><div class="eval-composer-backdrop" aria-hidden="true"></div><textarea id="eval-overview-composer" class="eval-composer" rows="1" placeholder="@mention or reply"></textarea></div>
     <div id="eval-overview-sort-row">
         <label for="eval-overview-sort">Sort</label>
-        <select id="eval-overview-sort" onchange="onEvalOverviewSortChange()" title="Position: top-left → bottom-right · Type: Note → Contested → Rejected">
+        <select id="eval-overview-sort" onchange="onEvalOverviewSortChange()" title="Position: top-left → bottom-right · Type: Note → Minor → Major">
             <option value="position" title="Top-left → bottom-right">Position</option>
-            <option value="type" title="Note → Contested → Rejected">Type</option>
+            <option value="type" title="Note → Minor → Major">Type</option>
         </select>
         <input id="eval-search-input" type="text" placeholder="Search notes…" oninput="onEvalSearchInput(this.value)" autocomplete="off" spellcheck="false">
     </div>
@@ -2058,7 +2134,7 @@
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-05 r27.3';
+    const APP_BUILD = '2026-09-05 r27.17';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -3463,10 +3539,13 @@
     }
     function updateArrowMarkers() {
         const isLight = document.body.classList.contains('bg-light');
+        // Mirrors the CSS palette; arrowheads carry literal fills because a
+        // <marker> in an exported standalone SVG has no :root to resolve
+        // var() against.
         const colors = {
-            contention: isLight ? '#333' : '#fff', support: isLight ? '#333' : '#fff',
-            objection: isLight ? '#c62828' : '#f44336', rebuttal: '#ff9800',
-            note: isLight ? '#b5a23d' : '#d4c875', neutral: isLight ? '#888' : '#9e9e9e',
+            contention: isLight ? '#333' : '#ffffff', support: isLight ? '#333' : '#ffffff',
+            objection: isLight ? '#c62828' : '#ff6250', rebuttal: isLight ? '#ff9800' : '#ffb780',
+            note: isLight ? '#b5a23d' : '#f0e28c', neutral: isLight ? '#888' : '#484e51',
         };
         Object.entries(colors).forEach(([type, color]) => {
             const marker = document.getElementById(`arrow-${type}`);
@@ -3475,6 +3554,11 @@
     }
 
     // --- Evaluation Markers ---
+    // Display names for the evaluation statuses. Stored values are unchanged
+    // ('contested'/'rejected'), so this is a rename in the UI only.
+    const EVAL_LABELS = { note: 'Note', contested: 'Minor', rejected: 'Major' };
+    const evalLabel = st => EVAL_LABELS[st] || 'Note';
+
     function cycleEvaluation() {
         if (collabReadOnly()) return;   // shared view-only: statuses are shared content
         if (selectedIds.length === 0) return;
@@ -3488,7 +3572,7 @@
                 if (!ctx) return;
                 if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
                 const cur = ctx.node.statuses[idx] || 'none';
-                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none' };
+                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
                 ctx.node.statuses[idx] = cycle[cur] === 'none' ? null : cycle[cur];
                 if (!ctx.node.statusAuthors) ctx.node.statusAuthors = ctx.node.texts.map(() => null);
                 ctx.node.statusAuthors[idx] = ctx.node.statuses[idx] ? (currentUser || null) : null;
@@ -3498,7 +3582,7 @@
                 if (!ctx) return;
                 if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
                 const cur = ctx.node.statuses[0] || 'none';
-                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none' };
+                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
                 const next = cycle[cur] === 'none' ? null : cycle[cur];
                 ctx.node.statuses = ctx.node.statuses.map(() => next);
                 ctx.node.statusAuthors = ctx.node.texts.map(() => next ? (currentUser || null) : null);
@@ -4411,7 +4495,7 @@
     // model directly on every keystroke without a full render() (a full
     // render on every keystroke while typing would be wasteful and would
     // destroy/recreate the very textarea being typed in). That means the
-    // overview panel's "Contested — <node text>" line goes stale until
+    // overview panel's "Minor — <node text>" line goes stale until
     // something else happens to trigger a full render. Rather than
     // rebuilding the whole list on every keystroke elsewhere (overkill,
     // and would blow away any note textarea mid-edit in the same list),
@@ -4459,7 +4543,7 @@
     }
 
     // 'position': top-left to bottom-right, reading order, regardless of
-    // type. 'type': Note -> Contested -> Rejected, position as tiebreak
+    // type. 'type': Note -> Minor -> Major, position as tiebreak
     // within each group.
     let evalOverviewSortMode = 'position';
 
@@ -4476,7 +4560,7 @@
         return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0 };
     }
     function evalCategoryRank(entry) {
-        if (!entry.status) return 0;       // Note
+        if (!entry.status || entry.status === 'note') return 0;   // Note (unset, or a legacy 'note')
         if (entry.status === 'contested') return 1;
         if (entry.status === 'rejected') return 2;
         return 3;
@@ -4526,14 +4610,14 @@
         return parts.join('\n').toLowerCase().includes(q);
     }
     // Overview dot click: cycle the entry's type in place —
-    // Note → Contested → Rejected → Note.
+    // Note → Minor → Major → none.
     function cycleEntryStatus(nodeId, idx) {
         if (collabReadOnly()) return;   // shared view-only: statuses are shared content
         const ctx = findNodeContext(state.trees, nodeId);
         if (!ctx) return;
         pushHistory();
         if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
-        const cycle = { none: 'contested', contested: 'rejected', rejected: 'none' };
+        const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
         const next = cycle[ctx.node.statuses[idx] || 'none'];
         ctx.node.statuses[idx] = next === 'none' ? null : next;
         if (!ctx.node.statusAuthors) ctx.node.statusAuthors = ctx.node.texts.map(() => null);
@@ -4638,14 +4722,14 @@
 
             const dot = document.createElement('div');
             dot.className = 'eval-row-dot ' + (entry.status === 'contested' ? 'contested' : entry.status === 'rejected' ? 'rejected' : 'notes-only');
-            dot.title = 'Change type: Note → Contested → Rejected';
+            dot.title = 'Change type: Note → Minor → Major';
             dot.addEventListener('mousedown', (e) => e.stopPropagation());
             dot.addEventListener('click', (e) => { e.stopPropagation(); cycleEntryStatus(entry.id, entry.idx); });
             header.appendChild(dot);
 
             const source = document.createElement('div');
             source.className = 'eval-row-source';
-            const statusLabel = entry.status ? (entry.status.charAt(0).toUpperCase() + entry.status.slice(1)) : 'Note';
+            const statusLabel = evalLabel(entry.status);
             const byline = entry.status && entry.statusAuthor ? ` (by ${entry.statusAuthor})` : '';
             source.textContent = `${statusLabel}${byline} — ${entry.nodeText || '(empty)'}`;
             header.appendChild(source);
@@ -5574,15 +5658,29 @@
     // Single Selection Enforcer
     function getSingleSelection() { 
         const addBtns = ['btn-add-sup', 'btn-add-co', 'btn-add-obj', 'btn-add-reb', 'btn-add-not'];
-        if (selectedIds.length !== 1) {
-            addBtns.forEach(id => document.getElementById(id).disabled = true);
+        // The type toggles and the two premise modifiers all act on EVERY
+        // selected box, so they only need a selection to exist. The add
+        // buttons need exactly one target. With nothing selected none of them
+        // can do anything, so the whole set greys out rather than just the
+        // add row.
+        const actOnSelection = ['btn-type-sup', 'btn-type-obj', 'btn-type-reb', 'btn-type-note',
+                                'btn-main', 'btn-implicit', 'btn-given'];
+        const setDisabled = (ids, v) => ids.forEach(id => {
+            const el = document.getElementById(id); if (el) el.disabled = v;
+        });
+        if (selectedIds.length === 0) {
+            setDisabled(addBtns, true);
+            setDisabled(actOnSelection, true);
             return null;
         }
-        addBtns.forEach(id => document.getElementById(id).disabled = false);
-        // Cleared here so a previous contention/note selection cannot leave
-        // these greyed out on a box that does accept the flags.
-        document.getElementById('btn-implicit').disabled = false;
-        document.getElementById('btn-given').disabled = false;
+        // Re-enabled on every pass so a previous contention/note selection
+        // cannot leave these greyed out on a box that does accept them.
+        setDisabled(actOnSelection, false);
+        if (selectedIds.length !== 1) {
+            setDisabled(addBtns, true);
+            return null;
+        }
+        setDisabled(addBtns, false);
         // Main contentions cannot have co-premises, implicit or given status
         // — grey out buttons
         const selId = parseSel(selectedIds[0]).id;
@@ -6439,12 +6537,16 @@
     const resizeObserver = new ResizeObserver(() => scheduleLayout());
 
     // --- UI Rendering ---
+    // Connector colours. Support and contention lines use --color-line rather
+    // than --color-support: the border colour is a deep grey in the dark
+    // palette, which reads fine as a 2px box edge against the node's own
+    // ground but nearly vanishes as a thin line on the canvas.
     function getColorForType(type) {
-        if (type === 'objection') return 'var(--color-objection)';
-        if (type === 'rebuttal') return 'var(--color-rebuttal)';
-        if (type === 'note') return 'var(--note-border)';
+        if (type === 'objection') return 'var(--line-objection)';
+        if (type === 'rebuttal') return 'var(--line-rebuttal)';
+        if (type === 'note') return 'var(--line-note)';
         if (type === 'neutral') return 'var(--color-neutral)';
-        return 'var(--color-support)';
+        return 'var(--color-line)';
     }
 
     function updateSelectionVisuals() {
@@ -6661,9 +6763,9 @@
             if (boxStatus || hasEvalNote) {
                 const dot = document.createElement('div');
                 dot.className = 'status-dot';
-                // Contested/Rejected still identify themselves; the
-                // notes-only dot carries no title tooltip.
-                if (boxStatus) dot.title = boxStatus === 'contested' ? 'Contested' : 'Rejected';
+                // A set status names itself; the dot a box gets merely from
+                // having comments carries no title tooltip.
+                if (boxStatus) dot.title = evalLabel(boxStatus);
 
                 // Hover tooltip: preview of the thread
                 let hoverTip = null;
@@ -10767,18 +10869,19 @@
         const isLight = document.body.classList.contains('bg-light');
         const border = isLight
             ? { contention: '#333', support: '#333', objection: '#c62828', rebuttal: '#ff9800', neutral: '#888', note: '#b5a23d' }
-            : { contention: '#ffffff', support: '#ffffff', objection: '#f44336', rebuttal: '#ff9800', neutral: '#9e9e9e', note: '#d4c875' };
+            : { contention: '#717b80', support: '#717b80', objection: '#853b32', rebuttal: '#915527', neutral: '#484e51', note: '#857a2c' };
         return {
-            bg: isLight ? '#f0f0f0' : '#1e1e1e',
-            nodeBg: isLight ? '#ffffff' : '#252526',
-            noteBg: isLight ? '#fff9c4' : '#fdf2b3',
+            bg: isLight ? '#f0f0f0' : '#232426',
+            nodeBg: isLight ? '#ffffff' : '#2a2f30',
+            noteBg: isLight ? '#fff9c4' : '#4a4118',
+            // The contention's outer ring is its own colour, not the border's.
+            contentionRing: isLight ? '#333' : '#a8b1b8',
             // Given premises: the same tints the live nodes use, so an export
             // matches what was on screen. Keyed off the same isLight the rest
             // of this theme uses, which keeps them consistent with nodeBg.
-            givenBg: isLight ? '#e8f5ec' : '#1f3328',
-            givenAccent: isLight ? '#1b7a3e' : '#4caf50',
-            text: isLight ? '#1a1a1a' : '#e0e0e0',
-            noteText: '#1a1a1a',
+            givenBg: isLight ? '#c9e5d3' : '#263e30',
+            text: isLight ? '#1a1a1a' : '#ffffff',
+            noteText: isLight ? '#1a1a1a' : '#f2e6a8',
             neutralText: isLight ? '#666' : '#c9c9c9',
             border,
             font: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
@@ -10849,17 +10952,10 @@
                 let t = `<rect x="${x}" y="${y}" width="${wd}" height="${ht}" rx="${isNote ? 2 : 6}"`
                     + ` fill="${isGiven ? EXPORT_THEME.givenBg : isNote ? EXPORT_THEME.noteBg : EXPORT_THEME.nodeBg}"`
                     + ` stroke="${EXPORT_THEME.border[type] || EXPORT_THEME.border.support}" stroke-width="${bw}"${dashAttr}/>`;
-                // Given premises carry the live node's inner accent bar too.
-                // Inset from the corner radius so it cannot poke out of the
-                // rounded box the way a full-height rect would.
-                if (isGiven) {
-                    t += `<rect x="${x + 1}" y="${y + 3}" width="4" height="${Math.max(0, ht - 6)}"`
-                        + ` fill="${EXPORT_THEME.givenAccent}"/>`;
-                }
                 // Double border for contention (main) nodes — skip when implicit (dashed border replaces it)
                 if (type === 'contention' && !isImplicit) {
                     t += `<rect x="${x - 5}" y="${y - 5}" width="${wd + 10}" height="${ht + 10}" rx="9"`
-                        + ` fill="none" stroke="#ffffff" stroke-width="2"/>`;
+                        + ` fill="none" stroke="${EXPORT_THEME.contentionRing}" stroke-width="2"/>`;
                 }
                 const tx = boxAlign === 'center' ? x + wd / 2 : boxAlign === 'right' ? x + wd - 14 : x + 14;
                 const anchor = boxAlign === 'center' ? 'middle' : boxAlign === 'right' ? 'end' : 'start';
@@ -12028,10 +12124,10 @@
             const typeNode = g.querySelector('.node');
             let color = isLight ? '#555' : '#666';
             if (typeNode) {
-                if (typeNode.classList.contains('type-objection')) color = isLight ? '#c62828' : '#f44336';
-                else if (typeNode.classList.contains('type-rebuttal')) color = '#ff9800';
-                else if (typeNode.classList.contains('type-note')) color = isLight ? '#8a7a20' : '#d4c875';
-                else if (typeNode.classList.contains('type-contention')) color = isLight ? '#444' : '#aaa';
+                if (typeNode.classList.contains('type-objection')) color = isLight ? '#c62828' : '#ff6250';
+                else if (typeNode.classList.contains('type-rebuttal')) color = isLight ? '#ff9800' : '#ffb780';
+                else if (typeNode.classList.contains('type-note')) color = isLight ? '#8a7a20' : '#f0e28c';
+                else if (typeNode.classList.contains('type-contention')) color = isLight ? '#444' : '#a8b1b8';
             }
             rects.push({ x, y, w, h, color });
             cMinX = Math.min(cMinX, x); cMinY = Math.min(cMinY, y);
@@ -12305,7 +12401,7 @@
             // --- Evaluate + Implicit ---
             html += '<div class="ctx-label">Status</div>';
             html += '<div class="ctx-row">';
-            html += `<button onclick="ctxAction(()=>cycleEvaluation())" class="${status?'ctx-active':''}">Eval: ${status||'none'}</button>`;
+            html += `<button onclick="ctxAction(()=>cycleEvaluation())" class="${status?'ctx-active':''}">Eval: ${status ? evalLabel(status) : 'none'}</button>`;
             html += `<button onclick="ctxAction(()=>toggleImplicit())" class="${isImplicit?'ctx-active':''}">Implicit</button>`;
             html += `<button onclick="ctxAction(()=>toggleGiven())" class="${isGiven?'ctx-active':''}">Given</button>`;
             html += '</div>';

@@ -127,17 +127,18 @@ const TREES = [{
         const lightBlock = HTML.slice(HTML.indexOf('body.nodes-light {'),
                                       HTML.indexOf('body.nodes-light {') + 400);
         const darkBg = (rootBlock.match(/--color-given-bg:\s*(#[0-9a-fA-F]{6})/) || [])[1];
-        const darkAccent = (rootBlock.match(/--color-given:\s*(#[0-9a-fA-F]{6})/) || [])[1];
         const lightBg = (lightBlock.match(/--color-given-bg:\s*(#[0-9a-fA-F]{6})/) || [])[1];
-        const lightAccent = (lightBlock.match(/--color-given:\s*(#[0-9a-fA-F]{6})/) || [])[1];
 
         ok(!!darkBg && !!lightBg, 'both themes declare --color-given-bg',
             'dark=' + darkBg + ' light=' + lightBg);
         ok(darkBg && lightBg && darkBg.toLowerCase() !== lightBg.toLowerCase(),
             'the tint is theme-aware, not one flat green for both', darkBg + ' vs ' + lightBg);
 
-        // The node text colours these tints must carry, per theme axis.
-        const DARK_TEXT = '#e0e0e0', LIGHT_TEXT = '#1a1a1a';
+        // The node text colours these tints must carry, per theme axis. Read
+        // from the CSS rather than hardcoded, so a later palette change is
+        // checked against the text it actually has to carry.
+        const DARK_TEXT = (rootBlock.match(/--text-color:\s*(#[0-9a-fA-F]{6})/) || [])[1] || '#e0e0e0';
+        const LIGHT_TEXT = (lightBlock.match(/--text-color:\s*(#[0-9a-fA-F]{6})/) || [])[1] || '#1a1a1a';
         if (darkBg) {
             const c = contrast(darkBg, DARK_TEXT);
             ok(c >= 7, 'dark tint keeps node text at AAA (>=7:1)', darkBg + ' vs ' + DARK_TEXT + ' = ' + c.toFixed(2) + ':1');
@@ -146,22 +147,15 @@ const TREES = [{
             const c = contrast(lightBg, LIGHT_TEXT);
             ok(c >= 7, 'light tint keeps node text at AAA (>=7:1)', lightBg + ' vs ' + LIGHT_TEXT + ' = ' + c.toFixed(2) + ':1');
         }
-        // The accent bar is the non-colour-dependent cue; it has to be visible
-        // ON the tint it sits on, in each theme.
-        if (darkBg && darkAccent) {
-            const c = contrast(darkBg, darkAccent);
-            ok(c >= 4.5, 'dark accent bar reads against its own tint (>=4.5:1)',
-                darkAccent + ' on ' + darkBg + ' = ' + c.toFixed(2) + ':1');
-        }
-        if (lightBg && lightAccent) {
-            const c = contrast(lightBg, lightAccent);
-            ok(c >= 4.5, 'light accent bar reads against its own tint (>=4.5:1)',
-                lightAccent + ' on ' + lightBg + ' = ' + c.toFixed(2) + ':1');
-        }
+        // The tint is deliberately the ONLY cue — an earlier inner accent bar
+        // was dropped as too busy, so nothing should reintroduce a ::before on
+        // a given node without that being a considered choice.
+        ok(!/\.node\.given::before/.test(HTML),
+            'the given node carries no accent bar, only the tint');
         // The regression this whole design exists to prevent.
-        ok(contrast('#4caf50', '#e0e0e0') < 4.5,
+        ok(contrast('#4caf50', DARK_TEXT) < 4.5,
             'sanity: a saturated green really would fail the dark theme',
-            '#4caf50 vs #e0e0e0 = ' + contrast('#4caf50', '#e0e0e0').toFixed(2) + ':1');
+            '#4caf50 vs ' + DARK_TEXT + ' = ' + contrast('#4caf50', DARK_TEXT).toFixed(2) + ':1');
     }
 
     const W = makeWin('given');
@@ -367,9 +361,8 @@ const TREES = [{
                 var theme = getExportTheme();
                 return JSON.stringify({
                     hasGivenBg: svg.indexOf('fill="' + theme.givenBg + '"') >= 0,
-                    hasAccent: svg.indexOf('fill="' + theme.givenAccent + '"') >= 0,
                     givenBg: theme.givenBg,
-                    givenAccent: theme.givenAccent,
+                    accentGone: theme.givenAccent === undefined,
                     anyVarLeft: /var\\(/.test(svg)
                 });
             })();
@@ -377,7 +370,7 @@ const TREES = [{
         ok(!svgInfo.error, 'export: buildExportSVG produced output', svgInfo.error);
         ok(svgInfo.hasGivenBg, 'export: a given box is filled with the tint, not the node background',
             'givenBg=' + svgInfo.givenBg);
-        ok(svgInfo.hasAccent, 'export: the accent bar is drawn too', 'accent=' + svgInfo.givenAccent);
+        ok(svgInfo.accentGone, 'export: the dropped accent bar is gone from the theme too');
         ok(svgInfo.anyVarLeft === false, 'export: no unresolved var() leaked in');
     }
 
