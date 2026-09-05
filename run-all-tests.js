@@ -38,6 +38,7 @@ const SUITES = [
     'stringmode-r26-label-test.js',
     'xss-r26-render-test.js',
     'export-r27-tests.js',
+    'ctxmenu-r27-dismiss-test.js',
     'collab-r26-firebase-test.js',
 ];
 

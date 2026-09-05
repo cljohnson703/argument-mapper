@@ -12222,10 +12222,35 @@
         ctxMenu.style.top  = Math.min(y, vh - mh - 8) + 'px';
     }
 
-    // Close on click-away or Escape
-    document.addEventListener('mousedown', (e) => {
-        if (!e.target.closest('#context-menu')) hideContextMenu();
-    });
+    // Close on press-away or Escape.
+    //
+    // The press-away closer listens on POINTERDOWN, IN THE CAPTURE PHASE.
+    // Both halves are load-bearing:
+    //  - pointerdown, because a press that lands on a node never becomes a
+    //    mousedown at all: initPointerDrag() calls preventDefault() on the
+    //    node's pointerdown to kill text selection and touch scrolling, and
+    //    cancelling pointerdown suppresses the compatibility mouse events.
+    //    A mousedown-only closer therefore left the menu hanging open for
+    //    every press on a node -- the common case, since the menu is usually
+    //    opened on a node and dismissed by going somewhere else.
+    //  - capture, because handlers on the way up stop propagation (node
+    //    bodies, group forks, evaluation dots and thread boxes, toolbar
+    //    buttons), so a bubble-phase listener on document never hears those
+    //    presses either.
+    // The mousedown listener stays as a fallback for input that produces no
+    // pointer events, and it must stay on the BUBBLE phase: the post-long-
+    // press eater (armPostGestureEater) swallows the compatibility mousedown
+    // burst with a capture-phase stopImmediatePropagation, which only shields
+    // listeners downstream of it. A capture-phase mousedown closer would sit
+    // upstream and kill the menu the moment the finger lifts.
+    const closeCtxOnOutsidePress = (e) => {
+        if (!ctxMenu.classList.contains('open')) return;
+        const t = e.target;
+        if (t && t.closest && t.closest('#context-menu')) return;
+        hideContextMenu();
+    };
+    document.addEventListener('pointerdown', closeCtxOnOutsidePress, true);
+    document.addEventListener('mousedown', closeCtxOnOutsidePress);
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Escape' && ctxMenu.classList.contains('open')) {
             e.stopPropagation(); hideContextMenu();
@@ -12309,14 +12334,17 @@
     //    fire on-device.
     //  - When the finger lifts after the menu opens, the browser
     //    dispatches a compatibility mousedown/mouseup/click burst at the
-    //    press point. The menu's click-away closer listens on mousedown,
+    //    press point. The menu's press-away closer also runs on mousedown,
     //    so the menu died the instant the finger lifted — and since the
     //    menu is positioned AT the press point, the burst could even
     //    activate whichever menu item sat under the finger.
     //    preventDefault on pointerup does not suppress the burst (per
     //    spec), so a one-shot capture-phase eater swallows all three
     //    events, disarming on the next pointerdown (a genuinely new
-    //    gesture) or after 800ms, whichever comes first.
+    //    gesture) or after 800ms, whichever comes first. The closer's
+    //    pointerdown half is not a problem here: the pointerdown that
+    //    began this long press arrived before the menu opened, and the
+    //    next one is a new gesture that should close it anyway.
     //  - The ↗ badge runs its own long-press (manage references), and
     //    links cede to the platform's link preview — both excluded.
     //  - Android synthesizes a native contextmenu on long-press at about
