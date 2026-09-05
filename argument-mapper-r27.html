@@ -1798,7 +1798,7 @@
             <button id="labels-btn" onclick="cycleLabels()" title="Cycle label mode: none → simple → complex">Labels <span class="hotkey">L</span></button>
             <button id="depth-btn" onclick="toggleDepthLabels()" title="Toggle depth layer labels">Depth <span class="hotkey">D</span></button>
             <button onclick="toggleTheme()" title="Toggle light/dark theme">Theme <span class="hotkey">T</span></button>
-            <button onclick="cycleEvaluation()" title="Cycle evaluation: none → Minor → Major (E)">Evaluate <span class="hotkey">E</span></button>
+            <button onclick="cycleEvaluation()" title="Cycle evaluation: none → Note → Minor → Major (a box with a comment skips the empty step) (E)">Evaluate <span class="hotkey">E</span></button>
             <button id="minimap-btn" onclick="toggleMinimap()" title="Toggle minimap (M)">Minimap <span class="hotkey">M</span></button>
             <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every contested/rejected premise and evaluation note, click to jump to it (V)">Evaluations <span class="hotkey">V</span></button>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Toggle layout: Compact (cousins negotiate) vs Spread (parents make room) — B">Compact <span class="hotkey">B</span></button>
@@ -2134,7 +2134,7 @@
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-05 r27.17';
+    const APP_BUILD = '2026-09-05 r27.18';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -3559,6 +3559,23 @@
     const EVAL_LABELS = { note: 'Note', contested: 'Minor', rejected: 'Major' };
     const evalLabel = st => EVAL_LABELS[st] || 'Note';
 
+    // The cyan dot reads "Note", and a box carrying a live comment already
+    // shows it with no status set. Stepping through unset there would land on
+    // the very same dot, which is the redundant fourth step — so a commented
+    // box cycles Note -> Minor -> Major and never leaves the dot behind.
+    // With no comment, unset draws no dot at all, so it is a real state and
+    // stays in: none -> Note -> Minor -> Major.
+    function nextEvalStatus(node, idx) {
+        const thread = (node.evalThreads && node.evalThreads[idx]) || [];
+        const hasComment = thread.some(c => c && !c.deleted);
+        const order = hasComment ? ['note', 'contested', 'rejected']
+                                 : [null, 'note', 'contested', 'rejected'];
+        let cur = (node.statuses && node.statuses[idx]) || null;
+        // An unset box that is already showing the Note dot sits at that step.
+        if (cur === null && hasComment) cur = 'note';
+        return order[(order.indexOf(cur) + 1) % order.length];
+    }
+
     function cycleEvaluation() {
         if (collabReadOnly()) return;   // shared view-only: statuses are shared content
         if (selectedIds.length === 0) return;
@@ -3571,9 +3588,7 @@
                 const ctx = findNodeContext(state.trees, id);
                 if (!ctx) return;
                 if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
-                const cur = ctx.node.statuses[idx] || 'none';
-                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
-                ctx.node.statuses[idx] = cycle[cur] === 'none' ? null : cycle[cur];
+                ctx.node.statuses[idx] = nextEvalStatus(ctx.node, idx);
                 if (!ctx.node.statusAuthors) ctx.node.statusAuthors = ctx.node.texts.map(() => null);
                 ctx.node.statusAuthors[idx] = ctx.node.statuses[idx] ? (currentUser || null) : null;
             } else {
@@ -3581,9 +3596,8 @@
                 const ctx = findNodeContext(state.trees, sel);
                 if (!ctx) return;
                 if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
-                const cur = ctx.node.statuses[0] || 'none';
-                const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
-                const next = cycle[cur] === 'none' ? null : cycle[cur];
+                // The first box decides, and the rest follow it.
+                const next = nextEvalStatus(ctx.node, 0);
                 ctx.node.statuses = ctx.node.statuses.map(() => next);
                 ctx.node.statusAuthors = ctx.node.texts.map(() => next ? (currentUser || null) : null);
             }
@@ -4617,9 +4631,7 @@
         if (!ctx) return;
         pushHistory();
         if (!ctx.node.statuses) ctx.node.statuses = ctx.node.texts.map(() => null);
-        const cycle = { none: 'contested', contested: 'rejected', rejected: 'none', note: 'contested' };
-        const next = cycle[ctx.node.statuses[idx] || 'none'];
-        ctx.node.statuses[idx] = next === 'none' ? null : next;
+        ctx.node.statuses[idx] = nextEvalStatus(ctx.node, idx);
         if (!ctx.node.statusAuthors) ctx.node.statusAuthors = ctx.node.texts.map(() => null);
         ctx.node.statusAuthors[idx] = ctx.node.statuses[idx] ? (currentUser || null) : null;
         render();
