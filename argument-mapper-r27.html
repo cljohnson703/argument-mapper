@@ -18,6 +18,8 @@
         --color-rebuttal: #ff9800;
         --color-neutral: #9e9e9e;
         --color-selected: #00a8ff;
+        --color-given-bg: #1f3328;
+        --color-given: #4caf50;
         --note-bg: #fdf2b3;
         --note-border: #d4c875;
         --note-text: #1a1a1a;
@@ -55,6 +57,7 @@
     body.nodes-light {
         --node-bg: #ffffff; --text-color: #1a1a1a;
         --note-bg: #fff9c4; --note-text: #1a1a1a;
+        --color-given-bg: #e8f5ec; --color-given: #1b7a3e;
     }
     body.nodes-light .type-neutral textarea, body.nodes-light .type-neutral .rendered-text { color: #666; }
     body.nodes-light .node-label { color: #888; }
@@ -713,6 +716,35 @@
 
     /* Implicit premises — dashed border, same type colour */
     .node.implicit { border-style: dashed !important; }
+
+    /* Given / axiom premises — a premise taken as self-evident, one that
+       receives no further justification. This is an EPISTEMIC property, not a
+       dialectical role, so it is orthogonal to support/objection/rebuttal
+       (border colour) and composes with implicit (border style): an unstated
+       assumption taken as self-evident shows all three at once. That leaves
+       the background as the one free channel, which is why the mark lives
+       there and not on the border.
+       The tint tracks --node-bg's own theme axis (nodes-light), rather than
+       being a fixed green, for a measured reason: node text flips between
+       #e0e0e0 and #1a1a1a across themes, and a saturated fill sits at the
+       luminance midpoint where neither reads — #4caf50 scores 2.1:1 against
+       the dark theme's text. These tints hold 10.2:1 (dark) and 15.5:1
+       (light), against 11.6/17.4 for an untinted box, so marking a premise
+       given costs essentially nothing in legibility.
+       The ::before bar restates the mark without relying on hue: green/red is
+       the worst colour-blind axis and the app already spends red and orange
+       on objection/rebuttal borders. It also survives greyscale printing.
+       Absolutely positioned children sit against the PADDING box, so the bar
+       lands just inside the role-coloured border, within the box's 12px
+       gutter (clear of the text), and the node's own overflow:hidden lets
+       border-radius round its ends. Both pseudo-elements were unused on
+       .node, and ::before is immune to the box-shadow that .selected and
+       .type-contention override wholesale. */
+    .node.given { background: var(--color-given-bg); }
+    .node.given::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+        background: var(--color-given); pointer-events: none;
+    }
 
     /* Node action buttons (MindMup-style inline add) */
     .node-action-container {
@@ -1690,6 +1722,7 @@
             <button onclick="toggleTheme()" title="Toggle light/dark theme">Theme <span class="hotkey">T</span></button>
             <button onclick="cycleEvaluation()" title="Cycle evaluation: none → contested → rejected (E)">Evaluate <span class="hotkey">E</span></button>
             <button id="btn-implicit" onclick="toggleImplicit()" title="Toggle implicit premise — dashed border (I)">Implicit <span class="hotkey">I</span></button>
+            <button id="btn-given" onclick="toggleGiven()" title="Toggle given / axiom — a premise taken as self-evident, receiving no further justification (G)">Given <span class="hotkey">G</span></button>
             <button id="minimap-btn" onclick="toggleMinimap()" title="Toggle minimap (M)">Minimap <span class="hotkey">M</span></button>
             <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every contested/rejected premise and evaluation note, click to jump to it (V)">Evaluations <span class="hotkey">V</span></button>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Toggle layout: Compact (cousins negotiate) vs Spread (parents make room) — B">Compact <span class="hotkey">B</span></button>
@@ -1889,9 +1922,13 @@
         <strong>Escape formatting</strong> — to keep markup as literal text: put <kbd>\</kbd> before any marker (<kbd>\*not italic\*</kbd>, and <kbd>\\</kbd> for a literal backslash), or <kbd>!</kbd> immediately before a whole element (<kbd>!**stays plain**</kbd>, <kbd>!http://ex.com</kbd> for a bare URL that shouldn't link). The escape character is consumed. Untick <strong>Rich text</strong> in the toolbar to type plain text everywhere — nodes and evaluation comments alike — and to show existing content raw for copying markup out; re-ticking never reformats what was already committed.</span></p>
         <h2>Editing</h2>
         <p><kbd>Enter</kbd> Support &nbsp; <kbd>Shift+Enter</kbd> Objection &nbsp; <kbd>Ctrl+Enter</kbd> Rebuttal &nbsp; <kbd>Alt+Enter</kbd> Note &nbsp; <kbd>Tab</kbd> co-premise<br>
-        <kbd>S</kbd>/<kbd>O</kbd>/<kbd>R</kbd>/<kbd>N</kbd>/<kbd>U</kbd> retag &nbsp; <kbd>E</kbd> evaluation &nbsp; <kbd>I</kbd> implicit &nbsp; <kbd>A</kbd> normal node &nbsp; <kbd>Shift+A</kbd> free node at cursor &nbsp; <kbd>[</kbd>/<kbd>]</kbd> overlap &nbsp; <kbd>Del</kbd> delete &nbsp; <kbd>Esc</kbd> cancel<br>
+        <kbd>S</kbd>/<kbd>O</kbd>/<kbd>R</kbd>/<kbd>N</kbd>/<kbd>U</kbd> retag &nbsp; <kbd>E</kbd> evaluation &nbsp; <kbd>I</kbd> implicit &nbsp; <kbd>G</kbd> given &nbsp; <kbd>A</kbd> normal node &nbsp; <kbd>Shift+A</kbd> free node at cursor &nbsp; <kbd>[</kbd>/<kbd>]</kbd> overlap &nbsp; <kbd>Del</kbd> delete &nbsp; <kbd>Esc</kbd> cancel<br>
         <kbd>Ctrl+Z</kbd>/<kbd>Y</kbd> undo/redo &nbsp; <kbd>Ctrl+X</kbd>/<kbd>C</kbd>/<kbd>V</kbd> cut/copy/paste &nbsp; <kbd>Ctrl+Shift+V</kbd> paste as co-premise &nbsp; <kbd>Ctrl+S</kbd> save to browser &nbsp; <kbd>Ctrl+Shift+S</kbd> save to a file &nbsp; <kbd>Ctrl+A</kbd> select all &nbsp; <kbd>Ctrl+Shift+L/E/R</kbd> align<br>
         <span class="hint"><kbd>Alt+S/O/R/N/U/C</kbd> retag or re-center without leaving the text field. <kbd>Esc</kbd> while editing discards that edit — the text reverts to what it was before you started.</span></p>
+        <h2>Given Premises (Axioms)</h2>
+        <p><kbd>G</kbd> — or <strong>Given</strong> in the toolbar — marks a premise as <strong>taken as self-evident</strong>: one that receives no further justification. Given premises show a green tint and a green bar down their inner edge.<br>
+        This is a property of the premise, not a fourth type, so it sits alongside whatever the box already is — a support, objection or rebuttal keeps its border colour, and an <strong>implicit</strong> given keeps its dashed border too. It applies per box, so one co-premise can be a given while the one beside it still needs support. Main contentions and notes cannot be given: a contention is the claim being argued for, and a note is an annotation.<br>
+        <span class="hint">The mark is descriptive only — the app will still let you attach children to a given premise, and will not warn you when you do.</span></p>
         <h2>Find</h2>
         <p><kbd>Ctrl+F</kbd> — map search after clicking the map; the browser's own find after clicking a panel or scrollbar.</p>
         <h2>View</h2>
@@ -1910,7 +1947,7 @@
         <span class="hint">Letters match the type shortcuts: <kbd>S</kbd>upport, <kbd>O</kbd>bjection, <kbd>R</kbd>ebuttal, <kbd>N</kbd>ote, <kbd>M</kbd>ain contention. Older maps written with <strong>P</strong> for support still import.</span></p>
         <h2>Text Export &amp; String Mode</h2>
         <p>Export/import the whole map as structured text using complex labels; String Mode edits it live. Cross-references trail one per line as <strong>SOURCE &gt; TARGET</strong>.<br>
-        Wrap a label in <strong>parentheses</strong> to mark that premise <strong>implicit</strong> (dashed border): <strong>(M1S1a): unstated assumption</strong>. Main contentions and notes are never implicit, so parentheses are ignored there.</p>
+        Wrap a label in <strong>parentheses</strong> to mark that premise <strong>implicit</strong> (dashed border): <strong>(M1S1a): unstated assumption</strong>, or in <strong>square brackets</strong> to mark it <strong>given</strong> (green): <strong>[M1S1a]: taken as self-evident</strong>. The two nest — <strong>([M1S1a])</strong> is an implicit given. Main contentions and notes are never implicit or given, so the marks are ignored there.</p>
         <h2>Saving</h2>
         <p><strong>Two different things are called "saving":</strong><br>
         <kbd>Ctrl+S</kbd> / <strong>Save now</strong> keeps a copy <strong>inside this browser</strong>. It survives closing the tab or rebooting, and it is what restores your map when you come back — but it is invisible to you, no backup will capture it, and it does not travel to another browser or computer.<br>
@@ -2021,7 +2058,7 @@
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-04 r27.2';
+    const APP_BUILD = '2026-09-05 r27.3';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -2124,7 +2161,7 @@
             nodes.forEach(n => {
                 const sig = JSON.stringify([
                     n.texts, n.raw, n.type, n.aligns, n.statuses, n.statusAuthors,
-                    n.implicits, n.evalThreads, n.crossRefs, n.collapsed,
+                    n.implicits, n.givens, n.evalThreads, n.crossRefs, n.collapsed,
                     parentId,
                     (n.children || []).map(c => c.id)
                 ]);
@@ -2322,7 +2359,7 @@
     // so they must not count as content conflicts). Used to avoid flagging
     // two identical concurrent edits as a conflict.
     function nodeContentDiffers(a, b) {
-        const pick = n => JSON.stringify([n.texts, n.raw, n.type, n.aligns, n.statuses, n.statusAuthors, n.implicits, n.crossRefs]);
+        const pick = n => JSON.stringify([n.texts, n.raw, n.type, n.aligns, n.statuses, n.statusAuthors, n.implicits, n.givens, n.crossRefs]);
         return pick(a) !== pick(b);
     }
     // Identity of a stashed conflict entry — the SAME key the merge's dedupe
@@ -2343,7 +2380,8 @@
         conflicts[id].push({
             texts: loserNode.texts, type: loserNode.type, aligns: loserNode.aligns,
             statuses: loserNode.statuses, statusAuthors: loserNode.statusAuthors,
-            implicits: loserNode.implicits, crossRefs: loserNode.crossRefs,
+            implicits: loserNode.implicits, givens: loserNode.givens,
+            crossRefs: loserNode.crossRefs,
             evalThreads: loserNode.evalThreads,
             by: (loserVer && loserVer.by) || '', ts: (loserVer && loserVer.ts) || 0,
             stashedAt: Date.now(),
@@ -2597,7 +2635,7 @@
         for (const [, node] of mergedMap) {
             const boxLen = (node.texts || []).length;
             const parallel = [
-                'aligns', 'statuses', 'statusAuthors', 'implicits',
+                'aligns', 'statuses', 'statusAuthors', 'implicits', 'givens',
                 'evalNotes', 'crossRefs', 'evalThreads'
             ];
             parallel.forEach(field => {
@@ -4723,6 +4761,41 @@
         render();
     }
 
+    // Mark a premise GIVEN (an axiom): taken as self-evident, receiving no
+    // further justification. Per BOX, exactly like implicit — one co-premise
+    // can be a definition taken as given while its sibling is an empirical
+    // claim that still needs support. Selecting a whole group (no box index)
+    // drives every box to the same new value, matching toggleImplicit.
+    // Contentions and notes are excluded on the same reasoning the implicit
+    // flag uses: a main contention is by definition the claim being argued
+    // FOR, so it cannot be an unjustified given, and a note is an annotation
+    // rather than argumentative content.
+    // Deliberately presentational — nothing here stops a given box from
+    // taking children. Flagging that contradiction is a separate decision.
+    function toggleGiven() {
+        if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
+        if (selectedIds.length === 0) return;
+        pushHistory();
+        selectedIds.forEach(sel => {
+            const psel = parseSel(sel);
+            if (psel.hasBox) {
+                const id = psel.id;
+                const idx = psel.box;
+                const ctx = findNodeContext(state.trees, id);
+                if (!ctx || ctx.node.type === 'contention' || ctx.node.type === 'note') return;
+                if (!ctx.node.givens) ctx.node.givens = ctx.node.texts.map(() => false);
+                ctx.node.givens[idx] = !ctx.node.givens[idx];
+            } else {
+                const ctx = findNodeContext(state.trees, sel);
+                if (!ctx || ctx.node.type === 'contention' || ctx.node.type === 'note') return;
+                if (!ctx.node.givens) ctx.node.givens = ctx.node.texts.map(() => false);
+                const next = !ctx.node.givens[0];
+                ctx.node.givens = ctx.node.givens.map(() => next);
+            }
+        });
+        render();
+    }
+
     // --- Rich text to plain text (for export) ---
     function richTextToPlain(text) {
         let s = String(text);
@@ -5391,6 +5464,7 @@
             const extractedAlign = ctx.node.aligns ? ctx.node.aligns.splice(idx, 1)[0] : 'center';
             const extractedStatus = ctx.node.statuses ? ctx.node.statuses.splice(idx, 1)[0] : null;
             const extractedImplicit = ctx.node.implicits ? ctx.node.implicits.splice(idx, 1)[0] : false;
+            const extractedGiven = ctx.node.givens ? ctx.node.givens.splice(idx, 1)[0] : false;
             const extractedEvalNote = ctx.node.evalNotes ? ctx.node.evalNotes.splice(idx, 1)[0] : '';
             const extractedRefs = ctx.node.crossRefs ? (ctx.node.crossRefs.splice(idx, 1)[0] || []) : [];
             const extractedThread = ctx.node.evalThreads ? (ctx.node.evalThreads.splice(idx, 1)[0] || []) : [];
@@ -5416,7 +5490,7 @@
             ctx.node.children = remainingChildren;
             ctx.node.collapsed = prevCollapsed.filter(i => i !== idx).map(i => i > idx ? i - 1 : i);
             normalizeChildOrder(ctx.node);
-            const piece = { id: generateId(), type: ctx.node.type, texts: [extractedText], aligns: [extractedAlign], statuses: [extractedStatus], implicits: [extractedImplicit], evalNotes: [extractedEvalNote], crossRefs: [extractedRefs], evalThreads: [extractedThread], statusAuthors: [extractedStatusAuthor], boxW: extractedW != null ? { 0: extractedW } : undefined, children: extractedChildren, collapsed: wasCollapsed ? [0] : [] };
+            const piece = { id: generateId(), type: ctx.node.type, texts: [extractedText], aligns: [extractedAlign], statuses: [extractedStatus], implicits: [extractedImplicit], givens: [extractedGiven], evalNotes: [extractedEvalNote], crossRefs: [extractedRefs], evalThreads: [extractedThread], statusAuthors: [extractedStatusAuthor], boxW: extractedW != null ? { 0: extractedW } : undefined, children: extractedChildren, collapsed: wasCollapsed ? [0] : [] };
             if (extractedRaw !== undefined) piece.raw = { 0: extractedRaw };
             // The box's identity travels with it: incoming refs retarget to
             // the extracted piece. If the caller discards the piece instead
@@ -5459,6 +5533,7 @@
         const exAligns = sel.map(i => (node.aligns && node.aligns[i]) || 'center');
         const exStatuses = sel.map(i => (node.statuses && node.statuses[i]) || null);
         const exImplicits = sel.map(i => (node.implicits && node.implicits[i]) || false);
+        const exGivens = sel.map(i => (node.givens && node.givens[i]) || false);
         const exEvalNotes = sel.map(i => (node.evalNotes && node.evalNotes[i]) || '');
         const exRefs = sel.map(i => (node.crossRefs && node.crossRefs[i]) || []);
         const exThreads = sel.map(i => (node.evalThreads && node.evalThreads[i]) || []);
@@ -5469,6 +5544,7 @@
         if (node.aligns) node.aligns = node.aligns.filter((_, i) => !rank.has(i));
         if (node.statuses) node.statuses = node.statuses.filter((_, i) => !rank.has(i));
         if (node.implicits) node.implicits = node.implicits.filter((_, i) => !rank.has(i));
+        if (node.givens) node.givens = node.givens.filter((_, i) => !rank.has(i));
         if (node.evalNotes) node.evalNotes = node.evalNotes.filter((_, i) => !rank.has(i));
         if (node.crossRefs) node.crossRefs = node.crossRefs.filter((_, i) => !rank.has(i));
         if (node.evalThreads) node.evalThreads = node.evalThreads.filter((_, i) => !rank.has(i));
@@ -5476,7 +5552,7 @@
         node.children = remainChildren;
         node.collapsed = prevCollapsed.filter(i => !rank.has(i)).map(i => i - below(i));
 
-        const ex = { id: generateId(), type: node.type, texts: exTexts, aligns: exAligns, statuses: exStatuses, implicits: exImplicits, evalNotes: exEvalNotes, crossRefs: exRefs, evalThreads: exThreads, statusAuthors: exStatusAuthors, children: exChildren,
+        const ex = { id: generateId(), type: node.type, texts: exTexts, aligns: exAligns, statuses: exStatuses, implicits: exImplicits, givens: exGivens, evalNotes: exEvalNotes, crossRefs: exRefs, evalThreads: exThreads, statusAuthors: exStatusAuthors, children: exChildren,
                      collapsed: prevCollapsed.filter(i => rank.has(i)).map(i => rank.get(i)) };
         if (exRaw) ex.raw = exRaw;
         if (exBoxW) ex.boxW = exBoxW;
@@ -5503,15 +5579,22 @@
             return null;
         }
         addBtns.forEach(id => document.getElementById(id).disabled = false);
-        // Main contentions cannot have co-premises or implicit status — grey out buttons
+        // Cleared here so a previous contention/note selection cannot leave
+        // these greyed out on a box that does accept the flags.
+        document.getElementById('btn-implicit').disabled = false;
+        document.getElementById('btn-given').disabled = false;
+        // Main contentions cannot have co-premises, implicit or given status
+        // — grey out buttons
         const selId = parseSel(selectedIds[0]).id;
         const selCtx = findNodeContext(state.trees, selId);
         if (selCtx && selCtx.node.type === 'contention') {
             document.getElementById('btn-add-co').disabled = true;
             document.getElementById('btn-implicit').disabled = true;
+            document.getElementById('btn-given').disabled = true;
         }
         if (selCtx && selCtx.node.type === 'note') {
             document.getElementById('btn-implicit').disabled = true;
+            document.getElementById('btn-given').disabled = true;
         }
         return selectedIds[0];
     }
@@ -5701,6 +5784,7 @@
         if (ctx.node.aligns) ctx.node.aligns.splice(insertAt, 0, 'center');
         if (ctx.node.statuses) ctx.node.statuses.splice(insertAt, 0, null);
         if (ctx.node.implicits) ctx.node.implicits.splice(insertAt, 0, false);
+        if (ctx.node.givens) ctx.node.givens.splice(insertAt, 0, false);
         if (ctx.node.evalNotes) ctx.node.evalNotes.splice(insertAt, 0, '');
         if (ctx.node.crossRefs) ctx.node.crossRefs.splice(insertAt, 0, []);
         if (ctx.node.evalThreads) ctx.node.evalThreads.splice(insertAt, 0, []);
@@ -5779,6 +5863,7 @@
                 if (ctx.node.aligns) ctx.node.aligns.splice(idx, 1);
                 if (ctx.node.statuses) ctx.node.statuses.splice(idx, 1);
                 if (ctx.node.implicits) ctx.node.implicits.splice(idx, 1);
+                if (ctx.node.givens) ctx.node.givens.splice(idx, 1);
                 if (ctx.node.evalNotes) ctx.node.evalNotes.splice(idx, 1);
                 if (ctx.node.crossRefs) ctx.node.crossRefs.splice(idx, 1);
                 if (ctx.node.evalThreads) ctx.node.evalThreads.splice(idx, 1);
@@ -5860,9 +5945,12 @@
             }
 
             ctx.node.type = newType;
-            // Contentions and notes cannot be implicit — clear the flags
+            // Contentions and notes cannot be implicit or given — clear the flags
             if ((newType === 'contention' || newType === 'note') && ctx.node.implicits) {
                 ctx.node.implicits = ctx.node.implicits.map(() => false);
+            }
+            if ((newType === 'contention' || newType === 'note') && ctx.node.givens) {
+                ctx.node.givens = ctx.node.givens.map(() => false);
             }
             // Main contention enforcement: detach from parent if toggling to contention
             if (newType === 'contention' && ctx.parent) {
@@ -6556,7 +6644,8 @@
             // Determine status class: contested/rejected take priority; teal if notes-only
             const statusClass = boxStatus ? ` status-${boxStatus}` : (hasEvalNote ? ' status-has-notes' : '');
             const implicitClass = (node.implicits && node.implicits[index]) ? ' implicit' : '';
-            nodeDiv.className = `node type-${node.type}${statusClass}${implicitClass}`;
+            const givenClass = (node.givens && node.givens[index]) ? ' given' : '';
+            nodeDiv.className = `node type-${node.type}${statusClass}${implicitClass}${givenClass}`;
             if (node.boxW && node.boxW[index] != null) nodeDiv.style.width = node.boxW[index] + 'px';
             nodeDiv.setAttribute('data-node-id', node.id);
             nodeDiv.setAttribute('data-node-idx', index);
@@ -9232,6 +9321,7 @@
         if (node.aligns) { const a = node.aligns.splice(from, 1)[0]; node.aligns.splice(finalIdx, 0, a); }
         if (node.statuses) { const s = node.statuses.splice(from, 1)[0]; node.statuses.splice(finalIdx, 0, s); }
         if (node.implicits) { const m = node.implicits.splice(from, 1)[0]; node.implicits.splice(finalIdx, 0, m); }
+        if (node.givens) { const gv = node.givens.splice(from, 1)[0]; node.givens.splice(finalIdx, 0, gv); }
         if (node.evalNotes) { const n = node.evalNotes.splice(from, 1)[0]; node.evalNotes.splice(finalIdx, 0, n); }
         if (node.crossRefs) { const r = node.crossRefs.splice(from, 1)[0]; node.crossRefs.splice(finalIdx, 0, r); }
         if (node.evalThreads) { const et = node.evalThreads.splice(from, 1)[0]; node.evalThreads.splice(finalIdx, 0, et); }
@@ -9292,6 +9382,12 @@
         else {
             const extImplicits = extracted.implicits || extracted.texts.map(() => false);
             targetNode.implicits.splice(insertPos, 0, ...extImplicits);
+        }
+        // Sync givens array
+        if (!targetNode.givens) targetNode.givens = targetNode.texts.map(() => false);
+        else {
+            const extGivens = extracted.givens || extracted.texts.map(() => false);
+            targetNode.givens.splice(insertPos, 0, ...extGivens);
         }
         // Sync evalNotes array
         if (!targetNode.evalNotes) targetNode.evalNotes = targetNode.texts.map(() => '');
@@ -10676,6 +10772,11 @@
             bg: isLight ? '#f0f0f0' : '#1e1e1e',
             nodeBg: isLight ? '#ffffff' : '#252526',
             noteBg: isLight ? '#fff9c4' : '#fdf2b3',
+            // Given premises: the same tints the live nodes use, so an export
+            // matches what was on screen. Keyed off the same isLight the rest
+            // of this theme uses, which keeps them consistent with nodeBg.
+            givenBg: isLight ? '#e8f5ec' : '#1f3328',
+            givenAccent: isLight ? '#1b7a3e' : '#4caf50',
             text: isLight ? '#1a1a1a' : '#e0e0e0',
             noteText: '#1a1a1a',
             neutralText: isLight ? '#666' : '#c9c9c9',
@@ -10742,11 +10843,19 @@
                 const lines = wrapText(labelPrefix + cleanText, wrapW, font);
                 const bw = type === 'contention' ? 2 : 2;
                 const isImplicit = ctx && ctx.node.implicits && ctx.node.implicits[parseInt(nodeIdx)];
+                const isGiven = ctx && ctx.node.givens && ctx.node.givens[parseInt(nodeIdx)];
                 const dashAttr = isImplicit ? ' stroke-dasharray="6 4"' : '';
                 const boxAlign = (ctx && ctx.node.aligns && ctx.node.aligns[parseInt(nodeIdx)]) || 'center';
                 let t = `<rect x="${x}" y="${y}" width="${wd}" height="${ht}" rx="${isNote ? 2 : 6}"`
-                    + ` fill="${isNote ? EXPORT_THEME.noteBg : EXPORT_THEME.nodeBg}"`
+                    + ` fill="${isGiven ? EXPORT_THEME.givenBg : isNote ? EXPORT_THEME.noteBg : EXPORT_THEME.nodeBg}"`
                     + ` stroke="${EXPORT_THEME.border[type] || EXPORT_THEME.border.support}" stroke-width="${bw}"${dashAttr}/>`;
+                // Given premises carry the live node's inner accent bar too.
+                // Inset from the corner radius so it cannot poke out of the
+                // rounded box the way a full-height rect would.
+                if (isGiven) {
+                    t += `<rect x="${x + 1}" y="${y + 3}" width="4" height="${Math.max(0, ht - 6)}"`
+                        + ` fill="${EXPORT_THEME.givenAccent}"/>`;
+                }
                 // Double border for contention (main) nodes — skip when implicit (dashed border replaces it)
                 if (type === 'contention' && !isImplicit) {
                     t += `<rect x="${x - 5}" y="${y - 5}" width="${wd + 10}" height="${ht + 10}" rx="9"`
@@ -11475,7 +11584,13 @@
                     const raw = cLabels.get(`${n.id}-${i}`) || '?';
                     // Implicit premises export PARENTHESISED — "(M1S1a): ..."
                     // — which is exactly how the importer reads them back.
-                    const label = (n.implicits && n.implicits[i]) ? `(${raw})` : raw;
+                    // Given premises export BRACKETED, "[M1S1a]". The two marks
+                    // are independent, so they nest rather than compete: given
+                    // innermost, implicit outermost, making a premise that is
+                    // both "([M1S1a])" — which the importer reads back as both.
+                    let label = raw;
+                    if (n.givens && n.givens[i]) label = `[${label}]`;
+                    if (n.implicits && n.implicits[i]) label = `(${label})`;
                     const escapedText = text.replace(/\n/g, '\\n');
                     lines.push(`${'  '.repeat(indent)}${label}: ${escapedText}`);
                 });
@@ -11548,6 +11663,18 @@
             if (flag) node.implicits[boxIndex] = true;
         }
 
+        // A BRACKETED label marks that box as a given (an axiom): "[M1S1a]: ...".
+        // Same per-box shape and same contention/note exclusion as setImplicit
+        // above — see toggleGiven for why those two types are excluded.
+        function setGiven(node, boxIndex, flag) {
+            if (!node) return;
+            if (node.type === 'contention' || node.type === 'note') return;
+            if (!flag && !node.givens) return;
+            if (!node.givens) node.givens = node.texts.map(() => false);
+            while (node.givens.length < node.texts.length) node.givens.push(false);
+            if (flag) node.givens[boxIndex] = true;
+        }
+
         lines.forEach(line => {
             // Cross-reference line: "SOURCE > TARGET" (see the export's
             // trailing section). Checked before the node-line pattern;
@@ -11555,17 +11682,21 @@
             // pass, since a reference may point at a label defined on a
             // later line. Node lines can't collide with this shape:
             // they always carry a colon, which the pattern excludes.
-            // Parentheses are tolerated on either endpoint, so a reference
-            // copied from an implicit premise's line still resolves.
-            const refMatch = line.match(/^\s*\(?([@\w,]+)\)?\s*>\s*\(?([@\w,]+)\)?\s*$/);
+            // Parentheses and brackets are tolerated on either endpoint, so a
+            // reference copied from an implicit or given premise's line still
+            // resolves.
+            const refMatch = line.match(/^\s*\(?\[?([@\w,]+)\]?\)?\s*>\s*\(?\[?([@\w,]+)\]?\)?\s*$/);
             if (refMatch) { crossRefLines.push({ src: refMatch[1], tgt: refMatch[2] }); return; }
 
-            // "(LABEL): text" marks an implicit premise; a lone unmatched
-            // parenthesis is simply not a mark (the label still parses).
-            const match = line.match(/^(\s*)(\(?)([@\w,]+)(\)?):\s*(.*)/);
+            // "(LABEL): text" marks an implicit premise and "[LABEL]: text" a
+            // given one; the two nest as "([LABEL])". A lone unmatched bracket
+            // or parenthesis is simply not a mark (the label still parses),
+            // which is why each mark needs BOTH of its delimiters to count.
+            const match = line.match(/^(\s*)(\(?)(\[?)([@\w,]+)(\]?)(\)?):\s*(.*)/);
             if (!match) return;
-            const [, , openParen, label, closeParen, rawText] = match;
+            const [, , openParen, openBracket, label, closeBracket, closeParen, rawText] = match;
             const implicitMark = !!(openParen && closeParen);
+            const givenMark = !!(openBracket && closeBracket);
             const nodeText = rawText.replace(/\\n/g, '\n');
 
             // Free-floating node: @x,y or @x,yP1 etc.
@@ -11581,6 +11712,7 @@
                     if (existing) { /* duplicate coordinate, skip */ return; }
                     const node = { id: generateId(), type: 'neutral', texts: [nodeText], collapsed: [], children: [], x: fx, y: fy, freePosition: true };
                     setImplicit(node, 0, implicitMark);
+                    setGiven(node, 0, givenMark);
                     newTrees.push(node);
                     labelToNode.set(freeBase, node);
                     labelToNode.set(label, node);
@@ -11606,12 +11738,14 @@
                     const existing = labelToNode.get(baseLabel);
                     existing.texts.push(nodeText);
                     setImplicit(existing, existing.texts.length - 1, implicitMark);
+                    setGiven(existing, existing.texts.length - 1, givenMark);
                     labelToNode.set(label, existing);
                     return;
                 }
 
                 const node = { id: generateId(), type: nodeType, texts: [nodeText], collapsed: [], children: [] };
                 setImplicit(node, 0, implicitMark);
+                setGiven(node, 0, givenMark);
                 labelToNode.set(baseLabel, node);
                 labelToNode.set(label, node);
 
@@ -11671,6 +11805,7 @@
                 if (!labelToNode.has(fullLabel)) {
                     existing.texts.push(nodeText);
                     setImplicit(existing, existing.texts.length - 1, implicitMark);
+                    setGiven(existing, existing.texts.length - 1, givenMark);
                     labelToNode.set(fullLabel, existing);
                     return;
                 }
@@ -11679,6 +11814,7 @@
             // Create new node
             const node = { id: generateId(), type: nodeType, texts: [nodeText], collapsed: [], children: [] };
             setImplicit(node, 0, implicitMark);
+            setGiven(node, 0, givenMark);
             labelToNode.set(baseLabel, node);
             labelToNode.set(fullLabel, node);
 
@@ -12130,6 +12266,7 @@
 
         const currentAlign = node && node.aligns ? (node.aligns[boxIdx || 0] || 'center') : 'center';
         const isImplicit = node && node.implicits ? !!node.implicits[boxIdx || 0] : false;
+        const isGiven = node && node.givens ? !!node.givens[boxIdx || 0] : false;
         const status = node && node.statuses ? (node.statuses[boxIdx || 0] || null) : null;
 
         let html = '';
@@ -12170,6 +12307,7 @@
             html += '<div class="ctx-row">';
             html += `<button onclick="ctxAction(()=>cycleEvaluation())" class="${status?'ctx-active':''}">Eval: ${status||'none'}</button>`;
             html += `<button onclick="ctxAction(()=>toggleImplicit())" class="${isImplicit?'ctx-active':''}">Implicit</button>`;
+            html += `<button onclick="ctxAction(()=>toggleGiven())" class="${isGiven?'ctx-active':''}">Given</button>`;
             html += '</div>';
             html += `<button class="ctx-item" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference…</button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>openEvalNotesForBox('${nodeId}', ${boxIdx || 0}))">Evaluation Notes…</button>`;
@@ -12628,6 +12766,7 @@
             if (code === 'KeyU' || key === 'u') { changeSelectedTypes('contention'); return; }
             if (code === 'KeyE' || key === 'e') { cycleEvaluation(); return; }
             if (code === 'KeyI' || key === 'i') { toggleImplicit(); return; }
+            if (code === 'KeyG' || key === 'g') { toggleGiven(); return; }
             if (code === 'KeyA' || key === 'a') {
                 e.preventDefault();
                 createNodeAtCursor(e.shiftKey);
@@ -13680,7 +13819,7 @@
                     });
                 }
             }
-            ['texts', 'type', 'aligns', 'statuses', 'statusAuthors', 'implicits', 'crossRefs'].forEach(f => {
+            ['texts', 'type', 'aligns', 'statuses', 'statusAuthors', 'implicits', 'givens', 'crossRefs'].forEach(f => {
                 if (body[f] === undefined) delete node[f]; else node[f] = body[f];
             });
             // Live comments stay with the node: threads merge by ID
