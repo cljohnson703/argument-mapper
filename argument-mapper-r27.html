@@ -2134,7 +2134,7 @@
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-05 r27.18';
+    const APP_BUILD = '2026-09-10 r27.19';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6247,17 +6247,35 @@
     // guards and on matching the rendered height (which prevents jitter).
     // Callers must invoke this synchronously inside the user gesture: iOS
     // only raises the on-screen keyboard for a focus() made there.
+    // The editor is opened at the rendered text's height so the box does not
+    // jitter. A source that is hidden -- or not laid out yet -- measures 0,
+    // and writing that 0 straight onto the textarea collapses the box until
+    // something else resizes it. Fall back to the textarea's own content
+    // height, and never write a zero.
+    function setEditHeight(ta, measuredH) {
+        const h = measuredH || ta.scrollHeight;
+        if (h) ta.style.height = h + 'px';
+    }
+
     function enterEditMode(nodeEl) {
         if (!nodeEl) return false;
         if (presentMode || reviewMode || collabReadOnly()) return false;
         const ta = nodeEl.querySelector('textarea');
         const renderDiv = nodeEl.querySelector('.rendered-text');
         if (!ta || !renderDiv) return false;
+        // Already editing: the rendered div is display:none by now, so
+        // re-measuring it would return 0. A second double-click inside an
+        // open editor is the browser selecting a word -- don't reopen, and
+        // don't move the caret out from under that selection.
+        if (renderDiv.style.display === 'none') {
+            if (document.activeElement !== ta) ta.focus();
+            return true;
+        }
         const targetH = renderDiv.offsetHeight;
         renderDiv.style.display = 'none';
         ta.style.display = '';
         ta.readOnly = false; ta.style.cursor = 'text';
-        ta.style.height = targetH + 'px';
+        setEditHeight(ta, targetH);
         ta.focus();
         ta.setSelectionRange(ta.value.length, ta.value.length);
         return true;
@@ -6289,10 +6307,12 @@
         // Switch to edit mode: hide rendered div, show textarea
         const renderDiv = ta.parentElement.querySelector('.rendered-text');
         if (renderDiv) {
+            // offsetHeight is 0 when this box is already in edit mode; the
+            // helper falls back to the content height rather than writing it.
             const targetH = renderDiv.offsetHeight;
             renderDiv.style.display = 'none';
             ta.style.display = '';
-            ta.style.height = targetH + 'px';
+            setEditHeight(ta, targetH);
         } else {
             ta.style.display = '';
             ta.style.height = '0'; ta.style.height = ta.scrollHeight + 'px';

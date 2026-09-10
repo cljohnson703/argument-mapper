@@ -40,6 +40,7 @@ const SUITES = [
     'export-r27-tests.js',
     'ctxmenu-r27-dismiss-test.js',
     'given-r27-axiom-test.js',
+    'editmode-r27-collapse-test.js',
     'collab-r26-firebase-test.js',
 ];
 
