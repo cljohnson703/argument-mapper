@@ -2,7 +2,7 @@
 
 // Focused pure-layout regression for r25's edge-based parent centering.
 // The outer child groups deliberately have unequal widths.  Centering their
-// outer premise-box centres would put the parent 37.5px off the midpoint of
+// outer premise-box centers would put the parent 37.5px off the midpoint of
 // their visible span; both Compact and Spread must instead use the outer
 // edges while retaining the minimum inter-group gap.
 
@@ -83,6 +83,7 @@ function makeApi(source) {
         var ROUTE_MIN_STUB = ${numericConstant(source, 'ROUTE_MIN_STUB', 10)};
         var ROUTE_CORNER_RADIUS = ${numericConstant(source, 'ROUTE_CORNER_RADIUS', 6)};
         var ROUTE_STROKE_CLEARANCE = ${numericConstant(source, 'ROUTE_STROKE_CLEARANCE', 2.05)};
+        var ROUTE_LINE_CLEARANCE = ${numericConstant(source, 'ROUTE_LINE_CLEARANCE', 2.05)};
         var NODE_ROUTE_CLEARANCE = HGAP + ROUTE_STROKE_CLEARANCE / 2;
         var layoutMode = 'compact';
         var spreadGaps = {};

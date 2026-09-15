@@ -68,7 +68,7 @@ const BANNER = `/*!
  * Licensed under the GNU Affero General Public License, version 3 (AGPL-3.0).
  * You may use, study, share and modify this program freely. If you run a
  * modified version and let others use it over a network, you MUST also offer
- * them its complete corresponding source under the same licence.
+ * them its complete corresponding source under the same license.
  *
  * Complete corresponding source: ${SOURCE_URL}
  * This file is a compiled artifact and is NOT the preferred form for
@@ -253,18 +253,18 @@ function renameVocabulary(parts) {
     // --- names ASSEMBLED AT RUNTIME must never be renamed ------------------
     // The app looks things up with constructed strings:
     //     document.getElementById(`arrow-${type}`)      // SVG arrowheads
-    //     'type-' + node.type                            // node colour classes
+    //     'type-' + node.type                            // node color classes
     //     getElementById('group-' + node.id)             // node wrappers
     // Renaming the STATIC definition (id="arrow-support", .type-objection)
     // while the lookup still builds the original name at runtime silently
-    // breaks the feature — arrowheads vanish, type colours stop applying —
+    // breaks the feature — arrowheads vanish, type colors stop applying —
     // and no leftover-name check can catch it, because only the FRAGMENT
     // ("arrow-", "type-") appears in the source, never the whole name.
     // So: any name beginning with a dynamically-built prefix is left intact,
     // which keeps definition and lookup consistent. Correctness over
     // obfuscation.
     // The fragment is whatever identifier-ish token TRAILS the literal text,
-    // which is not necessarily at the start of the string: the node colour
+    // which is not necessarily at the start of the string: the node color
     // class is built as `node type-${node.type}` — the useful prefix is
     // "type-", sitting after "node ". So take the text preceding each `${`
     // (or each string that is concatenated) and keep its trailing token.
@@ -360,7 +360,7 @@ function renameVocabulary(parts) {
 
     // Alternations (longest-first) so one pass handles every name.
     // NOTE: no attempt is made to tokenize the JS. Minified code contains
-    // regex literals such as /["\\]/g whose quote characters desynchronise any
+    // regex literals such as /["\\]/g whose quote characters desynchronize any
     // regex-based string scanner, so "only inside string literals" cannot be
     // implemented reliably without a real parser. Instead we rely on the two
     // shapes a class name can take — `.name` (selector) and `"name"` (quoted

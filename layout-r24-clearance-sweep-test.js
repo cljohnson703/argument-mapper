@@ -59,6 +59,7 @@ let STRAIGHT_THRESH;
 let ROUTE_MIN_STUB;
 let ROUTE_CORNER_RADIUS;
 let ROUTE_STROKE_CLEARANCE;
+let ROUTE_LINE_CLEARANCE;
 let EDGE_FORK_SOURCE = false;
 try {
     html = fs.readFileSync(FILE, 'utf8');
@@ -69,6 +70,7 @@ try {
     ROUTE_MIN_STUB = numericConstant(html, 'ROUTE_MIN_STUB', 10);
     ROUTE_CORNER_RADIUS = numericConstant(html, 'ROUTE_CORNER_RADIUS', 6);
     ROUTE_STROKE_CLEARANCE = numericConstant(html, 'ROUTE_STROKE_CLEARANCE', 2.05);
+    ROUTE_LINE_CLEARANCE = numericConstant(html, 'ROUTE_LINE_CLEARANCE', ROUTE_STROKE_CLEARANCE);
     const names = [
         'collapsedList', 'boxOf', 'vgapForDepth', 'resolveRowPositions',
         'routeSegmentDistance', 'routeSegmentTouchesRect',
@@ -121,6 +123,7 @@ try {
         var ROUTE_MIN_STUB = ${ROUTE_MIN_STUB};
         var ROUTE_CORNER_RADIUS = ${ROUTE_CORNER_RADIUS};
         var ROUTE_STROKE_CLEARANCE = ${ROUTE_STROKE_CLEARANCE};
+        var ROUTE_LINE_CLEARANCE = ${ROUTE_LINE_CLEARANCE};
         var NODE_ROUTE_CLEARANCE = HGAP + ROUTE_STROKE_CLEARANCE / 2;
         var layoutMode = 'compact';
         var spreadGaps = {};
@@ -511,6 +514,39 @@ function audit(result) {
     return { drawing, nodeNode, nodeRoute, sameParentSiblingChecks };
 }
 
+// r27: lines of DIFFERENT fans keep ROUTE_LINE_CLEARANCE between center-lines.
+// Every primitive is axis-aligned, so the distance between two of them is the
+// hypotenuse of their gaps on each axis. Pairs that belong together are
+// skipped: one fan's own routes (its channels sit CHANNEL_SPACING apart by
+// design), a route and its child's or parent's fork, and a route and a fork of
+// a sibling in the same fan.
+function lineGapViolations(drawing) {
+    const fanOfChild = {};
+    drawing.primitives.forEach(p => { if (p.kind === 'route') fanOfChild[p.childId] = p.parentId + '|' + p.targetBox; });
+    const fan = p => p.parentId + '|' + p.targetBox;
+    const prims = drawing.primitives, out = [];
+    for (let i = 0; i < prims.length; i++) {
+        for (let j = i + 1; j < prims.length; j++) {
+            const a = prims[i], b = prims[j];
+            if (a.kind !== 'route' && b.kind !== 'route') continue;
+            const r = a.kind === 'route' ? a : b, q = r === a ? b : a;
+            if (q.kind === 'route' && fan(q) === fan(r)) continue;
+            if (q.kind === 'fork' && (q.owner === r.childId || q.owner === r.parentId || fanOfChild[q.owner] === fan(r))) continue;
+            const gx = axisGap(Math.min(r.a.x, r.b.x), Math.max(r.a.x, r.b.x), Math.min(q.a.x, q.b.x), Math.max(q.a.x, q.b.x));
+            const gy = axisGap(Math.min(r.a.y, r.b.y), Math.max(r.a.y, r.b.y), Math.min(q.a.y, q.b.y), Math.max(q.a.y, q.b.y));
+            const distance = Math.hypot(gx, gy);
+            if (distance < ROUTE_LINE_CLEARANCE - EPS) out.push({ r, q, distance });
+        }
+    }
+    return out;
+}
+
+function conciseLineGaps(items) {
+    return items.slice(0, 3).map(item => 'route:' + item.r.childId + '>' + item.r.parentId + ' / ' +
+        (item.q.kind === 'fork' ? 'fork:' + item.q.owner : 'route:' + item.q.childId + '>' + item.q.parentId) +
+        ' d=' + item.distance.toFixed(2)).join('; ');
+}
+
 function concise(items, kind) {
     return items.slice(0, 5).map(item => {
         if (kind === 'node') {
@@ -599,6 +635,45 @@ ok(spreadSamples.every(entry => !entry.audit.nodeNode.length && !entry.audit.nod
     spreadSamples.filter(entry => entry.audit.nodeNode.length || entry.audit.nodeRoute.length)
         .map(entry => 'h=' + entry.height).join(', '));
 
+// r27: a corridor too tight to route drops every line of that parent, and two
+// fans' lines 2px apart read as one thick line. Layout must leave room for
+// both, in every sampled state.
+const unrouted = compactAudits.concat(spreadSamples)
+    .filter(entry => entry.audit.drawing.allocations.some(allocation => !allocation.allocated));
+ok(unrouted.length === 0,
+    'CS9 every parent\'s lines can be routed in every sampled layout (none would be dropped)',
+    unrouted.map(entry => 'h=' + entry.height).join(', '));
+const crowded = compactAudits.concat(spreadSamples)
+    .map(entry => ({ height: entry.height, gaps: lineGapViolations(entry.audit.drawing) }))
+    .filter(entry => entry.gaps.length);
+ok(ROUTE_LINE_CLEARANCE >= 14 && crowded.length === 0,
+    'CS10 lines of different fans keep ROUTE_LINE_CLEARANCE (' + ROUTE_LINE_CLEARANCE + 'px) apart in every sampled layout',
+    crowded.length ? 'first h=' + crowded[0].height + ': ' + conciseLineGaps(crowded[0].gaps) : '');
+
+// The reported map: a two-premise objection whose short premise a answers
+// three children, and whose taller premise b answers one child placed to their
+// right. In Narrow its lines used to be 2.07px apart, or were dropped outright.
+{
+    const zombie = () => single('M1', 208, 96, [
+        (function () {
+            const c1 = multi('M1O1aR1', [208, 208], [58, 97], []);
+            const c2 = multi('M1O1aR2', [208, 208], [214, 136], []);
+            const c3 = single('M1O1aS1', 208, 58, []);
+            const d = multi('M1O1bR1', [208, 208], [136, 136], []);
+            d.targetIndex = 1;
+            return multi('M1O1', [208, 208], [77, 116], [c1, c2, c3, d]);
+        })()
+    ]);
+    const states = ['compact', 'spread', 'compact'].map(mode => {
+        const result = layoutRoot(zombie(), mode);
+        const drawing = drawingFor(result);
+        return { mode, routed: drawing.allocations.every(allocation => allocation.allocated), gaps: lineGapViolations(drawing) };
+    });
+    ok(states.every(state => state.routed && !state.gaps.length),
+        'CS11 the reported two-fan objection routes every line, 14px apart, in Narrow, Wide and Narrow again',
+        states.map(state => state.mode + ':' + (state.routed ? 'routed' : 'DROPPED') + ' ' + conciseLineGaps(state.gaps)).join(' | '));
+}
+
 if (failures.length) {
     console.log('\nExpected red-first failures:');
     failures.forEach(message => console.log('  - ' + message));
@@ -610,7 +685,7 @@ process.exit(failed ? 1 : 0);
 
 module.exports = {
     single, multi, geometryFor, walkNodes, layoutRoot, drawingFor, audit,
-    concise, axisGap, segmentBounds,
+    concise, axisGap, segmentBounds, lineGapViolations,
     constants: { HGAP, INNER_GAP, STROKE_PAD, EPS, ROUTE_STROKE_CLEARANCE }
 };
 

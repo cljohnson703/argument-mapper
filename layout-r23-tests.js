@@ -106,6 +106,7 @@ try {
         var ROUTE_MIN_STUB = ${numericConstant('ROUTE_MIN_STUB', 10)};
         var ROUTE_CORNER_RADIUS = ${numericConstant('ROUTE_CORNER_RADIUS', 6)};
         var ROUTE_STROKE_CLEARANCE = ${numericConstant('ROUTE_STROKE_CLEARANCE', 2.05)};
+        var ROUTE_LINE_CLEARANCE = ${numericConstant('ROUTE_LINE_CLEARANCE', 2.05)};
         var NODE_ROUTE_CLEARANCE = HGAP + ROUTE_STROKE_CLEARANCE / 2;
         var layoutMode = 'compact';
         var spreadGaps = {};

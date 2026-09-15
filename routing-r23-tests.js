@@ -262,7 +262,7 @@ function allowedPointJunction(a, b, point) {
 
     // The incoming child-to-parent route starts at the midpoint of a
     // co-premise child's fork bar. That route endpoint may lie in the bar's
-    // interior (or on a centre tick for an odd box count).
+    // interior (or on a center tick for an odd box count).
     const route = a.fork ? b : a;
     const fork = a.fork ? a : b;
     if (fork.fork && route.child === fork.fork && samePoint(point, route.start)) {
@@ -839,7 +839,7 @@ function byChild(routes) {
                 'R8h: locked leaf route remains at its exact endpoint midpoint');
         }
 
-        // A centre-line can be mathematically outside a statement while its
+        // A center-line can be mathematically outside a statement while its
         // visible 2px stroke still enters it.  This fixture leaves the source
         // only 0.5px left of the foreign tall box, so the exact minimum row
         // must leave HGAP beyond the visible stroke's guarded half-width.

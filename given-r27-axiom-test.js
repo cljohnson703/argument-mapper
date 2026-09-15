@@ -4,8 +4,9 @@
 // A "given" marks a premise taken as self-evident — one that receives no
 // further justification. It is a per-BOX epistemic flag stored in
 // node.givens[] parallel to node.texts[], orthogonal to the
-// support/objection/rebuttal role (border colour) and composable with
-// `implicit` (border style), which is why it claims the background channel.
+// support/objection/rebuttal role (border color), so it claims the background
+// channel. It composes with `implicit`, which makes the box see-through: an
+// implicit given keeps its tint, see-through (implicit-r27-see-through-test.js).
 //
 // Covers:
 //   (1) the tint is theme-aware rather than a fixed fill. This is the
@@ -118,7 +119,7 @@ const TREES = [{
     /* ================================================================
        1. The tint is theme-aware, and both halves stay readable.
        ================================================================ */
-    console.log('\n-- colour contract --');
+    console.log('\n-- color contract --');
     {
         // The dark (":root") tint and the light ("body.nodes-light") tint must
         // BOTH exist and must differ: one flat green for both themes is the
@@ -134,7 +135,7 @@ const TREES = [{
         ok(darkBg && lightBg && darkBg.toLowerCase() !== lightBg.toLowerCase(),
             'the tint is theme-aware, not one flat green for both', darkBg + ' vs ' + lightBg);
 
-        // The node text colours these tints must carry, per theme axis. Read
+        // The node text colors these tints must carry, per theme axis. Read
         // from the CSS rather than hardcoded, so a later palette change is
         // checked against the text it actually has to carry.
         const DARK_TEXT = (rootBlock.match(/--text-color:\s*(#[0-9a-fA-F]{6})/) || [])[1] || '#e0e0e0';
@@ -229,7 +230,7 @@ const TREES = [{
     }
 
     /* ================================================================
-       3. toggleGiven behaviour.
+       3. toggleGiven behavior.
        ================================================================ */
     console.log('\n-- toggleGiven --');
     const toggle = (trees, sel) => JSON.parse(W.win.eval(`

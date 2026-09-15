@@ -2,9 +2,10 @@
 // r26 String Mode / text-label regression.
 //
 // Covers the two r26 shorthand changes:
-//   * support premises label as S (matching the S keyboard shortcut), while
-//     legacy P labels still IMPORT so older exports and maps keep working;
-//   * a PARENTHESISED label marks that box implicit — "(M1S1a): ..." — in
+//   * support premises label as S (matching the S keyboard shortcut). The old
+//     P-for-support reading has since been retired: P now names a weak
+//     rebuttal, beside Q for a weak objection (section 4);
+//   * a PARENTHESIZED label marks that box implicit — "(M1S1a): ..." — in
 //     both directions (export writes them, import reads them), per box, with
 //     contentions and notes exempt (the app's own invariant).
 //
@@ -90,7 +91,7 @@ function findByText(trees, needle) {
     await sleep(340);
     console.log('=== r26 String Mode labels: S for support, () for implicit ===');
 
-    // --- 1. Export uses S, and parenthesises implicit boxes --------------
+    // --- 1. Export uses S, and parenthesizes implicit boxes --------------
     const TREES = [{
         id: 'root', type: 'contention', texts: ['Main'], collapsed: [], children: [
             {
@@ -108,9 +109,9 @@ function findByText(trees, needle) {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     ok(text.indexOf('P1') === -1, 'export: no legacy P labels remain', text.replace(/\n/g, ' | '));
     ok(lines.includes('M1: Main'), 'export: contention still labels M1');
-    ok(lines.includes('(M1S1a): Prem A'), 'export: implicit co-premise is parenthesised with an S label', lines.join(' | '));
+    ok(lines.includes('(M1S1a): Prem A'), 'export: implicit co-premise is parenthesized with an S label', lines.join(' | '));
     ok(lines.includes('M1S1b: Prem B'), 'export: the non-implicit co-premise has NO parentheses');
-    ok(lines.includes('M1S1aO1: Obj'), 'export: objection nests under the S-labelled support');
+    ok(lines.includes('M1S1aO1: Obj'), 'export: objection nests under the S-labeled support');
     ok(lines.includes('M1S1aO1R1: Reb'), 'export: rebuttal chain uses S in its ancestry');
     ok(lines.includes('M1N1: Note text'), 'export: note keeps N');
 
@@ -119,8 +120,8 @@ function findByText(trees, needle) {
     const sup = findByText(parsed.trees, 'Prem A');
     ok(!!sup && sup.type === 'support', 'import: S label produces a support node', sup && sup.type);
     ok(!!sup && sup.texts.length === 2 && sup.texts[1] === 'Prem B', 'import: co-premise joined the same node');
-    ok(!!sup && !!sup.implicits && sup.implicits[0] === true, 'import: parenthesised box is implicit');
-    ok(!!sup && !!sup.implicits && !sup.implicits[1], 'import: its non-parenthesised sibling is NOT implicit', JSON.stringify(sup && sup.implicits));
+    ok(!!sup && !!sup.implicits && sup.implicits[0] === true, 'import: parenthesized box is implicit');
+    ok(!!sup && !!sup.implicits && !sup.implicits[1], 'import: its non-parenthesized sibling is NOT implicit', JSON.stringify(sup && sup.implicits));
     ok(!!sup && sup.implicits.length === sup.texts.length, 'import: implicits array stays parallel with texts');
     const obj = findByText(parsed.trees, 'Obj');
     ok(!!obj && obj.type === 'objection', 'import: nested objection type survives');
@@ -134,17 +135,24 @@ function findByText(trees, needle) {
     ok(again === text, 'round-trip: export -> import -> export is byte-identical',
         again === text ? '' : ('\n--- first ---\n' + text + '\n--- second ---\n' + again));
 
-    // --- 4. Legacy P labels still import ---------------------------------
+    // --- 4. Q and P: weak objection and weak rebuttal ---------------------
+    // P was once read as a legacy support letter. No map still uses it, so it
+    // now names a weak rebuttal (it Preserves the argument), beside Q for a
+    // weak objection (it Questions the argument).
     {
-        const legacy = ['M1: Main', '  M1P1: Old style support', '    M1P1O1: Old style objection'].join('\n');
-        const lp = parseOf(W, legacy);
-        const old = findByText(lp.trees, 'Old style support');
-        ok(!!old && old.type === 'support', 'legacy: a P label still imports as support', old && old.type);
-        const oldObj = findByText(lp.trees, 'Old style objection');
-        ok(!!oldObj && oldObj.type === 'objection', 'legacy: children of a P node still attach');
-        const upgraded = reexportOf(W, lp);
-        ok(upgraded.indexOf('M1S1: Old style support') >= 0 && upgraded.indexOf('M1P1') === -1,
-            'legacy: re-exporting an old map upgrades P to S', upgraded.replace(/\n/g, ' | '));
+        const weak = ['M1: Main', '  M1S1: Support', '    M1S1Q1: Weak objection',
+            '      M1S1Q1P1: Weak rebuttal', '      M1S1Q1S1: Backs the weak objection'].join('\n');
+        const wp = parseOf(W, weak);
+        const q = findByText(wp.trees, 'Weak objection');
+        ok(!!q && q.type === 'weak-objection', 'weak: Q imports as a weak objection', q && q.type);
+        const p = findByText(wp.trees, 'Weak rebuttal');
+        ok(!!p && p.type === 'weak-rebuttal', 'weak: P imports as a weak rebuttal, no longer as a support', p && p.type);
+        const s = findByText(wp.trees, 'Backs the weak objection');
+        ok(!!s && s.type === 'support', 'weak: a support under a weak objection keeps S', s && s.type);
+        const again = reexportOf(W, wp);
+        ok(again.indexOf('M1S1Q1: Weak objection') >= 0 && again.indexOf('M1S1Q1P1: Weak rebuttal') >= 0 &&
+           again.indexOf('M1S1Q1S1: Backs the weak objection') >= 0,
+            'weak: re-exporting writes Q and P back', again.replace(/\n/g, ' | '));
     }
 
     // --- 5. Parentheses are ignored where implicit cannot apply ----------
@@ -166,13 +174,13 @@ function findByText(trees, needle) {
             'free nodes: an implicit child of a free-floating root parses', kid && JSON.stringify(kid.implicits));
     }
 
-    // --- 7. Cross-references tolerate parenthesised endpoints ------------
+    // --- 7. Cross-references tolerate parenthesized endpoints ------------
     {
         const src = ['M1: Main', '  (M1S1a): A', '  M1S1b: B', '  M1S2: C', '', 'Cross-references:', '(M1S1a) > M1S2'].join('\n');
         const p = parseOf(W, src);
         const a = findByText(p.trees, 'A');
         ok(!!a && !!a.crossRefs && (a.crossRefs[0] || []).length === 1,
-            'cross-refs: a parenthesised source endpoint resolves', a && JSON.stringify(a.crossRefs));
+            'cross-refs: a parenthesized source endpoint resolves', a && JSON.stringify(a.crossRefs));
         const c = findByText(p.trees, 'C');
         ok(!!a && !!c && a.crossRefs[0][0].targetId === c.id, 'cross-refs: it points at the right target');
     }

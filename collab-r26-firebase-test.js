@@ -906,7 +906,7 @@ function ok(cond, label, detail) {
 
     // --- 27. Same-box popover + overview composers have distinct keys -----
     // Review finding: both carried loc-key "box|id|idx|", so a draft in one
-    // was dropped in favour of the other during a merge. The surface tag
+    // was dropped in favor of the other during a merge. The surface tag
     // ('pop'/'ov') disambiguates them.
     {
         const P = makeWin('composerkeys', cloud, {});
@@ -977,7 +977,7 @@ function ok(cond, label, detail) {
         const guid = GV.win.__argmap.collab.session.user.uid;
         const mem = room().members[guid];
         ok(mem && mem.role === 'viewer' && mem.displayName === 'Guest',
-            'guest: member record is labelled Guest for the owner', JSON.stringify(mem));
+            'guest: member record is labeled Guest for the owner', JSON.stringify(mem));
         ok(GV.win.eval('currentUser') === '',
             'guest: no display name, so the app’s anonymous path applies');
         await waitFor(() => A.win.__argmap.livePresence().some(p => p.anon && !p.me), 'owner sees an anonymous peer');

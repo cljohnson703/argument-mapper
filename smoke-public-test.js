@@ -41,7 +41,7 @@ function makeWin(label) {
 
     // --- Static hygiene checks (no boot needed) --------------------------
     ok(HTML.indexOf('Copyright (c)') >= 0 && HTML.indexOf('AGPL-3.0') >= 0,
-        'banner: copyright + AGPL licence notice present');
+        'banner: copyright + AGPL license notice present');
     ok(HTML.indexOf('WITHOUT WARRANTY OF ANY KIND') >= 0, 'banner: warranty disclaimer present');
     ok(/Complete corresponding source: \S+/.test(HTML), 'banner: source offer present (AGPL §13)');
     // Offline self-containment: no tag may FETCH anything over the network.
@@ -73,7 +73,7 @@ function makeWin(label) {
         'toggleImplicit', 'cutNode', 'copyNode', 'pasteNode', 'saveMap', 'manualLocalSave',
         'newMap', 'openStringMode', 'applyStringMode', 'toggleHelp', 'toggleCollabPanel',
         'closeCollabPanel', 'toggleEvalOverview', 'recenter', 'loadMap', 'importTextFile',
-        'toggleReviewMode', 'togglePresentMode', 'deleteSelected'];
+        'toggleReviewMode', 'togglePresentMode', 'deleteSelected', 'toggleFreePlacement', 'toggleColorKey'];
     const missing = handlerNames.filter(n => typeof W.win[n] !== 'function');
     ok(missing.length === 0, 'handlers: every inline-onclick function is still callable', 'missing: ' + missing.join(','));
 
@@ -137,19 +137,27 @@ function makeWin(label) {
     // Regression guard for a real build bug: the rename rewrote the static
     // definitions (`id="arrow-support"`, `.type-objection`) while the app
     // still builds those names at runtime (`arrow-${type}`, `node type-${t}`),
-    // so arrowheads disappeared and every node drew in the support colour.
+    // so arrowheads disappeared and every node drew in the support color.
     // jsdom applies no CSS, so this checks the CLASS/id wiring rather than the
-    // painted colour — the browser check in BUILD-AND-DEPLOY covers the paint.
+    // painted color — the browser check in BUILD-AND-DEPLOY covers the paint.
     {
         const dyn = W.win.eval(`
             __argmap.state.trees = [{ id:'m', type:'contention', texts:['Main'], collapsed:[], children:[
-                { id:'s', type:'support',   texts:['S'], collapsed:[], children:[] },
-                { id:'o', type:'objection', texts:['O'], collapsed:[], children:[] },
-                { id:'r', type:'rebuttal',  texts:['R'], collapsed:[], children:[] } ] }];
+                // The weak objection answers the support; the weak rebuttal
+                // answers the objection. Kinds are derived from the tree, so
+                // each must hang on the side that makes it what it is.
+                { id:'s', type:'support',   texts:['S'], collapsed:[], children:[
+                    { id:'b', type:'weak-objection', texts:['Q'], collapsed:[], children:[] } ] },
+                // The rebuttal attacks the objection. Kinds are derived from the
+                // tree, so a rebuttal aimed at the main contention would render
+                // as an objection and the classes would not be distinct.
+                { id:'o', type:'objection', texts:['O'], collapsed:[], children:[
+                    { id:'r', type:'rebuttal',  texts:['R'], collapsed:[], children:[] },
+                    { id:'g', type:'weak-rebuttal', texts:['P'], collapsed:[], children:[] } ] } ] }];
             __argmap.selectedIds = ['m-0'];
             cycleLabels(); cycleLabels(); cycleLabels();   // reserved handler; renders (render() itself is mangled)
             (function () {
-                var cls = ['s','o','r'].map(function (id) {
+                var cls = ['s','o','r','b','g'].map(function (id) {
                     var el = document.querySelector('[data-node-id="' + id + '"]');
                     return el ? el.className : 'MISSING';
                 });
@@ -175,7 +183,7 @@ function makeWin(label) {
             })();
         `);
         const d = JSON.parse(dyn);
-        ok(d.distinctTypeClasses === 3, 'runtime names: each node type gets its own class', JSON.stringify(d));
+        ok(d.distinctTypeClasses === 5, 'runtime names: each node type gets its own class (support, objection, rebuttal, weak objection, weak rebuttal)', JSON.stringify(d));
         ok(d.everyTypeStyled === true, 'runtime names: every type class still has a stylesheet rule', JSON.stringify(d));
         ok(d.everyMarkerResolves === true, 'runtime names: every arrowhead marker reference resolves', JSON.stringify(d));
     }

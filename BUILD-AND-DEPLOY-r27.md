@@ -27,13 +27,13 @@ DRM'd code looks like, and on a free tool it invites the question "what's being
 hidden here?" It also costs real runtime on a layout-heavy app, and it cannot
 protect against the thing that actually matters — someone copying the whole
 file wholesale, which needs no reading at all. Licensing and public provenance
-are the real defences there; see the note at the end.
+are the real defenses there; see the note at the end.
 
 An optional `--rename-vocabulary` pass exists (renames CSS custom properties,
 ids and hyphenated classes to opaque tokens). It is **off by default** and
 should stay that way unless you have a specific reason: it is the fragile part
 of the pipeline, because any name the app assembles at runtime — `arrow-${type}`
-for the SVG arrowheads, `` `node type-${node.type}` `` for the colour classes —
+for the SVG arrowheads, `` `node type-${node.type}` `` for the color classes —
 must be detected and exempted, and a miss breaks styling **silently**. It is
 guarded (the build aborts on an incomplete rename, and the smoke test asserts
 type classes and arrowhead markers still resolve), but off is the safer default.
@@ -51,10 +51,10 @@ type classes and arrowhead markers still resolve), but off is the safer default.
   at runtime**. This last category is the important one and cost a real bug:
   the app looks things up with constructed strings —
   `` getElementById(`arrow-${type}`) `` for the SVG arrowheads and
-  `` `node type-${node.type}` `` for the node colour classes. Renaming the
+  `` `node type-${node.type}` `` for the node color classes. Renaming the
   *static* definition (`id="arrow-support"`, `.type-objection`) while the
   lookup still builds the original name at runtime made every arrowhead vanish
-  and every node draw in the support colour. The build now detects these
+  and every node draw in the support color. The build now detects these
   prefixes (`arrow-`, `type-`, `status-`, `group-`, `drop-…`) and leaves the
   whole family intact so definition and lookup stay consistent. It prints them
   on every run. **If you ever add a new runtime-built name, the build will
@@ -112,7 +112,7 @@ node smoke-public-test.js argument-mapper-public.html
 detect a broken stylesheet rename. After a build, open
 `argument-mapper-public.html` in a real browser and confirm the app is styled
 (dark background, bordered nodes), the Collaborate dialog opens, and `P`
-(present mode) still greys out interaction. Those three exercise a custom
+(present mode) still grays out interaction. Those three exercise a custom
 property, a renamed id, and a JS-added renamed class respectively.
 
 (The behavioral suites run against the PRIVATE file, because they reach app
@@ -183,7 +183,7 @@ never touch them — someone working solo consumes no database quota at all.
 KaTeX is **embedded** in the build, and deliberately **pinned** — the app makes
 no network requests at runtime, so it cannot (and must not) check for updates
 itself. Doing so would break the "solo use sends nothing anywhere" guarantee
-and would let a third party change the app's behaviour after you shipped it.
+and would let a third party change the app's behavior after you shipped it.
 
 Update on your own schedule instead, with the test suite as the gate:
 

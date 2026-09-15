@@ -2,18 +2,18 @@
 // r27 export regressions.
 //
 // (1) SVG/PNG export lost every connector LINE while still showing the
-//     arrowheads. Cause: the live paths colour themselves with CSS custom
+//     arrowheads. Cause: the live paths color themselves with CSS custom
 //     properties — stroke="var(--color-support)" — which resolve against the
 //     page's :root. A standalone .svg file has no :root, so the stroke was
 //     invalid and painted nothing; the <marker> defs carry literal hex fills
 //     and render regardless of the path's stroke, which is why the arrowheads
 //     survived and the lines did not. The export now resolves var() to a real
-//     colour on the way out.
+//     color on the way out.
 //
 // (2) Saving went straight to the browser's Downloads folder. Saves now offer
 //     a real "Save As" dialog where the browser supports it
 //     (window.showSaveFilePicker), falling back to a download elsewhere, and
-//     a cancelled dialog must not claim the file was saved.
+//     a canceled dialog must not claim the file was saved.
 //
 // Run:  node export-r27-tests.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -60,7 +60,7 @@ const MAP = [{
 }];
 
 (async () => {
-    console.log('=== r27 export: connector colours + Save As ===');
+    console.log('=== r27 export: connector colors + Save As ===');
     const W = makeWin('exp');
     await sleep(360);
 
@@ -90,11 +90,11 @@ const MAP = [{
     ok(r.anyVarLeft === false, 'export: NO unresolved var() survives anywhere in the SVG',
         'strokes=' + JSON.stringify(r.strokes));
     ok(r.strokes.length > 0 && r.strokes.every(s => s !== '(none)' && !/^var\(/.test(s)),
-        'export: every connector has a literal stroke colour', JSON.stringify(r.strokes));
+        'export: every connector has a literal stroke color', JSON.stringify(r.strokes));
     ok(r.hasDefs && r.markerCount >= 4, 'export: arrowhead markers still included',
         'markers=' + r.markerCount);
 
-    // --- 2. Fallback value is honoured when a property is undefined ------
+    // --- 2. Fallback value is honored when a property is undefined ------
     const fb = W.win.eval(`
         (function () {
             var rs = getComputedStyle(document.documentElement);
@@ -105,8 +105,8 @@ const MAP = [{
             });
         })();
     `);
-    ok(fb.indexOf('#abcdef') >= 0, 'export: a var() fallback colour is used when the property is unset', fb);
-    ok(fb.indexOf('var(') === -1, 'export: an unset property with no fallback still resolves to a colour', fb);
+    ok(fb.indexOf('#abcdef') >= 0, 'export: a var() fallback color is used when the property is unset', fb);
+    ok(fb.indexOf('var(') === -1, 'export: an unset property with no fallback still resolves to a color', fb);
 
     // --- 3. Save As: uses the picker when the browser has one ------------
     {
@@ -146,11 +146,11 @@ const MAP = [{
         ok(o.res.saved === true && o.res.picked === true, 'save as: reports a real user-chosen save', JSON.stringify(o.res));
         ok(o.wrote === true, 'save as: the file contents are actually written');
         ok(o.suggested === 'My Great Map.json',
-            'save as: suggested filename comes from the map name, sanitised', String(o.suggested));
+            'save as: suggested filename comes from the map name, sanitized', String(o.suggested));
         S.win.close();
     }
 
-    // --- 4. Save As: a cancelled dialog must NOT claim success -----------
+    // --- 4. Save As: a canceled dialog must NOT claim success -----------
     {
         const C = makeWin('cancel', {
             beforeParse(win) {
@@ -169,7 +169,7 @@ const MAP = [{
             })();
         `);
         const o = JSON.parse(out);
-        ok(o.res.saved === false, 'save as: cancelling reports saved:false', JSON.stringify(o.res));
+        ok(o.res.saved === false, 'save as: canceling reports saved:false', JSON.stringify(o.res));
 
         // And through saveMap(), "Last Saved" must not move on a cancel.
         const t = await C.win.eval(`
@@ -179,7 +179,7 @@ const MAP = [{
                 return new Promise(function (r) { setTimeout(function () { r(String(lastSaveTime)); }, 60); });
             })();
         `);
-        ok(t === 'null', 'save as: a cancelled save does not update "Last Saved"', t);
+        ok(t === 'null', 'save as: a canceled save does not update "Last Saved"', t);
         C.win.close();
     }
 

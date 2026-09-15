@@ -67,7 +67,7 @@ minutes, entirely in the browser, and verifies the result. Invite links then
 carry that project's public identifiers, so *members* still need no setup at
 all. See `FIREBASE-SETUP-r26.md`.
 
-## Licence
+## License
 
 Copyright (c) 2026 C. L. Johnson.
 
@@ -77,7 +77,7 @@ Licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0) — see
 In short: you may use, study, share and modify this program freely. **If you run
 a modified version and let other people use it over a network, you must also
 offer them the complete corresponding source of your version under the same
-licence**, and preserve attribution to the original author (AGPL-3.0 §7(b)).
+license**, and preserve attribution to the original author (AGPL-3.0 §7(b)).
 
 The name **"Argument Mapper"** and the project's branding are **not** licensed
 and remain the author's. A fork must not present itself as this project.

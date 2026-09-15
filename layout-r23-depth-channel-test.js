@@ -68,6 +68,7 @@ try {
         ROUTE_MIN_STUB: 10,
         ROUTE_CORNER_RADIUS: 6,
         ROUTE_STROKE_CLEARANCE: 2.05,
+        ROUTE_LINE_CLEARANCE: Number((html.match(/const ROUTE_LINE_CLEARANCE = ([\d.]+)/) || [0, 2.05])[1]),
         NODE_ROUTE_CLEARANCE: 15 + 2.05 / 2,
         CENTER_X: 30000,
         CENTER_Y: 30000,

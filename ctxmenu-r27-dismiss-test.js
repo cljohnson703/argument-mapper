@@ -4,7 +4,7 @@
 // menu.  The menu used to close only on `mousedown`, which meant it survived
 // any press that landed on a node: the node's own pointerdown handler calls
 // preventDefault() (via initPointerDrag, to suppress text selection and touch
-// scrolling), and cancelling pointerdown suppresses the compatibility mouse
+// scrolling), and canceling pointerdown suppresses the compatibility mouse
 // events entirely.  It also stops propagation, so a bubble-phase document
 // listener would not have heard the press even if one had been dispatched.
 // The closer therefore listens on pointerdown in the capture phase.

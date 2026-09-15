@@ -246,7 +246,7 @@ function lineContacts(drawing) {
                 }
             }
             // STRAIGHT_THRESH can produce a nearly vertical diagonal. Use
-            // its exact centre-line intersection: a bounding-box proxy turns
+            // its exact center-line intersection: a bounding-box proxy turns
             // the legitimate route/fork source join into a false crossing.
             if ((oa === 'd' || ob === 'd') && !horizontal && !vertical) {
                 const contact = diagonalContact(a, b);
@@ -365,6 +365,10 @@ let siblingChecks = 0;
 let nonExactSettles = 0;
 let maxSettlePasses = 0;
 let maxPassesEntry = null;
+// r27: a parent whose lines cannot be routed has them all dropped on screen,
+// and lines of different fans must keep ROUTE_LINE_CLEARANCE apart.
+const unroutableSeeds = [];
+const crowdedSeeds = [];
 const suiteStarted = performance.now();
 
 for (let seed = SEED_START; seed < SEED_START + SEED_COUNT; seed++) {
@@ -379,7 +383,12 @@ for (let seed = SEED_START; seed < SEED_START + SEED_COUNT; seed++) {
         worstOffsetEntry = { seed, root, checked };
     }
     worstOffset = Math.max(worstOffset, checked.maxOffset || 0);
-    if (checked.clearance) siblingChecks += checked.clearance.sameParentSiblingChecks;
+    if (checked.clearance) {
+        siblingChecks += checked.clearance.sameParentSiblingChecks;
+        const drawing = checked.clearance.drawing;
+        if (drawing.allocations.some(allocation => !allocation.allocated)) unroutableSeeds.push(seed);
+        else if (harness.lineGapViolations(drawing).length) crowdedSeeds.push(seed);
+    }
     if (checked.result) {
         if (!checked.result.exact) nonExactSettles++;
         if ((checked.result.passes || 0) > maxSettlePasses) {
@@ -416,6 +425,12 @@ ok(counts['line-line'] === 0,
 ok(siblingChecks > 0,
     'CF6 randomized audit exercises same-parent outgoing routes against sibling statics',
     'checks=' + siblingChecks);
+ok(unroutableSeeds.length === 0,
+    'CF7 every parent\'s lines can be routed in every seed (none would be dropped)',
+    'seeds=' + unroutableSeeds.join(','));
+ok(crowdedSeeds.length === 0,
+    'CF8 lines of different fans keep ROUTE_LINE_CLEARANCE apart in every seed',
+    'seeds=' + crowdedSeeds.join(','));
 
 Object.keys(first).forEach(kind => {
     const entry = first[kind];

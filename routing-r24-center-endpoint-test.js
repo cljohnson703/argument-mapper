@@ -1,7 +1,7 @@
 'use strict';
 
 // Focused r24 regression: a singleton child targeting one statement of a
-// co-premise group must terminate at that statement's horizontal centre.
+// co-premise group must terminate at that statement's horizontal center.
 // This boots the shipped app and invokes its real render() and drawLines().
 //
 // Usage: node routing-r24-center-endpoint-test.js [path-to-html]

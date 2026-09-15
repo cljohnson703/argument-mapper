@@ -2,7 +2,7 @@
 
 // r25 regression: parent centering uses the visible outer edges of its
 // immediate children. For an unequal-width co-premise child, the outgoing
-// route must therefore leave the existing centre-to-centre fork bar at that
+// route must therefore leave the existing center-to-center fork bar at that
 // same edge midpoint; otherwise a centered singleton route bends needlessly.
 
 const fs = require('fs');
@@ -199,7 +199,7 @@ function horizontalForkBar(document, nodeId) {
             'pure routing source is the midpoint of unequal outer edges',
             'source=' + pureSource + ', expected=82.5');
         ok(Math.abs(pureSource - pureGeom.anchorCx) > 1,
-            'pure routing source is not the old outer-centre midpoint',
+            'pure routing source is not the old outer-center midpoint',
             'source=' + pureSource + ', old=' + pureGeom.anchorCx);
 
         dom = bootApp(source);
@@ -274,7 +274,7 @@ function horizontalForkBar(document, nodeId) {
                 'd=' + route.d);
             ok(Math.abs(bar.start.x - firstCenter) <= EPS &&
                     Math.abs(bar.end.x - lastCenter) <= EPS,
-                prefix + ' fork bar still spans the premise-box centres',
+                prefix + ' fork bar still spans the premise-box centers',
                 'bar=' + bar.d);
         }
 
