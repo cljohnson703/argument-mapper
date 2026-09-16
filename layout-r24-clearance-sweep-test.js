@@ -73,7 +73,7 @@ try {
     ROUTE_LINE_CLEARANCE = numericConstant(html, 'ROUTE_LINE_CLEARANCE', ROUTE_STROKE_CLEARANCE);
     const names = [
         'collapsedList', 'boxOf', 'vgapForDepth', 'resolveRowPositions',
-        'routeSegmentDistance', 'routeSegmentTouchesRect',
+        'routeSegmentDistance', 'routeSegmentsWithin', 'routeSegmentTouchesRect',
         'statementFanRouteSegments', 'statementFanCornerRects', 'statementFanGeometry',
         'routeRectsWithinClearance', 'statementFanGeometriesConflict',
         'allocateStatementFanBands',

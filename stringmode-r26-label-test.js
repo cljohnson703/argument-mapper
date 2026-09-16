@@ -92,8 +92,9 @@ function findByText(trees, needle) {
     console.log('=== r26 String Mode labels: S for support, () for implicit ===');
 
     // --- 1. Export uses S, and parenthesizes implicit boxes --------------
+    // (A note stands alone since r27, so it is a tree of its own beside the map.)
     const TREES = [{
-        id: 'root', type: 'contention', texts: ['Main'], collapsed: [], children: [
+        id: 'root', type: 'contention', texts: ['Main'], collapsed: [], x: 30000, y: 30000, children: [
             {
                 id: 'sup', type: 'support', texts: ['Prem A', 'Prem B'],
                 implicits: [true, false], collapsed: [], children: [
@@ -101,10 +102,9 @@ function findByText(trees, needle) {
                         { id: 'reb', type: 'rebuttal', texts: ['Reb'], collapsed: [], children: [] }
                     ] }
                 ]
-            },
-            { id: 'note1', type: 'note', texts: ['Note text'], collapsed: [], children: [] }
+            }
         ]
-    }];
+    }, { id: 'note1', type: 'note', texts: ['Note text'], collapsed: [], children: [], x: 29715, y: 30195, freePosition: true }];
     const text = exportOf(W, TREES);
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     ok(text.indexOf('P1') === -1, 'export: no legacy P labels remain', text.replace(/\n/g, ' | '));
@@ -113,7 +113,7 @@ function findByText(trees, needle) {
     ok(lines.includes('M1S1b: Prem B'), 'export: the non-implicit co-premise has NO parentheses');
     ok(lines.includes('M1S1aO1: Obj'), 'export: objection nests under the S-labeled support');
     ok(lines.includes('M1S1aO1R1: Reb'), 'export: rebuttal chain uses S in its ancestry');
-    ok(lines.includes('M1N1: Note text'), 'export: note keeps N');
+    ok(lines.includes('N1: Note text'), 'export: note keeps N');
 
     // --- 2. Import reads S labels and parentheses ------------------------
     const parsed = parseOf(W, text);

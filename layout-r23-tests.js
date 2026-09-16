@@ -79,6 +79,7 @@ try {
         'vgapForDepth',
         'resolveRowPositions',
         'routeSegmentDistance',
+        'routeSegmentsWithin',
         'routeSegmentTouchesRect',
         'statementFanRouteSegments',
         'statementFanCornerRects',
@@ -118,6 +119,7 @@ try {
         ${fn.vgapForDepth}
         ${fn.resolveRowPositions}
         ${fn.routeSegmentDistance}
+        ${fn.routeSegmentsWithin}
         ${fn.routeSegmentTouchesRect}
         ${fn.statementFanRouteSegments}
         ${fn.statementFanCornerRects}

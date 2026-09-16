@@ -71,7 +71,7 @@ function geometryFor(root) {
 try {
     const html = fs.readFileSync(FILE, 'utf8');
     const names = ['collapsedList', 'boxOf', 'vgapForDepth', 'resolveRowPositions',
-        'routeSegmentDistance', 'routeSegmentTouchesRect', 'statementFanRouteSegments',
+        'routeSegmentDistance', 'routeSegmentsWithin', 'routeSegmentTouchesRect', 'statementFanRouteSegments',
         'statementFanCornerRects', 'statementFanGeometry', 'routeRectsWithinClearance',
         'statementFanGeometriesConflict',
         'allocateStatementFanBands', 'shiftedStatementFanPlans',
@@ -101,6 +101,7 @@ try {
         ${fn.vgapForDepth}
         ${fn.resolveRowPositions}
         ${fn.routeSegmentDistance}
+        ${fn.routeSegmentsWithin}
         ${fn.routeSegmentTouchesRect}
         ${fn.statementFanRouteSegments}
         ${fn.statementFanCornerRects}

@@ -102,16 +102,16 @@ function findByText(trees, needle) {
     return hit;
 }
 
+// (A note stands alone since r27, so it is a tree of its own beside the map.)
 const TREES = [{
-    id: 'root', type: 'contention', texts: ['Main'], collapsed: [], children: [
+    id: 'root', type: 'contention', texts: ['Main'], collapsed: [], x: 30000, y: 30000, children: [
         {
             id: 'sup', type: 'support', texts: ['Axiom A', 'Ordinary B', 'Both C'],
             givens: [true, false, true], implicits: [false, false, true],
             collapsed: [], children: []
-        },
-        { id: 'note1', type: 'note', texts: ['Note text'], collapsed: [], children: [] }
+        }
     ]
-}];
+}, { id: 'note1', type: 'note', texts: ['Note text'], collapsed: [], children: [], x: 29715, y: 30195, freePosition: true }];
 
 (async () => {
     console.log('=== r27 Given / axiom premises ===');

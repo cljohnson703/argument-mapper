@@ -75,7 +75,7 @@ ok(C.ROUTE_RENDER_SLACK > 0 && C.ROUTE_RENDER_SLACK <= 0.5, 'rendering forgives 
 }
 
 /* ---------------- sandbox ---------------- */
-const names = ['routeSegmentDistance', 'routeSegmentTouchesRect', 'statementFanRouteSegments', 'statementFanCornerRects',
+const names = ['routeSegmentDistance', 'routeSegmentsWithin', 'routeSegmentTouchesRect', 'statementFanRouteSegments', 'statementFanCornerRects',
     'statementFanGeometry', 'routeRectsWithinClearance', 'statementFanGeometriesConflict', 'allocateStatementFanBands',
     'shiftedStatementFanPlans', 'minimumStatementFanChildShift'];
 const sandbox = { Math, Object, Array, JSON, Map, Set, Number, isFinite, Infinity };

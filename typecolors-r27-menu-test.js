@@ -4,15 +4,16 @@
 // A co-premise joins the selected box's own argument, so every way of adding
 // one wears that box's look: the + buttons either side of the box, the
 // toolbar's Add Co-Premise, and the dot beside Add Co-Premise in the context
-// menu. Red in an objection, orange in a rebuttal, a note's yellow for a
-// note, white (the main argument's line color) otherwise -- and dashed inside
-// a weak branch. (They were always blue before.) The + under a selected box
-// opens a choice of boxes, so it wears the selection blue instead.
+// menu. Red in an objection, orange in a rebuttal, white (the main argument's
+// line color) otherwise -- and dashed inside a weak branch. (They were always
+// blue before.) The + under a selected box opens a choice of boxes, so it
+// wears the selection blue instead. A note stands alone and gets no + at all.
 // The toolbar's Add Nodes and Change Type buttons are drawn as the boxes they
 // make, as the canvas draws them: background, text color, and border color and
-// style -- a note as a note, Implicit see-through and faded, Given tinted.
+// style -- a note as a note, Implicit see-through with a faded border and a
+// mini IMPLICIT tag (its label nearly as bright as the rest), Given tinted.
 // Their border is 1.5px, and a disabled one fades far enough, and loses its
-// color, to tell it from Implicit's already faint look.
+// color, to be unmistakable.
 // The context menu's Change Type buttons preview the box each would make in
 // the canvas's own colors: the node text color, and the border color and
 // style that box would have. The box's current type is marked the way the
@@ -152,25 +153,23 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         ok(both('R1', 'action-rebuttal') && both('RS', 'action-rebuttal'), 'on a rebuttal, and a support inside one, orange', J([b.R1, b.RS]));
         ok(both('B1', 'action-objection action-weak-branch') && both('BS', 'action-objection action-weak-branch'),
             'on a weak objection, and a support inside it, red and dashed', J([b.B1, b.BS]));
-        ok(both('NT', 'action-note'), 'on a note, a note\'s yellow', J(b.NT));
+        ok(Array.isArray(b.NT) && b.NT.length === 0, 'a note has none: it stands alone', J(b.NT));
         ok(Array.isArray(b.M) && b.M.length === 0, 'a main contention still has none', J(b.M));
-        ok(!/\.action-copremise\s*\{/.test(CSS) && !/#42a5f5/i.test(CSS) &&
-           /\.node-action-btn\.action-note\s*\{\s*border-color:\s*var\(--accent-note\);\s*color:\s*var\(--accent-note\)/.test(CSS),
-            'the blue is gone from the stylesheet, and notes have a + color');
+        ok(!/\.action-copremise\s*\{/.test(CSS) && !/#42a5f5/i.test(CSS) && !/\.node-action-btn\.action-note/.test(CSS),
+            'the blue is gone from the stylesheet, and so is the note + color no button uses');
         ok(/\.node-action-btn\.action-support\s*\{\s*border-color:\s*var\(--color-line\);\s*color:\s*var\(--color-line\)/.test(CSS),
             'a support\'s + is drawn in the main argument\'s line color: white, like the box\'s border (dark in the light theme)');
 
         const one = (k) => (below[k] || []).map(x => x.cls);
-        ok(J(one('S1')) === J(['action-chooser']) && J(one('NT')) === J(['action-chooser']) && J(one('M')) === J(['action-chooser']),
-            'the + under a selected box is the chooser, on every kind of box', J([one('S1'), one('NT'), one('M')]));
+        ok(J(one('S1')) === J(['action-chooser']) && J(one('M')) === J(['action-chooser']) && J(one('NT')) === J([]),
+            'the + under a selected box is the chooser, on every box but a note', J([one('S1'), one('NT'), one('M')]));
         ok(/\.node-action-btn\.action-chooser\s*\{\s*border-color:\s*var\(--color-selected\);\s*color:\s*var\(--color-selected\)/.test(CSS),
             'the chooser is blue, the selection color, since it offers a choice rather than one box');
         ok(J(one('S1+')) === J(['action-support', 'action-objection', 'action-weak-objection']) && J(one('M+')) === J(['action-support', 'action-objection', 'action-weak-objection']),
             'opened on a support (or the contention): a white support, a red objection, a dashed weak objection', J([one('S1+'), one('M+')]));
         ok(J(one('O1+')) === J(['action-support action-objection', 'action-rebuttal', 'action-weak-rebuttal']),
             'opened on an objection: its support red (the objection wins over white), then the rebuttals', J(one('O1+')));
-        ok(J(one('NT+')) === J(['action-note']) && /^Add Note \(Alt\+Enter\)$/.test(((below['NT+'] || [])[0] || {}).title || ''),
-            'opened on a note it offers only a note: a note holds only notes', J(below['NT+']));
+        ok(J(one('NT+')) === J([]), 'a note never gets the chooser, opened or not: nothing is added to a note', J(below['NT+']));
         const at = (sel) => { const i = CSS.indexOf(sel); return i < 0 ? Infinity : i; };
         ok(at('.node-action-btn.action-support') < at('.node-action-btn.action-objection') && at('.node-action-btn.action-support') < at('.node-action-btn.action-rebuttal'),
             'the white support rule comes first, so a support inside an objection or rebuttal still takes that color');
@@ -219,9 +218,20 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
             'Add Note and Note are drawn as notes');
         ok(!/#new-node-btn\s*\{/.test(CSS) && !/neutral/.test(CSS),
             'New Node has no look of its own: it makes a plain support, the default look, and the untyped gray is gone');
-        ok(/#btn-implicit\s*\{\s*--look-bg:\s*transparent;\s*--look-text:\s*var\(--implicit-text\);\s*--look-edge:\s*var\(--line-faded\)/.test(CSS) &&
+        ok(/#btn-implicit\s*\{\s*--look-bg:\s*transparent;\s*--look-text:\s*var\(--implicit-button-text\);\s*--look-edge:\s*var\(--line-faded\);\s*position:\s*relative/.test(CSS) &&
            /#btn-given\s*\{\s*--look-bg:\s*var\(--color-given-bg\)/.test(CSS) && !/--btn-given-bg/.test(HTML),
-            'Implicit is see-through with a faded border and faint text; Given wears the canvas tint');
+            'Implicit is see-through with a faded border; Given wears the canvas tint');
+        const tag = CSS.match(/#btn-implicit::after\s*\{([^}]*)\}/);
+        ok(!!tag && /content:\s*'Implicit'/.test(tag[1]) && /text-transform:\s*uppercase/.test(tag[1]) && /top:\s*0/.test(tag[1]) &&
+           /border:\s*1px solid var\(--implicit-tag-border\)/.test(tag[1]) && /color:\s*var\(--implicit-tag-text\)/.test(tag[1]) &&
+           /background:\s*var\(--panel-bg/.test(tag[1]) && /body\.bg-light #btn-implicit::after\s*\{\s*background:\s*#f0f0f0/.test(CSS),
+            'Implicit wears a mini IMPLICIT tag across its top border, in the canvas tag\'s colors, masking the border with the toolbar\'s background', tag ? tag[1] : 'no rule');
+        const hex = (s) => parseInt(s.slice(1, 3), 16);
+        const darkBtn = (CSS.match(/:root \{[\s\S]*?--implicit-button-text:\s*(#[0-9a-f]{6})/i) || [])[1];
+        const darkFaint = (CSS.match(/:root \{[\s\S]*?--implicit-text:\s*(#[0-9a-f]{6})/i) || [])[1];
+        const lightBtn = (CSS.match(/body\.nodes-light \{[^}]*--implicit-button-text:\s*(#[0-9a-f]{6})/i) || [])[1];
+        ok(!!darkBtn && !!darkFaint && hex(darkBtn) >= 0xe0 && hex(darkBtn) > hex(darkFaint) && !!lightBtn && hex(lightBtn) <= 0x33,
+            'its label is only a shade off the other labels (' + darkBtn + ' dark, ' + lightBtn + ' light), brighter than an implicit box\'s faint text (' + darkFaint + ')');
         ok(BODY.indexOf('style="color:#ff7563') < 0 && BODY.indexOf('accent-note-border);"') < 0, 'the old colored-text inline styles are gone');
 
         const dis = CSS.match(/#toolbar \.toolbar-group button\.node-look:disabled\s*\{([^}]*)\}/);
@@ -270,13 +280,14 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
                 var item = Array.prototype.slice.call(document.querySelectorAll('#context-menu .ctx-item')).find(function (b) { return /^Add Co-Premise/.test(b.textContent.trim()); });
                 var dot = item && item.querySelector('.ctx-dot');
                 out[id] = dot ? dot.getAttribute('style') : null;
+                out[id + ':off'] = item ? item.disabled : null;
                 hideContextMenu();
             });
             return out;`);
         ok(/var\(--color-line\)/.test(m.S1 || '') && /var\(--color-line\)/.test(m.FS || '') && /#f44336/.test(m.O1 || '') && /#ff9800/.test(m.R1 || '') && /#ff9800/.test(m.RS || ''),
             'its dot is white on a plain support, red on an objection, orange in a rebuttal', J(m));
-        ok(/#f44336/.test(m.B1 || '') && /#f44336/.test(m.BS || '') && /accent-note/.test(m.NT || ''),
-            'red in a weak objection, yellow on a note', J(m));
+        ok(/#f44336/.test(m.B1 || '') && /#f44336/.test(m.BS || '') && m['NT:off'] === true && m['S1:off'] === false,
+            'red in a weak objection; on a note it is grayed out, since a note stands alone', J(m));
     }
 
     /* ---------------- 4. Change Type buttons ---------------- */

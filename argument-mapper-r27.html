@@ -66,6 +66,9 @@
            (6.4:1 on the see-through given tint), where regular text is
            15.5:1 -- plainly dimmer, still comfortably readable. */
         --implicit-text: #b3b3b3;
+        /* The Implicit toolbar button's label: just under the other labels'
+           white, so the button reads as available. */
+        --implicit-button-text: #e6e6e6;
         --implicit-tag-text: #c9c9c9;
         --implicit-tag-border: #717b80;
         --note-bg: #4a4118;
@@ -125,6 +128,7 @@
         --color-given-bg: #c9e5d3;
         --color-given-see-through: rgba(201, 229, 211, 0.6);
         --implicit-text: #505050;   /* 7.1:1 on the light canvas, 6.4:1 on the tint; regular text 15.3:1 */
+        --implicit-button-text: #2e2e2e;
         --note-border: #b5a23d;
     }
     body.nodes-light .node-label { color: #555; }
@@ -359,9 +363,20 @@
     /* The attack buttons start as objections, until a selection says. */
     #btn-add-obj, #btn-type-obj, #btn-add-weak, #btn-type-weak { --look-edge: var(--line-objection); }
     #btn-add-weak, #btn-type-weak { --look-style: dashed; }
-    /* The two premise modifiers: Implicit see-through, with a faded border and
-       faint text; Given in its green tint. */
-    #btn-implicit { --look-bg: transparent; --look-text: var(--implicit-text); --look-edge: var(--line-faded); }
+    /* The two premise modifiers: Implicit see-through, with a faded border
+       and a mini IMPLICIT tag across it, as the canvas draws the box; Given in
+       its green tint. Implicit's label is only a shade under the other
+       buttons' (the box's own faint text read as a disabled button), and the
+       tag masks the border with the toolbar's own background, as the canvas
+       tag masks the box border with the box's. */
+    #btn-implicit { --look-bg: transparent; --look-text: var(--implicit-button-text); --look-edge: var(--line-faded); position: relative; }
+    #btn-implicit::after {
+        content: 'Implicit'; position: absolute; top: 0; right: 7px; transform: translateY(-58%);
+        font-size: 7px; line-height: 8px; letter-spacing: 0.35px; text-transform: uppercase; white-space: nowrap;
+        padding: 0 3px; border-radius: 2px; border: 1px solid var(--implicit-tag-border);
+        background: var(--panel-bg, #2d2d30); color: var(--implicit-tag-text); pointer-events: none;
+    }
+    body.bg-light #btn-implicit::after { background: #f0f0f0; }
     #btn-given { --look-bg: var(--color-given-bg); }
     /* No explicit line break separates the type toggles from the two
        modifiers: at these label widths the group already wraps to
@@ -978,10 +993,10 @@
     .node-action-btn.action-weak-rebuttal  { border-color: #ffa726; color: #ffa726; border-style: dashed; }
     /* A support added inside a weak branch shows the branch's dashed edge. */
     .node-action-btn.action-weak-branch    { border-style: dashed; }
-    .node-action-btn.action-note       { border-color: var(--accent-note); color: var(--accent-note); }
     /* The co-premise buttons (.action-copremise) have no color of their own:
        they take the selected box's, through the classes above, since a
-       co-premise joins that box's argument (see coPremiseActionClass). */
+       co-premise joins that box's argument (see coPremiseActionClass). A
+       note gets no + buttons: it stands alone. */
 
     .node-action-expanded .node-action-btn {
         animation: nodeActionPop 0.15s ease-out;
@@ -1073,6 +1088,8 @@
 
     /* Spatial Drop Zones (Inset shadows prevent jitter) */
     .drop-child { box-shadow: inset 0 -6px 0 var(--color-selected) !important; }
+    /* Dropped above a box, the dragged box becomes its parent: the bar is on top. */
+    .drop-parent { box-shadow: inset 0 6px 0 var(--color-selected) !important; }
     .drop-copremise-left { box-shadow: inset 6px 0 0 var(--color-selected) !important; }
     .drop-copremise-right { box-shadow: inset -6px 0 0 var(--color-selected) !important; }
     .drop-sibling-left { box-shadow: -6px 0 0 var(--color-selected) !important; }
@@ -1898,14 +1915,14 @@
             <button id="btn-add-co" class="node-look" onclick="addCoPremise()" title="Add a co-premise beside the selected box: Tab adds it on the right, Shift+Tab on the left.">Add Co-Premise <span class="hotkey">Tab</span></button>
             <button id="btn-add-obj" class="node-look" onclick="addChild('objection')" title="Attack the selected premise. The app picks the kind: a Rebuttal against a red premise, an Objection against a white or orange one">Add Objection <span class="hotkey">Shift+Enter</span></button>
             <button id="btn-add-weak" class="node-look" onclick="addChild('weak-objection')" title="Weakly attack the selected premise: deny it without endorsing its negation. The app picks the kind: a Weak Rebuttal against a red premise, a Weak Objection against a white or orange one">Add Weak Objection <span class="hotkey">Ctrl+Enter</span></button>
-            <button id="btn-add-not" class="node-look" onclick="addChild('note')">Add Note <span class="hotkey">Alt+Enter</span></button>
+            <button id="btn-add-not" class="node-look" onclick="addNote()" title="Add a note beside the selected box. A note stands alone: it connects to nothing (Alt+Enter)">Add Note <span class="hotkey">Alt+Enter</span></button>
         </div>
         <div class="toolbar-group" id="group-change-type">
             <span class="toolbar-group-label">Change Type</span>
             <button id="btn-type-sup" class="node-look" onclick="changeSelectedTypes('support')" title="Change the selected premises to Support (S)">Support <span class="hotkey">S</span></button>
             <button id="btn-type-obj" class="node-look" onclick="changeSelectedTypes('objection')" title="Make the selected premises attack their parent. The app picks the kind">Objection <span class="hotkey">O</span></button>
             <button id="btn-type-weak" class="node-look" onclick="changeSelectedTypes('weak-objection')" title="Make the selected premises weakly attack their parent: deny it without endorsing its negation. The app picks the kind">Weak Objection <span class="hotkey">W</span></button>
-            <button id="btn-type-note" class="node-look" onclick="changeSelectedTypes('note')" title="Change the selected premises to Note (N)">Note <span class="hotkey">N</span></button>
+            <button id="btn-type-note" class="node-look" onclick="changeSelectedTypes('note')" title="Change the selected boxes to notes (N). A note stands alone, so each loses its connections">Note <span class="hotkey">N</span></button>
             <button id="btn-implicit" class="node-look" onclick="toggleImplicit()" title="Toggle implicit premise — a see-through box with a faded border, fainter text and an IMPLICIT tag (I)">Implicit <span class="hotkey">I</span></button>
             <button id="btn-given" class="node-look" onclick="toggleGiven()" title="Toggle given / axiom — a premise taken as self-evident, receiving no further justification (G)">Given <span class="hotkey">G</span></button>
             <button id="btn-main" class="node-look" onclick="changeSelectedTypes('contention')" title="Change the selected premises to a Main Contention (U)">Main <span class="hotkey">U</span></button>
@@ -1937,15 +1954,13 @@
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">File</span>
-            <button onclick="saveMap()" title="Save to the linked file (or choose one the first time). Chrome/Edge write straight to your file; other browsers download a copy.">Save to File <span class="hotkey">Ctrl+S</span></button>
+            <button onclick="saveMap()" title="Save to the file this map was opened from or last saved to (or choose one the first time). Chrome/Edge write straight to your file; other browsers download a copy.">Save to File <span class="hotkey">Ctrl+S</span></button>
             <button onclick="saveMapAs()" title="Choose a new file and location for this map">Save As… <span class="hotkey">Ctrl+Shift+S</span></button>
             <button onclick="toggleRecentMaps()" title="Maps stored in this browser — switch between them">Recent Maps…</button>
             <button id="collab-btn" onclick="toggleCollabPanel()" title="Share this map for live collaboration, or open a map someone shared with you">Collaborate</button>
             <button id="new-map-btn" onclick="newMap()" title="Start a new map. The current one stays in Recent Maps">New</button>
-            <label class="file-upload-label">
-                Open File... <span class="hotkey">JSON</span>
-                <input type="file" accept=".json" onchange="loadMap(event)">
-            </label>
+            <button id="open-file-btn" onclick="openMapFile()" title="Open a saved map (JSON). In Chrome and Edge the map stays linked to that file, so Ctrl+S saves straight back to it">Open File... <span class="hotkey">JSON</span></button>
+            <input type="file" id="open-file-input" accept=".json" onchange="loadMap(event)">
             <button id="shortcuts-btn" onclick="toggleShortcutBar()" title="Advanced tools and keyboard shortcuts — click Help for the full reference">&#9432; Advanced</button>
             <button id="help-btn" onclick="toggleHelp()" title="Help (/)">Help <span class="hotkey">/</span></button>
             <button id="toolbar-position-btn" onclick="toggleToolbarPosition()" title="Move toolbar to left / top" style="font-size:14px; padding:4px 8px;">⇄</button>
@@ -2128,10 +2143,10 @@
         <span class="hint">LaTeX also works bare: <kbd>\textbf{…}</kbd> <kbd>\frac{a}{b}</kbd> <kbd>\alpha</kbd> (plain <kbd>x^2</kbd> still needs <kbd>$…$</kbd>). Select text and right-click to link it; right-click a link to open, copy, edit, or unlink it.<br>
         <strong>Escape formatting</strong> — to keep markup as literal text: put <kbd>\</kbd> before any marker (<kbd>\*not italic\*</kbd>, and <kbd>\\</kbd> for a literal backslash), or <kbd>!</kbd> immediately before a whole element (<kbd>!**stays plain**</kbd>, <kbd>!http://ex.com</kbd> for a bare URL that shouldn't link). The escape character is consumed. Untick <strong>Rich text</strong> in the toolbar to type plain text everywhere — nodes and evaluation comments alike — and to show existing content raw for copying markup out; re-ticking never reformats what was already committed.</span></p>
         <h2>Editing</h2>
-        <p><kbd>Enter</kbd> Support &nbsp; <kbd>Shift+Enter</kbd> Objection or Rebuttal &nbsp; <kbd>Ctrl+Enter</kbd> Weak Objection or Weak Rebuttal &nbsp; <kbd>Alt+Enter</kbd> Note &nbsp; <kbd>Tab</kbd> co-premise &nbsp; <kbd>Shift+Tab</kbd> co-premise on the left<br>
-        <kbd>S</kbd> support &nbsp; <kbd>O</kbd> Objection or Rebuttal &nbsp; <kbd>W</kbd> Weak Objection or Weak Rebuttal &nbsp; <kbd>N</kbd> note &nbsp; <kbd>U</kbd> main contention &nbsp; <kbd>E</kbd> evaluation &nbsp; <kbd>I</kbd> implicit &nbsp; <kbd>G</kbd> given &nbsp; <kbd>A</kbd> new node at cursor &nbsp; <kbd>Shift+A</kbd> the same, placed the other way &nbsp; <kbd>Shift+F</kbd> placement snap/free &nbsp; <kbd>[</kbd>/<kbd>]</kbd> overlap &nbsp; <kbd>Del</kbd> delete &nbsp; <kbd>Esc</kbd> cancel<br>
+        <p><kbd>Enter</kbd> Support &nbsp; <kbd>Shift+Enter</kbd> Objection or Rebuttal &nbsp; <kbd>Ctrl+Enter</kbd> Weak Objection or Weak Rebuttal &nbsp; <kbd>Alt+Enter</kbd> note beside the box &nbsp; <kbd>Tab</kbd> co-premise &nbsp; <kbd>Shift+Tab</kbd> co-premise on the left<br>
+        <kbd>S</kbd> support &nbsp; <kbd>O</kbd> Objection or Rebuttal &nbsp; <kbd>W</kbd> Weak Objection or Weak Rebuttal &nbsp; <kbd>N</kbd> turn into a note &nbsp; <kbd>U</kbd> main contention &nbsp; <kbd>E</kbd> evaluation &nbsp; <kbd>I</kbd> implicit &nbsp; <kbd>G</kbd> given &nbsp; <kbd>A</kbd> new node at cursor &nbsp; <kbd>Shift+A</kbd> the same, placed the other way &nbsp; <kbd>Shift+F</kbd> placement snap/free &nbsp; <kbd>[</kbd>/<kbd>]</kbd> overlap &nbsp; <kbd>Del</kbd> delete &nbsp; <kbd>Esc</kbd> cancel<br>
         <kbd>Ctrl+Z</kbd>/<kbd>Y</kbd> undo/redo &nbsp; <kbd>Ctrl+X</kbd>/<kbd>C</kbd>/<kbd>V</kbd> cut/copy/paste &nbsp; <kbd>Ctrl+Shift+V</kbd> paste as co-premise &nbsp; <kbd>Ctrl+S</kbd> save &nbsp; <kbd>Ctrl+Shift+S</kbd> save as &nbsp; <kbd>Ctrl+A</kbd> select all &nbsp; <kbd>Ctrl+Shift+L/E/R</kbd> align<br>
-        <span class="hint">The app picks between Objection and Rebuttal, weak or not, from what the new box answers (see Colors); <kbd>O</kbd> turns a weak one back into an ordinary one. A <strong>note</strong> can hang from any box, but holds only other notes: supports, objections and rebuttals go under premises, not notes. <strong>Placement</strong> (Change Type) decides where new nodes, and nodes dropped in empty space, end up: <strong>Snap</strong> lets the layout arrange them, <strong>Free</strong> leaves them exactly where you put them. Holding <kbd>Shift</kbd> while placing a node does the opposite of the setting — <kbd>Shift+A</kbd>, a Shift-click to place with New Node or from the canvas menu, or a Shift-drop. <kbd>Alt+S/O/W/N/U/C</kbd> retag or re-center without leaving the text field. <kbd>Esc</kbd> while editing discards that edit — the text reverts to what it was before you started.</span></p>
+        <span class="hint">The app picks between Objection and Rebuttal, weak or not, from what the new box answers (see Colors); <kbd>O</kbd> turns a weak one back into an ordinary one. A <strong>note</strong> stands alone: it connects to nothing, and nothing connects to it. <strong>Add Note</strong> puts one beside the selected box, and <kbd>N</kbd> turns boxes into notes, cutting their lines; they stay where they were. <strong>Placement</strong> (Change Type) decides where new nodes, and nodes dropped in empty space, end up: <strong>Snap</strong> lets the layout arrange them, <strong>Free</strong> leaves them exactly where you put them. Holding <kbd>Shift</kbd> while placing a node does the opposite of the setting — <kbd>Shift+A</kbd>, a Shift-click to place with New Node or from the canvas menu, or a Shift-drop. <kbd>Alt+S/O/W/N/U/C</kbd> retag or re-center without leaving the text field. <kbd>Esc</kbd> while editing discards that edit — the text reverts to what it was before you started.</span></p>
         <h2>Colors</h2>
         <p>A color says which <strong>argument</strong> a box belongs to. You never pick it: it follows from where the box sits.<br>
         <span class="key-swatch key-main"></span> <strong>White</strong> (dark gray in the light theme) — the main argument: the main contention and everything supporting it.<br>
@@ -2150,7 +2165,7 @@
         <h2>View</h2>
         <p><kbd>C</kbd> center &nbsp; <kbd>Z</kbd> fit &nbsp; <kbd>−</kbd>/<kbd>+</kbd> zoom &nbsp; <kbd>B</kbd> breadth: narrow/wide &nbsp; <kbd>L</kbd> labels &nbsp; <kbd>D</kbd> depth guides &nbsp; <kbd>T</kbd> theme &nbsp; <kbd>M</kbd> minimap &nbsp; <kbd>X</kbd> toolbar &nbsp; <kbd>V</kbd> evaluation &nbsp; <kbd>P</kbd> present &nbsp; <kbd>F</kbd> focus &nbsp; <kbd>/</kbd> help &nbsp; <kbd>←↑↓→</kbd> pan</p>
         <h2>Drag, Drop &amp; Resize</h2>
-        <p>Drag to move (selected nodes move together) &nbsp; Side-drop = co-premise &nbsp; Below-drop = child &nbsp; <kbd>Shift</kbd>-drop = no connection, placed opposite to Placement (stays put under Snap, snaps into the layout under Free) &nbsp; Empty-space drop = snaps into the layout, or stays put with Placement: Free &nbsp; <kbd>Alt</kbd>-drop = leave unselected children &nbsp; <kbd>Shift</kbd>-drag canvas = marquee &nbsp; Fork bar = select group<br>
+        <p>Drag to move (selected nodes move together) &nbsp; Side-drop = co-premise &nbsp; Below-drop = child &nbsp; Above-drop = parent (the dropped box takes the other's place, and the other hangs from it) &nbsp; <kbd>Shift</kbd>-drop = no connection, placed opposite to Placement (stays put under Snap, snaps into the layout under Free) &nbsp; Empty-space drop = snaps into the layout, or stays put with Placement: Free &nbsp; <kbd>Alt</kbd>-drop = leave unselected children &nbsp; <kbd>Shift</kbd>-drag canvas = marquee &nbsp; Fork bar = select group<br>
         Drag the bottom-right grip to set width — <kbd>Shift</kbd> snaps to the grid, double-click resets. Width syncs and undoes; height always fits the text.</p>
         <h2>Cross-References</h2>
         <p>Right-click a premise → <strong>Add Cross-Reference…</strong>, then click the target (<kbd>Esc</kbd> cancels). The <strong>↗</strong> badge jumps to the target; right-click it to remove. References follow moves and reorders.</p>
@@ -2168,7 +2183,7 @@
         <h2>Saving</h2>
         <p><strong>Two different things are called "saving":</strong><br>
         <strong>Autosave</strong> and <strong>Save now</strong> keep a copy <strong>inside this browser</strong>. It survives closing the tab or rebooting, and it is what restores your map when you come back — but it is invisible to you, no backup will capture it, and it does not travel to another browser or computer.<br>
-        <kbd>Ctrl+S</kbd> / <strong>Save to File</strong> writes a real <strong>.json file</strong>. The first time, it asks where to put it, like Word. In Chrome and Edge the map then stays <em>linked</em> to that file: from that point Ctrl+S and Autosave write straight to it with no dialog, exactly like a desktop program — the indicator top-right names the file. <kbd>Ctrl+Shift+S</kbd> / <strong>Save As…</strong> always asks for a new location. Other browsers (Firefox, Safari) cannot link to a file, so they download a copy each time instead.<br>
+        <kbd>Ctrl+S</kbd> / <strong>Save to File</strong> writes a real <strong>.json file</strong>. A map with no file yet is asked where to put it, like Word. In Chrome and Edge the map then stays <em>linked</em> to that file, and so does a map you <strong>Open</strong> from one: from that point Ctrl+S and Autosave write straight to it with no dialog, exactly like a desktop program — the indicator top-right names the file. Chrome asks once for permission to write to a file you opened; decline, and nothing is saved until you allow it or use Save As. <kbd>Ctrl+Shift+S</kbd> / <strong>Save As…</strong> always asks for a new location. Other browsers (Firefox, Safari) cannot link to a file, so they download a copy each time instead.<br>
         <span class="hint">Until you save to a file, the indicator says <strong>“Saved in browser only”</strong>. Each map gets its own slot, so starting a new map never overwrites the last one — <strong>Recent Maps…</strong> lists everything stored here and switches between them. The browser keeps the most recent dozen.</span></p>
         <h2>Your data</h2>
         <p>Used on your own — including the downloaded file — this app <strong>never sends anything anywhere</strong>: your maps stay in this browser (and in files you save). No account, no tracking, no analytics.<br>
@@ -5896,11 +5911,6 @@
         // Re-enabled on every pass so a previous contention/note selection
         // cannot leave these grayed out on a box that does accept them.
         setDisabled(actOnSelection, false);
-        // Notes hold only notes (noteCanHold): Support, Objection and Weak gray
-        // out when not one selected box could leave the note it hangs from,
-        // Note when not one could become a note (see selectionCanRetype).
-        if (!selectionCanRetype('support')) setDisabled(['btn-type-sup', 'btn-type-obj', 'btn-type-weak'], true);
-        if (!selectionCanRetype('note')) setDisabled(['btn-type-note'], true);
         if (selectedIds.length !== 1) {
             setDisabled(addBtns, true);
             return null;
@@ -5918,8 +5928,9 @@
         if (selCtx && selCtx.node.type === 'note') {
             document.getElementById('btn-implicit').disabled = true;
             document.getElementById('btn-given').disabled = true;
-            // A note takes a co-premise or a note below it, nothing else.
-            setDisabled(['btn-add-sup', 'btn-add-obj', 'btn-add-weak'], true);
+            // A note stands alone: nothing goes under it or beside it. Add
+            // Note stays, and puts another note next to this one.
+            setDisabled(['btn-add-sup', 'btn-add-obj', 'btn-add-weak', 'btn-add-co'], true);
         }
         return selectedIds[0];
     }
@@ -6107,6 +6118,7 @@
         const idx = psel.box;
         const ctx = findNodeContext(state.trees, id);
         if (!ctx || ctx.node.type === 'contention') return; // Main contentions cannot have co-premises
+        if (ctx.node.type === 'note') { refuseNoteConnection(); return; }   // nor can notes: they stand alone
         pushHistory();
         const insertAt = side === 'left' ? idx : idx + 1;
         ctx.node.texts.splice(insertAt, 0, '');
@@ -6170,52 +6182,196 @@
         if (ctxMenu.classList.contains('open')) hideContextMenu();
     }
 
-    // A note annotates the argument: it can hang from an argument box, but it
-    // holds only other notes, never an argument box of its own. Every way of
-    // putting a box under a note asks this -- adding, retyping, dropping and
-    // pasting -- and the buttons that would break it gray out.
-    function noteCanHold(parent, childType) {
-        return !parent || parent.type !== 'note' || childType === 'note';
+    // A note is an aside, and stands alone: it has no parent, no children and
+    // no co-premises. Nothing is added to a note, dropped onto it or pasted
+    // into it, and a note is never attached to anything -- Add Note puts one
+    // beside the selected box, and turning boxes into notes cuts their
+    // connections (convertSelectionToNotes). The buttons that would connect a
+    // note gray out. Maps saved while notes could hang from boxes keep those
+    // notes where they are until one is moved or retyped.
+    function refuseNoteConnection() {
+        showOneTimeHint('notes-stand-alone', 'Notes stand alone: nothing connects to a note, and a note connects to nothing.');
     }
-    function refuseUnderNote() {
-        showOneTimeHint('note-holds-notes', 'A note holds only notes: add argument boxes to a premise instead.');
-    }
-    // May Change Type give this box (ctx) the new type? Judged on the tree the
-    // change leaves, so boxes selected together change together: a box
-    // becomes a note if everything under it is a note or is selected to
-    // become one, and a note's child leaves the note behind if that note is
-    // selected to change too. Main is always allowed: it lifts the box out
-    // into a tree of its own.
-    function retypeAllowed(ctx, newType, selectedNodeIds) {
-        if (newType === 'contention') return true;
-        if (newType === 'note') {
-            const becomesNote = child => child.type === 'note' || (selectedNodeIds.has(child.id) && child.children.every(becomesNote));
-            return ctx.node.children.every(becomesNote);
+
+    // Where things are drawn, in surface pixels, read from the layout's own
+    // positions (a group's left/top) and the boxes' offsets within their
+    // groups. A size the browser has not measured counts as nothing.
+    const NOTE_SIZE = { w: 180, h: 60 };
+    function renderedBoxRect(id, idx) {
+        const group = document.getElementById(`group-${id}`);
+        const x = group ? parseFloat(group.style.left) : NaN, y = group ? parseFloat(group.style.top) : NaN;
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            const cached = lastRenderedSurfaceGeometry.boxes.get(`${id}-${idx}`);
+            return cached ? Object.assign({}, cached) : null;
         }
-        let parent = ctx.parent;
-        while (parent && parent.type === 'note' && selectedNodeIds.has(parent.id)) {
-            parent = findNodeContext(state.trees, parent.id).parent;
-        }
-        return noteCanHold(parent, newType);
+        const box = group.querySelector(`.node[data-node-idx="${idx}"]`);
+        const left = x + (box ? box.offsetLeft : 0), top = y + (box ? box.offsetTop : 0);
+        return { left, top, right: left + (box ? box.offsetWidth : 0), bottom: top + (box ? box.offsetHeight : 0) };
     }
-    // Could Change Type give ANY selected box this type? If not one could,
-    // the toolbar and the context menu gray the type out.
-    function selectionCanRetype(newType) {
-        const ids = new Set(selectedIds.map(sel => parseSel(sel).id));
-        return selectedIds.some(sel => {
-            const c = findNodeContext(state.trees, parseSel(sel).id);
-            return !!c && retypeAllowed(c, newType, ids);
+    function renderedGroupRects(skipIds) {
+        const out = [];
+        document.querySelectorAll('#surface .node-group[id^="group-"]').forEach(g => {
+            if (skipIds && skipIds.has(g.id.slice(6))) return;
+            const x = parseFloat(g.style.left), y = parseFloat(g.style.top);
+            if (!Number.isFinite(x) || !Number.isFinite(y) || !g.offsetWidth) return;
+            out.push({ left: x, top: y, right: x + g.offsetWidth, bottom: y + g.offsetHeight });
         });
+        return out;
+    }
+    // A whole tree's drawn extent: the union of its visible groups.
+    function renderedTreeRect(root) {
+        let r = null;
+        (function walk(n) {
+            const g = document.getElementById(`group-${n.id}`);
+            const x = g ? parseFloat(g.style.left) : NaN, y = g ? parseFloat(g.style.top) : NaN;
+            if (Number.isFinite(x) && Number.isFinite(y) && g.offsetWidth) {
+                const right = x + g.offsetWidth, bottom = y + g.offsetHeight;
+                r = r ? { left: Math.min(r.left, x), top: Math.min(r.top, y), right: Math.max(r.right, right), bottom: Math.max(r.bottom, bottom) }
+                      : { left: x, top: y, right, bottom };
+            }
+            visibleChildren(n).forEach(walk);
+        })(root);
+        return r;
+    }
+    // The nearest spot to (x, y) where a w-by-h box overlaps nothing drawn,
+    // keeping a small gap; ties go right and down before left and up.
+    // `skipIds` are groups to ignore -- the tree being placed.
+    function freeSpotNear(x, y, w, h, skipIds) {
+        const GAP = 24, STEP = 40, REACH = 15;
+        const rects = renderedGroupRects(skipIds);
+        const clear = (px, py) => rects.every(r => px + w + GAP <= r.left || px >= r.right + GAP ||
+                                                   py + h + GAP <= r.top || py >= r.bottom + GAP);
+        const spots = [];
+        for (let i = -REACH; i <= REACH; i++) {
+            for (let j = -REACH; j <= REACH; j++) {
+                spots.push({ dx: i * STEP, dy: j * STEP, cost: i * i + j * j + (i < 0 ? 0.5 : 0) + (j < 0 ? 0.25 : 0) });
+            }
+        }
+        spots.sort((a, b) => a.cost - b.cost);
+        const hit = spots.find(s => clear(x + s.dx, y + s.dy));
+        return hit ? { x: Math.round(x + hit.dx), y: Math.round(y + hit.dy) } : { x: Math.round(x), y: Math.round(y) };
+    }
+    // Trees just pinned where their boxes were drawn: the trees those boxes
+    // left close up around the gap, so each one that now overlaps something
+    // moves to the nearest clear spot, and the map is drawn again.
+    function settleClearOfMap(rootIds) {
+        let moved = false;
+        rootIds.forEach(rid => {
+            const ctx = findNodeContext(state.trees, rid);
+            if (!ctx || ctx.parent) return;
+            const r = renderedTreeRect(ctx.node);
+            if (!r) return;
+            const skip = new Set(); collectSubtreeIds(ctx.node, skip);
+            const spot = freeSpotNear(r.left, r.top, r.right - r.left, r.bottom - r.top, skip);
+            const dx = spot.x - Math.round(r.left), dy = spot.y - Math.round(r.top);
+            if (!dx && !dy) return;
+            ctx.node.x = Math.round(ctx.node.x + dx); ctx.node.y = Math.round(ctx.node.y + dy);
+            // Shift what is drawn too, so the next tree sees this one where it now is.
+            skip.forEach(id => {
+                const g = document.getElementById(`group-${id}`);
+                if (!g) return;
+                g.style.left = (parseFloat(g.style.left) + dx) + 'px';
+                g.style.top = (parseFloat(g.style.top) + dy) + 'px';
+            });
+            moved = true;
+        });
+        if (moved) render();
+    }
+
+    // Add Note: a note of its own, beside the selected box in the nearest free
+    // space, pinned there. It cannot hang from the box it is about.
+    function addNote() {
+        if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
+        const sel = getSingleSelection(); if (!sel) return;
+        const psel = parseSel(sel);
+        const at = renderedBoxRect(psel.id, psel.hasBox ? psel.box : 0);
+        const origin = at ? { x: at.right + 30, y: at.top } : viewportCenterSurface();
+        const spot = freeSpotNear(origin.x, origin.y, NOTE_SIZE.w, NOTE_SIZE.h);
+        pushHistory();
+        const n = { id: generateId(), type: 'note', texts: [''], collapsed: [], children: [],
+                    x: spot.x, y: spot.y, freePosition: true };
+        state.trees.push(n);
+        selectedIds = [`${n.id}-0`]; render(); focusTextarea(n.id, 0);
+    }
+
+    // Turning boxes into notes cuts every connection they have. Each selected
+    // box leaves its parent and its co-premises as a note of its own, and each
+    // box it held becomes the top of a tree of its own. All of them stay
+    // where they were drawn, pinned, and then step clear of anything the
+    // closed-up map now puts under them.
+    function convertSelectionToNotes() {
+        const byNode = new Map();
+        selectedIds.forEach(sel => {
+            const ps = parseSel(sel);
+            const ctx = findNodeContext(state.trees, ps.id);
+            if (!ctx) return;
+            if (!byNode.has(ps.id)) byNode.set(ps.id, new Set());
+            if (ps.hasBox) { if (ps.box < ctx.node.texts.length) byNode.get(ps.id).add(ps.box); }
+            else ctx.node.texts.forEach((_, i) => byNode.get(ps.id).add(i));
+        });
+        // Nothing to cut: every selected box is already a note on its own.
+        const alone = [...byNode.keys()].every(id => {
+            const ctx = findNodeContext(state.trees, id);
+            return !ctx.parent && ctx.node.type === 'note' && ctx.node.texts.length === 1 && !ctx.node.children.length;
+        });
+        if (!byNode.size || alone) return;
+        // Where everything is drawn, before anything moves.
+        const boxAt = new Map(), groupAt = new Map();
+        byNode.forEach((idxs, id) => {
+            const node = findNodeContext(state.trees, id).node;
+            idxs.forEach(i => boxAt.set(`${id}-${i}`, renderedBoxRect(id, i)));
+            node.children.forEach(c => groupAt.set(c.id, previousRenderedRootPosition(c.id, NaN, NaN)));
+        });
+        pushHistory();
+        const placed = [], newSel = [];
+        byNode.forEach((idxs, id) => {
+            // Highest box first, so each extraction leaves the lower indices in place.
+            [...idxs].sort((a, b) => b - a).forEach(i => {
+                const ctx = findNodeContext(state.trees, id);
+                if (!ctx || i >= ctx.node.texts.length) return;
+                const rect = boxAt.get(`${id}-${i}`);
+                const inPlace = !ctx.parent && ctx.node.texts.length === 1;
+                const note = inPlace ? ctx.node : removeNodePiece(id, i);
+                if (!note) return;
+                note.type = 'note';
+                // Notes are never implicit or given.
+                if (note.implicits) note.implicits = note.texts.map(() => false);
+                if (note.givens) note.givens = note.texts.map(() => false);
+                note.children.forEach((c, k) => {
+                    const p = groupAt.get(c.id);
+                    const fx = (rect ? rect.left : CENTER_X) + k * 30, fy = (rect ? rect.bottom : CENTER_Y) + 80 + k * 30;
+                    delete c.targetIndex;
+                    c.x = p && Number.isFinite(p.x) ? p.x : Math.round(fx);
+                    c.y = p && Number.isFinite(p.y) ? p.y : Math.round(fy);
+                    c.freePosition = true;
+                    state.trees.push(c);
+                    placed.push(c.id);
+                });
+                note.children = [];
+                note.collapsed = [];
+                delete note.targetIndex;
+                if (rect) { note.x = Math.round(rect.left); note.y = Math.round(rect.top); }
+                else if (note.x === undefined) { const v = viewportCenterSurface(); note.x = Math.round(v.x); note.y = Math.round(v.y); }
+                note.freePosition = true;
+                if (!inPlace) state.trees.push(note);
+                placed.push(note.id);
+                newSel.push(`${note.id}-0`);
+            });
+        });
+        if (newSel.length) selectedIds = newSel;
+        render();
+        settleClearOfMap(placed);
     }
 
     function addChild(type) {
+        if (type === 'note') { addNote(); return; }
         if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
         const sel = getSingleSelection(); if (!sel) return;
         const psel = parseSel(sel);
         const id = psel.id;
         const targetIdx = psel.hasBox ? psel.box : NaN;
         const ctx = findNodeContext(state.trees, id);
-        if (ctx && !noteCanHold(ctx.node, type)) { refuseUnderNote(); return; }
+        if (ctx && ctx.node.type === 'note') { refuseNoteConnection(); return; }
         pushHistory();
 
         if (ctx) {
@@ -6309,15 +6465,8 @@
     function changeSelectedTypes(newType) {
         if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
         if (selectedIds.length === 0) return;
-        // A note's children stay notes, and a box holding an argument box cannot
-        // become a note (noteCanHold, judged on the result by retypeAllowed).
-        // Boxes the rule rules out are left as they are.
-        const selNodeIds = new Set(selectedIds.map(sel => parseSel(sel).id));
-        const retypable = new Set(selectedIds.filter(sel => {
-            const c = findNodeContext(state.trees, parseSel(sel).id);
-            return !!c && retypeAllowed(c, newType, selNodeIds);
-        }));
-        if (!retypable.size) { refuseUnderNote(); return; }
+        // A note connects to nothing, so becoming one cuts the box loose.
+        if (newType === 'note') { convertSelectionToNotes(); return; }
         pushHistory();
         // O means "attack" and W "weak attack"; objection or rebuttal is picked
         // from each parent, read from the tree as it was before this change.
@@ -6328,7 +6477,6 @@
             const id = psel.id;
             const ctx = findNodeContext(state.trees, id);
             if (!ctx) return;
-            if (!retypable.has(sel)) { newSelections.push(sel); return; }
 
             // Main contention: extract the selected premise(s) from any
             // co-premise group, keeping their children, and make each a
@@ -6385,11 +6533,12 @@
             } else {
                 ctx.node.type = newType;
             }
-            // Contentions and notes cannot be implicit or given — clear the flags
-            if ((newType === 'contention' || newType === 'note') && ctx.node.implicits) {
+            // Contentions cannot be implicit or given (nor can notes, which
+            // convertSelectionToNotes clears) — clear the flags
+            if (newType === 'contention' && ctx.node.implicits) {
                 ctx.node.implicits = ctx.node.implicits.map(() => false);
             }
-            if ((newType === 'contention' || newType === 'note') && ctx.node.givens) {
+            if (newType === 'contention' && ctx.node.givens) {
                 ctx.node.givens = ctx.node.givens.map(() => false);
             }
             // Main contention enforcement: detach from parent if toggling to contention
@@ -6520,8 +6669,8 @@
         const sel = getSingleSelection();
         const psel = sel ? parseSel(sel) : null;
         const ctx = psel ? findNodeContext(state.trees, psel.id) : null;
-        // A note holds only notes (noteCanHold).
-        if (ctx && clipboard.some(item => !noteCanHold(ctx.node, item.type))) { refuseUnderNote(); return; }
+        // Nothing pastes onto a note: notes stand alone.
+        if (ctx && ctx.node.type === 'note' && clipboard.some(item => item.type !== 'note')) { refuseNoteConnection(); return; }
         pushHistory();
         const reId = (n) => { n.id = generateId(); (n.children || []).forEach(reId); };
         const clones = clipboard.map(item => { const c = JSON.parse(JSON.stringify(item)); reId(c); return c; });
@@ -6535,10 +6684,23 @@
             });
         } else {
             const boxIdx = (psel.hasBox && ctx.node.texts.length > 1) ? psel.box : 0;
-            clones.forEach(c => {
+            // Notes cannot hang from the box: they go beside it, pinned, as
+            // Add Note puts them.
+            const notes = clones.filter(c => c.type === 'note');
+            if (notes.length) {
+                const at = renderedBoxRect(ctx.node.id, boxIdx);
+                const origin = at ? { x: at.right + 30, y: at.top } : viewportCenterSurface();
+                const spot = freeSpotNear(origin.x, origin.y, NOTE_SIZE.w, NOTE_SIZE.h);
+                notes.forEach((c, i) => {
+                    c.x = spot.x; c.y = spot.y + i * (NOTE_SIZE.h + 24); c.freePosition = true;
+                    delete c.targetIndex;
+                    state.trees.push(c);
+                });
+            }
+            clones.filter(c => c.type !== 'note').forEach(c => {
                 // Main contention cannot be a child: auto-convert
                 if (c.type === 'contention') c.type = 'support';
-                delete c.x; delete c.y;
+                delete c.x; delete c.y; delete c.freePosition;
                 if (ctx.node.texts.length > 1) c.targetIndex = boxIdx; else delete c.targetIndex;
                 ctx.node.children.push(c);
             });
@@ -6559,10 +6721,8 @@
         const id = psel.id;
         const ctx = findNodeContext(state.trees, id); if (!ctx) return;
         if (ctx.node.type === 'contention') return; // Main contentions cannot have co-premises
-        // Pasted into a note, boxes become note co-premises and their children
-        // the note's children: only notes may come in (noteCanHold).
-        if (ctx.node.type === 'note' && clipboard.some(item => item.type !== 'note' ||
-                (item.children || []).some(child => child.type !== 'note'))) { refuseUnderNote(); return; }
+        // Notes stand alone: none joins a group, and no group forms around one.
+        if (ctx.node.type === 'note' || clipboard.some(item => item.type === 'note')) { refuseNoteConnection(); return; }
         pushHistory();
         const reId = (n) => { n.id = generateId(); (n.children || []).forEach(reId); };
         let pos = psel.hasBox ? psel.box + 1 : ctx.node.texts.length;
@@ -6934,8 +7094,9 @@
     // white premise draws, labels and exports as an objection. Nothing is
     // migrated: stored types are only reinterpreted, and the type written for a
     // new or retyped box is simply the derived one.
-    // Notes keep their own look, and hold only other notes (see noteCanHold);
-    // they pass their parent's side down to those. (Untyped boxes were
+    // Notes keep their own look, and stand alone (see refuseNoteConnection);
+    // one an older map still hangs from a box passes that box's side down to
+    // whatever hangs from the note. (Untyped boxes were
     // retired: one that turns up reads as a support.) A free-floating root has
     // no parent to derive from, so its stored type decides -- and O and W
     // switch it within its pair (see changeSelectedTypes), so a separate tree
@@ -7168,12 +7329,12 @@
 
     // The co-premise + buttons take the selected box's own look, because a
     // co-premise joins that box's argument: red in an objection, orange in a
-    // rebuttal, a note's yellow for a note, plain otherwise, and dashed
-    // inside a weak branch.
+    // rebuttal, white otherwise, and dashed inside a weak branch. (A note has
+    // none: it stands alone.)
     function coPremiseActionClass(k) {
         if (!k) return '';
         const fam = { support: ' action-support', objection: ' action-objection',
-                      rebuttal: ' action-rebuttal', note: ' action-note' }[k.color] || '';
+                      rebuttal: ' action-rebuttal' }[k.color] || '';
         return fam + (isWeakType(k.side) ? ' action-weak-branch' : '');
     }
 
@@ -7218,9 +7379,13 @@
 
         const GAP = 8 / zoomLevel; // gap in surface pixels
 
+        // A note stands alone: nothing is added below it or beside it, so it
+        // gets no + buttons at all.
+        const standsAlone = ctx.node.type === 'note';
+
         // ---- Below: add-child button(s) ----
         const belowY = toSurfY(nodeRect.bottom) + GAP;
-        if (nodeRect.bottom + 8 < cvRect.bottom - 10) {  // viewport check
+        if (!standsAlone && nodeRect.bottom + 8 < cvRect.bottom - 10) {  // viewport check
             const below = document.createElement('div');
             below.className = 'node-action-container' + (nodeActionExpanded ? ' node-action-expanded' : '');
 
@@ -7244,10 +7409,7 @@
                 // SIDES), so each offers that one.
                 const sideHere = (computeArgumentKinds(state.trees).get(ctx.node.id) || { side: 'main' }).side;
                 const atk = attackKindOn(sideHere), weak = weakKindOn(sideHere);
-                // A note holds only notes (noteCanHold), so it offers just one.
-                const types = ctx.node.type === 'note' ? [
-                    { type: 'note', cls: 'action-note' + (isWeakType(sideHere) ? ' action-weak-branch' : ''), label: 'Add Note (Alt+Enter)' }
-                ] : [
+                const types = [
                     // The support takes this box's argument: red, orange, or
                     // plain -- dashed inside a weak branch.
                     { type: 'support', label: 'Add Support (Enter)',
@@ -7279,8 +7441,8 @@
         }
 
         // ---- Right: add co-premise button ----
-        // Main contentions cannot have co-premises
-        if (ctx.node.type !== 'contention') {
+        // Main contentions cannot have co-premises, and notes stand alone
+        if (ctx.node.type !== 'contention' && !standsAlone) {
             const coCls = 'node-action-btn action-copremise' +
                 coPremiseActionClass(computeArgumentKinds(state.trees).get(ctx.node.id));
             if (nodeRect.right + 8 < cvRect.right - 10) {     // viewport check
@@ -7935,6 +8097,21 @@
             pointDistance(b.a, a), pointDistance(b.b, a));
     }
 
+    // Cheap exact rejections, ahead of the geometry above. Two segments are at
+    // least as far apart as the gap between their bounding boxes, and a
+    // segment that reaches an expanded rect must overlap that rect's box. The
+    // band allocator asks these questions millions of times on a hard corridor,
+    // and the answer is almost always "nowhere near".
+    // (1e-6 below is slack against floating-point noise, so the cheap test
+    // never rejects something the exact test would have accepted.)
+    function routeSegmentsWithin(a, b, clearance) {
+        const reach = clearance + 1e-6;
+        if (Math.min(a.a.x, a.b.x) - reach > Math.max(b.a.x, b.b.x) ||
+            Math.min(b.a.x, b.b.x) - reach > Math.max(a.a.x, a.b.x) ||
+            Math.min(a.a.y, a.b.y) - reach > Math.max(b.a.y, b.b.y) ||
+            Math.min(b.a.y, b.b.y) - reach > Math.max(a.a.y, a.b.y)) return false;
+        return routeSegmentDistance(a, b) <= clearance;
+    }
     function routeSegmentTouchesRect(segment, rect, requestedClearance) {
         const pad = requestedClearance === undefined
             ? NODE_ROUTE_CLEARANCE : requestedClearance;
@@ -7942,6 +8119,10 @@
             x0: rect.x0 - pad, x1: rect.x1 + pad,
             y0: rect.y0 - pad, y1: rect.y1 + pad
         };
+        if (Math.min(segment.a.x, segment.b.x) > expanded.x1 + 1e-6 ||
+            Math.max(segment.a.x, segment.b.x) < expanded.x0 - 1e-6 ||
+            Math.min(segment.a.y, segment.b.y) > expanded.y1 + 1e-6 ||
+            Math.max(segment.a.y, segment.b.y) < expanded.y0 - 1e-6) return false;
         const inside = p => p.x >= expanded.x0 && p.x <= expanded.x1 &&
             p.y >= expanded.y0 && p.y <= expanded.y1;
         if (inside(segment.a) || inside(segment.b)) return true;
@@ -8032,10 +8213,10 @@
         const aCorners = a.corners || [], bCorners = b.corners || [];
         for (const sa of a.routes) {
             for (const sb of b.routes) {
-                if (routeSegmentDistance(sa, sb) <= lineClearance) return true;
+                if (routeSegmentsWithin(sa, sb, lineClearance)) return true;
             }
             for (const sb of b.forks) {
-                if (routeSegmentDistance(sa, sb) <= lineClearance) return true;
+                if (routeSegmentsWithin(sa, sb, lineClearance)) return true;
             }
             for (const rect of b.nodes) if (routeSegmentTouchesRect(sa, rect, nodeClearance)) return true;
             for (const rect of bCorners) {
@@ -8044,7 +8225,7 @@
         }
         for (const sb of b.routes) {
             for (const sa of a.forks) {
-                if (routeSegmentDistance(sb, sa) <= lineClearance) return true;
+                if (routeSegmentsWithin(sb, sa, lineClearance)) return true;
             }
             for (const rect of a.nodes) if (routeSegmentTouchesRect(sb, rect, nodeClearance)) return true;
             for (const rect of aCorners) {
@@ -8649,6 +8830,16 @@
         const EPS = 0.01;
         const fallbackGeom = { w: 180, h: 60, boxes: [{ cx: 90, w: 180, h: 60, top: 0 }] };
         const requiredBandGap = {};
+        // Finding the smallest corridor that fits a fan is a binary search over
+        // band allocations -- tens of allocator runs. A corridor that is
+        // impossible at any height makes it run again at every horizontal
+        // probe, and a solve that cannot converge probes thousands of times
+        // (degenerate geometry: boxes measured at zero size, as in a page that
+        // was never laid out). Bound it per tree layout, deterministically, so
+        // that case costs a moment rather than half a minute. Healthy maps use
+        // a handful of searches; the cap is far above anything they reach.
+        const CORRIDOR_SEARCH_LIMIT = 200;
+        let corridorSearches = 0;
         // See computeRoutingChannels: extracted pure-layout suites do not carry
         // top-level helpers with them, so retain an identical local fallback.
         const connectionSourceLocalX = typeof routeSourceLocalX === 'function'
@@ -8992,10 +9183,49 @@
         // will render, but as pure geometry.  Compact packing uses the
         // resulting thin rectangles as branch obstacles, so a shallow cousin
         // branch cannot thread through another branch's lines or nodes.
+        // Route geometry is pure in the positions it reads -- this parent's,
+        // its children's, and any vertical reservation already recorded for it
+        // -- but it runs the band allocator, by far the most expensive thing in
+        // the solver. The safety loop below asks every parent again on every
+        // iteration, while only a branch or two has actually moved, so the same
+        // answer was being recomputed hundreds of times. Memoize on exactly
+        // those inputs; the two side effects (a recorded reservation, and the
+        // stamp on the position object, which materializeCompact replaces each
+        // iteration) are stored with the answer and replayed on a hit.
+        const routeGeometryCache = new Map();
         function routeGeometryFor(parentNode) {
             const children = meta[parentNode.id].children;
+            if (!children.length) return {};
+            const p = pos[parentNode.id];
+            let key = parentNode.id + '@' + p.x + ',' + p.y + '#' + (requiredBandGap[parentNode.id] || 0);
+            for (const child of children) {
+                const cp = pos[child.id];
+                key += '|' + child.id + ':' + cp.x + ',' + cp.y;
+            }
+            let entry = routeGeometryCache.get(key);
+            if (typeof window !== 'undefined' && window.__cache) { window.__cache[entry ? 'hit' : 'miss']++; }
+            if (!entry) {
+                entry = computeRouteGeometry(parentNode, children);
+                // Positions are floats off a search: bound the cache rather
+                // than let a long solve accumulate one entry per probe.
+                if (routeGeometryCache.size > 4000) routeGeometryCache.clear();
+                routeGeometryCache.set(key, entry);
+            }
+            if (entry.gap !== null) {
+                requiredBandGap[parentNode.id] = Math.max(requiredBandGap[parentNode.id] || 0, entry.gap);
+            }
+            if (entry.stamp !== null) {
+                Object.defineProperty(pos[parentNode.id], '_requiredBandGap', {
+                    value: entry.stamp, configurable: true, enumerable: false
+                });
+            }
+            return entry.result;
+        }
+        // The work itself. Returns the routes, plus whatever the caller must
+        // record: `gap` a vertical reservation for this parent, `stamp` the
+        // value to mark on its position object.
+        function computeRouteGeometry(parentNode, children) {
             const result = {};
-            if (!children.length) return result;
             const parentPos = pos[parentNode.id];
             const parentGeom = geometry(parentNode);
             const childTopY = Math.min(...children.map(child => pos[child.id].y));
@@ -9006,10 +9236,7 @@
                 // reservation: buildFlow() only consumes it on the next
                 // routing-settle pass. Avoid recomputing the same expensive
                 // infeasible band search on every horizontal safety iteration.
-                Object.defineProperty(parentPos, '_requiredBandGap', {
-                    value: pendingGap, configurable: true, enumerable: false
-                });
-                return result;
+                return { result, gap: null, stamp: pendingGap };
             }
             const fanMap = new Map();
             children.forEach(child => {
@@ -9166,25 +9393,22 @@
 
             const allocated = allocateStatementFanBands(plans);
             if (!allocated) {
-                const extra = minimumStatementFanChildShift(plans);
+                const extra = corridorSearches++ < CORRIDOR_SEARCH_LIMIT
+                    ? minimumStatementFanChildShift(plans) : null;
                 if (extra !== null) {
                     // `extra` is kept on the feasible side of the binary
                     // bracket. Preserve the largest request found during this
                     // horizontal solve; materializeCompact() will stamp it on
                     // each replacement position object until settling reads it.
-                    requiredBandGap[parentNode.id] = Math.max(
+                    const gap = Math.max(
                         requiredBandGap[parentNode.id] || 0,
                         (minGapPerParent || {})[parentNode.id] || 0,
                         currentGap + extra
                     );
-                    Object.defineProperty(parentPos, '_requiredBandGap', {
-                        value: requiredBandGap[parentNode.id],
-                        configurable: true, enumerable: false
-                    });
                     // This pass cannot render these routes legally at its
                     // current Y coordinates. Do not make the horizontal solver
                     // chase a conflict that only the next settled row can fix.
-                    return result;
+                    return { result, gap, stamp: gap };
                 }
             }
             plans.forEach(plan => {
@@ -9193,7 +9417,7 @@
                     result[route.child.id] = makeItems(route, plan.key);
                 });
             });
-            return result;
+            return { result, gap: null, stamp: null };
         }
 
         function ownGeometryItems(node) {
@@ -9820,8 +10044,9 @@
             startGhostTop: (ghostRect.top - sRect.top) / zoomLevel,
             draggedParentId: forest.commonParentId,
             canReorderRow: !!forest.commonParentId,
-            // Only notes may land under or inside a note (noteCanHold).
-            notesOnly: forest.units.every(unit => {
+            // A selection carrying a note connects to nothing when dropped:
+            // it just moves (notes stand alone).
+            carriesNote: forest.units.some(unit => {
                 const source = findNodeContext(state.trees, unit.sourceId);
                 return !!source && source.node.type === 'note';
             }),
@@ -9994,7 +10219,9 @@
             gw: ghostRect.width / zoomLevel,
             gh: ghostRect.height / zoomLevel,
             draggedParentId: (mode === 'group' && ctx && ctx.parent) ? ctx.parent.id : null,
-            notesOnly: node.type === 'note',   // only notes may land under or inside a note
+            carriesNote: node.type === 'note',   // a note connects to nothing: dropped, it just moves
+            // Several boxes at once (a co-premise group) cannot top a main contention.
+            multiBox: mode === 'texts' || (mode === 'group' && node.texts.length > 1),
             targets: [], groupCenters: {}, lastHL: null,
             overlay, grabVisualX, grabVisualY
         };
@@ -10054,11 +10281,14 @@
     }
 
     // Pure geometric classification. Returns one of:
-    //   {type:'detach'} | {type:'child', T} | {type:'copremise', T, side}
-    //   | {type:'reorder-row', T, side} | {type:'insert-sibling', T, side}
-    //   | {type:'refused'} (aimed at a note that cannot hold what is dragged)
+    //   {type:'detach'} | {type:'child', T} | {type:'parent', T}
+    //   | {type:'copremise', T, side} | {type:'reorder-row', T, side}
+    //   | {type:'insert-sibling', T, side}
+    //   | {type:'refused'} (aimed at a note, which nothing connects to)
     function classifyDrop(G, targets, opts) {
-        if (opts.shift) return { type: 'detach' };
+        // Shift drops free; so does anything carrying a note, which connects
+        // to nothing -- wherever it is dropped, it simply moves there.
+        if (opts.shift || opts.carriesNote) return { type: 'detach' };
         const gcx = G.left + G.w / 2, gcy = G.top + G.h / 2;
         let best = null, refused = false;
 
@@ -10067,6 +10297,11 @@
             const ix = Math.min(G.left + G.w, T.left + T.w) - Math.max(G.left, T.left);  // horizontal overlap
             const iy = Math.min(G.top + G.h, T.top + T.h) - Math.max(G.top, T.top);      // vertical overlap
             const belowGap = G.top - (T.top + T.h); // >0 once the ghost's top edge passes the box's bottom
+            const aboveGap = T.top - (G.top + G.h); // >0 once the ghost's bottom edge rises above the box's top
+            // A halo drop (below a box, or above it) scores by horizontal
+            // overlap, discounted by distance: in the gap between a box and
+            // the box under it, the nearer edge wins.
+            const haloScore = gap => ix * Math.max(iy, 8) * (1 - Math.max(0, gap) / 60) + 1;
 
             let cls = null, score = 0;
 
@@ -10074,7 +10309,16 @@
                 // Ghost hangs below the box -> child. The 30px halo under the box
                 // means "slightly past the bottom edge" still reads as a child drop.
                 cls = { type: 'child', T };
-                score = ix * Math.max(iy, 8) + 1;
+                score = haloScore(belowGap);
+            } else if (ix >= 12 && G.top + G.h < Tcy && aboveGap <= 30 && opts.mode !== 'forest' &&
+                       !(T.nodeType === 'contention' && !T.parentId && opts.multiBox)) {
+                // Ghost hovers above the box -> parent: the mirror of a child
+                // drop. The dropped box takes this one's place and this one
+                // hangs from it. One unit only (a multi-selection has no one
+                // box to be the parent), and never a co-premise group on top of
+                // a main contention, which would have to become one.
+                cls = { type: 'parent', T };
+                score = haloScore(aboveGap);
             } else if (ix > 0 && iy > 0) {
                 const side = gcx < Tcx ? 'left' : 'right';
                 const centerInside = gcx > T.left && gcx < T.left + T.w && gcy > T.top && gcy < T.top + T.h;
@@ -10091,22 +10335,21 @@
                 if (cls) score = ix * iy;
             }
 
-            // A note holds only notes (noteCanHold): a drag carrying anything
-            // else cannot land as its child, its co-premise, or beside a box
-            // that hangs from a note.
-            if (cls && !opts.notesOnly && ((cls.type === 'child' || cls.type === 'copremise') ? T.nodeType === 'note'
-                    : cls.type === 'insert-sibling' && T.parentType === 'note')) { cls = null; refused = true; }
+            // Notes stand alone: nothing lands as a note's child, co-premise or
+            // parent, nor joins one of the notes that older maps hang from boxes.
+            if (cls && (((cls.type === 'child' || cls.type === 'copremise' || cls.type === 'parent') && T.nodeType === 'note') ||
+                        ((cls.type === 'insert-sibling' || cls.type === 'parent') && T.parentType === 'note'))) { cls = null; refused = true; }
 
             if (cls && score > (best ? best.score : 0)) { best = cls; best.score = score; }
         }
-        // Aimed only at a note that cannot take it, the drop is refused rather
-        // than read as a drop into empty space: the box stays where it was.
+        // Aimed only at a note, the drop is refused rather than read as a drop
+        // into empty space: the box stays where it was.
         return best || (refused ? { type: 'refused' } : { type: 'detach' });
     }
 
     function clearDropHighlight() {
         if (dragCtx && dragCtx.lastHL) {
-            dragCtx.lastHL.el.classList.remove('drop-child', 'drop-copremise-left', 'drop-copremise-right', 'drop-sibling-left', 'drop-sibling-right');
+            dragCtx.lastHL.el.classList.remove('drop-child', 'drop-parent', 'drop-copremise-left', 'drop-copremise-right', 'drop-sibling-left', 'drop-sibling-right');
             dragCtx.lastHL = null;
         }
     }
@@ -10130,13 +10373,14 @@
         const isShift = e.shiftKey || freeDropMode;
         const cls = classifyDrop(probeRectFor(e), dragCtx.targets,
             { shift: isShift, mode: dragCtx.mode, draggedParentId: dragCtx.draggedParentId,
-              canReorderRow: dragCtx.canReorderRow, notesOnly: dragCtx.notesOnly });
+              canReorderRow: dragCtx.canReorderRow, carriesNote: dragCtx.carriesNote, multiBox: dragCtx.multiBox });
         // Slop suppression only for no-target (detach) drops; child/copremise
         // drops must highlight even at tiny drag distances, otherwise a node
         // sitting near the left edge of a group can never dock there.
         if (cls.type === 'detach' && !isShift && withinDragSlop(e)) { clearDropHighlight(); return; }
         let el = null, cssClass = null;
         if (cls.type === 'child') { el = cls.T.el; cssClass = 'drop-child'; }
+        else if (cls.type === 'parent') { el = cls.T.el; cssClass = 'drop-parent'; }
         else if (cls.type === 'copremise') { el = cls.T.el; cssClass = 'drop-copremise-' + cls.side; }
         else if (cls.type === 'reorder-row' || cls.type === 'insert-sibling') { el = cls.T.el; cssClass = 'drop-sibling-' + cls.side; }
 
@@ -10442,10 +10686,12 @@
             shift: isShift, mode: dragCtx.mode,
             draggedParentId: dragCtx.draggedParentId,
             canReorderRow: dragCtx.canReorderRow,
-            notesOnly: dragCtx.notesOnly
+            carriesNote: dragCtx.carriesNote
         });
 
-        if (cls.type === 'refused') { refuseUnderNote(); endDrag(); return; }
+        // A multi-selection has no one box to be a parent (classifyDrop never
+        // offers it here; this only guards the extraction below).
+        if (cls.type === 'refused' || cls.type === 'parent') { if (cls.type === 'refused') refuseNoteConnection(); endDrag(); return; }
         if (cls.type === 'detach') {
             if (!isShift && withinDragSlop(e)) { endDrag(); return; }
             const structural = units.some(u => u.kind !== 'whole' || !!u.sourceParentId);
@@ -10592,9 +10838,10 @@
         const gcx = P.left + P.w / 2;
         const isShift = e.shiftKey || freeDropMode;
         const cls = classifyDrop(P, dragCtx.targets,
-            { shift: isShift, mode: dragCtx.mode, draggedParentId: dragCtx.draggedParentId, notesOnly: dragCtx.notesOnly });
-        // A note cannot hold what was dragged onto it: nothing moves.
-        if (cls.type === 'refused') { refuseUnderNote(); endDrag(); return; }
+            { shift: isShift, mode: dragCtx.mode, draggedParentId: dragCtx.draggedParentId,
+              carriesNote: dragCtx.carriesNote, multiBox: dragCtx.multiBox });
+        // Aimed at a note, which nothing connects to: nothing moves.
+        if (cls.type === 'refused') { refuseNoteConnection(); endDrag(); return; }
 
         // Before extraction changes the tree, check whether the dragged
         // node's ROOT tree is free-positioned. Alt-drop orphans need this.
@@ -10650,6 +10897,56 @@
             expandBox(tctx.node, boxOf(tctx.node, ex));
             tctx.node.children.splice(childSlotFor(tctx.node, gcx), 0, ex);
             normalizeChildOrder(tctx.node); // slot snaps into the target premise's segment
+            selectedIds = ex.texts.length > 1 ? [ex.id] : [`${ex.id}-0`];
+        }
+        else if (cls.type === 'parent') {
+            // Dropped above a box: the dragged box becomes its parent. It takes
+            // the box's place -- in its parent's row, on the same premise box --
+            // or, above the top of a tree, tops that tree where it stood. The
+            // box, with everything under it, then hangs from the dragged box
+            // (from the box that was grabbed, if it brought co-premises).
+            if (!findNodeContext(state.trees, cls.T.id)) { endDrag(); return; }
+            pushHistory();
+            const ex = extractDragged();
+            if (!ex) { endDrag(); return; }
+            orphanChildren(ex, e.altKey, G, wasFree);
+            // Extraction can shift the target within its row: find it again.
+            const tctx = findNodeContext(state.trees, cls.T.id);
+            if (!tctx) {
+                ex.x = Math.round(G.left); ex.y = Math.round(G.top); delete ex.targetIndex;
+                state.trees.push(ex);
+            } else {
+                const target = tctx.node;
+                const grabbed = dragCtx.mode === 'texts' ? dragCtx.idxs.indexOf(dragCtx.idx)
+                              : dragCtx.mode === 'group' ? dragCtx.idx : 0;
+                const hangFrom = Math.max(0, Math.min(Number.isInteger(grabbed) ? grabbed : 0, ex.texts.length - 1));
+                if (tctx.parent) {
+                    // Main contention cannot be a child: auto-convert to support
+                    if (ex.type === 'contention') ex.type = 'support';
+                    delete ex.x; delete ex.y; delete ex.freePosition;
+                    if (target.targetIndex !== undefined) ex.targetIndex = target.targetIndex; else delete ex.targetIndex;
+                    tctx.parent.children.splice(tctx.index, 1, ex);
+                    normalizeChildOrder(tctx.parent);
+                } else {
+                    // Above a main contention, the dropped box becomes the main
+                    // contention, and the old one a support under it.
+                    if (target.type === 'contention') {
+                        ex.type = 'contention';
+                        if (ex.implicits) ex.implicits = ex.implicits.map(() => false);
+                        if (ex.givens) ex.givens = ex.givens.map(() => false);
+                    }
+                    ex.x = target.x; ex.y = target.y;
+                    if (target.freePosition && ex.type !== 'contention') ex.freePosition = true; else delete ex.freePosition;
+                    delete ex.targetIndex;
+                    state.trees.splice(tctx.treeIndex, 1, ex);
+                }
+                if (target.type === 'contention') target.type = 'support';
+                delete target.x; delete target.y; delete target.freePosition;
+                if (ex.texts.length > 1) target.targetIndex = hangFrom; else delete target.targetIndex;
+                ex.children.push(target);
+                expandBox(ex, hangFrom);
+                normalizeChildOrder(ex);
+            }
             selectedIds = ex.texts.length > 1 ? [ex.id] : [`${ex.id}-0`];
         }
         else if (cls.type === 'copremise') {
@@ -11913,11 +12210,13 @@
         } catch (_) { return null; }
     }
 
+    // The remembered link names the map it belongs to, so it can never be
+    // restored onto a different map and have that map saved over this file.
     function setLinkedFile(handle, permission) {
         _fileHandle = handle || null;
         _fileName = handle ? handle.name : null;
         _filePermission = permission || 'granted';
-        try { idbPut(IDB_FILE_KEY, handle || null); } catch (e) {}
+        try { idbPut(IDB_FILE_KEY, handle ? { handle: handle, mapId: state && state._mapId } : null); } catch (e) {}
         updateSaveIndicator();
     }
     function unlinkFile() {
@@ -11927,11 +12226,14 @@
     }
     // Restore the remembered file on boot. Chromium keeps permission granted
     // within a session, so a plain reload often reconnects with no prompt; a
-    // browser restart lands on 'prompt' and waits for the next save.
+    // browser restart lands on 'prompt' and waits for the next save. (Links
+    // remembered before they named their map are the bare handle.)
     async function restoreLinkedFile() {
         if (!fileApiAvailable()) return;
-        const handle = await idbGet(IDB_FILE_KEY);
+        const saved = await idbGet(IDB_FILE_KEY);
+        const handle = saved && saved.handle ? saved.handle : saved;
         if (!handle || typeof handle.queryPermission !== 'function') return;
+        if (saved.mapId && state && state._mapId && saved.mapId !== state._mapId) return;
         let perm = 'prompt';
         try { perm = await handle.queryPermission({ mode: 'readwrite' }); } catch (e) { perm = 'prompt'; }
         if (perm === 'denied') { unlinkFile(); return; }
@@ -11965,19 +12267,25 @@
     }
     // Ctrl+S / "Save to File". Writes STRAIGHT to the linked file when
     // there is one — no dialog, like any desktop program — and only asks
-    // where to put it the first time (or via "Save As…").
+    // where to put it when the map has no file yet (or via "Save As…").
+    //
+    // A refused save saves NOTHING. Falling back to "Save As" here used to
+    // turn a canceled permission prompt into a file: the prompt eats the
+    // click's user activation, so the save dialog could not open either, and
+    // the last-resort download dropped a copy in Downloads -- a file the user
+    // had just declined to write, in a folder they did not choose.
     function saveMap() {
         if (_fileHandle) {
             return writeLinkedFile(true).then(function (r) {
                 if (r.written) return r;
                 if (r.reason === 'denied' || r.reason === 'needs-permission') {
-                    // Permission refused: fall back to choosing a location.
-                    return saveMapAs();
+                    showHintToast('Not saved. ' + (_fileName || 'The file') + ' needs the browser\'s permission to be written: press Ctrl+S again and allow it, or use Save As… (Ctrl+Shift+S) to save elsewhere.');
+                    return { saved: false, reason: 'denied' };
                 }
                 if (r.reason === 'error') {
                     alert('Could not write to ' + (_fileName || 'the linked file') +
-                          '.\n\nIt may have been moved, renamed or deleted. Choose where to save it instead.');
-                    return saveMapAs();
+                          '.\n\nIt may have been moved, renamed or deleted. Use Save As… to save it elsewhere.');
+                    return { saved: false, reason: 'error' };
                 }
                 return r;
             });
@@ -12015,6 +12323,77 @@
             return { saved: true, picked: false };
         });
     }
+    // Open File. Where the browser lets a page keep hold of a file (Chrome,
+    // Edge), the map stays LINKED to the file it was opened from, exactly as
+    // after Save As: Ctrl+S and Autosave write straight back to it, the
+    // browser asking once for permission to save changes. Other browsers
+    // read a copy through the file input (loadMap), and saving downloads one.
+    async function openMapFile() {
+        const input = document.getElementById('open-file-input');
+        // A shared window opens files in a new window, through the input.
+        if (typeof window.showOpenFilePicker !== 'function' || isSharedSession()) { if (input) input.click(); return; }
+        let handle = null;
+        try {
+            const picked = await window.showOpenFilePicker({
+                types: [{ description: 'Argument map (JSON)', accept: { 'application/json': ['.json'] } }]
+            });
+            handle = picked && picked[0];
+        } catch (err) {
+            if (err && (err.name === 'AbortError' || err.code === 20)) return;   // canceled
+            if (input) input.click();   // the picker is blocked here: fall back to the input
+            return;
+        }
+        if (!handle) return;
+        // Ask for permission to WRITE straight away, while opening the file is
+        // still the gesture the browser is acting on -- before reading and
+        // drawing the map, which could outlast it. Chrome hands a picked file
+        // over read-only and asks before a page may change it; asking here
+        // makes that question part of "open this file", and every later Ctrl+S
+        // writes silently. Declined (or asked too late for the gesture), the
+        // map still opens, the file stays linked, and the first save asks again.
+        let perm = 'prompt';
+        try { perm = await handle.queryPermission({ mode: 'readwrite' }); } catch (e) { perm = 'prompt'; }
+        if (perm !== 'granted') {
+            try { perm = await handle.requestPermission({ mode: 'readwrite' }); } catch (e) { perm = 'prompt'; }
+        }
+        let text;
+        try { text = await (await handle.getFile()).text(); }
+        catch (err) { alert('Could not read that file.'); return; }
+        // Keep the outgoing map in Recent maps before it is replaced.
+        try { autosaveNow(true); } catch (e) {}
+        if (!openMapText(text)) return;
+        setLinkedFile(handle, perm === 'granted' ? 'granted' : 'prompt');
+    }
+    // Make a map file's text the live map; false (after saying so) if it is
+    // not a map. Undo starts afresh: undoing past the open would bring back
+    // the previous map, and the next save would write it into this file.
+    function openMapText(text) {
+        let data = null;
+        try { data = JSON.parse(text); } catch (err) { data = null; }
+        if (!data || !Array.isArray(data.trees) || !data.trees.length) { alert("Failed to parse JSON file."); return false; }
+        try {
+            state = data;
+            migrateCollabData(state);
+            ensureCollabFields(state);
+            (function migrate(nodes) {
+                nodes.forEach(n => {
+                    if (!Array.isArray(n.collapsed)) n.collapsed = n.collapsed === true ? n.texts.map((_, i) => i) : [];
+                    if (!Array.isArray(n.aligns)) n.aligns = n.texts.map(() => n.align || 'center');
+                    delete n.align;
+                    normalizeChildOrder(n);
+                    migrate(n.children || []);
+                });
+            })(state.trees);
+            _shadowSnapshot = JSON.stringify(state);
+            selectedIds = [`${state.trees[0].id}-0`];
+            undoStack = []; redoStack = []; updateUndoRedoDepth();
+            lastSaveTime = null;
+            pushHistory(); render(); recenter();
+            document.getElementById('map-name').value = state.name || 'Untitled Map';
+            document.title = (state.name || 'Untitled Map') + ' — Argument Mapper';
+            return true;
+        } catch (err) { alert("Failed to parse JSON file."); return false; }
+    }
     function loadMap(event) {
         const file = event.target.files[0]; if (!file) return;
         event.target.value = '';
@@ -12032,27 +12411,11 @@
             return;
         }
         const reader = new FileReader();
-        reader.onload = (e) => {
-            try { 
-                state = JSON.parse(e.target.result);
-                migrateCollabData(state);
-                ensureCollabFields(state);
-                (function migrate(nodes) {
-                    nodes.forEach(n => {
-                        if (!Array.isArray(n.collapsed)) n.collapsed = n.collapsed === true ? n.texts.map((_, i) => i) : [];
-                        if (!Array.isArray(n.aligns)) n.aligns = n.texts.map(() => n.align || 'center');
-                        delete n.align;
-                        normalizeChildOrder(n);
-                        migrate(n.children || []);
-                    });
-                })(state.trees);
-                _shadowSnapshot = JSON.stringify(state);
-                selectedIds = [`${state.trees[0].id}-0`]; pushHistory(); render(); recenter();
-                document.getElementById('map-name').value = state.name || 'Untitled Map';
-                document.title = (state.name || 'Untitled Map') + ' — Argument Mapper';
-            } catch (err) { alert("Failed to parse JSON file."); }
-        };
-        reader.readAsText(file); event.target.value = '';
+        // A copy read through the input has no way back to its file, so the map
+        // is linked to no file -- and never to the file of the map it replaces,
+        // which the next save would otherwise overwrite with this one.
+        reader.onload = (e) => { if (openMapText(e.target.result)) unlinkFile(); };
+        reader.readAsText(file);
     }
 
     // --- Save Indicator ---
@@ -12076,7 +12439,9 @@
         if (_fileName) {
             if (lastSaveTime) parts.push(`Saved to ${_fileName} ${formatSaveDate(lastSaveTime)}`);
             else parts.push(`Linked to ${_fileName}`);
-            if (_filePermission !== 'granted') parts.push('reconnect on next save');
+            // Freshly opened, or reloaded after a browser restart: the browser
+            // asks for permission once, at the next save.
+            if (_filePermission !== 'granted') parts.push('Ctrl+S asks to save to it');
         } else if (typeof _collab !== 'undefined' && _collab) {
             // Shared maps: the server copy is the real one.
             if (lastAutosaveTime) parts.push(`Offline copy ${formatSaveDate(lastAutosaveTime)}`);
@@ -12670,8 +13035,9 @@
                 const nodeType = typeMap[lastSeg.type] || 'support';
                 const baseLabel = groupLabel(segments, freeBase);
 
-                // Check co-premise
-                if (lastSeg.co && labelToNode.has(baseLabel) && !labelToNode.has(label)) {
+                // Check co-premise (notes stand alone: one never joins a group)
+                if (lastSeg.co && labelToNode.has(baseLabel) && !labelToNode.has(label) &&
+                        nodeType !== 'note' && labelToNode.get(baseLabel).type !== 'note') {
                     const existing = labelToNode.get(baseLabel);
                     existing.texts.push(nodeText);
                     setImplicit(existing, existing.texts.length - 1, implicitMark);
@@ -12695,7 +13061,12 @@
                     ? groupLabel(parentSegments, freeBase)
                     : freeBase;
                 const parentNode = labelToNode.get(parentLabel) || labelToNode.get(parentLabelBase);
-                if (parentNode) {
+                // A note connects to nothing: written under a box, or with a
+                // box under it, it comes in as a tree of its own.
+                if (parentNode && (nodeType === 'note' || parentNode.type === 'note')) {
+                    node.x = fx; node.y = fy + 200;
+                    newTrees.push(node);
+                } else if (parentNode) {
                     const lastParentSeg = parentSegments.length ? parentSegments[parentSegments.length - 1] : null;
                     if (lastParentSeg && lastParentSeg.co && parentNode.texts.length > 1) {
                         node.targetIndex = lastParentSeg.co.charCodeAt(0) - 97;
@@ -12737,8 +13108,9 @@
             const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q questions the argument, P preserves it; X (briefly, untyped) reads as S
             const nodeType = typeMap[lastSeg.type] || 'support';
 
-            // Check if this is a co-premise of an existing node
-            if (lastSeg.co && labelToNode.has(baseLabel)) {
+            // Check if this is a co-premise of an existing node (notes stand
+            // alone: one never joins a group)
+            if (lastSeg.co && labelToNode.has(baseLabel) && nodeType !== 'note' && labelToNode.get(baseLabel).type !== 'note') {
                 const existing = labelToNode.get(baseLabel);
                 if (!labelToNode.has(fullLabel)) {
                     existing.texts.push(nodeText);
@@ -12762,7 +13134,12 @@
                 const parentLabelWithCo = parentSegments.map((s, i) => `${s.type}${s.num}${s.co || ''}`).join('');
                 const parentLabelBase = groupLabel(parentSegments);
                 const parentNode = labelToNode.get(parentLabelWithCo) || labelToNode.get(parentLabelBase);
-                if (parentNode) {
+                // A note connects to nothing: written under a box, or with a
+                // box under it, it comes in as a tree of its own beside the map.
+                if (parentNode && (nodeType === 'note' || parentNode.type === 'note')) {
+                    node.x = CENTER_X + newTrees.length * 300; node.y = CENTER_Y;
+                    newTrees.push(node);
+                } else if (parentNode) {
                     const lastParentSeg = parentSegments[parentSegments.length - 1];
                     if (lastParentSeg.co && parentNode.texts.length > 1) {
                         node.targetIndex = lastParentSeg.co.charCodeAt(0) - 97;
@@ -13262,8 +13639,8 @@
             // --- Add children ---
             html += '<div class="ctx-label">Add Child</div>';
             // A support wears the color of the argument it joins (white in the
-            // main argument, like its box). A note holds only notes, so under a
-            // note the argument boxes are unavailable (noteCanHold).
+            // main argument, like its box). A note stands alone, so nothing is
+            // added under it or beside it.
             const ctxSupportColor = (sideOf) => SIDE_COLOR[sideOf] === 'objection' ? '#f44336'
                 : SIDE_COLOR[sideOf] === 'rebuttal' ? '#ff9800' : 'var(--color-line)';
             const argDis = dis || (node.type === 'note' ? 'disabled' : '');
@@ -13271,14 +13648,13 @@
             html += `<button class="ctx-item" onclick="ctxAction(()=>addChild('${ctxAddAttack}'))" ${argDis}><span class="ctx-dot" style="background:${ctxAddAttack === 'rebuttal' ? '#ff9800' : '#f44336'}"></span>${ctxAddAttack === 'rebuttal' ? 'Rebuttal' : 'Objection'}<span class="ctx-key">Shift+Enter</span></button>`;
             // A hollow dot: the weaker relative of the filled attack dot above.
             html += `<button class="ctx-item" onclick="ctxAction(()=>addChild('${ctxAddWeak}'))" ${argDis}><span class="ctx-dot" style="background:transparent; box-sizing:border-box; border:2px solid ${ctxAddWeak === 'weak-rebuttal' ? '#ff9800' : '#f44336'}"></span>${KIND_NAME[ctxAddWeak]}<span class="ctx-key">Ctrl+Enter</span></button>`;
-            html += `<button class="ctx-item" onclick="ctxAction(()=>addChild('note'))" ${dis}><span class="ctx-dot" style="background:var(--accent-note)"></span>Note<span class="ctx-key">Alt+Enter</span></button>`;
             if (node.type !== 'contention') {
                 // A co-premise joins this box's own argument, so its dot
-                // matches the box: red, orange, a note's yellow, or plain.
-                const coColor = (ctxKinds.get(node.id) || { color: 'support' }).color;
-                const coDot = coColor === 'note' ? 'var(--accent-note)' : ctxSupportColor(ctxSide);
-                html += `<button class="ctx-item" onclick="ctxAction(()=>addCoPremise())" ${dis}><span class="ctx-dot" style="background:${coDot}"></span>Add Co-Premise<span class="ctx-key">Tab</span></button>`;
+                // matches the box: red, orange, or white.
+                html += `<button class="ctx-item" onclick="ctxAction(()=>addCoPremise())" ${argDis}><span class="ctx-dot" style="background:${ctxSupportColor(ctxSide)}"></span>Add Co-Premise<span class="ctx-key">Tab</span></button>`;
             }
+            // A note is not a child: it goes beside the box (see addNote).
+            html += `<button class="ctx-item" onclick="ctxAction(()=>addNote())" ${dis}><span class="ctx-dot" style="background:var(--accent-note)"></span>Add Note<span class="ctx-key">Alt+Enter</span></button>`;
             html += '<div class="ctx-divider"></div>';
 
             // --- Change type ---
@@ -13295,22 +13671,17 @@
                     `<button class="ctx-type${o.on ? ' ctx-current' : ''}${o.main ? ' ctx-main' : ''}"`
                     + ` onclick="ctxAction(()=>changeSelectedTypes('${type}'))"`
                     + ` style="color:${o.text || 'var(--text-color)'}; border-color:${edge};${o.dashed ? ' border-style:dashed;' : ''}"`
-                    + `${o.on ? ' aria-pressed="true"' : ''}${o.off ? ' disabled' : ''}>${label}</button>`;
-                // Notes hold only notes (noteCanHold): under a note only Note and
-                // Main are open; a box holding an argument box cannot become a
-                // note. Judged over the selection the buttons act on, as the
-                // toolbar does (selectionCanRetype).
-                const argumentOff = !selectionCanRetype('support');
-                const noteOff = !selectionCanRetype('note');
+                    + `${o.on ? ' aria-pressed="true"' : ''}>${label}</button>`;
                 // A support put in this box's place joins its parent's argument.
                 const supSide = ctxParentSide || 'main';
-                html += typeBtn('Sup', 'support', edgeOf(SIDE_COLOR[supSide]), { dashed: isWeakType(supSide), on: node.type === 'support', off: argumentOff });
+                html += typeBtn('Sup', 'support', edgeOf(SIDE_COLOR[supSide]), { dashed: isWeakType(supSide), on: node.type === 'support' });
                 // Current only when the box already IS the kind the button
                 // offers -- never for a separate tree's top box, whose button
                 // offers a switch.
-                html += typeBtn(ctxRetypeAttack === 'rebuttal' ? 'Reb' : 'Obj', ctxRetypeAttack, edgeOf(ctxRetypeAttack), { on: ctxKindNow === ctxRetypeAttack, off: argumentOff });
-                html += typeBtn(ctxRetypeWeak === 'weak-rebuttal' ? 'Weak Reb' : 'Weak Obj', ctxRetypeWeak, edgeOf(SIDE_COLOR[ctxRetypeWeak]), { dashed: true, on: ctxKindNow === ctxRetypeWeak, off: argumentOff });
-                html += typeBtn('Note', 'note', 'var(--line-note)', { text: 'var(--note-text)', on: node.type === 'note', off: noteOff });
+                html += typeBtn(ctxRetypeAttack === 'rebuttal' ? 'Reb' : 'Obj', ctxRetypeAttack, edgeOf(ctxRetypeAttack), { on: ctxKindNow === ctxRetypeAttack });
+                html += typeBtn(ctxRetypeWeak === 'weak-rebuttal' ? 'Weak Reb' : 'Weak Obj', ctxRetypeWeak, edgeOf(SIDE_COLOR[ctxRetypeWeak]), { dashed: true, on: ctxKindNow === ctxRetypeWeak });
+                // A note connects to nothing: this cuts the box loose.
+                html += typeBtn('Note', 'note', 'var(--line-note)', { text: 'var(--note-text)', on: node.type === 'note' });
                 html += typeBtn('Main', 'contention', 'var(--color-line)', { main: true, on: node.type === 'contention' });
             }
             html += '</div>';
@@ -13490,9 +13861,16 @@
         if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
     }
     function showOneTimeHint(key, text) {
-        if (hintsDisabled() || hintSeen(key)) return;
+        if (hintSeen(key)) return;
+        if (showHintToast(text)) markHintSeen(key);
+    }
+    // The same toast, every time it is asked for: for something that has just
+    // NOT happened (a save the browser refused), which the user must hear
+    // about each time, not once ever.
+    function showHintToast(text) {
+        if (hintsDisabled()) return false;
         let el = document.getElementById('onetime-hint');
-        if (el && el.classList.contains('show')) return; // one at a time; retry at a quieter moment
+        if (el && el.classList.contains('show')) return false; // one at a time; retry at a quieter moment
         if (!el) {
             el = document.createElement('div');
             el.id = 'onetime-hint';
@@ -13500,10 +13878,10 @@
             document.body.appendChild(el);
         }
         el.textContent = text;
-        markHintSeen(key);
         requestAnimationFrame(() => el.classList.add('show'));
         if (hintTimer) clearTimeout(hintTimer);
         hintTimer = setTimeout(hideOneTimeHint, 6000);
+        return true;
     }
 
     // Long-press (touch/pen): hold ~500ms within an 8px slop to open the
@@ -13766,7 +14144,7 @@
             if (letter === 'w') { changeSelectedTypes('weak-objection'); return; }
             if (letter === 'n') { changeSelectedTypes('note'); return; }
             if (letter === 'u') { changeSelectedTypes('contention'); return; }
-            if (e.code === 'Enter') { document.activeElement.blur(); addChild('note'); return; }
+            if (e.code === 'Enter') { document.activeElement.blur(); addNote(); return; }
         }
 
         if (e.ctrlKey || e.metaKey) {

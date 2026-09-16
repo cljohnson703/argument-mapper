@@ -40,6 +40,7 @@ try {
         'boxOf',
         'vgapForDepth',
         'routeSegmentDistance',
+        'routeSegmentsWithin',
         'routeSegmentTouchesRect',
         'statementFanRouteSegments',
         'statementFanCornerRects',

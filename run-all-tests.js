@@ -52,7 +52,9 @@ const SUITES = [
     'typecolors-r27-menu-test.js',
     'routing-r27-line-gap-test.js',
     'stringmode-r27-positions-test.js',
-    'notes-r27-hold-notes-test.js',
+    'notes-r27-stand-alone-test.js',
+    'drop-r27-parent-test.js',
+    'file-r27-open-link-test.js',
     'navkeys-r27-panel-test.js',
     'collab-r26-firebase-test.js',
 ];

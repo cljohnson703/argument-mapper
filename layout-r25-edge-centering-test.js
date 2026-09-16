@@ -59,6 +59,7 @@ function makeApi(source) {
         'collapsedList',
         'boxOf',
         'routeSegmentDistance',
+        'routeSegmentsWithin',
         'routeSegmentTouchesRect',
         'statementFanRouteSegments',
         'statementFanCornerRects',
