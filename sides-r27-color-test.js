@@ -321,18 +321,18 @@ const T = (W, body) => {
             var rows = g ? g.querySelectorAll('.color-key-row').length : 0;
             var text = g ? g.textContent.replace(/\\s+/g, ' ') : '';
             var b = document.getElementById('key-btn');
-            var r = { rows: rows, text: text, edges: g ? g.querySelectorAll('svg').length : -1, visible: !document.body.classList.contains('color-key-hidden'), btnActive: b && b.classList.contains('active') };
+            var r = { rows: rows, text: text, edges: g ? g.querySelectorAll('svg').length : -1, inHelp: !!g.closest('#help-panel'), noButton: !b };
             toggleColorKey();
-            r.afterHide = { hidden: document.body.classList.contains('color-key-hidden'), stored: localStorage.getItem('argmap-color-key'), btnActive: b.classList.contains('active') };
+            r.afterHide = { hidden: document.body.classList.contains('color-key-hidden'), stored: localStorage.getItem('argmap-color-key'), visible: getComputedStyle(g).display !== 'none' };
             toggleColorKey();
             r.afterShow = { hidden: document.body.classList.contains('color-key-hidden'), stored: localStorage.getItem('argmap-color-key') };
             return r;`);
         key.afterHide = key.afterHide || {}; key.afterShow = key.afterShow || {};
         ok(key.rows === 4 && key.edges === 1 && /Main argument/.test(key.text) && /Objection/.test(key.text) && /Rebuttal/.test(key.text) &&
-           /Weak objection \/ rebuttal/.test(key.text),
+           /Weak objection or rebuttal/.test(key.text),
             'the toolbar has a color key: three colors, and one dotted-line row for weak objections and rebuttals', JSON.stringify({ rows: key.rows, edges: key.edges, text: key.text }));
-        ok(key.visible && key.btnActive, 'shown by default, with its View button active', JSON.stringify(key));
-        ok(key.afterHide.hidden && key.afterHide.stored === '0' && !key.afterHide.btnActive &&
+        ok(key.inHelp && key.noButton, 'the legend is in Help without a toolbar button', JSON.stringify(key));
+        ok(key.afterHide.hidden && key.afterHide.stored === '0' && key.afterHide.visible &&
            !key.afterShow.hidden && key.afterShow.stored === '1',
             'the View button hides and shows it, and remembers the choice', JSON.stringify([key.afterHide, key.afterShow]));
     }

@@ -347,8 +347,8 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(JSON.stringify(direct) === JSON.stringify(['A', 'B', '', 'C']),
             'addCoPremise() with no argument (button, context menu, + action) still inserts right',
             JSON.stringify(direct));
-        ok(/onclick="addCoPremise\(\)"/.test(HTML) && /ctxAction\(\(\)=>addCoPremise\(\)\)/.test(HTML),
-            'the toolbar button and context menu still call it with no argument');
+        ok(/onclick="addCoPremise\(\)"/.test(HTML) && /ctxAction\(\(\)=>addCoPremise\('right'\)\)/.test(HTML),
+            'the toolbar retains default insertion and Right co-premise explicitly inserts right');
     }
 
     /* ================================================================
@@ -356,7 +356,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
        ================================================================ */
     console.log('\n-- documentation --');
     {
-        ok(/<kbd>Shift\+Tab<\/kbd>\s*co-premise on the left/.test(HTML),
+        ok(/Add co-premise right \/ left<\/td><td><kbd>Tab<\/kbd> \/ <kbd>Shift\+Tab<\/kbd>/.test(HTML),
             'Help lists Shift+Tab as co-premise on the left');
     }
 

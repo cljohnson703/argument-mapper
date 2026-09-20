@@ -1,0 +1,32 @@
+﻿[
+    {
+        "url":  "https://raw.githubusercontent.com/RosaeNLG/rosaenlg/ff38d3275e86567142506592d6e14ce679bf70e3/packages/english-verbs-irregular/resources/irregularVerbs.json",
+        "file":  "verbs.json",
+        "sha256":  "f0902ff0cf8e857f82228a14ada9f8ff5808822bd498835a7bc77ee2da3ab7b1"
+    },
+    {
+        "url":  "https://raw.githubusercontent.com/RosaeNLG/rosaenlg/ff38d3275e86567142506592d6e14ce679bf70e3/packages/english-verbs-irregular/README.md",
+        "file":  "verbs-README.md",
+        "sha256":  "243ba81aa6f473d431591d25e161e52ecc4e6570acfeb3fc22060e2439717828"
+    },
+    {
+        "url":  "https://raw.githubusercontent.com/RosaeNLG/rosaenlg/ff38d3275e86567142506592d6e14ce679bf70e3/packages/english-verbs-irregular/LICENSE",
+        "file":  "verbs-LICENSE.txt",
+        "sha256":  "ec8a72fcab6d0df9596634efe03fda1551368dd724a79549249a30bf08f6fbbc"
+    },
+    {
+        "url":  "https://raw.githubusercontent.com/sindresorhus/irregular-plurals/5800d46249fb15f739f0ac19006f840ef41acb46/irregular-plurals.json",
+        "file":  "plurals.json",
+        "sha256":  "a19de8991dfa5e4ff4e9fe2bf874db0ceef6b9f07f648635647a7ddd1cd61682"
+    },
+    {
+        "url":  "https://raw.githubusercontent.com/sindresorhus/irregular-plurals/5800d46249fb15f739f0ac19006f840ef41acb46/readme.md",
+        "file":  "plurals-README.md",
+        "sha256":  "9a28628ba1edc2a842e55c4947416f9ab6664a8748396e8e1e97e7daf7db3bbe"
+    },
+    {
+        "url":  "https://raw.githubusercontent.com/sindresorhus/irregular-plurals/5800d46249fb15f739f0ac19006f840ef41acb46/license",
+        "file":  "plurals-LICENSE.txt",
+        "sha256":  "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3"
+    }
+]

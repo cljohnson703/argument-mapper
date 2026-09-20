@@ -1,0 +1,80 @@
+{
+  "equivalent": [
+    {"canonical":"If Poe is a raven, then Poe is black", "forms":[
+      "\"Poe is a raven\" is a sufficient condition for \"Poe is black\".",
+      "A sufficient condition for \"Poe is black\" is \"Poe is a raven\".",
+      "\"Poe is black\" is a necessary condition for \"Poe is a raven\".",
+      "A necessary condition for \"Poe is a raven\" is \"Poe is black\".",
+      "On the assumption that Poe is a raven, Poe is black.",
+      "Supposing that Poe is a raven, Poe is black.",
+      "Poe is black on the assumption that Poe is a raven."
+      ,"\"Poe is a raven\" is sufficient for \"Poe is black\"."
+      ,"\"Poe is black\" is necessary for \"Poe is a raven\"."
+    ]},
+    {"canonical":"Poe is a raven if and only if Poe is black", "forms":[
+      "\"Poe is a raven\" is a necessary and sufficient condition for \"Poe is black\".",
+      "\"Poe is a raven\" is a sufficient and necessary condition for \"Poe is black\".",
+      "A necessary and sufficient condition for \"Poe is black\" is \"Poe is a raven\"."
+    ]},
+    {"canonical":"Poe is black and Fido is white", "forms":[
+      "It is true both that Poe is black and that Fido is white.",
+      "Both \"Poe is black\" and \"Fido is white\" are true.",
+      "Poe is black; additionally, Fido is white.",
+      "It is the case that Poe is black and Fido is white.",
+      "It is true that Poe is black and Fido is white."
+    ]},
+    {"canonical":"Poe is black or Fido is white", "forms":[
+      "Either Poe is black or Fido is white, or both.",
+      "Poe is black or Fido is white, or both are true.",
+      "At least one of \"Poe is black\" and \"Fido is white\" is true."
+    ]},
+    {"canonical":"It is not the case that Poe is black", "forms":[
+      "It isn't so that Poe is black.",
+      "It is untrue to say that Poe is black.",
+      "The proposition that Poe is black is false.",
+      "\"Poe is black\" is false."
+    ]},
+    {"canonical":"All ravens are black", "forms":[
+      "All ravens without exception are black.",
+      "Every raven without exception is black.",
+      "All ravens are black without exception.",
+      "Each one of the ravens is black.",
+      "Each and every one of the ravens is black.",
+      "Every single one of the ravens is black."
+    ]},
+    {"canonical":"No ravens are white", "forms":[
+      "No ravens whatsoever are white.",
+      "There does not exist any raven that is white.",
+      "There doesn't exist a raven that is white.",
+      "It isn't so that any raven is white.",
+      "No single raven is white.",
+      "Not one single raven is white."
+    ]},
+    {"canonical":"Some raven is black", "forms":[
+      "There exists at least one raven that is black.",
+      "There is at least one raven that is black."
+    ]},
+    {"canonical":"Poe is not black and Fido is not white", "forms":[
+      "Both \"Poe is black\" and \"Fido is white\" are false.",
+      "It is false both that Poe is black and that Fido is white."
+    ]},
+    {"canonical":"Poe is black", "forms":[
+      "It is the case that Poe is black.",
+      "It is indeed the case that Poe is black.",
+      "It is true that Poe is black.",
+      "\"Poe is black\" is true.",
+      "The proposition that Poe is black is true."
+    ]}
+  ],
+  "distinct": [
+    ["\"Poe is a raven\" is a necessary condition for \"Poe is black\"", "If Poe is a raven, then Poe is black"],
+    ["\"Poe is a raven\" is not a sufficient condition for \"Poe is black\"", "If Poe is a raven, then Poe is black"],
+    ["Poe is black only if Poe is a raven", "If Poe is a raven, then Poe is black"],
+    ["Poe is black or Fido is white, but not both", "Poe is black or Fido is white"],
+    ["It is not known that Poe is black", "It is not the case that Poe is black"],
+    ["All ravens except Poe are black", "All ravens are black"],
+    ["All people who work without exception are happy", "All people who work are happy"],
+    ["There exists exactly one raven that is black", "Some raven is black"],
+    ["Poe is necessarily black", "Poe is black"]
+  ]
+}

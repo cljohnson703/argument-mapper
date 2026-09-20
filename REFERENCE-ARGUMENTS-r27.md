@@ -1,0 +1,23 @@
+# Reference arguments
+
+Right-click the conclusion box and choose **Reference arguments…**, or open its badge. The menu retains the old 280px width and compact, single-line premise rows; hover reveals full text. Use **+** to add references or start an empty argument.
+
+Drag one ungrouped premise onto another to form an argument. Drop a premise into a bordered group to move it there, or into the Ungrouped area to separate it. Ctrl/Alt-drag copies its membership, allowing several arguments to reuse the same original node. Individual child co-premises can move separately; their siblings stay in the source argument.
+
+Right-click a premise to add/move it to a group, reuse it in another group, ungroup it, or remove the link. **Argument type…** offers support, objection, weak objection, rebuttal, and weak rebuttal. Click or right-click a group heading for its type, adding linked premises, including children, or ungrouping the whole argument. Keyboard Context Menu / Shift+F10 and touch long-press expose the same options. Undo/redo work while the menu has focus.
+
+The expanded badge encloses each argument in a separate border using the role's existing color and solid/dashed styling. When Deductive is active, each group uses the same inference tag wording as canvas co-premises, without premise-assessment suffixes. When inactive, opening or editing the reference menu performs no deductive check and displays no logic result or role-correction diagnostic. Toggling Deductive refreshes any open reference menu. Each argument is checked separately. A child can participate in more than one argument without creating another node. Children assigned to explicit arguments are not also checked as incomplete standalone inferences. Ungrouping changes reference memberships, not the original tree connections.
+
+Argument details appear only inside the reference menu; no additional Argument labels appear above canvas nodes. Ordinary deductive tags remain. Hover highlights the original premises; clicking a premise navigates to its original box. The badge is keyboard operable. Notes and ungrouped links remain informational.
+
+The checker evaluates the selected argument type only. It does not suggest alternative types or offer an automatic type-correction button.
+
+Arguments are stored as records in the target box's existing `crossRefs` array, alongside legacy endpoints: `{argumentId, kind, childIds, premises}`. Logical dependencies form a graph; the layout still displays one canonical tree node per premise. Inference validity and warrant are separate: a valid inference from a challenged premise cannot establish its target. Circular dependencies are conservatively marked pending and cannot supply their own warrant.
+
+Reference groups use the same `argumentKindFor` rule as ordinary children. The type menu offers Support plus the strong and weak attack appropriate to the parent's current side: Rebuttal / Weak Rebuttal under objections, Objection / Weak Objection on the main or rebuttal side. Support inherits its parent's color and weak-branch dashes. Saved attack roles are interpreted relative to the current parent, just like saved child node types, so moving or retagging the parent automatically updates the menu, border, and inference role without rewriting the saved map.
+
+JSON, undo/redo, collaboration's existing crossRefs transport, and text export preserve argument groups. Copying multiple nodes remaps internal memberships to the copied nodes; external memberships retain their original destinations. Endpoint remapping preserves linked box identity during co-premise index changes. Deleting a linked premise retains a missing-premise record, which blocks certification. Removing or moving a selected child group away from its target leaves a missing child membership that must be detached or reassigned explicitly; it never silently substitutes another group.
+
+Text exports use `Argument TARGET ROLE | children LABELS | refs LABELS` lines. SVG/PNG exports retain ordinary visible deductive checks and omit the removed Argument labels.
+
+Validation: `node reference-arguments-r27-test.js` covers all five roles, all four group configurations, independent inference checks, shared children, inherited weak challenges, cycles, missing sources, remapping, copying, JSON/text roundtrips, undo/redo, read-only behavior, inspector rows/highlighting, and SVG markers. `node reference-menu-r27-test.js` exercises drag/drop events, context menus, compact styles, individual co-premises, reuse, undo, and read-only protection. Visual pixel placement still needs an in-browser check; the browser tool rejected local navigation in this session.

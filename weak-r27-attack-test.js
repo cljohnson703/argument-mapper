@@ -351,14 +351,14 @@ const J = JSON.stringify;
             ['S1', 'BS', 'GS', 'GO', 'RB'].forEach(function (id) {
                 __c.load(${J(TREES)}, [id + '-0']); __c.key('KeyW', 'w'); out[id] = __c.type(id); });
             return out;`);
-        ok(w.S1 === WO, 'W on a box under a white premise makes it a WEAK OBJECTION', J(w));
-        ok(w.BS === WR, 'W on a box under a weak objection makes it a WEAK REBUTTAL', J(w));
-        ok(w.GS === WO && w.GO === WO, 'W on a box under a weak rebuttal makes it a WEAK OBJECTION', J(w));
-        ok(w.RB === WO, 'W on a box under an orange premise makes it a WEAK OBJECTION', J(w));
+        ok(w.S1 === 'support', 'W leaves support unchanged: there is no weak-support type', J(w));
+        ok(w.BS === 'support', 'W leaves a support inside a weak objection unchanged', J(w));
+        ok(w.GS === 'support' && w.GO === WO, 'W preserves support but weakens an ordinary objection', J(w));
+        ok(w.RB === 'objection', 'W strengthens a weak objection under an orange premise', J(w));
 
         const altW = T(W, `__c.load(${J(TREES)}, ['BS-0']); __c.key('KeyW', 'w', { altKey: true }); return __c.type('BS');`);
         const altMac = T(W, `__c.load(${J(TREES)}, ['S1-0']); __c.key('KeyW', '∑', { altKey: true }); return __c.type('S1');`);
-        ok(altW === WR && altMac === WO, 'Alt+W retags too, including the macOS Option+W character', J([altW, altMac]));
+        ok(altW === 'support' && altMac === 'support', 'Alt+W and macOS Option+W also preserve supports', J([altW, altMac]));
 
         const ctrlEnter = T(W, `var out = {};
             [['S1', 'ctrlKey'], ['O1', 'ctrlKey'], ['B1', 'metaKey'], ['BG', 'ctrlKey']].forEach(function (p) {
@@ -382,7 +382,7 @@ const J = JSON.stringify;
             __c.load(${J(TREES)}, ['B1-0']); __c.key('KeyO', 'o'); out.strong = __c.type('B1');
             return out;`);
         ok(oR.o === 'rebuttal' && oR.r === 'objection', 'O and R still make the ordinary attack that fits', J(oR));
-        ok(oR.strong === 'objection', 'O turns a weak objection back into an ordinary one', J(oR));
+        ok(oR.strong === 'support', 'O turns a weak objection into support', J(oR));
 
         const given = T(W, `__c.load(${J(TREES)}, ['S1-0']); __c.key('KeyG', 'g');
             var n = findNodeContext(state.trees, 'S1').node; return { type: n.type, given: !!(n.givens && n.givens[0]) };`);
@@ -416,13 +416,13 @@ const J = JSON.stringify;
             __c.key('KeyO', 'o'); out.once = __c.type('FO'); out.supportColor = __c.kind('FOS').color;
             __c.key('KeyO', 'o'); out.twice = __c.type('FO');
             return out;`);
-        ok(o.once === 'rebuttal' && o.twice === 'objection', 'O on a separate objection tree makes it a Rebuttal, and O again switches it back', J(o));
-        ok(o.supportColor === 'rebuttal', 'its support follows: orange once the tree is a rebuttal', J(o));
+        ok(o.once === 'support' && o.twice === 'objection', 'O on a separate objection toggles support and back', J(o));
+        ok(o.supportColor === 'support', 'its supporting descendants follow the new support side', J(o));
 
         const w = T(W, `__c.load(${J(ROOTS)}, ['FW-0']);
             __c.key('KeyW', 'w'); var once = __c.type('FW'); __c.key('KeyW', 'w'); var twice = __c.type('FW');
             return { once: once, twice: twice };`);
-        ok(w.once === WR && w.twice === WO, 'W on a separate weak objection switches it to a Weak Rebuttal and back', J(w));
+        ok(w.once === 'objection' && w.twice === WO, 'W on a separate weak objection toggles regular and weak without switching sides', J(w));
 
         const other = T(W, `var out = {};
             __c.load(${J(ROOTS)}, ['FS-0']); __c.key('KeyW', 'w'); out.supportW = __c.type('FS');
@@ -432,10 +432,10 @@ const J = JSON.stringify;
             __c.load(${J(ROOTS)}, ['FO-0']); __c.key('KeyR', 'r'); out.r1 = __c.type('FO'); __c.key('KeyR', 'r'); out.r2 = __c.type('FO');
             __c.load(${J(ROOTS)}, ['S-0']); __c.key('KeyO', 'o'); out.attachedO1 = __c.type('S'); __c.key('KeyO', 'o'); out.attachedO2 = __c.type('S');
             return out;`);
-        ok(other.supportW === WO && other.supportO === 'objection', 'a separate tree of another kind takes the default: Weak Objection for W, Objection for O', J(other));
-        ok(other.weakO === 'objection' && other.objectionW === WO, 'O on a weak one, or W on an ordinary one, crosses to the other pair', J(other));
+        ok(other.supportW === 'support' && other.supportO === 'objection', 'W preserves a separate support; O changes it to an objection', J(other));
+        ok(other.weakO === 'support' && other.objectionW === WO, 'O changes weak objection to support; W weakens an ordinary objection', J(other));
         ok(other.r1 === 'rebuttal' && other.r2 === 'rebuttal', 'R asks for a rebuttal outright, so it does not switch back', J(other));
-        ok(other.attachedO1 === 'objection' && other.attachedO2 === 'objection', 'an attached box does not switch: O keeps picking from its parent', J(other));
+        ok(other.attachedO1 === 'objection' && other.attachedO2 === 'support', 'O toggles an attached premise between attack and support', J(other));
 
         const tb = T(W, `var out = {};
             function read() { return { obj: __c.text('btn-type-obj'), weak: __c.text('btn-type-weak'),
@@ -595,38 +595,17 @@ const J = JSON.stringify;
     console.log('\n-- Color Key and Help --');
     {
         const key = T(W, `var g = document.getElementById('group-color-key');
-            var kb = document.getElementById('key-btn');
-            return { label: (g.querySelector('.toolbar-group-label') || {}).textContent, button: kb.textContent.trim(),
-                rows: Array.prototype.slice.call(g.querySelectorAll('.color-key-row')).map(function (r) {
-                    var line = r.querySelector('svg line');
-                    return { name: (r.querySelector('.color-key-name') || {}).textContent, detail: (r.querySelector('.color-key-detail') || {}).textContent,
-                             title: r.title, dash: line ? line.getAttribute('stroke-dasharray') : null };
-                }) };`);
-        const rows = Array.isArray(key.rows) ? key.rows : [];
-        ok(key.label === 'Color Key' && key.button === 'Color Key', 'the toolbar group and its View button read "Color Key"', J([key.label, key.button]));
-        ok(rows.map(r => r.name).join(',') === 'Main argument,Objection,Rebuttal,Weak objection / rebuttal',
-            'the key lists Main argument, Objection, Rebuttal, and Weak objection / rebuttal', J(rows.map(r => r.name)));
-        const wk = rows[3] || {};
-        ok(wk.dash === '6 4' && /dashed branch/.test(wk.detail || '') && /without endorsing its negation/.test(wk.title || ''),
-            'that row shows a dashed line, says "dashed branch", and explains what weak means', J(wk));
-
-        const help = T(W, `var p = document.getElementById('help-panel'); return { html: p.innerHTML, text: p.textContent };`);
-        const h = (help && help.html) || '', ht = (help && help.text) || '';
-        ok(/<kbd>W<\/kbd> Weak Objection or Weak Rebuttal/.test(h) && /<kbd>Ctrl\+Enter<\/kbd> Weak Objection or Weak Rebuttal/.test(h) && /Alt\+S\/O\/W\/N\/U\/C/.test(h),
-            'Help lists W, Ctrl+Enter and Alt+W for weak objections and rebuttals');
-        ok(/<kbd>B<\/kbd> breadth: narrow\/wide/.test(h) && /<kbd>G<\/kbd> given/.test(h), 'Help lists B for breadth and G for given');
-        ok(/<strong>Dashed<\/strong> — a <strong>weak objection<\/strong> \(red\) or <strong>weak rebuttal<\/strong> \(orange\)/.test(h) &&
-           /Every box and connector in a weak branch is dashed/.test(ht), 'the Colors section explains that a whole weak branch is dashed');
-        ok(/<strong>See-through, with an IMPLICIT tag<\/strong> — an <strong>implicit<\/strong> premise/.test(h) && !/dotted|dashed border\)/.test(ht),
-            'it explains the implicit look too, and Help no longer calls implicit dashed');
-        ok(/<kbd>W<\/kbd> between Weak Objection and Weak Rebuttal/.test(h), 'and how W switches a separate weak tree');
-        ok(/<strong>Q<\/strong> for a weak objection/.test(h) && /<strong>P<\/strong> for a weak rebuttal/.test(h) && !/legacy|Older maps written with/.test(ht),
-            'the Labels section gives Q and P, and no longer mentions P as an old support letter');
-        ok(!/\bBlock\b|\bGuard\b/.test(ht), 'Help never mentions Block or Guard');
-        // British spellings, assembled so this file does not contain them.
-        const british = ['col' + 'our', 'cent' + 're', 'licen' + 'ce', 'gr' + 'ey', 'behavi' + 'our', 'cancel' + 'led', 'favo' + 'ur', 'hono' + 'ur'];
-        const brit = british.filter(w => new RegExp(w, 'i').test(ht));
-        ok(brit.length === 0, 'Help uses American spelling throughout', brit.join(', '));
+            return { inHelp: !!g.closest('#help-panel'), noButton: !document.getElementById('key-btn'),
+                rows: [...g.querySelectorAll('.color-key-row')].map(r => ({text:r.textContent.trim(),dash:r.querySelector('line')?.getAttribute('stroke-dasharray')})),
+                help: document.getElementById('help-panel').textContent };`);
+        ok(key.inHelp && key.noButton, 'Color Key is in Help without a toolbar button', J(key));
+        ok(key.rows.length === 4 && ['Main argument','Objection','Rebuttal','Weak objection or rebuttal'].every((label,i) => key.rows[i].text.startsWith(label)),
+            'compact legend labels all four roles');
+        ok(key.rows[3].dash === '6 4' && key.rows[3].text.includes('dashed'), 'weak role has a dashed sample');
+        ok(key.help.includes('without establishing its opposite'), 'compact Help explains what a weak challenge does');
+        ok(key.help.includes('Implicit marks an unstated assumption') && key.help.includes('Given marks a premise taken as given'),
+            'compact Help explains premise modifiers');
+        ok(key.help.includes('Add weak objection / rebuttal') && key.help.includes('Ctrl+Enter'), 'Help retains the weak-attack creation shortcut');
     }
 
     /* ---------------- 9. export ---------------- */

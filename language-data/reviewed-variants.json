@@ -1,0 +1,37 @@
+{
+  "sources": [
+    "https://www.ox.ac.uk/about/the-university/brand/style-guide/words",
+    "https://www.upf.edu/en/web/gabinet-linguistic/principals-diferencies-ortografiques",
+    "verbs.json (commit and checksum in sources.json)"
+  ],
+  "spellingPairs": {
+    "colour":"color", "colours":"colors", "coloured":"colored", "colouring":"coloring",
+    "honour":"honor", "honours":"honors", "honoured":"honored", "honouring":"honoring",
+    "flavour":"flavor", "flavours":"flavors", "flavoured":"flavored", "flavouring":"flavoring",
+    "humour":"humor", "humours":"humors", "labour":"labor", "labours":"labors",
+    "laboured":"labored", "labouring":"laboring", "neighbour":"neighbor", "neighbours":"neighbors",
+    "centre":"center", "centres":"centers", "centred":"centered", "centring":"centering",
+    "fibre":"fiber", "fibres":"fibers", "litre":"liter", "litres":"liters",
+    "theatre":"theater", "theatres":"theaters", "traveller":"traveler", "travellers":"travelers",
+    "travelled":"traveled", "travelling":"traveling", "cancelled":"canceled", "cancelling":"canceling",
+    "labelled":"labeled", "labelling":"labeling", "modelled":"modeled", "modelling":"modeling"
+  },
+  "verbSpellingPairs": {
+    "organise":"organize", "realise":"realize", "recognise":"recognize",
+    "globalise":"globalize", "specialise":"specialize", "analyse":"analyze"
+  },
+  "pastAlternatives": {
+    "daydream":{"daydreamt":"daydreamed"},
+    "sunburn":{"sunburnt":"sunburned"},
+    "unlearn":{"unlearnt":"unlearned"},
+    "spoil":{"spoilt":"spoiled"},
+    "sneak":{"snuck":"sneaked"},
+    "dive":{"dove":"dived"}
+  },
+  "compoundPlurals": {
+    "mothers-in-law":"mother-in-law", "fathers-in-law":"father-in-law",
+    "brothers-in-law":"brother-in-law", "sisters-in-law":"sister-in-law",
+    "sons-in-law":"son-in-law", "daughters-in-law":"daughter-in-law",
+    "passers-by":"passer-by", "attorneys general":"attorney general"
+  }
+}

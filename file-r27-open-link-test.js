@@ -104,7 +104,7 @@ const run = async (W, body) => JSON.parse(await W.win.eval(`(async function () {
                      input: !!i && i.type, accept: i && i.accept, onchange: i && i.getAttribute('onchange'), label: label };
         })())`);
         const o = JSON.parse(m);
-        ok(o.btn === 'BUTTON' && o.onclick === 'openMapFile()' && /^Open File/.test(o.text || '') && !o.label,
+        ok(o.btn === 'BUTTON' && o.onclick === 'openMapFile()' && /^Open…/.test(o.text || '') && !o.label,
             'Open File is a button that opens the picker', m);
         ok(o.input === 'file' && o.accept === '.json' && o.onchange === 'loadMap(event)', 'with the plain file input kept, hidden, as the fallback', m);
     }

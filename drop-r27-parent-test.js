@@ -276,7 +276,7 @@ const ABOVE = { left: 40, top: 200 - 60, w: 50, h: 40 };
         ok(/\.drop-parent\s*\{\s*box-shadow:\s*inset 0 6px 0 var\(--color-selected\) !important/.test(CSS) &&
            /\.drop-child\s*\{\s*box-shadow:\s*inset 0 -6px 0 var\(--color-selected\) !important/.test(CSS),
             'the light is a bar along the top edge, mirroring the child drop\'s bar along the bottom');
-        ok(/Above-drop = parent/.test(h.help || ''), 'Help lists the above-drop');
+        ok(/above it to become a parent/.test(h.help || ''), 'Help lists the above-drop');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

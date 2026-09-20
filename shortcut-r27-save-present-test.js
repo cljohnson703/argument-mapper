@@ -170,7 +170,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(/>Save to File <span class="hotkey">Ctrl\+S<\/span>/.test(HTML), 'the Save to File button shows Ctrl+S');
         ok(/>Save As… <span class="hotkey">Ctrl\+Shift\+S<\/span>/.test(HTML), 'the Save As button shows Ctrl+Shift+S');
         ok(/>Save now<\/button>/.test(HTML), 'Save now (browser storage) keeps its button, without a shortcut label');
-        ok(/<kbd>Ctrl\+S<\/kbd> save &nbsp; <kbd>Ctrl\+Shift\+S<\/kbd> save as/.test(HTML), 'Help lists Ctrl+S save and Ctrl+Shift+S save as');
+        ok([...W.win.document.querySelectorAll('#help-panel tr')].some(row => row.textContent.includes('Save / save as') && [...row.querySelectorAll('kbd')].map(k => k.textContent).join('|') === 'Ctrl+S|Ctrl+Shift+S'), 'Help lists Ctrl+S save and Ctrl+Shift+S save as');
         ok(!/<kbd>Shift\+S<\/kbd>/.test(HTML), 'and Shift+S appears nowhere in Help');
     }
 
@@ -203,7 +203,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(!typing.open, 'typing "/" inside a box does not open Help', JSON.stringify(typing));
 
         ok(/<button id="help-btn"[^>]*title="Help \(\/\)"[^>]*>Help <span class="hotkey">\/<\/span>/.test(HTML) &&
-           /id="help-icon-topleft"[^>]*title="Help \(\/\)"/.test(HTML) && /<kbd>\/<\/kbd> help/.test(HTML) && !/<kbd>H<\/kbd> help/.test(HTML),
+           /id="help-icon-topleft"[^>]*title="Help \(\/\)"/.test(HTML) && [...W.win.document.querySelectorAll('#help-panel tr')].some(row => row.textContent.includes('open Help') && [...row.querySelectorAll('kbd')].some(k => k.textContent === '/')) && !/<kbd>H<\/kbd> help/.test(HTML),
             'the Help button, the ? icon and the Help text all say "/"');
     }
 

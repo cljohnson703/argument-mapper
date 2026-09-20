@@ -502,6 +502,7 @@ function ok(cond, label, detail) {
         catch (e) { code = e && e.code; }
         ok(code === 'permission', 'viewer: direct transport write refused by rules (code=permission)', String(code));
         await C.win.__argmap.engine.pullNow();   // resync the vandalized local copy
+        await waitFor(() => texts(C) === texts(A), 'viewer refresh discards unauthorized local mutations before promotion');
     }
 
     // --- 9. Live role promotion ------------------------------------------

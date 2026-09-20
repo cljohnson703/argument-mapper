@@ -73,7 +73,7 @@ function makeWin(label) {
         'toggleImplicit', 'cutNode', 'copyNode', 'pasteNode', 'saveMap', 'manualLocalSave',
         'newMap', 'openStringMode', 'applyStringMode', 'toggleHelp', 'toggleCollabPanel',
         'closeCollabPanel', 'toggleEvalOverview', 'recenter', 'loadMap', 'openMapFile', 'addNote', 'importTextFile',
-        'toggleReviewMode', 'togglePresentMode', 'deleteSelected', 'toggleFreePlacement', 'toggleColorKey'];
+        'toggleReviewMode', 'togglePresentMode', 'deleteSelected', 'toggleFreePlacement'];
     const missing = handlerNames.filter(n => typeof W.win[n] !== 'function');
     ok(missing.length === 0, 'handlers: every inline-onclick function is still callable', 'missing: ' + missing.join(','));
 

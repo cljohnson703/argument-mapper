@@ -139,7 +139,7 @@ const J = JSON.stringify;
             var exportGroup = Array.prototype.slice.call(document.querySelectorAll('#extra-toolbar .toolbar-group')).find(function (g) {
                 return /Export \\/ Import/.test((g.querySelector('.toolbar-group-label') || {}).textContent || ''); });
             return { kids: kids, inAddNodes: inAddNodes, fileLabel: file && (file.querySelector('.toolbar-group-label') || {}).textContent,
-                     newText: nb && nb.textContent.trim(), nextIsOpen: !!(next && /Open File/.test(next.textContent)),
+                     newText: nb && nb.textContent.trim(), nextIsOpen: !!(next && /Open…/.test(next.textContent)),
                      onclick: nb && nb.getAttribute('onclick'),
                      exportHasNew: !!(exportGroup && Array.prototype.slice.call(exportGroup.querySelectorAll('button')).some(function (b) { return b.textContent.trim() === 'New'; })),
                      newButtons: Array.prototype.slice.call(document.querySelectorAll('button[onclick="newMap()"]')).length };`);
@@ -306,12 +306,10 @@ const J = JSON.stringify;
     {
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
         const html = typeof h === 'string' ? h : '';
-        ok(/<kbd>Shift\+F<\/kbd> placement snap\/free/.test(html) && /<strong>Placement<\/strong> \(Change Type\)/.test(html),
-            'Help lists Shift+F and explains Placement');
-        ok(/Holding <kbd>Shift<\/kbd> while placing a node does the opposite of the setting/.test(html) &&
-           /<kbd>Shift<\/kbd>-drop = no connection, placed opposite to Placement \(stays put under Snap, snaps into the layout under Free\)/.test(html),
-            'and says Shift places a node the other way, drops included');
-        ok(/<kbd>F<\/kbd> focus/.test(html), 'and still lists F for focus');
+        ok(/<strong>Placement: Free<\/strong> keeps boxes where you put them/.test(html),
+            'compact Help explains free placement');
+        ok(/<strong>Shift-drop<\/strong> avoids connecting/.test(html),
+            'compact Help explains Shift-drop');
         const tips = T(W, `applyFreePlacement(true); var free = document.getElementById('placement-btn').title;
             applyFreePlacement(false); var snap = document.getElementById('placement-btn').title;
             return { free: free, snap: snap, node: document.getElementById('new-node-btn').title };`);

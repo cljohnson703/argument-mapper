@@ -1,0 +1,7 @@
+# Upstream snapshots are verified by SHA-256; preserve their original bytes.
+language-data/verbs.json -text
+language-data/verbs-README.md -text whitespace=cr-at-eol
+language-data/verbs-LICENSE.txt -text whitespace=cr-at-eol
+language-data/plurals.json -text
+language-data/plurals-README.md -text
+language-data/plurals-LICENSE.txt -text

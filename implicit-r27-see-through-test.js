@@ -134,7 +134,7 @@ const rule = (sel) => {
         ok(/--line-faded:\s*rgba\(255, 255, 255, 0\.5\)/.test(dark) && /--line-objection-faded:\s*rgba\(255, 98, 80, 0\.5\)/.test(dark) &&
            /--line-rebuttal-faded:\s*rgba\(255, 183, 128, 0\.5\)/.test(dark),
             'dark theme: the connector colors at half strength');
-        ok(/--line-faded:\s*rgba\(51, 51, 51, 0\.5\)/.test(light) && /--line-objection-faded:\s*rgba\(198, 40, 40, 0\.5\)/.test(light) &&
+        ok(/--line-faded:\s*rgba\(51, 51, 51, 0\.5\)/.test(light) && /--line-objection-faded:\s*rgba\(244, 67, 54, 0\.5\)/.test(light) &&
            /--line-rebuttal-faded:\s*rgba\(255, 152, 0, 0\.5\)/.test(light),
             'light theme: the same, from its own connector colors');
         ok(/--color-given-see-through:\s*rgba\(38, 62, 48, 0\.55\)/.test(dark) && /--color-given-see-through:\s*rgba\(201, 229, 211, 0\.6\)/.test(nodesLight),
@@ -317,12 +317,9 @@ const rule = (sel) => {
         ok(/see-through box with a faded border, fainter text and an IMPLICIT tag/.test(b.title || ''), 'its tooltip describes the look', J(b.title));
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
         const html = typeof h === 'string' ? h : '';
-        ok(/<strong>See-through, with an IMPLICIT tag<\/strong> — an <strong>implicit<\/strong> premise \(<kbd>I<\/kbd>\)/.test(html) &&
-           /see-through, with a faded border and fainter text, and a small IMPLICIT tag sits across the top of the border/.test(html) &&
-           /stays dashed in a weak branch/.test(html),
-            'Help\'s Colors section describes the look');
-        ok(/an <strong>implicit<\/strong> given keeps its tint, see-through/.test(html) && /\(see-through, with an IMPLICIT tag\)/.test(html),
-            'and so do its Given and Labels sections');
+        ok(/<strong>Implicit<\/strong> marks an unstated assumption/.test(html) &&
+           /<strong>Given<\/strong> marks a premise taken as given/.test(html),
+            'compact Help distinguishes implicit and given premises');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

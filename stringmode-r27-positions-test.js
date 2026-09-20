@@ -214,10 +214,8 @@ function fixture(mx, my, plain) {
     console.log('\n-- Help --');
     {
         const h = W.win.eval(`document.getElementById('help-panel').innerHTML`);
-        ok(/<strong>N1<\/strong> is the first separate note/.test(h) && !/<strong>X<\/strong>/.test(h) && !/not typed yet/.test(h),
-            'Help names separate trees by letter, and no longer mentions X');
-        ok(/a <strong>Positions<\/strong> list says where each separate tree sits, as an offset in pixels from main contention 1: <strong>N1 @ -285,\+195<\/strong>/.test(h) &&
-           /Older text named free trees by coordinates/.test(h), 'and describes the Positions list and older text');
+        ok(/<strong>String Mode<\/strong> to edit the map as structured text/.test(h),
+            'compact Help explains String Mode');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

@@ -1,0 +1,6196 @@
+{
+  "verbs": [
+    {
+      "base": "arise",
+      "forms": [
+        [
+          "arose",
+          "arisen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "awake",
+      "forms": [
+        [
+          "awakened",
+          "awakened"
+        ],
+        [
+          "awoke",
+          "awoken"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "backslide",
+      "forms": [
+        [
+          "backslid",
+          "backslidden"
+        ],
+        [
+          "backslid",
+          "backslid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "be",
+      "forms": [
+        [
+          "was",
+          "been"
+        ],
+        [
+          "were",
+          "been"
+        ]
+      ],
+      "disposition": "auxiliary or sense-sensitive: existing parser policy"
+    },
+    {
+      "base": "bear",
+      "forms": [
+        [
+          "bore",
+          "born"
+        ],
+        [
+          "bore",
+          "borne"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "beat",
+      "forms": [
+        [
+          "beat",
+          "beaten"
+        ],
+        [
+          "beat",
+          "beat"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "become",
+      "forms": [
+        [
+          "became",
+          "become"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "begin",
+      "forms": [
+        [
+          "began",
+          "begun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "bend",
+      "forms": [
+        [
+          "bent",
+          "bent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "bet",
+      "forms": [
+        [
+          "bet",
+          "bet"
+        ],
+        [
+          "betted",
+          "betted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "bid",
+      "forms": [
+        [
+          "bid",
+          "bidden"
+        ],
+        [
+          "bade",
+          "bidden"
+        ],
+        [
+          "bid",
+          "bid"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "bind",
+      "forms": [
+        [
+          "bound",
+          "bound"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "bite",
+      "forms": [
+        [
+          "bit",
+          "bitten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "bleed",
+      "forms": [
+        [
+          "bled",
+          "bled"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "blow",
+      "forms": [
+        [
+          "blew",
+          "blown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "break",
+      "forms": [
+        [
+          "broke",
+          "broken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "breed",
+      "forms": [
+        [
+          "bred",
+          "bred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "bring",
+      "forms": [
+        [
+          "brought",
+          "brought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "broadcast",
+      "forms": [
+        [
+          "broadcast",
+          "broadcast"
+        ],
+        [
+          "broadcasted",
+          "broadcasted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "browbeat",
+      "forms": [
+        [
+          "browbeat",
+          "browbeaten"
+        ],
+        [
+          "browbeat",
+          "browbeat"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "build",
+      "forms": [
+        [
+          "built",
+          "built"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "burn",
+      "forms": [
+        [
+          "burned",
+          "burned"
+        ],
+        [
+          "burnt",
+          "burnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "burst",
+      "forms": [
+        [
+          "burst",
+          "burst"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "bust",
+      "forms": [
+        [
+          "busted",
+          "busted"
+        ],
+        [
+          "bust",
+          "bust"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "buy",
+      "forms": [
+        [
+          "bought",
+          "bought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "cast",
+      "forms": [
+        [
+          "cast",
+          "cast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "catch",
+      "forms": [
+        [
+          "caught",
+          "caught"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "choose",
+      "forms": [
+        [
+          "chose",
+          "chosen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "cling",
+      "forms": [
+        [
+          "clung",
+          "clung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "clothe",
+      "forms": [
+        [
+          "clothed",
+          "clothed"
+        ],
+        [
+          "clad",
+          "clad"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "come",
+      "forms": [
+        [
+          "came",
+          "come"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "cost",
+      "forms": [
+        [
+          "cost",
+          "cost"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "creep",
+      "forms": [
+        [
+          "crept",
+          "crept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "crossbreed",
+      "forms": [
+        [
+          "crossbred",
+          "crossbred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "cut",
+      "forms": [
+        [
+          "cut",
+          "cut"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "daydream",
+      "forms": [
+        [
+          "daydreamed",
+          "daydreamed"
+        ],
+        [
+          "daydreamt",
+          "daydreamt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "daydreamt": "daydreamed"
+      }
+    },
+    {
+      "base": "deal",
+      "forms": [
+        [
+          "dealt",
+          "dealt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "dig",
+      "forms": [
+        [
+          "dug",
+          "dug"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "disprove",
+      "forms": [
+        [
+          "disproved",
+          "disproved"
+        ],
+        [
+          "disproved",
+          "disproven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "dive",
+      "forms": [
+        [
+          "dove",
+          "dived"
+        ],
+        [
+          "dived",
+          "dived"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "dove": "dived"
+      }
+    },
+    {
+      "base": "do",
+      "forms": [
+        [
+          "did",
+          "done"
+        ]
+      ],
+      "disposition": "auxiliary or sense-sensitive: existing parser policy"
+    },
+    {
+      "base": "draw",
+      "forms": [
+        [
+          "drew",
+          "drawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "dream",
+      "forms": [
+        [
+          "dreamed",
+          "dreamed"
+        ],
+        [
+          "dreamt",
+          "dreamt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "drink",
+      "forms": [
+        [
+          "drank",
+          "drunk"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "drive",
+      "forms": [
+        [
+          "drove",
+          "driven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "dwell",
+      "forms": [
+        [
+          "dwelt",
+          "dwelt"
+        ],
+        [
+          "dwelled",
+          "dwelled"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "eat",
+      "forms": [
+        [
+          "ate",
+          "eaten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "fall",
+      "forms": [
+        [
+          "fell",
+          "fallen"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "feed",
+      "forms": [
+        [
+          "fed",
+          "fed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "feel",
+      "forms": [
+        [
+          "felt",
+          "felt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "fight",
+      "forms": [
+        [
+          "fought",
+          "fought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "find",
+      "forms": [
+        [
+          "found",
+          "found"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "fit",
+      "forms": [
+        [
+          "fitted",
+          "fitted"
+        ],
+        [
+          "fit",
+          "fit"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "flee",
+      "forms": [
+        [
+          "fled",
+          "fled"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "fling",
+      "forms": [
+        [
+          "flung",
+          "flung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "fly",
+      "forms": [
+        [
+          "flew",
+          "flown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "forbid",
+      "forms": [
+        [
+          "forbade",
+          "forbidden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "forecast",
+      "forms": [
+        [
+          "forecast",
+          "forecast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "forego",
+      "forms": [
+        [
+          "forewent",
+          "foregone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "foresee",
+      "forms": [
+        [
+          "foresaw",
+          "foreseen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "foretell",
+      "forms": [
+        [
+          "foretold",
+          "foretold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "forget",
+      "forms": [
+        [
+          "forgot",
+          "forgotten"
+        ],
+        [
+          "forgot",
+          "forgot"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "forgive",
+      "forms": [
+        [
+          "forgave",
+          "forgiven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "forsake",
+      "forms": [
+        [
+          "forsook",
+          "forsaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "freeze",
+      "forms": [
+        [
+          "froze",
+          "frozen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "frostbite",
+      "forms": [
+        [
+          "frostbit",
+          "frostbitten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "get",
+      "forms": [
+        [
+          "got",
+          "gotten"
+        ],
+        [
+          "got",
+          "got"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "give",
+      "forms": [
+        [
+          "gave",
+          "given"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "go",
+      "forms": [
+        [
+          "went",
+          "gone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "grind",
+      "forms": [
+        [
+          "ground",
+          "ground"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "grow",
+      "forms": [
+        [
+          "grew",
+          "grown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hand-feed",
+      "forms": [
+        [
+          "hand-fed",
+          "hand-fed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "handwrite",
+      "forms": [
+        [
+          "handwrote",
+          "handwritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hang",
+      "forms": [
+        [
+          "hung",
+          "hung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "have",
+      "forms": [
+        [
+          "had",
+          "had"
+        ]
+      ],
+      "disposition": "auxiliary or sense-sensitive: existing parser policy"
+    },
+    {
+      "base": "hear",
+      "forms": [
+        [
+          "heard",
+          "heard"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hew",
+      "forms": [
+        [
+          "hewed",
+          "hewn"
+        ],
+        [
+          "hewed",
+          "hewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hide",
+      "forms": [
+        [
+          "hid",
+          "hidden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hit",
+      "forms": [
+        [
+          "hit",
+          "hit"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "hold",
+      "forms": [
+        [
+          "held",
+          "held"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "hurt",
+      "forms": [
+        [
+          "hurt",
+          "hurt"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "inbreed",
+      "forms": [
+        [
+          "inbred",
+          "inbred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "inlay",
+      "forms": [
+        [
+          "inlaid",
+          "inlaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "input",
+      "forms": [
+        [
+          "input",
+          "input"
+        ],
+        [
+          "inputted",
+          "inputted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "interbreed",
+      "forms": [
+        [
+          "interbred",
+          "interbred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "interweave",
+      "forms": [
+        [
+          "interwove",
+          "interwoven"
+        ],
+        [
+          "interweaved",
+          "interweaved"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "interwind",
+      "forms": [
+        [
+          "interwound",
+          "interwound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "jerry-build",
+      "forms": [
+        [
+          "jerry-built",
+          "jerry-built"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "keep",
+      "forms": [
+        [
+          "kept",
+          "kept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "kneel",
+      "forms": [
+        [
+          "knelt",
+          "knelt"
+        ],
+        [
+          "kneeled",
+          "kneeled"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "knit",
+      "forms": [
+        [
+          "knitted",
+          "knitted"
+        ],
+        [
+          "knit",
+          "knit"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "know",
+      "forms": [
+        [
+          "knew",
+          "known"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "lay",
+      "forms": [
+        [
+          "laid",
+          "laid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "lead",
+      "forms": [
+        [
+          "led",
+          "led"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "lean",
+      "forms": [
+        [
+          "leaned",
+          "leaned"
+        ],
+        [
+          "leant",
+          "leant"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "leap",
+      "forms": [
+        [
+          "leaped",
+          "leaped"
+        ],
+        [
+          "leapt",
+          "leapt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "learn",
+      "forms": [
+        [
+          "learned",
+          "learned"
+        ],
+        [
+          "learnt",
+          "learnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "leave",
+      "forms": [
+        [
+          "left",
+          "left"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "lend",
+      "forms": [
+        [
+          "lent",
+          "lent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "let",
+      "forms": [
+        [
+          "let",
+          "let"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "lie",
+      "forms": [
+        [
+          "lay",
+          "lain"
+        ]
+      ],
+      "disposition": "auxiliary or sense-sensitive: existing parser policy"
+    },
+    {
+      "base": "light",
+      "forms": [
+        [
+          "lit",
+          "lit"
+        ],
+        [
+          "lighted",
+          "lighted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "lip-read",
+      "forms": [
+        [
+          "lip-read",
+          "lip-read"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "lose",
+      "forms": [
+        [
+          "lost",
+          "lost"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "make",
+      "forms": [
+        [
+          "made",
+          "made"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mean",
+      "forms": [
+        [
+          "meant",
+          "meant"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "meet",
+      "forms": [
+        [
+          "met",
+          "met"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "miscast",
+      "forms": [
+        [
+          "miscast",
+          "miscast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "misdeal",
+      "forms": [
+        [
+          "misdealt",
+          "misdealt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "misdo",
+      "forms": [
+        [
+          "misdid",
+          "misdone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mishear",
+      "forms": [
+        [
+          "misheard",
+          "misheard"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mislay",
+      "forms": [
+        [
+          "mislaid",
+          "mislaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mislead",
+      "forms": [
+        [
+          "misled",
+          "misled"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mislearn",
+      "forms": [
+        [
+          "mislearned",
+          "mislearned"
+        ],
+        [
+          "mislearnt",
+          "mislearnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "misread",
+      "forms": [
+        [
+          "misread",
+          "misread"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "misset",
+      "forms": [
+        [
+          "misset",
+          "misset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "misspeak",
+      "forms": [
+        [
+          "misspoke",
+          "misspoken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "misspell",
+      "forms": [
+        [
+          "misspelled",
+          "misspelled"
+        ],
+        [
+          "misspelt",
+          "misspelt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "misspend",
+      "forms": [
+        [
+          "misspent",
+          "misspent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mistake",
+      "forms": [
+        [
+          "mistook",
+          "mistaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "misteach",
+      "forms": [
+        [
+          "mistaught",
+          "mistaught"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "misunderstand",
+      "forms": [
+        [
+          "misunderstood",
+          "misunderstood"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "miswrite",
+      "forms": [
+        [
+          "miswrote",
+          "miswritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "mow",
+      "forms": [
+        [
+          "mowed",
+          "mowed"
+        ],
+        [
+          "mowed",
+          "mown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "offset",
+      "forms": [
+        [
+          "offset",
+          "offset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "outbid",
+      "forms": [
+        [
+          "outbid",
+          "outbid"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "outbreed",
+      "forms": [
+        [
+          "outbred",
+          "outbred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outdo",
+      "forms": [
+        [
+          "outdid",
+          "outdone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outdraw",
+      "forms": [
+        [
+          "outdrew",
+          "outdrawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outdrink",
+      "forms": [
+        [
+          "outdrank",
+          "outdrunk"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outdrive",
+      "forms": [
+        [
+          "outdrove",
+          "outdriven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outfight",
+      "forms": [
+        [
+          "outfought",
+          "outfought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outfly",
+      "forms": [
+        [
+          "outflew",
+          "outflown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outgrow",
+      "forms": [
+        [
+          "outgrew",
+          "outgrown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outleap",
+      "forms": [
+        [
+          "outleaped",
+          "outleaped"
+        ],
+        [
+          "outleapt",
+          "outleapt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "outride",
+      "forms": [
+        [
+          "outrode",
+          "outridden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outrun",
+      "forms": [
+        [
+          "outran",
+          "outrun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outsell",
+      "forms": [
+        [
+          "outsold",
+          "outsold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outshine",
+      "forms": [
+        [
+          "outshined",
+          "outshined"
+        ],
+        [
+          "outshone",
+          "outshone"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "outshoot",
+      "forms": [
+        [
+          "outshot",
+          "outshot"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outsing",
+      "forms": [
+        [
+          "outsang",
+          "outsung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outsit",
+      "forms": [
+        [
+          "outsat",
+          "outsat"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outsleep",
+      "forms": [
+        [
+          "outslept",
+          "outslept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outsmell",
+      "forms": [
+        [
+          "outsmelled",
+          "outsmelled"
+        ],
+        [
+          "outsmelt",
+          "outsmelt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "outspeak",
+      "forms": [
+        [
+          "outspoke",
+          "outspoken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outspeed",
+      "forms": [
+        [
+          "outsped",
+          "outsped"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outspend",
+      "forms": [
+        [
+          "outspent",
+          "outspent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outswear",
+      "forms": [
+        [
+          "outswore",
+          "outsworn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outswim",
+      "forms": [
+        [
+          "outswam",
+          "outswum"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outthink",
+      "forms": [
+        [
+          "outthought",
+          "outthought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outthrow",
+      "forms": [
+        [
+          "outthrew",
+          "outthrown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "outwrite",
+      "forms": [
+        [
+          "outwrote",
+          "outwritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overbid",
+      "forms": [
+        [
+          "overbid",
+          "overbid"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "overbreed",
+      "forms": [
+        [
+          "overbred",
+          "overbred"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overbuild",
+      "forms": [
+        [
+          "overbuilt",
+          "overbuilt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overbuy",
+      "forms": [
+        [
+          "overbought",
+          "overbought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overcome",
+      "forms": [
+        [
+          "overcame",
+          "overcome"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overdo",
+      "forms": [
+        [
+          "overdid",
+          "overdone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overdraw",
+      "forms": [
+        [
+          "overdrew",
+          "overdrawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overdrink",
+      "forms": [
+        [
+          "overdrank",
+          "overdrunk"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overeat",
+      "forms": [
+        [
+          "overate",
+          "overeaten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overfeed",
+      "forms": [
+        [
+          "overfed",
+          "overfed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overhang",
+      "forms": [
+        [
+          "overhung",
+          "overhung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overhear",
+      "forms": [
+        [
+          "overheard",
+          "overheard"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overlay",
+      "forms": [
+        [
+          "overlaid",
+          "overlaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overpay",
+      "forms": [
+        [
+          "overpaid",
+          "overpaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "override",
+      "forms": [
+        [
+          "overrode",
+          "overridden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overrun",
+      "forms": [
+        [
+          "overran",
+          "overrun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "oversee",
+      "forms": [
+        [
+          "oversaw",
+          "overseen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "oversell",
+      "forms": [
+        [
+          "oversold",
+          "oversold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "oversew",
+      "forms": [
+        [
+          "oversewed",
+          "oversewn"
+        ],
+        [
+          "oversewed",
+          "oversewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overshoot",
+      "forms": [
+        [
+          "overshot",
+          "overshot"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "oversleep",
+      "forms": [
+        [
+          "overslept",
+          "overslept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overspeak",
+      "forms": [
+        [
+          "overspoke",
+          "overspoken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overspend",
+      "forms": [
+        [
+          "overspent",
+          "overspent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overspill",
+      "forms": [
+        [
+          "overspilled",
+          "overspilled"
+        ],
+        [
+          "overspilt",
+          "overspilt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "overtake",
+      "forms": [
+        [
+          "overtook",
+          "overtaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overthink",
+      "forms": [
+        [
+          "overthought",
+          "overthought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overthrow",
+      "forms": [
+        [
+          "overthrew",
+          "overthrown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overwind",
+      "forms": [
+        [
+          "overwound",
+          "overwound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "overwrite",
+      "forms": [
+        [
+          "overwrote",
+          "overwritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "partake",
+      "forms": [
+        [
+          "partook",
+          "partaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "pay",
+      "forms": [
+        [
+          "paid",
+          "paid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "plead",
+      "forms": [
+        [
+          "pleaded",
+          "pleaded"
+        ],
+        [
+          "pled",
+          "pled"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "prebuild",
+      "forms": [
+        [
+          "prebuilt",
+          "prebuilt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "predo",
+      "forms": [
+        [
+          "predid",
+          "predone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "premake",
+      "forms": [
+        [
+          "premade",
+          "premade"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "prepay",
+      "forms": [
+        [
+          "prepaid",
+          "prepaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "presell",
+      "forms": [
+        [
+          "presold",
+          "presold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "preset",
+      "forms": [
+        [
+          "preset",
+          "preset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "preshrink",
+      "forms": [
+        [
+          "preshrank",
+          "preshrunk"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "proofread",
+      "forms": [
+        [
+          "proofread",
+          "proofread"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "prove",
+      "forms": [
+        [
+          "proved",
+          "proven"
+        ],
+        [
+          "proved",
+          "proved"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "put",
+      "forms": [
+        [
+          "put",
+          "put"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "quick-freeze",
+      "forms": [
+        [
+          "quick-froze",
+          "quick-frozen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "quit",
+      "forms": [
+        [
+          "quit",
+          "quit"
+        ],
+        [
+          "quitted",
+          "quitted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "read",
+      "forms": [
+        [
+          "read",
+          "read"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "reawake",
+      "forms": [
+        [
+          "reawoke",
+          "reawaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rebid",
+      "forms": [
+        [
+          "rebid",
+          "rebid"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "rebind",
+      "forms": [
+        [
+          "rebound",
+          "rebound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rebroadcast",
+      "forms": [
+        [
+          "rebroadcast",
+          "rebroadcast"
+        ],
+        [
+          "rebroadcasted",
+          "rebroadcasted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rebuild",
+      "forms": [
+        [
+          "rebuilt",
+          "rebuilt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "recast",
+      "forms": [
+        [
+          "recast",
+          "recast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "recut",
+      "forms": [
+        [
+          "recut",
+          "recut"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "redeal",
+      "forms": [
+        [
+          "redealt",
+          "redealt"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "redo",
+      "forms": [
+        [
+          "redid",
+          "redone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "redraw",
+      "forms": [
+        [
+          "redrew",
+          "redrawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "refit",
+      "forms": [
+        [
+          "refit",
+          "refit"
+        ],
+        [
+          "refitted",
+          "refitted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "regrind",
+      "forms": [
+        [
+          "reground",
+          "reground"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "regrow",
+      "forms": [
+        [
+          "regrew",
+          "regrown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rehang",
+      "forms": [
+        [
+          "rehung",
+          "rehung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rehear",
+      "forms": [
+        [
+          "reheard",
+          "reheard"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "reknit",
+      "forms": [
+        [
+          "reknitted",
+          "reknitted"
+        ],
+        [
+          "reknit",
+          "reknit"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "relay",
+      "forms": [
+        [
+          "relaid",
+          "relaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "relearn",
+      "forms": [
+        [
+          "relearned",
+          "relearned"
+        ],
+        [
+          "relearnt",
+          "relearnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "relight",
+      "forms": [
+        [
+          "relit",
+          "relit"
+        ],
+        [
+          "relighted",
+          "relighted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "remake",
+      "forms": [
+        [
+          "remade",
+          "remade"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "repay",
+      "forms": [
+        [
+          "repaid",
+          "repaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "reread",
+      "forms": [
+        [
+          "reread",
+          "reread"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "rerun",
+      "forms": [
+        [
+          "reran",
+          "rerun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "resell",
+      "forms": [
+        [
+          "resold",
+          "resold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "resend",
+      "forms": [
+        [
+          "resent",
+          "resent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "reset",
+      "forms": [
+        [
+          "reset",
+          "reset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "resew",
+      "forms": [
+        [
+          "resewed",
+          "resewn"
+        ],
+        [
+          "resewed",
+          "resewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "retake",
+      "forms": [
+        [
+          "retook",
+          "retaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "reteach",
+      "forms": [
+        [
+          "retaught",
+          "retaught"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "retear",
+      "forms": [
+        [
+          "retore",
+          "retorn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "retell",
+      "forms": [
+        [
+          "retold",
+          "retold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rethink",
+      "forms": [
+        [
+          "rethought",
+          "rethought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "retread",
+      "forms": [
+        [
+          "retread",
+          "retread"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "retrofit",
+      "forms": [
+        [
+          "retrofitted",
+          "retrofitted"
+        ],
+        [
+          "retrofit",
+          "retrofit"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rewake",
+      "forms": [
+        [
+          "rewoke",
+          "rewaken"
+        ],
+        [
+          "rewaked",
+          "rewaked"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rewear",
+      "forms": [
+        [
+          "rewore",
+          "reworn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "reweave",
+      "forms": [
+        [
+          "rewove",
+          "rewoven"
+        ],
+        [
+          "reweaved",
+          "reweaved"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rewed",
+      "forms": [
+        [
+          "rewed",
+          "rewed"
+        ],
+        [
+          "rewedded",
+          "rewedded"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rewet",
+      "forms": [
+        [
+          "rewet",
+          "rewet"
+        ],
+        [
+          "rewetted",
+          "rewetted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "rewin",
+      "forms": [
+        [
+          "rewon",
+          "rewon"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rewind",
+      "forms": [
+        [
+          "rewound",
+          "rewound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rewrite",
+      "forms": [
+        [
+          "rewrote",
+          "rewritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rid",
+      "forms": [
+        [
+          "rid",
+          "rid"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "ride",
+      "forms": [
+        [
+          "rode",
+          "ridden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "ring",
+      "forms": [
+        [
+          "rang",
+          "rung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "rise",
+      "forms": [
+        [
+          "rose",
+          "risen"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "roughcast",
+      "forms": [
+        [
+          "roughcast",
+          "roughcast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "run",
+      "forms": [
+        [
+          "ran",
+          "run"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sand-cast",
+      "forms": [
+        [
+          "sand-cast",
+          "sand-cast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "saw",
+      "forms": [
+        [
+          "sawed",
+          "sawed"
+        ],
+        [
+          "sawed",
+          "sawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "say",
+      "forms": [
+        [
+          "said",
+          "said"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "see",
+      "forms": [
+        [
+          "saw",
+          "seen"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "seek",
+      "forms": [
+        [
+          "sought",
+          "sought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sell",
+      "forms": [
+        [
+          "sold",
+          "sold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "send",
+      "forms": [
+        [
+          "sent",
+          "sent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "set",
+      "forms": [
+        [
+          "set",
+          "set"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "sew",
+      "forms": [
+        [
+          "sewed",
+          "sewn"
+        ],
+        [
+          "sewed",
+          "sewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "shake",
+      "forms": [
+        [
+          "shook",
+          "shaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "shave",
+      "forms": [
+        [
+          "shaved",
+          "shaved"
+        ],
+        [
+          "shaved",
+          "shaven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "shear",
+      "forms": [
+        [
+          "sheared",
+          "sheared"
+        ],
+        [
+          "sheared",
+          "shorn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "shed",
+      "forms": [
+        [
+          "shed",
+          "shed"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "shine",
+      "forms": [
+        [
+          "shined",
+          "shined"
+        ],
+        [
+          "shone",
+          "shone"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "shit",
+      "forms": [
+        [
+          "shit",
+          "shit"
+        ],
+        [
+          "shat",
+          "shat"
+        ],
+        [
+          "shitted",
+          "shitted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "shoot",
+      "forms": [
+        [
+          "shot",
+          "shot"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "show",
+      "forms": [
+        [
+          "showed",
+          "shown"
+        ],
+        [
+          "showed",
+          "showed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "shrink",
+      "forms": [
+        [
+          "shrank",
+          "shrunk"
+        ],
+        [
+          "shrunk",
+          "shrunk"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "shut",
+      "forms": [
+        [
+          "shut",
+          "shut"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "sight-read",
+      "forms": [
+        [
+          "sight-read",
+          "sight-read"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "sing",
+      "forms": [
+        [
+          "sang",
+          "sung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sink",
+      "forms": [
+        [
+          "sank",
+          "sunk"
+        ],
+        [
+          "sunk",
+          "sunk"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "sit",
+      "forms": [
+        [
+          "sat",
+          "sat"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "slay",
+      "forms": [
+        [
+          "slew",
+          "slain"
+        ],
+        [
+          "slayed",
+          "slayed"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "sleep",
+      "forms": [
+        [
+          "slept",
+          "slept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "slide",
+      "forms": [
+        [
+          "slid",
+          "slid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sling",
+      "forms": [
+        [
+          "slung",
+          "slung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "slink",
+      "forms": [
+        [
+          "slinked",
+          "slinked"
+        ],
+        [
+          "slunk",
+          "slunk"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "slit",
+      "forms": [
+        [
+          "slit",
+          "slit"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "smell",
+      "forms": [
+        [
+          "smelled",
+          "smelled"
+        ],
+        [
+          "smelt",
+          "smelt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "sneak",
+      "forms": [
+        [
+          "sneaked",
+          "sneaked"
+        ],
+        [
+          "snuck",
+          "snuck"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "snuck": "sneaked"
+      }
+    },
+    {
+      "base": "sow",
+      "forms": [
+        [
+          "sowed",
+          "sown"
+        ],
+        [
+          "sowed",
+          "sowed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "speak",
+      "forms": [
+        [
+          "spoke",
+          "spoken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "speed",
+      "forms": [
+        [
+          "sped",
+          "sped"
+        ],
+        [
+          "speeded",
+          "speeded"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "spell",
+      "forms": [
+        [
+          "spelled",
+          "spelled"
+        ],
+        [
+          "spelt",
+          "spelt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "spend",
+      "forms": [
+        [
+          "spent",
+          "spent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "spill",
+      "forms": [
+        [
+          "spilled",
+          "spilled"
+        ],
+        [
+          "spilt",
+          "spilt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "spin",
+      "forms": [
+        [
+          "spun",
+          "spun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "spit",
+      "forms": [
+        [
+          "spit",
+          "spit"
+        ],
+        [
+          "spat",
+          "spat"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "split",
+      "forms": [
+        [
+          "split",
+          "split"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "spoil",
+      "forms": [
+        [
+          "spoiled",
+          "spoiled"
+        ],
+        [
+          "spoilt",
+          "spoilt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "spoilt": "spoiled"
+      }
+    },
+    {
+      "base": "spoon-feed",
+      "forms": [
+        [
+          "spoon-fed",
+          "spoon-fed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "spread",
+      "forms": [
+        [
+          "spread",
+          "spread"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "spring",
+      "forms": [
+        [
+          "sprang",
+          "sprung"
+        ],
+        [
+          "sprung",
+          "sprung"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "stand",
+      "forms": [
+        [
+          "stood",
+          "stood"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "steal",
+      "forms": [
+        [
+          "stole",
+          "stolen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "stick",
+      "forms": [
+        [
+          "stuck",
+          "stuck"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sting",
+      "forms": [
+        [
+          "stung",
+          "stung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "stink",
+      "forms": [
+        [
+          "stunk",
+          "stunk"
+        ],
+        [
+          "stank",
+          "stunk"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "strew",
+      "forms": [
+        [
+          "strewed",
+          "strewn"
+        ],
+        [
+          "strewed",
+          "strewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "stride",
+      "forms": [
+        [
+          "strode",
+          "stridden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "strike",
+      "forms": [
+        [
+          "struck",
+          "stricken"
+        ],
+        [
+          "struck",
+          "struck"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "string",
+      "forms": [
+        [
+          "strung",
+          "strung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "strive",
+      "forms": [
+        [
+          "strove",
+          "striven"
+        ],
+        [
+          "strived",
+          "strived"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "sublet",
+      "forms": [
+        [
+          "sublet",
+          "sublet"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "sunburn",
+      "forms": [
+        [
+          "sunburned",
+          "sunburned"
+        ],
+        [
+          "sunburnt",
+          "sunburnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "sunburnt": "sunburned"
+      }
+    },
+    {
+      "base": "swear",
+      "forms": [
+        [
+          "swore",
+          "sworn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "sweat",
+      "forms": [
+        [
+          "sweat",
+          "sweat"
+        ],
+        [
+          "sweated",
+          "sweated"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "sweep",
+      "forms": [
+        [
+          "swept",
+          "swept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "swell",
+      "forms": [
+        [
+          "swelled",
+          "swollen"
+        ],
+        [
+          "swelled",
+          "swelled"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "swim",
+      "forms": [
+        [
+          "swam",
+          "swum"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "swing",
+      "forms": [
+        [
+          "swung",
+          "swung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "take",
+      "forms": [
+        [
+          "took",
+          "taken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "teach",
+      "forms": [
+        [
+          "taught",
+          "taught"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "tear",
+      "forms": [
+        [
+          "tore",
+          "torn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "telecast",
+      "forms": [
+        [
+          "telecast",
+          "telecast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "tell",
+      "forms": [
+        [
+          "told",
+          "told"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "test-drive",
+      "forms": [
+        [
+          "test-drove",
+          "test-driven"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "test-fly",
+      "forms": [
+        [
+          "test-flew",
+          "test-flown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "think",
+      "forms": [
+        [
+          "thought",
+          "thought"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "throw",
+      "forms": [
+        [
+          "threw",
+          "thrown"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "thrust",
+      "forms": [
+        [
+          "thrust",
+          "thrust"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "tread",
+      "forms": [
+        [
+          "trod",
+          "trodden"
+        ],
+        [
+          "trod",
+          "trod"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "typecast",
+      "forms": [
+        [
+          "typecast",
+          "typecast"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "typeset",
+      "forms": [
+        [
+          "typeset",
+          "typeset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "typewrite",
+      "forms": [
+        [
+          "typewrote",
+          "typewritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unbend",
+      "forms": [
+        [
+          "unbent",
+          "unbent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unbind",
+      "forms": [
+        [
+          "unbound",
+          "unbound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unclothe",
+      "forms": [
+        [
+          "unclothed",
+          "unclothed"
+        ],
+        [
+          "unclad",
+          "unclad"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "underbid",
+      "forms": [
+        [
+          "underbid",
+          "underbid"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "undercut",
+      "forms": [
+        [
+          "undercut",
+          "undercut"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "underfeed",
+      "forms": [
+        [
+          "underfed",
+          "underfed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "undergo",
+      "forms": [
+        [
+          "underwent",
+          "undergone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "underlie",
+      "forms": [
+        [
+          "underlay",
+          "underlain"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "undersell",
+      "forms": [
+        [
+          "undersold",
+          "undersold"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "underspend",
+      "forms": [
+        [
+          "underspent",
+          "underspent"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "understand",
+      "forms": [
+        [
+          "understood",
+          "understood"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "undertake",
+      "forms": [
+        [
+          "undertook",
+          "undertaken"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "underwrite",
+      "forms": [
+        [
+          "underwrote",
+          "underwritten"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "undo",
+      "forms": [
+        [
+          "undid",
+          "undone"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unfreeze",
+      "forms": [
+        [
+          "unfroze",
+          "unfrozen"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unhang",
+      "forms": [
+        [
+          "unhung",
+          "unhung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unhide",
+      "forms": [
+        [
+          "unhid",
+          "unhidden"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unknit",
+      "forms": [
+        [
+          "unknitted",
+          "unknitted"
+        ],
+        [
+          "unknit",
+          "unknit"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "unlearn",
+      "forms": [
+        [
+          "unlearned",
+          "unlearned"
+        ],
+        [
+          "unlearnt",
+          "unlearnt"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "unlearnt": "unlearned"
+      }
+    },
+    {
+      "base": "unsew",
+      "forms": [
+        [
+          "unsewed",
+          "unsewn"
+        ],
+        [
+          "unsewed",
+          "unsewed"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unsling",
+      "forms": [
+        [
+          "unslung",
+          "unslung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unspin",
+      "forms": [
+        [
+          "unspun",
+          "unspun"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unstick",
+      "forms": [
+        [
+          "unstuck",
+          "unstuck"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unstring",
+      "forms": [
+        [
+          "unstrung",
+          "unstrung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "unweave",
+      "forms": [
+        [
+          "unwove",
+          "unwoven"
+        ],
+        [
+          "unweaved",
+          "unweaved"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "unwind",
+      "forms": [
+        [
+          "unwound",
+          "unwound"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "uphold",
+      "forms": [
+        [
+          "upheld",
+          "upheld"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "upset",
+      "forms": [
+        [
+          "upset",
+          "upset"
+        ]
+      ],
+      "disposition": "unchanged tense spelling: requires context"
+    },
+    {
+      "base": "wake",
+      "forms": [
+        [
+          "woke",
+          "woken"
+        ],
+        [
+          "waked",
+          "waked"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "waylay",
+      "forms": [
+        [
+          "waylaid",
+          "waylaid"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "wear",
+      "forms": [
+        [
+          "wore",
+          "worn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "weave",
+      "forms": [
+        [
+          "wove",
+          "woven"
+        ],
+        [
+          "weaved",
+          "weaved"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "wed",
+      "forms": [
+        [
+          "wed",
+          "wed"
+        ],
+        [
+          "wedded",
+          "wedded"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "weep",
+      "forms": [
+        [
+          "wept",
+          "wept"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "wet",
+      "forms": [
+        [
+          "wet",
+          "wet"
+        ],
+        [
+          "wetted",
+          "wetted"
+        ]
+      ],
+      "disposition": "multiple past forms: retained, not automatically equated"
+    },
+    {
+      "base": "win",
+      "forms": [
+        [
+          "won",
+          "won"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "wind",
+      "forms": [
+        [
+          "wound",
+          "wound"
+        ]
+      ],
+      "disposition": "homograph: requires context"
+    },
+    {
+      "base": "withdraw",
+      "forms": [
+        [
+          "withdrew",
+          "withdrawn"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "withhold",
+      "forms": [
+        [
+          "withheld",
+          "withheld"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "withstand",
+      "forms": [
+        [
+          "withstood",
+          "withstood"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "wring",
+      "forms": [
+        [
+          "wrung",
+          "wrung"
+        ]
+      ],
+      "disposition": "imported past form"
+    },
+    {
+      "base": "write",
+      "forms": [
+        [
+          "wrote",
+          "written"
+        ]
+      ],
+      "disposition": "imported past form"
+    }
+  ],
+  "nouns": [
+    {
+      "singular": "abscissa",
+      "plural": "abscissae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "addendum",
+      "plural": "addenda",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "adulthood",
+      "plural": "adulthood",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "advice",
+      "plural": "advice",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "afreet",
+      "plural": "afreets",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "afrit",
+      "plural": "afrits",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "agendum",
+      "plural": "agenda",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "aid",
+      "plural": "aid",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "aircraft",
+      "plural": "aircraft",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "albino",
+      "plural": "albinos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "alcohol",
+      "plural": "alcohol",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "alga",
+      "plural": "algae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "alto",
+      "plural": "altos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "alumna",
+      "plural": "alumnae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "alumnus",
+      "plural": "alumni",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "alveolus",
+      "plural": "alveoli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "amoeba",
+      "plural": "amoebas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ammo",
+      "plural": "ammo",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "analysis",
+      "plural": "analyses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "analytics",
+      "plural": "analytics",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "anathema",
+      "plural": "anathemas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "anime",
+      "plural": "anime",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "antenna",
+      "plural": "antennas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "antithesis",
+      "plural": "antitheses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "aphelion",
+      "plural": "aphelia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "apparatus",
+      "plural": "apparatuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "appendix",
+      "plural": "appendixes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "aquarium",
+      "plural": "aquariums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "archipelago",
+      "plural": "archipelagos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "armadillo",
+      "plural": "armadillos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "asyndeton",
+      "plural": "asyndetons",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "athletics",
+      "plural": "athletics",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "audio",
+      "plural": "audio",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "aurora",
+      "plural": "auroras",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "automaton",
+      "plural": "automatons",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "axis",
+      "plural": "axes",
+      "disposition": "ambiguous singular: requires context"
+    },
+    {
+      "singular": "bacillus",
+      "plural": "bacilli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "bacterium",
+      "plural": "bacteria",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "baculum",
+      "plural": "bacula",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "barracks",
+      "plural": "barracks",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "basis",
+      "plural": "bases",
+      "disposition": "ambiguous singular: requires context"
+    },
+    {
+      "singular": "basso",
+      "plural": "bassos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "beau",
+      "plural": "beaus",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "beef",
+      "plural": "beefs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "blood",
+      "plural": "blood",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "bema",
+      "plural": "bemas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "biceps",
+      "plural": "biceps",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "bison",
+      "plural": "bison",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "bream",
+      "plural": "bream",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "breeches",
+      "plural": "breeches",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "britches",
+      "plural": "britches",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "brother",
+      "plural": "brothers",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "buffalo",
+      "plural": "buffalo",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "bureau",
+      "plural": "bureaus",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "businessman",
+      "plural": "businessmen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "butter",
+      "plural": "butter",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "cactus",
+      "plural": "cactuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "calf",
+      "plural": "calves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cash",
+      "plural": "cash",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "candelabrum",
+      "plural": "candelabra",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "canto",
+      "plural": "cantos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cantus",
+      "plural": "cantus",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "carcinoma",
+      "plural": "carcinomas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "carp",
+      "plural": "carp",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "census",
+      "plural": "censuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "chapeau",
+      "plural": "chapeaus",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "charisma",
+      "plural": "charismas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "chairman",
+      "plural": "chairmen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "chassis",
+      "plural": "chassis",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "cherub",
+      "plural": "cherubs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "chess",
+      "plural": "chess",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "child",
+      "plural": "children",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "château",
+      "plural": "châteaus",
+      "disposition": "outside single-word grammar"
+    },
+    {
+      "singular": "clippers",
+      "plural": "clippers",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "clitoris",
+      "plural": "clitorises",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "clothes",
+      "plural": "clothes",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "clothing",
+      "plural": "clothing",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "cloaca",
+      "plural": "cloacae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cod",
+      "plural": "cod",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "codex",
+      "plural": "codices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "commerce",
+      "plural": "commerce",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "coitus",
+      "plural": "coitus",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "commando",
+      "plural": "commandos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "compendium",
+      "plural": "compendiums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "concerto",
+      "plural": "concertos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "consortium",
+      "plural": "consortia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "contralto",
+      "plural": "contraltos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "contretemps",
+      "plural": "contretemps",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "cooperation",
+      "plural": "cooperation",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "corps",
+      "plural": "corps",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "corpus",
+      "plural": "corpora",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cortex",
+      "plural": "cortices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cranium",
+      "plural": "crania",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "crescendo",
+      "plural": "crescendos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "crisis",
+      "plural": "crises",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "criterion",
+      "plural": "criteria",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "curriculum",
+      "plural": "curricula",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cyclops",
+      "plural": "cyclopses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "cystoma",
+      "plural": "cystomata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "data",
+      "plural": "data",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "datum",
+      "plural": "data",
+      "disposition": "ambiguous singular: requires context"
+    },
+    {
+      "singular": "debris",
+      "plural": "debris",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "deer",
+      "plural": "deer",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "desideratum",
+      "plural": "desiderata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "diabetes",
+      "plural": "diabetes",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "diagnosis",
+      "plural": "diagnoses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "dictum",
+      "plural": "dicta",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "die",
+      "plural": "dice",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "digestion",
+      "plural": "digestion",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "dingo",
+      "plural": "dingoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "diploma",
+      "plural": "diplomas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ditto",
+      "plural": "dittos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "djinni",
+      "plural": "djinn",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "dogma",
+      "plural": "dogmata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "drama",
+      "plural": "dramas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "dwarf",
+      "plural": "dwarfs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "dynamo",
+      "plural": "dynamos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "economics",
+      "plural": "economics",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "echo",
+      "plural": "echoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "edema",
+      "plural": "edemas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "efreet",
+      "plural": "efreets",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "eland",
+      "plural": "eland",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "elf",
+      "plural": "elves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "elk",
+      "plural": "elk",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "ellipsis",
+      "plural": "ellipses",
+      "disposition": "ambiguous singular: requires context"
+    },
+    {
+      "singular": "embargo",
+      "plural": "embargoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "embryo",
+      "plural": "embryos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "emphasis",
+      "plural": "emphases",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "emporium",
+      "plural": "emporia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "encomium",
+      "plural": "encomia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "enigma",
+      "plural": "enigmas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "equipment",
+      "plural": "equipment",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "ephemeris",
+      "plural": "ephemerides",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "erratum",
+      "plural": "errata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "excretion",
+      "plural": "excretion",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "expertise",
+      "plural": "expertise",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "extremum",
+      "plural": "extrema",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "faux pas",
+      "plural": "faux pas",
+      "disposition": "outside single-word grammar"
+    },
+    {
+      "singular": "fez",
+      "plural": "fezzes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "fiasco",
+      "plural": "fiascos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "fibula",
+      "plural": "fibulae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "firmware",
+      "plural": "firmware",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "fish",
+      "plural": "fish",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "flounder",
+      "plural": "flounder",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "focus",
+      "plural": "focuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "foot",
+      "plural": "feet",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "fun",
+      "plural": "fun",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "foramen",
+      "plural": "foramina",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "formula",
+      "plural": "formulas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "forum",
+      "plural": "forums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "fungus",
+      "plural": "fungi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "gallows",
+      "plural": "gallows",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "garbage",
+      "plural": "garbage",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "ganglion",
+      "plural": "ganglia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "generalissimo",
+      "plural": "generalissimos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "genie",
+      "plural": "genies",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "gentleman",
+      "plural": "gentlemen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "genus",
+      "plural": "genera",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ghetto",
+      "plural": "ghettos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "glomerulus",
+      "plural": "glomeruli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "goose",
+      "plural": "geese",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "goy",
+      "plural": "goyim",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "graffiti",
+      "plural": "graffiti",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "graffito",
+      "plural": "graffiti",
+      "disposition": "ambiguous singular: requires context"
+    },
+    {
+      "singular": "grouse",
+      "plural": "grouse",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "guano",
+      "plural": "guano",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "gumma",
+      "plural": "gummata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "gymnasium",
+      "plural": "gymnasiums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "half",
+      "plural": "halves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hamulus",
+      "plural": "hamuli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hardware",
+      "plural": "hardware",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "health",
+      "plural": "health",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "headquarters",
+      "plural": "headquarters",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "hero",
+      "plural": "heroes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "herpes",
+      "plural": "herpes",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "highjinks",
+      "plural": "highjinks",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "hijinks",
+      "plural": "hijinks",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "hiatus",
+      "plural": "hiatuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hippopotamus",
+      "plural": "hippopotamuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "homework",
+      "plural": "homework",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "honorarium",
+      "plural": "honoraria",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hoof",
+      "plural": "hooves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "housework",
+      "plural": "housework",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "hovercraft",
+      "plural": "hovercraft",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "humerus",
+      "plural": "humeri",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hyperbaton",
+      "plural": "hyperbata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hyperbola",
+      "plural": "hyperbolae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "hypothesis",
+      "plural": "hypotheses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ilium",
+      "plural": "ilia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "impetus",
+      "plural": "impetuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "incubus",
+      "plural": "incubi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "index",
+      "plural": "indexes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "information",
+      "plural": "information",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "inferno",
+      "plural": "infernos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "innings",
+      "plural": "innings",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "interregnum",
+      "plural": "interregna",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "interstitium",
+      "plural": "interstitia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "jackanapes",
+      "plural": "jackanapes",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "jeans",
+      "plural": "jeans",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "jumbo",
+      "plural": "jumbos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "kakapo",
+      "plural": "kakapo",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "knife",
+      "plural": "knives",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "kudos",
+      "plural": "kudos",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "labour",
+      "plural": "labour",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "lacuna",
+      "plural": "lacunas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "larva",
+      "plural": "larvae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "leaf",
+      "plural": "leaves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lemma",
+      "plural": "lemmas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "libretto",
+      "plural": "librettos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "life",
+      "plural": "lives",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lingo",
+      "plural": "lingos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "literature",
+      "plural": "literature",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "loaf",
+      "plural": "loaves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "loculus",
+      "plural": "loculi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "locus",
+      "plural": "loci",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "looey",
+      "plural": "looies",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "louse",
+      "plural": "lice",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lumbago",
+      "plural": "lumbagos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lumen",
+      "plural": "lumina",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lustrum",
+      "plural": "lustra",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "lymphoma",
+      "plural": "lymphomata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "machinery",
+      "plural": "machinery",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "mackerel",
+      "plural": "mackerel",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "magma",
+      "plural": "magmas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "mail",
+      "plural": "mail",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "magneto",
+      "plural": "magnetos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "man",
+      "plural": "men",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "manga",
+      "plural": "manga",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "manifesto",
+      "plural": "manifestos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "matrix",
+      "plural": "matrices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "maximum",
+      "plural": "maxima",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "means",
+      "plural": "means",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "measles",
+      "plural": "measles",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "medico",
+      "plural": "medicos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "medium",
+      "plural": "media",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "melisma",
+      "plural": "melismas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "memorandum",
+      "plural": "memoranda",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "meniscus",
+      "plural": "menisci",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "mews",
+      "plural": "mews",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "miasma",
+      "plural": "miasmas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "millennium",
+      "plural": "millennia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "minimum",
+      "plural": "minima",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "minutia",
+      "plural": "minutiae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "momentum",
+      "plural": "momenta",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "mongoose",
+      "plural": "mongooses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "moose",
+      "plural": "moose",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "mud",
+      "plural": "mud",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "mouse",
+      "plural": "mice",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "mumps",
+      "plural": "mumps",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "music",
+      "plural": "music",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "murex",
+      "plural": "murices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "mythos",
+      "plural": "mythoi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nebula",
+      "plural": "nebulas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nemesis",
+      "plural": "nemeses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "neurosis",
+      "plural": "neuroses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "news",
+      "plural": "news",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "nexus",
+      "plural": "nexuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nimbus",
+      "plural": "nimbuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "noumenon",
+      "plural": "noumena",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nova",
+      "plural": "novas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nucleolus",
+      "plural": "nucleoli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "nucleus",
+      "plural": "nuclei",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "oasis",
+      "plural": "oases",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "occiput",
+      "plural": "occipita",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "octavo",
+      "plural": "octavos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "octopus",
+      "plural": "octopuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "oedema",
+      "plural": "oedemas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "offspring",
+      "plural": "offspring",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "omphalos",
+      "plural": "omphaloi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "optimum",
+      "plural": "optima",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "opus",
+      "plural": "opuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "organon",
+      "plural": "organons",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ovum",
+      "plural": "ova",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "ox",
+      "plural": "oxen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "parabola",
+      "plural": "parabolas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "paralysis",
+      "plural": "paralyses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "parenthesis",
+      "plural": "parentheses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "passerby",
+      "plural": "passersby",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "penny",
+      "plural": "pennies",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "personnel",
+      "plural": "personnel",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "perihelion",
+      "plural": "perihelia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "person",
+      "plural": "people",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "phalanx",
+      "plural": "phalanges",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "phenomenon",
+      "plural": "phenomena",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "photo",
+      "plural": "photos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "physics",
+      "plural": "physics",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "phylum",
+      "plural": "phyla",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "pike",
+      "plural": "pike",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "pincers",
+      "plural": "pincers",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "plankton",
+      "plural": "plankton",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "plateau",
+      "plural": "plateaus",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "platypus",
+      "plural": "platypuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "plexus",
+      "plural": "plexuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "pliers",
+      "plural": "pliers",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "police",
+      "plural": "police",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "policeman",
+      "plural": "policemen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "politics",
+      "plural": "politics",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "pollution",
+      "plural": "pollution",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "polyhedron",
+      "plural": "polyhedra",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "pontifex",
+      "plural": "pontifices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "potato",
+      "plural": "potatoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "premises",
+      "plural": "premises",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "pro",
+      "plural": "pros",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "proceedings",
+      "plural": "proceedings",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "prognosis",
+      "plural": "prognoses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "prolegomenon",
+      "plural": "prolegomena",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "prospectus",
+      "plural": "prospectuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "quantum",
+      "plural": "quanta",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "quarto",
+      "plural": "quartos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "quiz",
+      "plural": "quizzes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "rabies",
+      "plural": "rabies",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "rain",
+      "plural": "rain",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "radius",
+      "plural": "radii",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "referendum",
+      "plural": "referendums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "reindeer",
+      "plural": "reindeer",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "research",
+      "plural": "research",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "rhino",
+      "plural": "rhinos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "rice",
+      "plural": "rice",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "roof",
+      "plural": "roofs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "rostrum",
+      "plural": "rostrums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "salmon",
+      "plural": "salmon",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "sarcoma",
+      "plural": "sarcomas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "sarcophagus",
+      "plural": "sarcophagi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "savings",
+      "plural": "savings",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "scarf",
+      "plural": "scarves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "schema",
+      "plural": "schemas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "scissors",
+      "plural": "scissors",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "scrotum",
+      "plural": "scrota",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "sea bass",
+      "plural": "sea bass",
+      "disposition": "outside single-word grammar"
+    },
+    {
+      "singular": "sewage",
+      "plural": "sewage",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "self",
+      "plural": "selves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "seminoma",
+      "plural": "seminomas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "shambles",
+      "plural": "shambles",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "seraph",
+      "plural": "seraphs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "series",
+      "plural": "series",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "shears",
+      "plural": "shears",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "sheep",
+      "plural": "sheep",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "shelf",
+      "plural": "shelves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "shrimp",
+      "plural": "shrimp",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "silex",
+      "plural": "silices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "simplex",
+      "plural": "simplexes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "simulacrum",
+      "plural": "simulacra",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "software",
+      "plural": "software",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "sinus",
+      "plural": "sinuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "soliloquy",
+      "plural": "soliloquies",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "solo",
+      "plural": "solos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "soma",
+      "plural": "somas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "soprano",
+      "plural": "sopranos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "spacecraft",
+      "plural": "spacecraft",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "spokesman",
+      "plural": "spokesmen",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "species",
+      "plural": "species",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "spectrum",
+      "plural": "spectra",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "speculum",
+      "plural": "specula",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "sphinx",
+      "plural": "sphinxes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "squid",
+      "plural": "squid",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "stadium",
+      "plural": "stadiums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "staff",
+      "plural": "staffs",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stairs",
+      "plural": "stairs",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "stamen",
+      "plural": "stamens",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "status",
+      "plural": "statuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stigma",
+      "plural": "stigmas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stimulus",
+      "plural": "stimuli",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stoma",
+      "plural": "stomas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stratum",
+      "plural": "strata",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "stylus",
+      "plural": "styluses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "succubus",
+      "plural": "succubi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "swine",
+      "plural": "swine",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "syconium",
+      "plural": "syconia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "syllabus",
+      "plural": "syllabuses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "symposium",
+      "plural": "symposiums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "synopsis",
+      "plural": "synopses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "synthesis",
+      "plural": "syntheses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tennis",
+      "plural": "tennis",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "tableau",
+      "plural": "tableaus",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tempo",
+      "plural": "tempos",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "thanks",
+      "plural": "thanks",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "testis",
+      "plural": "testes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "that",
+      "plural": "those",
+      "disposition": "demonstrative, not a noun"
+    },
+    {
+      "singular": "thesis",
+      "plural": "theses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "thief",
+      "plural": "thieves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "this",
+      "plural": "these",
+      "disposition": "demonstrative, not a noun"
+    },
+    {
+      "singular": "thrombus",
+      "plural": "thrombi",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tibia",
+      "plural": "tibias",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tomato",
+      "plural": "tomatoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tooth",
+      "plural": "teeth",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "torpedo",
+      "plural": "torpedoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "tornado",
+      "plural": "tornadoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "torus",
+      "plural": "tori",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "traffic",
+      "plural": "traffic",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "transportation",
+      "plural": "transportation",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "trapezium",
+      "plural": "trapezia",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "trauma",
+      "plural": "traumas",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "triceps",
+      "plural": "triceps",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "trilby",
+      "plural": "trilbies",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "trout",
+      "plural": "trout",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "tuna",
+      "plural": "tuna",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "ultimatum",
+      "plural": "ultimatums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "umbilicus",
+      "plural": "umbilici",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "upstairs",
+      "plural": "upstairs",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "uterus",
+      "plural": "uteruses",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "vacuum",
+      "plural": "vacuums",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "velum",
+      "plural": "vela",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "vertebra",
+      "plural": "vertebrae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "vertex",
+      "plural": "vertices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "veto",
+      "plural": "vetoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "viscus",
+      "plural": "viscera",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "wealth",
+      "plural": "wealth",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "welfare",
+      "plural": "welfare",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "vita",
+      "plural": "vitae",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "volcano",
+      "plural": "volcanoes",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "vortex",
+      "plural": "vortices",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "watercraft",
+      "plural": "watercraft",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "wharf",
+      "plural": "wharves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "whiting",
+      "plural": "whiting",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "wife",
+      "plural": "wives",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "wildebeest",
+      "plural": "wildebeest",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "wildlife",
+      "plural": "wildlife",
+      "disposition": "unchanged or uncountable: retained, existing number policy"
+    },
+    {
+      "singular": "wolf",
+      "plural": "wolves",
+      "disposition": "imported plural"
+    },
+    {
+      "singular": "woman",
+      "plural": "women",
+      "disposition": "imported plural"
+    }
+  ],
+  "reviewed": {
+    "sources": [
+      "https://www.ox.ac.uk/about/the-university/brand/style-guide/words",
+      "https://www.upf.edu/en/web/gabinet-linguistic/principals-diferencies-ortografiques",
+      "verbs.json (commit and checksum in sources.json)"
+    ],
+    "spellingPairs": {
+      "colour": "color",
+      "colours": "colors",
+      "coloured": "colored",
+      "colouring": "coloring",
+      "honour": "honor",
+      "honours": "honors",
+      "honoured": "honored",
+      "honouring": "honoring",
+      "flavour": "flavor",
+      "flavours": "flavors",
+      "flavoured": "flavored",
+      "flavouring": "flavoring",
+      "humour": "humor",
+      "humours": "humors",
+      "labour": "labor",
+      "labours": "labors",
+      "laboured": "labored",
+      "labouring": "laboring",
+      "neighbour": "neighbor",
+      "neighbours": "neighbors",
+      "centre": "center",
+      "centres": "centers",
+      "centred": "centered",
+      "centring": "centering",
+      "fibre": "fiber",
+      "fibres": "fibers",
+      "litre": "liter",
+      "litres": "liters",
+      "theatre": "theater",
+      "theatres": "theaters",
+      "traveller": "traveler",
+      "travellers": "travelers",
+      "travelled": "traveled",
+      "travelling": "traveling",
+      "cancelled": "canceled",
+      "cancelling": "canceling",
+      "labelled": "labeled",
+      "labelling": "labeling",
+      "modelled": "modeled",
+      "modelling": "modeling"
+    },
+    "verbSpellingPairs": {
+      "organise": "organize",
+      "realise": "realize",
+      "recognise": "recognize",
+      "globalise": "globalize",
+      "specialise": "specialize",
+      "analyse": "analyze"
+    },
+    "pastAlternatives": {
+      "daydream": {
+        "daydreamt": "daydreamed"
+      },
+      "sunburn": {
+        "sunburnt": "sunburned"
+      },
+      "unlearn": {
+        "unlearnt": "unlearned"
+      },
+      "spoil": {
+        "spoilt": "spoiled"
+      },
+      "sneak": {
+        "snuck": "sneaked"
+      },
+      "dive": {
+        "dove": "dived"
+      }
+    },
+    "compoundPlurals": {
+      "mothers-in-law": "mother-in-law",
+      "fathers-in-law": "father-in-law",
+      "brothers-in-law": "brother-in-law",
+      "sisters-in-law": "sister-in-law",
+      "sons-in-law": "son-in-law",
+      "daughters-in-law": "daughter-in-law",
+      "passers-by": "passer-by",
+      "attorneys general": "attorney general"
+    }
+  }
+}

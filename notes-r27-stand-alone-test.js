@@ -238,7 +238,7 @@ const TR = J(TREES);
                 __n.load(${TR}); showContextMenu(10, 10, id, 0);
                 var menu = document.getElementById('context-menu');
                 var items = {}; Array.prototype.slice.call(menu.querySelectorAll('.ctx-item')).forEach(function (el) {
-                    items[el.textContent.replace(/(Enter|Shift\\+Enter|Ctrl\\+Enter|Alt\\+Enter|Tab)$/, '').trim()] = el.disabled; });
+                    items[el.textContent.replace(/(Shift\\+Tab|Enter|Shift\\+Enter|Ctrl\\+Enter|Alt\\+Enter|Tab)$/, '').trim()] = el.disabled; });
                 var chips = {}; Array.prototype.slice.call(menu.querySelectorAll('.ctx-types button')).forEach(function (el) { chips[el.textContent.trim()] = el.disabled; });
                 hideContextMenu();
                 return { items: items, chips: chips };
@@ -246,11 +246,11 @@ const TR = J(TREES);
             out.FN = read('FN'); out.S2 = read('S2');
             return out;`);
         const it = (k, name) => ((m[k] || {}).items || {})[name];
-        ok(['Support', 'Objection', 'Weak Objection', 'Add Co-Premise'].every(x => it('FN', x) === true) && it('FN', 'Add Note') === false,
+        ok(['Support', 'Objection', 'Weak Objection', 'Left co-premise', 'Right co-premise'].every(x => it('FN', x) === true) && it('FN', 'Add Note') === false,
             'right-click a note: Support, Objection, Weak Objection and Add Co-Premise are grayed; Add Note is not', J(m.FN && m.FN.items));
         ok(Object.values((m.FN || {}).chips || {}).length === 5 && Object.values(m.FN.chips).every(v => v === false),
             'none of its Change Type chips is grayed', J(m.FN && m.FN.chips));
-        ok(['Support', 'Objection', 'Weak Objection', 'Add Co-Premise', 'Add Note'].every(x => it('S2', x) === false) && it('S2', 'Note') === undefined,
+        ok(['Support', 'Objection', 'Weak Objection', 'Left co-premise', 'Right co-premise', 'Add Note'].every(x => it('S2', x) === false) && it('S2', 'Note') === undefined,
             'on a support nothing is grayed, and Note is no longer offered as a child -- Add Note is its own item', J(m.S2 && m.S2.items));
 
         W.win.eval(`
@@ -275,7 +275,7 @@ const TR = J(TREES);
         W.win.eval(`Element.prototype.getBoundingClientRect = window.__realRect;`);
         ok(plus.FN === 0 && plus['FN+'] === 0 && plus.LN === 0 && plus['LN+'] === 0,
             'a selected note gets no + buttons at all, the chooser opened or not', J(plus));
-        ok(plus.S2 === 3 && plus['S2+'] === 5, 'a support still gets its chooser and both co-premise buttons', J(plus));
+        ok(plus.S2 === 4 && plus['S2+'] === 6, 'a support still gets its chooser, both co-premise buttons, and the + for a parent above', J(plus));
     }
 
     /* ---------------- 4. turning boxes into notes ---------------- */
@@ -558,9 +558,9 @@ const TR = J(TREES);
     console.log('\n-- Help --');
     {
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
-        ok(/A <strong>note<\/strong> stands alone: it connects to nothing, and nothing connects to it/.test(h || '') &&
-           /<kbd>Alt\+Enter<\/kbd> note beside the box/.test(h || '') && /<kbd>N<\/kbd> turn into a note/.test(h || '') && !/holds only other notes/.test(h || ''),
-            'Help says a note stands alone, and what Add Note and N do');
+        ok(/<strong>Notes<\/strong> are annotations, not premises/.test(h || '') &&
+           /Add parent \/ note<\/td><td><kbd>Alt\+↑<\/kbd> \/ <kbd>Alt\+Enter<\/kbd>/.test(h || ''),
+            'compact Help explains notes and their creation shortcut');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

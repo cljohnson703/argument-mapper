@@ -12,7 +12,7 @@
 // make, as the canvas draws them: background, text color, and border color and
 // style -- a note as a note, Implicit see-through with a faded border and a
 // mini IMPLICIT tag (its label nearly as bright as the rest), Given tinted.
-// Their border is 1.5px, and a disabled one fades far enough, and loses its
+// Their border is 2.5px, and a disabled one fades far enough, and loses its
 // color, to be unmistakable.
 // The context menu's Change Type buttons preview the box each would make in
 // the canvas's own colors: the node text color, and the border color and
@@ -138,7 +138,7 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         const below = T(W, `var out = {};
             function read(id, expanded) {
                 __t.load(${J(TREES)}, [id + '-0']); nodeActionExpanded = expanded; updateNodeActions();
-                return Array.prototype.slice.call(document.querySelectorAll('.node-action-btn:not(.action-copremise)')).map(function (el) {
+                return Array.prototype.slice.call(document.querySelectorAll('.node-action-btn:not(.action-copremise):not(.action-parent)')).map(function (el) {
                     return { cls: el.className.replace(/node-action-btn/, '').trim(), title: el.title };
                 });
             }
@@ -211,9 +211,9 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
             placement: document.getElementById('placement-btn').classList.contains('node-look') };`);
         ok(Array.isArray(cls.look) && cls.look.every(Boolean) && cls.placement === false,
             'every Add Nodes and Change Type button that makes or marks a box is drawn as one; Placement is not', J(cls));
-        ok(/body\.bg-light #toolbar \.toolbar-group button\.node-look:hover\s*\{\s*background:\s*var\(--look-bg, var\(--node-bg\)\);\s*color:\s*var\(--look-text, var\(--text-color\)\);\s*border:\s*1\.5px var\(--look-style, solid\) var\(--look-edge, var\(--color-line\)\)/.test(CSS),
-            'the look: the box background, the node text color and a 1.5px canvas-colored border, in both themes and on hover');
-        ok(/#toolbar \.toolbar-group button\.node-look\s*\{\s*padding:\s*5\.5px 11\.5px/.test(CSS), 'the half-pixel-wider border is paid for with half a pixel less padding, so buttons keep their size');
+        ok(/body\.bg-light #toolbar \.toolbar-group button\.node-look:hover\s*\{\s*background:\s*var\(--look-bg, var\(--node-bg\)\);\s*color:\s*var\(--look-text, var\(--text-color\)\);\s*border:\s*2\.5px var\(--look-style, solid\) var\(--look-edge, var\(--color-line\)\)/.test(CSS),
+            'the look: the box background, the node text color and a 2.5px canvas-colored border, in both themes and on hover');
+        ok(/#toolbar \.toolbar-group button\.node-look\s*\{\s*padding:\s*4\.5px 10\.5px/.test(CSS), 'the thicker border is paid for with 1.5px less padding, so buttons keep their size');
         ok(/#btn-add-not, #btn-type-note\s*\{\s*--look-bg:\s*var\(--note-bg\);\s*--look-text:\s*var\(--note-text\);\s*--look-edge:\s*var\(--line-note\)/.test(CSS),
             'Add Note and Note are drawn as notes');
         ok(!/#new-node-btn\s*\{/.test(CSS) && !/neutral/.test(CSS),
@@ -277,7 +277,7 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         const m = T(W, `var out = {};
             ${J(IDS)}.forEach(function (id) {
                 __t.load(${J(TREES)}); showContextMenu(10, 10, id, 0);
-                var item = Array.prototype.slice.call(document.querySelectorAll('#context-menu .ctx-item')).find(function (b) { return /^Add Co-Premise/.test(b.textContent.trim()); });
+                var item = Array.prototype.slice.call(document.querySelectorAll('#context-menu .ctx-item')).find(function (b) { return /^Right co-premise/.test(b.textContent.trim()); });
                 var dot = item && item.querySelector('.ctx-dot');
                 out[id] = dot ? dot.getAttribute('style') : null;
                 out[id + ':off'] = item ? item.disabled : null;
@@ -326,8 +326,8 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         ok(/#context-menu \.ctx-row button\.ctx-type\.ctx-current\s*\{\s*font-weight:\s*700;\s*box-shadow:\s*0 0 0 1px #2a2a2e, 0 0 0 3px var\(--color-selected\)/.test(CSS) &&
            /body\.bg-light #context-menu \.ctx-row button\.ctx-type\.ctx-current\s*\{\s*box-shadow:\s*0 0 0 1px #f5f5f5, 0 0 0 3px var\(--color-selected\)/.test(CSS),
             'the current type wears the blue selection ring, just outside a gap in the menu color, and bold');
-        ok(/#context-menu \.ctx-row button\.ctx-type\s*\{[^}]*border-width:\s*1\.5px/.test(CSS) && /#context-menu \.ctx-row button\.ctx-main\s*\{\s*outline:\s*1px solid var\(--color-contention-ring\)/.test(CSS),
-            'the buttons have the toolbar\'s 1.5px border, and Main the contention ring\'s color');
+        ok(/#context-menu \.ctx-row button\.ctx-type\s*\{[^}]*border-width:\s*2\.5px/.test(CSS) && /#context-menu \.ctx-row button\.ctx-main\s*\{\s*outline:\s*1px solid var\(--color-contention-ring\)/.test(CSS),
+            'the context-menu buttons match the toolbar’s 2.5px border, and Main the contention ring\'s color');
         ok(/#context-menu \.ctx-row button\.ctx-type\s*\{[^}]*white-space:\s*nowrap/.test(CSS), '"Weak Obj" and "Weak Reb" stay on one line');
 
         const click = T(W, `__t.load(${J(TREES)}); showContextMenu(10, 10, 'RS', 0);
