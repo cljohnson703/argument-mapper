@@ -2253,7 +2253,7 @@
     </div>
 </div>
 <div id="depth-labels-container"></div>
-<div id="minimap-container"><button id="minimap-close" onclick="toggleMinimap()" title="Hide minimap (M)">✕</button><canvas id="minimap" width="200" height="130"></canvas></div>
+<div id="minimap-container"><button id="minimap-close" onclick="toggleMinimap()" title="Hide minimap (M)">✕</button><canvas id="minimap" width="200" height="130" title="Click or drag to navigate. Solid markers: regular branches. Hollow dashed markers: weak branches. Red: objection; orange: rebuttal; yellow: note." aria-label="Argument minimap: solid regular branches, hollow dashed weak branches"></canvas></div>
 <button id="minimap-reopen" onclick="toggleMinimap()" title="Show minimap (M)">⊞</button>
 <div id="help-icon-topleft" onclick="toggleHelp()" title="Help (/)">?</div>
 <div id="fullscreen-indicator" onclick="toggleFullscreen()" title="Toggle fullscreen (F11)">
@@ -2713,7 +2713,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-14 r27.20';
+    const APP_BUILD = '2026-09-20 r27.22';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -18410,16 +18410,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const w = g.getBoundingClientRect().width / zoomLevel;
             const h = g.getBoundingClientRect().height / zoomLevel;
             const typeNode = g.querySelector('.node');
-            let color = isLight ? '#555' : '#666';
+            let color = isLight ? '#8a8a8a' : '#666';
             if (typeNode) {
                 // data-color is the derived color family, so a support inside an
                 // objection shows red here too.
                 const family = typeNode.getAttribute('data-color');
-                if (family === 'objection') color = isLight ? '#c62828' : '#ff6250';
-                else if (family === 'rebuttal') color = isLight ? '#ff9800' : '#ffb780';                else if (family === 'note') color = isLight ? '#8a7a20' : '#f0e28c';
-                else if (family === 'contention') color = isLight ? '#444' : '#a8b1b8';
+                if (family === 'objection') color = '#ff6250';
+                else if (family === 'rebuttal') color = '#ffb780';
+                else if (family === 'note') color = '#f0e28c';
+                else if (family === 'contention') color = isLight ? '#303840' : '#a8b1b8';
             }
-            rects.push({ x, y, w, h, color });
+            const weak = !!typeNode && (typeNode.classList.contains('side-weak-objection') || typeNode.classList.contains('side-weak-rebuttal'));
+            rects.push({ x, y, w, h, color, weak });
             cMinX = Math.min(cMinX, x); cMinY = Math.min(cMinY, y);
             cMaxX = Math.max(cMaxX, x + w); cMaxY = Math.max(cMaxY, y + h);
         });
@@ -18461,13 +18463,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         // Node rectangles
         rects.forEach(r => {
-            ctx2.fillStyle = r.color;
-            ctx2.fillRect(
-                offX + (r.x - minX) * scale,
-                offY + (r.y - minY) * scale,
-                Math.max(r.w * scale, 3),
-                Math.max(r.h * scale, 2)
-            );
+            const x = offX + (r.x - minX) * scale, y = offY + (r.y - minY) * scale;
+            if (r.weak) {
+                // A hollow, dashed marker distinguishes weak branches even
+                // when their color is shared with an ordinary attack.
+                ctx2.save();
+                ctx2.strokeStyle = r.color; ctx2.lineWidth = 1;
+                ctx2.setLineDash([2, 1]);
+                ctx2.strokeRect(x + 0.5, y + 0.5, Math.max(r.w * scale, 5) - 1, Math.max(r.h * scale, 4) - 1);
+                ctx2.restore();
+            } else {
+                ctx2.fillStyle = r.color;
+                ctx2.fillRect(x, y, Math.max(r.w * scale, 3), Math.max(r.h * scale, 2));
+            }
         });
 
         // Viewport rectangle

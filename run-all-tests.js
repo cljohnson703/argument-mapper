@@ -52,6 +52,7 @@ const SUITES = [
     'implicit-r27-see-through-test.js',
     'typecolors-r27-menu-test.js',
     'type-toggle-r27-test.js',
+    'minimap-r27-style-test.js',
     'routing-r27-line-gap-test.js',
     'stringmode-r27-positions-test.js',
     'notes-r27-stand-alone-test.js',
