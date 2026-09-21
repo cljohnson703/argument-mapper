@@ -1268,7 +1268,10 @@
           "mislearnt"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "mislearnt": "mislearned"
+      }
     },
     {
       "base": "misread",
@@ -1312,7 +1315,10 @@
           "misspelt"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "misspelt": "misspelled"
+      }
     },
     {
       "base": "misspend",
@@ -1490,7 +1496,10 @@
           "outleapt"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "outleapt": "outleaped"
+      }
     },
     {
       "base": "outride",
@@ -1916,7 +1925,10 @@
           "overspilt"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "overspilt": "overspilled"
+      }
     },
     {
       "base": "overtake",
@@ -2000,7 +2012,10 @@
           "pled"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "pled": "pleaded"
+      }
     },
     {
       "base": "prebuild",
@@ -2334,7 +2349,10 @@
           "relearnt"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "relearnt": "relearned"
+      }
     },
     {
       "base": "relight",
@@ -2348,7 +2366,10 @@
           "relighted"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "relighted": "relit"
+      }
     },
     {
       "base": "remake",
@@ -2520,7 +2541,10 @@
           "rewaked"
         ]
       ],
-      "disposition": "multiple past forms: retained, not automatically equated"
+      "disposition": "multiple past forms: retained, not automatically equated",
+      "reviewedAlternatives": {
+        "rewaked": "rewoke"
+      }
     },
     {
       "base": "rewear",
@@ -6180,6 +6204,48 @@
       },
       "dive": {
         "dove": "dived"
+      },
+      "mislearn": {
+        "mislearnt": "mislearned"
+      },
+      "misspell": {
+        "misspelt": "misspelled"
+      },
+      "outleap": {
+        "outleapt": "outleaped"
+      },
+      "overspill": {
+        "overspilt": "overspilled"
+      },
+      "plead": {
+        "pled": "pleaded"
+      },
+      "relearn": {
+        "relearnt": "relearned"
+      },
+      "relight": {
+        "relighted": "relit"
+      },
+      "rewake": {
+        "rewaked": "rewoke"
+      }
+    },
+    "nounVariants": {
+      "octopi": {
+        "singular": "octopus",
+        "source": "https://www.ahdictionary.com/word/search.html?q=octopi"
+      },
+      "dwarves": {
+        "singular": "dwarf",
+        "source": "https://scrabble.merriam.com/finder/dwarf"
+      },
+      "zeros": {
+        "singular": "zero",
+        "source": "https://dictionary.cambridge.org/us/dictionary/english/zero"
+      },
+      "zeroes": {
+        "singular": "zero",
+        "source": "https://dictionary.cambridge.org/us/dictionary/english/zero"
       }
     },
     "compoundPlurals": {

@@ -41,6 +41,15 @@ for (const [s,p] of Object.entries(nouns)) {
     audit.nouns.push({singular:s, plural:p, disposition:reason});
 }
 const reviewed = JSON.parse(read('reviewed-variants.json'));
+// Explicitly reviewed alternate plurals supplement the one-form upstream
+// table. Do not guess Latin endings or silently override a homograph.
+for (const [plural, entry] of Object.entries(reviewed.nounVariants || {})) {
+    if (!word(plural) || !word(entry.singular) || !/^https:\/\//.test(entry.source) ||
+        ambiguousPlural.has(plural) || (plurals[plural] && plurals[plural] !== entry.singular)) {
+        throw Error('Invalid reviewed plural: ' + plural);
+    }
+    plurals[plural] = entry.singular;
+}
 const spellings = {...reviewed.spellingPairs}, presentBases = {};
 for (const [uk,us] of Object.entries(reviewed.verbSpellingPairs)) {
     presentBases[us+'s'] = us;
@@ -71,7 +80,8 @@ updated = updated.includes('<!-- BEGIN MORPHOLOGY LICENSES -->') ? updated.repla
 const report = JSON.stringify(audit, null, 2) + '\n';
 const auditFile = path.join(root, 'language-data', 'audit.json');
 if (process.argv.includes('--check')) {
-    if (updated !== old || fs.readFileSync(auditFile,'utf8') !== report) throw Error('Run node build-morphology-data.js to update generated data.');
+    const normalizeLines = text => text.replace(/\r\n/g, '\n');
+    if (normalizeLines(updated) !== normalizeLines(old) || normalizeLines(fs.readFileSync(auditFile,'utf8')) !== normalizeLines(report)) throw Error('Run node build-morphology-data.js to update generated data.');
 } else {
     fs.writeFileSync(file, updated);
     fs.writeFileSync(auditFile, report);

@@ -380,7 +380,7 @@ const MAP = [
         const STANDARD = ['Contradiction', 'identity symmetry', 'identity transitivity', 'identity substitution', 'modus ponens', 'modus tollens', 'hypothetical syllogism', 'constructive dilemma', 'destructive dilemma',
             'biconditional elimination', 'conjunction introduction', 'conjunction elimination', 'disjunction introduction', 'disjunctive syllogism',
             'resolution', 'explosion', 'Negation Elimination', 'existential introduction', 'universal elimination', 'universal modus ponens', 'universal modus tollens',
-            'universal syllogism', 'existential syllogism', 'reductio', 'absorption', 'quantifier negation', 'double negation', 'De Morgan’s laws',
+            'universal syllogism', 'existential syllogism', 'reductio', 'absorption', 'Quantifier Commutation', 'quantifier negation', 'double negation', 'De Morgan’s laws',
             'transposition', 'Negated Conditional', 'Negated Biconditional', 'material implication', 'material equivalence', 'exportation', 'distribution', 'tautology', 'conversion', 'contraposition',
             'a premise not established', 'a false premise', 'conclusion not established', 'an unsound argument'];
         ok(Array.isArray(names) && J(names.map(r => r[1])) === J(STANDARD) && names.every(r => r[2]),

@@ -26,7 +26,17 @@
     "unlearn":{"unlearnt":"unlearned"},
     "spoil":{"spoilt":"spoiled"},
     "sneak":{"snuck":"sneaked"},
-    "dive":{"dove":"dived"}
+    "dive":{"dove":"dived"},
+    "mislearn":{"mislearnt":"mislearned"}, "misspell":{"misspelt":"misspelled"},
+    "outleap":{"outleapt":"outleaped"}, "overspill":{"overspilt":"overspilled"},
+    "plead":{"pled":"pleaded"}, "relearn":{"relearnt":"relearned"},
+    "relight":{"relighted":"relit"}, "rewake":{"rewaked":"rewoke"}
+  },
+  "nounVariants": {
+    "octopi":{"singular":"octopus","source":"https://www.ahdictionary.com/word/search.html?q=octopi"},
+    "dwarves":{"singular":"dwarf","source":"https://scrabble.merriam.com/finder/dwarf"},
+    "zeros":{"singular":"zero","source":"https://dictionary.cambridge.org/us/dictionary/english/zero"},
+    "zeroes":{"singular":"zero","source":"https://dictionary.cambridge.org/us/dictionary/english/zero"}
   },
   "compoundPlurals": {
     "mothers-in-law":"mother-in-law", "fathers-in-law":"father-in-law",

@@ -2713,7 +2713,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-20 r27.22';
+    const APP_BUILD = '2026-09-20 r27.23';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -7749,7 +7749,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // A logic word keeps no mark, contracted or not ("It's", "Won't").
         const logic = tok => {
-            const w = claimWord(tok.replace(/[’‘]/g, "'"));
+            const w = claimWord(tok.replace(/[’‘]/g, "'")).replace(/^'+|'+$/g, '');
             return CLAIM_LOGIC_WORDS.has(w) || CLAIM_LOGIC_WORDS.has(w.replace(/'(?:s|d|ll|re|ve|m)$/, ''));
         };
         return marked.split(/ +/).map(tok => logic(tok) ? tok.replace(/\uE000/g, '') : tok).join(' ');
@@ -7834,7 +7834,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // better to leave a step uncertified than to read two sentences as one.)
     // BEGIN GENERATED MORPHOLOGY
     // Online source snapshots, licenses, exclusions: language-data/.
-    const CLAIM_VENDOR_MORPHOLOGY = {"past":{"arose":"arise","backslid":"backslide","became":"become","began":"begin","bent":"bend","bit":"bite","bled":"bleed","blew":"blow","broke":"break","bred":"breed","brought":"bring","built":"build","bought":"buy","caught":"catch","chose":"choose","clung":"cling","came":"come","crept":"creep","crossbred":"crossbreed","dealt":"deal","dug":"dig","disproved":"disprove","drew":"draw","drank":"drink","drove":"drive","ate":"eat","fed":"feed","felt":"feel","fought":"fight","fled":"flee","flung":"fling","flew":"fly","forbade":"forbid","forewent":"forego","foresaw":"foresee","foretold":"foretell","forgot":"forget","forgave":"forgive","forsook":"forsake","froze":"freeze","frostbit":"frostbite","got":"get","gave":"give","went":"go","grew":"grow","hand-fed":"hand-feed","handwrote":"handwrite","hung":"hang","heard":"hear","hewed":"hew","hid":"hide","held":"hold","inbred":"inbreed","inlaid":"inlay","interbred":"interbreed","interwound":"interwind","jerry-built":"jerry-build","kept":"keep","knew":"know","laid":"lay","led":"lead","lent":"lend","lost":"lose","made":"make","meant":"mean","met":"meet","misdealt":"misdeal","misdid":"misdo","misheard":"mishear","mislaid":"mislay","misled":"mislead","misspoke":"misspeak","misspent":"misspend","mistook":"mistake","mistaught":"misteach","misunderstood":"misunderstand","miswrote":"miswrite","mowed":"mow","outbred":"outbreed","outdid":"outdo","outdrew":"outdraw","outdrank":"outdrink","outdrove":"outdrive","outfought":"outfight","outflew":"outfly","outgrew":"outgrow","outrode":"outride","outran":"outrun","outsold":"outsell","outshot":"outshoot","outsang":"outsing","outsat":"outsit","outslept":"outsleep","outspoke":"outspeak","outsped":"outspeed","outspent":"outspend","outswore":"outswear","outswam":"outswim","outthought":"outthink","outthrew":"outthrow","outwrote":"outwrite","overbred":"overbreed","overbuilt":"overbuild","overbought":"overbuy","overcame":"overcome","overdid":"overdo","overdrew":"overdraw","overdrank":"overdrink","overate":"overeat","overfed":"overfeed","overhung":"overhang","overheard":"overhear","overlaid":"overlay","overpaid":"overpay","overrode":"override","overran":"overrun","oversaw":"oversee","oversold":"oversell","oversewed":"oversew","overshot":"overshoot","overslept":"oversleep","overspoke":"overspeak","overspent":"overspend","overtook":"overtake","overthought":"overthink","overthrew":"overthrow","overwound":"overwind","overwrote":"overwrite","partook":"partake","paid":"pay","prebuilt":"prebuild","predid":"predo","premade":"premake","prepaid":"prepay","presold":"presell","preshrank":"preshrink","proved":"prove","quick-froze":"quick-freeze","reawoke":"reawake","rebound":"rebind","rebuilt":"rebuild","redealt":"redeal","redid":"redo","redrew":"redraw","reground":"regrind","regrew":"regrow","rehung":"rehang","reheard":"rehear","relaid":"relay","remade":"remake","repaid":"repay","reran":"rerun","resold":"resell","resent":"resend","resewed":"resew","retook":"retake","retaught":"reteach","retore":"retear","retold":"retell","rethought":"rethink","rewore":"rewear","rewon":"rewin","rewound":"rewind","rewrote":"rewrite","rode":"ride","rang":"ring","ran":"run","sawed":"saw","said":"say","sought":"seek","sold":"sell","sent":"send","sewed":"sew","shook":"shake","shaved":"shave","sheared":"shear","shot":"shoot","showed":"show","sang":"sing","sat":"sit","slept":"sleep","slid":"slide","slung":"sling","sowed":"sow","spoke":"speak","spent":"spend","spun":"spin","spoon-fed":"spoon-feed","stood":"stand","stole":"steal","stuck":"stick","stung":"sting","strewed":"strew","strode":"stride","struck":"strike","strung":"string","swore":"swear","swept":"sweep","swelled":"swell","swam":"swim","swung":"swing","took":"take","taught":"teach","tore":"tear","told":"tell","test-drove":"test-drive","test-flew":"test-fly","thought":"think","threw":"throw","trod":"tread","typewrote":"typewrite","unbent":"unbend","unbound":"unbind","underfed":"underfeed","underwent":"undergo","underlay":"underlie","undersold":"undersell","underspent":"underspend","understood":"understand","undertook":"undertake","underwrote":"underwrite","undid":"undo","unfroze":"unfreeze","unhung":"unhang","unhid":"unhide","unsewed":"unsew","unslung":"unsling","unspun":"unspin","unstuck":"unstick","unstrung":"unstring","unwound":"unwind","upheld":"uphold","waylaid":"waylay","wore":"wear","wept":"weep","won":"win","withdrew":"withdraw","withheld":"withhold","withstood":"withstand","wrung":"wring","wrote":"write","daydreamt":"daydream","daydreamed":"daydream","sunburnt":"sunburn","sunburned":"sunburn","unlearnt":"unlearn","unlearned":"unlearn","spoilt":"spoil","spoiled":"spoil","snuck":"sneak","sneaked":"sneak","dove":"dive","dived":"dive"},"plurals":{"abscissae":"abscissa","addenda":"addendum","afreets":"afreet","afrits":"afrit","agenda":"agendum","albinos":"albino","algae":"alga","altos":"alto","alumnae":"alumna","alumni":"alumnus","alveoli":"alveolus","amoebas":"amoeba","analyses":"analysis","anathemas":"anathema","antennas":"antenna","antitheses":"antithesis","aphelia":"aphelion","apparatuses":"apparatus","appendixes":"appendix","aquariums":"aquarium","archipelagos":"archipelago","armadillos":"armadillo","asyndetons":"asyndeton","auroras":"aurora","automatons":"automaton","bacilli":"bacillus","bacteria":"bacterium","bacula":"baculum","bassos":"basso","beaus":"beau","beefs":"beef","bemas":"bema","brothers":"brother","bureaus":"bureau","businessmen":"businessman","cactuses":"cactus","calves":"calf","candelabra":"candelabrum","cantos":"canto","carcinomas":"carcinoma","censuses":"census","chapeaus":"chapeau","charismas":"charisma","chairmen":"chairman","cherubs":"cherub","children":"child","clitorises":"clitoris","cloacae":"cloaca","codices":"codex","commandos":"commando","compendiums":"compendium","concertos":"concerto","consortia":"consortium","contraltos":"contralto","corpora":"corpus","cortices":"cortex","crania":"cranium","crescendos":"crescendo","crises":"crisis","criteria":"criterion","curricula":"curriculum","cyclopses":"cyclops","cystomata":"cystoma","desiderata":"desideratum","diagnoses":"diagnosis","dicta":"dictum","dice":"die","dingoes":"dingo","diplomas":"diploma","dittos":"ditto","djinn":"djinni","dogmata":"dogma","dramas":"drama","dwarfs":"dwarf","dynamos":"dynamo","echoes":"echo","edemas":"edema","efreets":"efreet","elves":"elf","embargoes":"embargo","embryos":"embryo","emphases":"emphasis","emporia":"emporium","encomia":"encomium","enigmas":"enigma","ephemerides":"ephemeris","errata":"erratum","extrema":"extremum","fezzes":"fez","fiascos":"fiasco","fibulae":"fibula","focuses":"focus","feet":"foot","foramina":"foramen","formulas":"formula","forums":"forum","fungi":"fungus","ganglia":"ganglion","generalissimos":"generalissimo","genies":"genie","gentlemen":"gentleman","genera":"genus","ghettos":"ghetto","glomeruli":"glomerulus","geese":"goose","goyim":"goy","gummata":"gumma","gymnasiums":"gymnasium","halves":"half","hamuli":"hamulus","heroes":"hero","hiatuses":"hiatus","hippopotamuses":"hippopotamus","honoraria":"honorarium","hooves":"hoof","humeri":"humerus","hyperbata":"hyperbaton","hyperbolae":"hyperbola","hypotheses":"hypothesis","ilia":"ilium","impetuses":"impetus","incubi":"incubus","indexes":"index","infernos":"inferno","interregna":"interregnum","interstitia":"interstitium","jumbos":"jumbo","knives":"knife","lacunas":"lacuna","larvae":"larva","leaves":"leaf","lemmas":"lemma","librettos":"libretto","lives":"life","lingos":"lingo","loaves":"loaf","loculi":"loculus","loci":"locus","looies":"looey","lice":"louse","lumbagos":"lumbago","lumina":"lumen","lustra":"lustrum","lymphomata":"lymphoma","magmas":"magma","magnetos":"magneto","men":"man","manifestos":"manifesto","matrices":"matrix","maxima":"maximum","medicos":"medico","media":"medium","melismas":"melisma","memoranda":"memorandum","menisci":"meniscus","miasmas":"miasma","millennia":"millennium","minima":"minimum","minutiae":"minutia","momenta":"momentum","mongooses":"mongoose","mice":"mouse","murices":"murex","mythoi":"mythos","nebulas":"nebula","nemeses":"nemesis","neuroses":"neurosis","nexuses":"nexus","nimbuses":"nimbus","noumena":"noumenon","novas":"nova","nucleoli":"nucleolus","nuclei":"nucleus","oases":"oasis","occipita":"occiput","octavos":"octavo","octopuses":"octopus","oedemas":"oedema","omphaloi":"omphalos","optima":"optimum","opuses":"opus","organons":"organon","ova":"ovum","oxen":"ox","parabolas":"parabola","paralyses":"paralysis","parentheses":"parenthesis","passersby":"passerby","pennies":"penny","perihelia":"perihelion","people":"person","phalanges":"phalanx","phenomena":"phenomenon","photos":"photo","phyla":"phylum","plateaus":"plateau","platypuses":"platypus","plexuses":"plexus","policemen":"policeman","polyhedra":"polyhedron","pontifices":"pontifex","potatoes":"potato","pros":"pro","prognoses":"prognosis","prolegomena":"prolegomenon","prospectuses":"prospectus","quanta":"quantum","quartos":"quarto","quizzes":"quiz","radii":"radius","referendums":"referendum","rhinos":"rhino","roofs":"roof","rostrums":"rostrum","sarcomas":"sarcoma","sarcophagi":"sarcophagus","scarves":"scarf","schemas":"schema","scrota":"scrotum","selves":"self","seminomas":"seminoma","seraphs":"seraph","shelves":"shelf","silices":"silex","simplexes":"simplex","simulacra":"simulacrum","sinuses":"sinus","soliloquies":"soliloquy","solos":"solo","somas":"soma","sopranos":"soprano","spokesmen":"spokesman","spectra":"spectrum","specula":"speculum","sphinxes":"sphinx","stadiums":"stadium","staffs":"staff","stamens":"stamen","statuses":"status","stigmas":"stigma","stimuli":"stimulus","stomas":"stoma","strata":"stratum","styluses":"stylus","succubi":"succubus","syconia":"syconium","syllabuses":"syllabus","symposiums":"symposium","synopses":"synopsis","syntheses":"synthesis","tableaus":"tableau","tempos":"tempo","testes":"testis","theses":"thesis","thieves":"thief","thrombi":"thrombus","tibias":"tibia","tomatoes":"tomato","teeth":"tooth","torpedoes":"torpedo","tornadoes":"tornado","tori":"torus","trapezia":"trapezium","traumas":"trauma","trilbies":"trilby","ultimatums":"ultimatum","umbilici":"umbilicus","uteruses":"uterus","vacuums":"vacuum","vela":"velum","vertebrae":"vertebra","vertices":"vertex","vetoes":"veto","viscera":"viscus","vitae":"vita","volcanoes":"volcano","vortices":"vortex","wharves":"wharf","wives":"wife","wolves":"wolf","women":"woman"},"participles":["arisen","awakened","awoken","backslid","backslidden","beat","beaten","become","been","begun","bent","bet","betted","bid","bidden","bitten","bled","blown","born","borne","bought","bound","bred","broadcast","broadcasted","broken","brought","browbeat","browbeaten","built","burned","burnt","burst","bust","busted","cast","caught","chosen","clad","clothed","clung","come","cost","crept","crossbred","cut","daydreamed","daydreamt","dealt","disproved","disproven","dived","done","drawn","dreamed","dreamt","driven","drunk","dug","dwelled","dwelt","eaten","fallen","fed","felt","fit","fitted","fled","flown","flung","forbidden","forecast","foregone","foreseen","foretold","forgiven","forgot","forgotten","forsaken","fought","found","frostbitten","frozen","given","gone","got","gotten","ground","grown","had","hand-fed","handwritten","heard","held","hewed","hewn","hidden","hit","hung","hurt","inbred","inlaid","input","inputted","interbred","interweaved","interwound","interwoven","jerry-built","kept","kneeled","knelt","knit","knitted","known","laid","lain","leaned","leant","leaped","leapt","learned","learnt","led","left","lent","let","lighted","lip-read","lit","lost","made","meant","met","miscast","misdealt","misdone","misheard","mislaid","mislearned","mislearnt","misled","misread","misset","misspelled","misspelt","misspent","misspoken","mistaken","mistaught","misunderstood","miswritten","mowed","mown","offset","outbid","outbred","outdone","outdrawn","outdriven","outdrunk","outflown","outfought","outgrown","outleaped","outleapt","outridden","outrun","outsat","outshined","outshone","outshot","outslept","outsmelled","outsmelt","outsold","outsped","outspent","outspoken","outsung","outsworn","outswum","outthought","outthrown","outwritten","overbid","overbought","overbred","overbuilt","overcome","overdone","overdrawn","overdrunk","overeaten","overfed","overheard","overhung","overlaid","overpaid","overridden","overrun","overseen","oversewed","oversewn","overshot","overslept","oversold","overspent","overspilled","overspilt","overspoken","overtaken","overthought","overthrown","overwound","overwritten","paid","partaken","pleaded","pled","prebuilt","predone","premade","prepaid","preset","preshrunk","presold","proofread","proved","proven","put","quick-frozen","quit","quitted","read","reawaken","rebid","rebound","rebroadcast","rebroadcasted","rebuilt","recast","recut","redealt","redone","redrawn","refit","refitted","reground","regrown","reheard","rehung","reknit","reknitted","relaid","relearned","relearnt","relighted","relit","remade","repaid","reread","rerun","resent","reset","resewed","resewn","resold","retaken","retaught","rethought","retold","retorn","retread","retrofit","retrofitted","rewaked","rewaken","reweaved","rewed","rewedded","rewet","rewetted","rewon","reworn","rewound","rewoven","rewritten","rid","ridden","risen","roughcast","run","rung","said","sand-cast","sat","sawed","sawn","seen","sent","set","sewed","sewn","shaken","shat","shaved","shaven","sheared","shed","shined","shit","shitted","shone","shorn","shot","showed","shown","shrunk","shut","sight-read","slain","slayed","slept","slid","slinked","slit","slung","slunk","smelled","smelt","sneaked","snuck","sold","sought","sowed","sown","spat","sped","speeded","spelled","spelt","spent","spilled","spilt","spit","split","spoiled","spoilt","spoken","spoon-fed","spread","sprung","spun","stolen","stood","strewed","strewn","stricken","stridden","strived","striven","struck","strung","stuck","stung","stunk","sublet","sunburned","sunburnt","sung","sunk","sweat","sweated","swelled","swept","swollen","sworn","swum","swung","taken","taught","telecast","test-driven","test-flown","thought","thrown","thrust","told","torn","trod","trodden","typecast","typeset","typewritten","unbent","unbound","unclad","unclothed","underbid","undercut","underfed","undergone","underlain","undersold","underspent","understood","undertaken","underwritten","undone","unfrozen","unhidden","unhung","unknit","unknitted","unlearned","unlearnt","unsewed","unsewn","unslung","unspun","unstrung","unstuck","unweaved","unwound","unwoven","upheld","upset","waked","waylaid","weaved","wed","wedded","wept","wet","wetted","withdrawn","withheld","withstood","woken","won","worn","wound","woven","written","wrung"],"spellings":{"colour":"color","colours":"colors","coloured":"colored","colouring":"coloring","honour":"honor","honours":"honors","honoured":"honored","honouring":"honoring","flavour":"flavor","flavours":"flavors","flavoured":"flavored","flavouring":"flavoring","humour":"humor","humours":"humors","labour":"labor","labours":"labors","laboured":"labored","labouring":"laboring","neighbour":"neighbor","neighbours":"neighbors","centre":"center","centres":"centers","centred":"centered","centring":"centering","fibre":"fiber","fibres":"fibers","litre":"liter","litres":"liters","theatre":"theater","theatres":"theaters","traveller":"traveler","travellers":"travelers","travelled":"traveled","travelling":"traveling","cancelled":"canceled","cancelling":"canceling","labelled":"labeled","labelling":"labeling","modelled":"modeled","modelling":"modeling","organise":"organize","organises":"organizes","organised":"organized","organising":"organizing","realise":"realize","realises":"realizes","realised":"realized","realising":"realizing","recognise":"recognize","recognises":"recognizes","recognised":"recognized","recognising":"recognizing","globalise":"globalize","globalises":"globalizes","globalised":"globalized","globalising":"globalizing","specialise":"specialize","specialises":"specializes","specialised":"specialized","specialising":"specializing","analyse":"analyze","analysed":"analyzed","analysing":"analyzing"},"presentBases":{"organizes":"organize","realizes":"realize","recognizes":"recognize","globalizes":"globalize","specializes":"specialize","analyzes":"analyze"},"pastVariants":{"daydreamt":"daydreamed","sunburnt":"sunburned","unlearnt":"unlearned","spoilt":"spoiled","snuck":"sneaked","dove":"dived"},"compoundPlurals":{"mothers-in-law":"mother-in-law","fathers-in-law":"father-in-law","brothers-in-law":"brother-in-law","sisters-in-law":"sister-in-law","sons-in-law":"son-in-law","daughters-in-law":"daughter-in-law","passers-by":"passer-by","attorneys general":"attorney general"}};
+    const CLAIM_VENDOR_MORPHOLOGY = {"past":{"arose":"arise","backslid":"backslide","became":"become","began":"begin","bent":"bend","bit":"bite","bled":"bleed","blew":"blow","broke":"break","bred":"breed","brought":"bring","built":"build","bought":"buy","caught":"catch","chose":"choose","clung":"cling","came":"come","crept":"creep","crossbred":"crossbreed","dealt":"deal","dug":"dig","disproved":"disprove","drew":"draw","drank":"drink","drove":"drive","ate":"eat","fed":"feed","felt":"feel","fought":"fight","fled":"flee","flung":"fling","flew":"fly","forbade":"forbid","forewent":"forego","foresaw":"foresee","foretold":"foretell","forgot":"forget","forgave":"forgive","forsook":"forsake","froze":"freeze","frostbit":"frostbite","got":"get","gave":"give","went":"go","grew":"grow","hand-fed":"hand-feed","handwrote":"handwrite","hung":"hang","heard":"hear","hewed":"hew","hid":"hide","held":"hold","inbred":"inbreed","inlaid":"inlay","interbred":"interbreed","interwound":"interwind","jerry-built":"jerry-build","kept":"keep","knew":"know","laid":"lay","led":"lead","lent":"lend","lost":"lose","made":"make","meant":"mean","met":"meet","misdealt":"misdeal","misdid":"misdo","misheard":"mishear","mislaid":"mislay","misled":"mislead","misspoke":"misspeak","misspent":"misspend","mistook":"mistake","mistaught":"misteach","misunderstood":"misunderstand","miswrote":"miswrite","mowed":"mow","outbred":"outbreed","outdid":"outdo","outdrew":"outdraw","outdrank":"outdrink","outdrove":"outdrive","outfought":"outfight","outflew":"outfly","outgrew":"outgrow","outrode":"outride","outran":"outrun","outsold":"outsell","outshot":"outshoot","outsang":"outsing","outsat":"outsit","outslept":"outsleep","outspoke":"outspeak","outsped":"outspeed","outspent":"outspend","outswore":"outswear","outswam":"outswim","outthought":"outthink","outthrew":"outthrow","outwrote":"outwrite","overbred":"overbreed","overbuilt":"overbuild","overbought":"overbuy","overcame":"overcome","overdid":"overdo","overdrew":"overdraw","overdrank":"overdrink","overate":"overeat","overfed":"overfeed","overhung":"overhang","overheard":"overhear","overlaid":"overlay","overpaid":"overpay","overrode":"override","overran":"overrun","oversaw":"oversee","oversold":"oversell","oversewed":"oversew","overshot":"overshoot","overslept":"oversleep","overspoke":"overspeak","overspent":"overspend","overtook":"overtake","overthought":"overthink","overthrew":"overthrow","overwound":"overwind","overwrote":"overwrite","partook":"partake","paid":"pay","prebuilt":"prebuild","predid":"predo","premade":"premake","prepaid":"prepay","presold":"presell","preshrank":"preshrink","proved":"prove","quick-froze":"quick-freeze","reawoke":"reawake","rebound":"rebind","rebuilt":"rebuild","redealt":"redeal","redid":"redo","redrew":"redraw","reground":"regrind","regrew":"regrow","rehung":"rehang","reheard":"rehear","relaid":"relay","remade":"remake","repaid":"repay","reran":"rerun","resold":"resell","resent":"resend","resewed":"resew","retook":"retake","retaught":"reteach","retore":"retear","retold":"retell","rethought":"rethink","rewore":"rewear","rewon":"rewin","rewound":"rewind","rewrote":"rewrite","rode":"ride","rang":"ring","ran":"run","sawed":"saw","said":"say","sought":"seek","sold":"sell","sent":"send","sewed":"sew","shook":"shake","shaved":"shave","sheared":"shear","shot":"shoot","showed":"show","sang":"sing","sat":"sit","slept":"sleep","slid":"slide","slung":"sling","sowed":"sow","spoke":"speak","spent":"spend","spun":"spin","spoon-fed":"spoon-feed","stood":"stand","stole":"steal","stuck":"stick","stung":"sting","strewed":"strew","strode":"stride","struck":"strike","strung":"string","swore":"swear","swept":"sweep","swelled":"swell","swam":"swim","swung":"swing","took":"take","taught":"teach","tore":"tear","told":"tell","test-drove":"test-drive","test-flew":"test-fly","thought":"think","threw":"throw","trod":"tread","typewrote":"typewrite","unbent":"unbend","unbound":"unbind","underfed":"underfeed","underwent":"undergo","underlay":"underlie","undersold":"undersell","underspent":"underspend","understood":"understand","undertook":"undertake","underwrote":"underwrite","undid":"undo","unfroze":"unfreeze","unhung":"unhang","unhid":"unhide","unsewed":"unsew","unslung":"unsling","unspun":"unspin","unstuck":"unstick","unstrung":"unstring","unwound":"unwind","upheld":"uphold","waylaid":"waylay","wore":"wear","wept":"weep","won":"win","withdrew":"withdraw","withheld":"withhold","withstood":"withstand","wrung":"wring","wrote":"write","daydreamt":"daydream","daydreamed":"daydream","sunburnt":"sunburn","sunburned":"sunburn","unlearnt":"unlearn","unlearned":"unlearn","spoilt":"spoil","spoiled":"spoil","snuck":"sneak","sneaked":"sneak","dove":"dive","dived":"dive","mislearnt":"mislearn","mislearned":"mislearn","misspelt":"misspell","misspelled":"misspell","outleapt":"outleap","outleaped":"outleap","overspilt":"overspill","overspilled":"overspill","pled":"plead","pleaded":"plead","relearnt":"relearn","relearned":"relearn","relighted":"relight","relit":"relight","rewaked":"rewake","rewoke":"rewake"},"plurals":{"abscissae":"abscissa","addenda":"addendum","afreets":"afreet","afrits":"afrit","agenda":"agendum","albinos":"albino","algae":"alga","altos":"alto","alumnae":"alumna","alumni":"alumnus","alveoli":"alveolus","amoebas":"amoeba","analyses":"analysis","anathemas":"anathema","antennas":"antenna","antitheses":"antithesis","aphelia":"aphelion","apparatuses":"apparatus","appendixes":"appendix","aquariums":"aquarium","archipelagos":"archipelago","armadillos":"armadillo","asyndetons":"asyndeton","auroras":"aurora","automatons":"automaton","bacilli":"bacillus","bacteria":"bacterium","bacula":"baculum","bassos":"basso","beaus":"beau","beefs":"beef","bemas":"bema","brothers":"brother","bureaus":"bureau","businessmen":"businessman","cactuses":"cactus","calves":"calf","candelabra":"candelabrum","cantos":"canto","carcinomas":"carcinoma","censuses":"census","chapeaus":"chapeau","charismas":"charisma","chairmen":"chairman","cherubs":"cherub","children":"child","clitorises":"clitoris","cloacae":"cloaca","codices":"codex","commandos":"commando","compendiums":"compendium","concertos":"concerto","consortia":"consortium","contraltos":"contralto","corpora":"corpus","cortices":"cortex","crania":"cranium","crescendos":"crescendo","crises":"crisis","criteria":"criterion","curricula":"curriculum","cyclopses":"cyclops","cystomata":"cystoma","desiderata":"desideratum","diagnoses":"diagnosis","dicta":"dictum","dice":"die","dingoes":"dingo","diplomas":"diploma","dittos":"ditto","djinn":"djinni","dogmata":"dogma","dramas":"drama","dwarfs":"dwarf","dynamos":"dynamo","echoes":"echo","edemas":"edema","efreets":"efreet","elves":"elf","embargoes":"embargo","embryos":"embryo","emphases":"emphasis","emporia":"emporium","encomia":"encomium","enigmas":"enigma","ephemerides":"ephemeris","errata":"erratum","extrema":"extremum","fezzes":"fez","fiascos":"fiasco","fibulae":"fibula","focuses":"focus","feet":"foot","foramina":"foramen","formulas":"formula","forums":"forum","fungi":"fungus","ganglia":"ganglion","generalissimos":"generalissimo","genies":"genie","gentlemen":"gentleman","genera":"genus","ghettos":"ghetto","glomeruli":"glomerulus","geese":"goose","goyim":"goy","gummata":"gumma","gymnasiums":"gymnasium","halves":"half","hamuli":"hamulus","heroes":"hero","hiatuses":"hiatus","hippopotamuses":"hippopotamus","honoraria":"honorarium","hooves":"hoof","humeri":"humerus","hyperbata":"hyperbaton","hyperbolae":"hyperbola","hypotheses":"hypothesis","ilia":"ilium","impetuses":"impetus","incubi":"incubus","indexes":"index","infernos":"inferno","interregna":"interregnum","interstitia":"interstitium","jumbos":"jumbo","knives":"knife","lacunas":"lacuna","larvae":"larva","leaves":"leaf","lemmas":"lemma","librettos":"libretto","lives":"life","lingos":"lingo","loaves":"loaf","loculi":"loculus","loci":"locus","looies":"looey","lice":"louse","lumbagos":"lumbago","lumina":"lumen","lustra":"lustrum","lymphomata":"lymphoma","magmas":"magma","magnetos":"magneto","men":"man","manifestos":"manifesto","matrices":"matrix","maxima":"maximum","medicos":"medico","media":"medium","melismas":"melisma","memoranda":"memorandum","menisci":"meniscus","miasmas":"miasma","millennia":"millennium","minima":"minimum","minutiae":"minutia","momenta":"momentum","mongooses":"mongoose","mice":"mouse","murices":"murex","mythoi":"mythos","nebulas":"nebula","nemeses":"nemesis","neuroses":"neurosis","nexuses":"nexus","nimbuses":"nimbus","noumena":"noumenon","novas":"nova","nucleoli":"nucleolus","nuclei":"nucleus","oases":"oasis","occipita":"occiput","octavos":"octavo","octopuses":"octopus","oedemas":"oedema","omphaloi":"omphalos","optima":"optimum","opuses":"opus","organons":"organon","ova":"ovum","oxen":"ox","parabolas":"parabola","paralyses":"paralysis","parentheses":"parenthesis","passersby":"passerby","pennies":"penny","perihelia":"perihelion","people":"person","phalanges":"phalanx","phenomena":"phenomenon","photos":"photo","phyla":"phylum","plateaus":"plateau","platypuses":"platypus","plexuses":"plexus","policemen":"policeman","polyhedra":"polyhedron","pontifices":"pontifex","potatoes":"potato","pros":"pro","prognoses":"prognosis","prolegomena":"prolegomenon","prospectuses":"prospectus","quanta":"quantum","quartos":"quarto","quizzes":"quiz","radii":"radius","referendums":"referendum","rhinos":"rhino","roofs":"roof","rostrums":"rostrum","sarcomas":"sarcoma","sarcophagi":"sarcophagus","scarves":"scarf","schemas":"schema","scrota":"scrotum","selves":"self","seminomas":"seminoma","seraphs":"seraph","shelves":"shelf","silices":"silex","simplexes":"simplex","simulacra":"simulacrum","sinuses":"sinus","soliloquies":"soliloquy","solos":"solo","somas":"soma","sopranos":"soprano","spokesmen":"spokesman","spectra":"spectrum","specula":"speculum","sphinxes":"sphinx","stadiums":"stadium","staffs":"staff","stamens":"stamen","statuses":"status","stigmas":"stigma","stimuli":"stimulus","stomas":"stoma","strata":"stratum","styluses":"stylus","succubi":"succubus","syconia":"syconium","syllabuses":"syllabus","symposiums":"symposium","synopses":"synopsis","syntheses":"synthesis","tableaus":"tableau","tempos":"tempo","testes":"testis","theses":"thesis","thieves":"thief","thrombi":"thrombus","tibias":"tibia","tomatoes":"tomato","teeth":"tooth","torpedoes":"torpedo","tornadoes":"tornado","tori":"torus","trapezia":"trapezium","traumas":"trauma","trilbies":"trilby","ultimatums":"ultimatum","umbilici":"umbilicus","uteruses":"uterus","vacuums":"vacuum","vela":"velum","vertebrae":"vertebra","vertices":"vertex","vetoes":"veto","viscera":"viscus","vitae":"vita","volcanoes":"volcano","vortices":"vortex","wharves":"wharf","wives":"wife","wolves":"wolf","women":"woman","octopi":"octopus","dwarves":"dwarf","zeros":"zero","zeroes":"zero"},"participles":["arisen","awakened","awoken","backslid","backslidden","beat","beaten","become","been","begun","bent","bet","betted","bid","bidden","bitten","bled","blown","born","borne","bought","bound","bred","broadcast","broadcasted","broken","brought","browbeat","browbeaten","built","burned","burnt","burst","bust","busted","cast","caught","chosen","clad","clothed","clung","come","cost","crept","crossbred","cut","daydreamed","daydreamt","dealt","disproved","disproven","dived","done","drawn","dreamed","dreamt","driven","drunk","dug","dwelled","dwelt","eaten","fallen","fed","felt","fit","fitted","fled","flown","flung","forbidden","forecast","foregone","foreseen","foretold","forgiven","forgot","forgotten","forsaken","fought","found","frostbitten","frozen","given","gone","got","gotten","ground","grown","had","hand-fed","handwritten","heard","held","hewed","hewn","hidden","hit","hung","hurt","inbred","inlaid","input","inputted","interbred","interweaved","interwound","interwoven","jerry-built","kept","kneeled","knelt","knit","knitted","known","laid","lain","leaned","leant","leaped","leapt","learned","learnt","led","left","lent","let","lighted","lip-read","lit","lost","made","meant","met","miscast","misdealt","misdone","misheard","mislaid","mislearned","mislearnt","misled","misread","misset","misspelled","misspelt","misspent","misspoken","mistaken","mistaught","misunderstood","miswritten","mowed","mown","offset","outbid","outbred","outdone","outdrawn","outdriven","outdrunk","outflown","outfought","outgrown","outleaped","outleapt","outridden","outrun","outsat","outshined","outshone","outshot","outslept","outsmelled","outsmelt","outsold","outsped","outspent","outspoken","outsung","outsworn","outswum","outthought","outthrown","outwritten","overbid","overbought","overbred","overbuilt","overcome","overdone","overdrawn","overdrunk","overeaten","overfed","overheard","overhung","overlaid","overpaid","overridden","overrun","overseen","oversewed","oversewn","overshot","overslept","oversold","overspent","overspilled","overspilt","overspoken","overtaken","overthought","overthrown","overwound","overwritten","paid","partaken","pleaded","pled","prebuilt","predone","premade","prepaid","preset","preshrunk","presold","proofread","proved","proven","put","quick-frozen","quit","quitted","read","reawaken","rebid","rebound","rebroadcast","rebroadcasted","rebuilt","recast","recut","redealt","redone","redrawn","refit","refitted","reground","regrown","reheard","rehung","reknit","reknitted","relaid","relearned","relearnt","relighted","relit","remade","repaid","reread","rerun","resent","reset","resewed","resewn","resold","retaken","retaught","rethought","retold","retorn","retread","retrofit","retrofitted","rewaked","rewaken","reweaved","rewed","rewedded","rewet","rewetted","rewon","reworn","rewound","rewoven","rewritten","rid","ridden","risen","roughcast","run","rung","said","sand-cast","sat","sawed","sawn","seen","sent","set","sewed","sewn","shaken","shat","shaved","shaven","sheared","shed","shined","shit","shitted","shone","shorn","shot","showed","shown","shrunk","shut","sight-read","slain","slayed","slept","slid","slinked","slit","slung","slunk","smelled","smelt","sneaked","snuck","sold","sought","sowed","sown","spat","sped","speeded","spelled","spelt","spent","spilled","spilt","spit","split","spoiled","spoilt","spoken","spoon-fed","spread","sprung","spun","stolen","stood","strewed","strewn","stricken","stridden","strived","striven","struck","strung","stuck","stung","stunk","sublet","sunburned","sunburnt","sung","sunk","sweat","sweated","swelled","swept","swollen","sworn","swum","swung","taken","taught","telecast","test-driven","test-flown","thought","thrown","thrust","told","torn","trod","trodden","typecast","typeset","typewritten","unbent","unbound","unclad","unclothed","underbid","undercut","underfed","undergone","underlain","undersold","underspent","understood","undertaken","underwritten","undone","unfrozen","unhidden","unhung","unknit","unknitted","unlearned","unlearnt","unsewed","unsewn","unslung","unspun","unstrung","unstuck","unweaved","unwound","unwoven","upheld","upset","waked","waylaid","weaved","wed","wedded","wept","wet","wetted","withdrawn","withheld","withstood","woken","won","worn","wound","woven","written","wrung"],"spellings":{"colour":"color","colours":"colors","coloured":"colored","colouring":"coloring","honour":"honor","honours":"honors","honoured":"honored","honouring":"honoring","flavour":"flavor","flavours":"flavors","flavoured":"flavored","flavouring":"flavoring","humour":"humor","humours":"humors","labour":"labor","labours":"labors","laboured":"labored","labouring":"laboring","neighbour":"neighbor","neighbours":"neighbors","centre":"center","centres":"centers","centred":"centered","centring":"centering","fibre":"fiber","fibres":"fibers","litre":"liter","litres":"liters","theatre":"theater","theatres":"theaters","traveller":"traveler","travellers":"travelers","travelled":"traveled","travelling":"traveling","cancelled":"canceled","cancelling":"canceling","labelled":"labeled","labelling":"labeling","modelled":"modeled","modelling":"modeling","organise":"organize","organises":"organizes","organised":"organized","organising":"organizing","realise":"realize","realises":"realizes","realised":"realized","realising":"realizing","recognise":"recognize","recognises":"recognizes","recognised":"recognized","recognising":"recognizing","globalise":"globalize","globalises":"globalizes","globalised":"globalized","globalising":"globalizing","specialise":"specialize","specialises":"specializes","specialised":"specialized","specialising":"specializing","analyse":"analyze","analysed":"analyzed","analysing":"analyzing"},"presentBases":{"organizes":"organize","realizes":"realize","recognizes":"recognize","globalizes":"globalize","specializes":"specialize","analyzes":"analyze"},"pastVariants":{"daydreamt":"daydreamed","sunburnt":"sunburned","unlearnt":"unlearned","spoilt":"spoiled","snuck":"sneaked","dove":"dived","mislearnt":"mislearned","misspelt":"misspelled","outleapt":"outleaped","overspilt":"overspilled","pled":"pleaded","relearnt":"relearned","relighted":"relit","rewaked":"rewoke"},"compoundPlurals":{"mothers-in-law":"mother-in-law","fathers-in-law":"father-in-law","brothers-in-law":"brother-in-law","sisters-in-law":"sister-in-law","sons-in-law":"son-in-law","daughters-in-law":"daughter-in-law","passers-by":"passer-by","attorneys general":"attorney general"}};
     // END GENERATED MORPHOLOGY
     const CLAIM_GENERIC_HEADS = new Set(['thing', 'object', 'item', 'entity', 'stuff', 'being', 'person', 'people', 'one']);
     function normalizeClaimTerm(term) {
@@ -8169,8 +8169,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // zombies are possible, physicalism fails" splits after "possible").
     function splitAtClauseComma(text) {
         const re = /\s*,\s*/g;
+        const masked = claimTopLevelMask(text);
         let m;
         while ((m = re.exec(text))) {
+            if (!masked.slice(m.index,m.index+m[0].length).includes(',')) continue;
             const left = text.slice(0, m.index).trim(), right = text.slice(m.index + m[0].length).trim();
             if (!left || !right || !claimLooksLikeClause(left) || !claimLooksLikeClause(right)) continue;
             // Not a comma inside a list: "if Poe is black, small, and loud, Poe is a raven".
@@ -8519,8 +8521,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'it has not (?:yet )?been (?:shown|established|proven|proved|demonstrated|settled|determined)',
         'it has yet to be (?:shown|established|proven|proved|demonstrated|settled|determined)',
         'it (?:is|remains) not (?:yet )?(?:known|certain|clear|obvious|evident|self-evident|established|proven|proved|shown|demonstrated|settled|determined|warranted|justified)',
-        'it (?:is|remains) (?:unknown|uncertain|unclear|unsettled|unresolved|unproven|undetermined|doubtful|questionable|debatable|an open question|far from clear|far from certain|far from obvious|not at all clear|not at all obvious|by no means clear|by no means certain|by no means obvious|in no way clear|in no way established)',
-        'it remains to be (?:seen|shown|established|proven|proved|determined)',
+        'it (?:is|remains) (?:unknown|uncertain|unclear|unsettled|unresolved|unestablished|unproved|unproven|undetermined|doubtful|questionable|debatable|an open question|far from clear|far from certain|far from obvious|not at all clear|not at all obvious|by no means clear|by no means certain|by no means obvious|in no way clear|in no way established)',
+        'it remains to be (?:seen|shown|established|proven|proved|demonstrated|settled|determined)',
         'it can not be (?:concluded|inferred|determined|established|shown|proven|proved|demonstrated|ascertained|known|assumed|taken for granted)',
         'it does not follow',
         'it is (?:not warranted|unwarranted|not justified|unjustified|unreasonable|not reasonable) to ' + CLAIM_BELIEVE,
@@ -8533,6 +8535,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         '(?:we|i|you|one|they) (?:do|does) not have (?:any |good |sufficient |adequate |conclusive )?' + CLAIM_GROUNDS + '(?: (?:for ' + CLAIM_BELIEVING + '|to ' + CLAIM_BELIEVE + '))?',
         '(?:we|i|you|one|they) lacks? (?:any |good |sufficient |adequate |conclusive |compelling )?' + CLAIM_GROUNDS + '(?: (?:for ' + CLAIM_BELIEVING + '|to ' + CLAIM_BELIEVE + '))?',
         '(?:we|i|you|one|they) can not (?:necessarily )?(?:conclude|infer|determine|establish|ascertain|show|prove|demonstrate|know|be sure|be certain|say|assume|tell)',
+        '(?:(?:we|you|they) are|i am|one is) (?:unable|not able) to (?:conclude|infer|determine|establish|ascertain|show|prove|demonstrate|know|be sure|be certain)',
         '(?:(?:we|you|they) are|i am|one is) not (?:sure|certain)',
         '(?:we|i|you|one|they) (?:are|am|is) not in a position to (?:conclude|infer|know|say|assert|claim|tell)',
         '(?:we|i|you|one|they) (?:are|am|is) not (?:entitled|justified|warranted) (?:to ' + CLAIM_BELIEVE + '|in ' + CLAIM_BELIEVING + ')',
@@ -8551,8 +8554,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "That P has not been shown", "the claim that P is not warranted", "whether
     // P is unclear", "warrant for believing that P is lacking".
     const CLAIM_UNESTABLISHED_AFTER = new RegExp('^(?:(?:the )?(?:claim|belief|conclusion|view|thesis|assertion|idea|assumption|hypothesis|contention|proposition|supposition) )?(that|whether)\\s+(.+?)\\s+' +
-        '(has not (?:yet )?been (?:shown|established|proven|proved|demonstrated|settled|determined)|(?:is|remains) (?:not (?:yet )?(?:known|certain|clear|obvious|established|proven|shown|settled|determined|warranted|justified)|' +
-        'unknown|uncertain|unclear|unsettled|unresolved|unproven|unwarranted|unjustified|doubtful|questionable|debatable|an open question|to be seen)|does not follow)$');
+        '(has not (?:yet )?been (?:shown|established|proven|proved|demonstrated|settled|determined)|has yet to be (?:shown|established|proven|proved|demonstrated|settled|determined)|' +
+        'can not be (?:concluded|inferred|determined|established|shown|proven|proved|demonstrated|ascertained|known|assumed|taken for granted)|' +
+        '(?:is|remains) (?:not (?:yet )?(?:known|certain|clear|obvious|evident|self-evident|established|proven|proved|shown|demonstrated|settled|determined|warranted|justified)|' +
+        'unknown|uncertain|unclear|unsettled|unresolved|unestablished|unproved|unproven|undetermined|unwarranted|unjustified|doubtful|questionable|debatable|an open question|to be seen)|' +
+        'remains to be (?:seen|shown|established|proven|proved|demonstrated|settled|determined)|does not follow)$');
     const CLAIM_GROUNDS_LACKING = new RegExp('^(?:the )?(?:' + CLAIM_GROUNDS + ') for (?:' + CLAIM_BELIEVING + ' )?(that|whether)\\s+(.+?)\\s+((?:is|are) (?:lacking|insufficient|not sufficient|inadequate|absent|missing|wanting|inconclusive|not conclusive))$');
     const claimUnestablished = (inner, whether, words) => ({ kind: 'unestablished', inner, whether: !!whether, words: String(words).replace(/\s+/g, ' ') });
     // The premises of an argument named in a claim: quoted ("'P1' and 'P2'"),
@@ -8898,6 +8904,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Each form keeps the words it was read from (`src`), for saying a derived
     // conclusion in the map's own words.
     function readClaim(text) {
+        text = String(text || '').trim();
+        // Explicit grouping encloses a whole proposition, not just its first
+        // comma/then. Do this before reading its English connectives.
+        if (text.length > 1 && /^[('"“]/.test(text) && claimTopLevelMask(text, true)) {
+            return readClaim(text.slice(1, -1));
+        }
         let form = readClaimWords(text);
         if (form && form.kind === 'if') {
             form = claimBoundPronoun(form, text) || form;
@@ -8947,7 +8959,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Truth predicates are transparent only when their propositional
         // operand is delimited. Do not turn "Poe is true" into "Poe", or
         // erase the attitude in "we take P to be true".
-        const suffix = s.match(/^(.+?) is (not )?(true|false|the case)$/);
+        const suffix = s.match(/^(.+?) is (not )?(true|false|untrue|the case)$/);
         if (suffix) {
             const subject = suffix[1], shown = claimShowWords(subject);
             // Sentence-initial spelling normalization lowercases P in
@@ -8958,18 +8970,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 (shown.startsWith('(') && shown.endsWith(')') && !!readSymbolicClaim(restoreLetter(shown)));
             if (delimited) {
                 const operand = subject.replace(/^the proposition that\s+/, '');
-                const negative = (suffix[3] === 'false') !== !!suffix[2];
+                const negative = /^(?:false|untrue)$/.test(suffix[3]) !== !!suffix[2];
                 const read = () => readSymbolicClaim(restoreLetter(claimShowWords(claimUnquoted(operand)))) || readClaim(claimUnquoted(operand));
                 const form = negative ? claimWithAnyAsSome(read) : read();
                 if (form) return negative ? negateClaim(form) : form;
             }
         }
         const quoted = '(["“][^"”]+["”]|\x27[^\x27]+\x27)';
+        // A proposition letter or explicitly quoted clause names a claim.
+        // Ordinary noun phrases ("oxygen is necessary for life") do not.
+        const proposition = '(?:["“][^"”]+["”]|\x27[^\x27]+\x27|[\\uE000]?[a-z][0-9]*)';
+        const operand = '(' + proposition + ')';
         const relation = '(necessary and sufficient|sufficient and necessary|necessary|sufficient)';
-        let m = s.match(new RegExp('^' + quoted + ' is (?:a )?' + relation + '(?: condition)? for ' + quoted + '$'));
+        let m = s.match(new RegExp('^' + operand + ' is (?:a )?' + relation + '(?: condition)? for ' + operand + '$'));
         let a, b, kind;
         if (m) { a = m[1]; kind = m[2]; b = m[3]; }
-        else if ((m = s.match(new RegExp('^a ' + relation + ' condition for ' + quoted + ' is ' + quoted + '$')))) {
+        else if ((m = s.match(new RegExp('^a ' + relation + ' condition for ' + operand + ' is ' + operand + '$')))) {
             kind = m[1]; a = m[3]; b = m[2];
         }
         if (a && b) {
@@ -9177,12 +9193,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // if", "unclear if").
     // One vocabulary for both positions; keep direction-changing "only if"
     // and "unless" separate from sufficient-condition markers.
-    const CLAIM_CONDITION_MARKER = 'provided(?: that)?|providing(?: that)?|as long as|so long as|on (?:the )?condition that|in the event that|on the assumption that|assuming(?: that)?|supposing(?: that)?|whenever';
+    const CLAIM_CONDITION_MARKER = 'provided(?: that)?|providing(?: that)?|as long as|so long as|on (?:the )?condition that|in the event that|in the case that|on the assumption that|assuming(?: that)?|supposing(?: that)?|whenever';
     const CLAIM_POSTPOSED = new RegExp(',?\\s+(only if|if|' + CLAIM_CONDITION_MARKER + '|unless)\\s+', 'g');
     function claimPostposedCondition(s) {
         const re = new RegExp(CLAIM_POSTPOSED.source, 'g');
+        const masked = claimTopLevelMask(s);
         let m;
-        while ((m = re.exec(s))) {
+        while ((m = re.exec(masked))) {
             const left = s.slice(0, m.index).trim(), right = s.slice(m.index + m[0].length).trim(), marker = m[1];
             if (/\b(?:even|as|what|only|and only|if and only|that|whether|then|and|or|but|so|nor|either|both|neither)$|,$/.test(left)) continue;
             if (/\b(?:unclear|clear|sure|certain|doubtful|wonders?|wondered|asks?|asked|knows?|knew|see|sees|saw|check|checks|checked|tell|tells|told|decides?|decided|determines?|determined|doubts?|doubted|whether)$/.test(left)) continue;
@@ -9252,10 +9269,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return null;
     }
     // After "if": "A, then B", or "A, B". One condition per "if".
+    function claimTopLevelMask(text, wholeGroup = false) {
+        let depth = 0, quote = '', out = '', groupEnd = -1;
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+            const apostrophe = c === "'" && /[a-z0-9]/i.test(text[i-1] || '') && /[a-z0-9]/i.test(text[i+1] || '');
+            if (quote) {
+                if (c === quote && !apostrophe) { quote = ''; if (!depth && groupEnd < 0) groupEnd = i; }
+                out += ' '; continue;
+            }
+            if ((c === '"' || c === '“' || c === "'") && !apostrophe && !/[a-z0-9]/i.test(text[i-1] || '')) {
+                quote = c === '“' ? '”' : c; out += ' '; continue;
+            }
+            if (c === '(') { depth++; out += ' '; continue; }
+            if (c === ')' && depth) { depth--; if (!depth && groupEnd < 0) groupEnd = i; out += ' '; continue; }
+            out += depth ? ' ' : c;
+        }
+        // Unclosed punctuation must not count as explicit whole grouping.
+        if (wholeGroup) return !depth && !quote && groupEnd === text.length-1;
+        return depth || quote ? text : out;
+    }
     function readConditionalFront(rest) {
         let condText, consText;
-        const m = rest.match(/^(.+?),?\s+then,?\s+(.+)$/);
-        if (m) { condText = m[1]; consText = m[2]; }
+        const masked = claimTopLevelMask(rest);
+        const m = /\bthen,?\s+/.exec(masked);
+        if (m) {
+            condText = rest.slice(0,m.index).trim().replace(/,$/,'').trim();
+            consText = rest.slice(m.index+m[0].length).trim();
+            if (/(?:^|\bthat\s+)if\b/.test(claimTopLevelMask(condText))) {
+                claimAmbiguous('Group the embedded conditional with parentheses or quotation marks to identify which then belongs to which if', [], true);
+                return Object.assign(claimAtom('if '+rest),{unresolvedReference:true});
+            }
+        }
         else {
             const parts = splitAtClauseComma(rest);
             if (!parts) return null;
@@ -9945,6 +9990,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "no" and "some"; any other formula matches itself (up to the names of its
     // bound variables) and is otherwise not looked into.
     function symbolicToClaim(node) {
+        return Object.assign(symbolicToClaimForm(node), {folTree:node});
+    }
+    function symbolicToClaimForm(node) {
         const sub = symbolicToClaim;
         switch (node.op) {
             case 'bottom': return {kind:'bottom'};
@@ -10024,9 +10072,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // application of ONE rule, and uses every premise in its group: "if X, and
     // if Y, then Z" with X and Y is a single modus ponens on three premises,
     // and a disjunctive syllogism denies as many disjuncts as it has denials.
-    // Rules that need a supposition -- conditional introduction, existential
-    // elimination, universal introduction -- have no place in a map, where
-    // every box is asserted; the two syllogisms at the end do their work there.
+    // Conditional introduction, existential elimination and universal
+    // introduction require proof contexts (discharged assumptions, fresh
+    // witnesses or arbitrary individuals), which this map does not track.
+    // The categorical syllogisms cover specific uses, not those full rules.
     // Each rule is valid in first-order logic; the reader above decides whether
     // a sentence has the shape a rule wants.
     // Matching is strict. A claim that a rule needs twice -- the P of "if P,
@@ -10039,6 +10088,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // is ignored are let through and listed, so that the check can say what
     // stands between the step and its rule.
     let claimNearMisses = null;
+    // Moving a passive hedge after its that-clause removes dummy "it";
+    // ability paraphrases retain the speaker and the epistemic verb.
+    // Do not identify "I don't know" with "you don't know", or knowledge
+    // with proof merely because both leave a claim unestablished.
+    function claimWarrantWords(words) {
+        return String(words || '').replace(/^it /, '')
+            .replace(/^(we|you|they) are (?:unable|not able) to /, '$1 can not ')
+            .replace(/^i am (?:unable|not able) to /, 'i can not ')
+            .replace(/^one is (?:unable|not able) to /, 'one can not ');
+    }
     function claimSame(a, b) {
         if (!a || !b) return false;
         if (claimKey(a) === claimKey(b) && claimSameWords(a, b)) return true;
@@ -10053,21 +10112,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const leaf = f => f.kind !== 'and' && f.kind !== 'or' && f.kind !== 'if' && !epistemic(f);
         // "Not established" in the same words, of the same claim, from the same premises.
         if (epistemic(a) && a.kind === b.kind) {
-            return ((a.kind === 'unestablished' && a.quotedPremises && b.quotedPremises) || !a.words || !b.words || a.words === b.words) &&
+            return ((a.kind === 'unestablished' && a.quotedPremises && b.quotedPremises) || !a.words || !b.words || claimWarrantWords(a.words) === claimWarrantWords(b.words)) &&
                 (a.inner && b.inner ? claimSame(a.inner, b.inner) : !a.inner === !b.inner) &&
                 !a.from === !b.from && (!a.from || sameClaims(a.from, b.from));
         }
+        // The negation is a connective, not part of the operand's wording:
+        // "P is false" and "it is not the case that P" deny the same P.
+        if (a.kind === 'not' && b.kind === 'not') return claimSameWords(a.inner, b.inner);
         if (leaf(a) && leaf(b) && a.src !== undefined && b.src !== undefined) {
             const regionalSource = f => {
                 const src = claimClauseStart(f.src);
                 // The noun "analyses" must stay untouched; only a parsed verb
                 // phrase licenses this spelling equivalence.
-                return f.vpText && /^analyses\b/.test(f.vpText) && src.endsWith(f.vpText)
-                    ? src.slice(0,-f.vpText.length) + f.vpText.replace(/^analyses\b/,'analyzes') : src;
+                if (!f.vpText || !src.endsWith(f.vpText)) return src;
+                const vp = f.vpText.replace(/^analyses\b/,'analyzes')
+                    .replace(/^[a-z-]+/, word => CLAIM_PAST_VARIANTS[word] || word);
+                return src.slice(0,-f.vpText.length) + vp;
             };
             return regionalSource(a) === regionalSource(b);
         }
-        if (a.kind === 'not' && b.kind === 'not') return claimSameWords(a.inner, b.inner);
         if (a.kind === 'if' && b.kind === 'if') {
             return claimSame(a.cons, b.cons) && claimsPairOff(a.conds, b.conds.map(c => x => claimSame(x, c)));
         }
@@ -10377,6 +10440,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return claimOptionalNegationRemoval(r.cons,c.cons) && claimsPairOff(c.conds,r.conds.map(p => x => claimOptionalNegationRemoval(p,x)));
         return false;
     }
+    function quantifiedCommutationReplacement(P,C) {
+        if(P.length!==1 || !P[0].folTree || !C.folTree)return false;
+        // Exchange one adjacent pair of like quantifiers. Compare whole trees
+        // so alpha-renaming cannot change the bindings of surrounding variables.
+        const rewrite=r=>{
+            const out=[];
+            if(['all','some'].includes(r.op) && r.body.op===r.op && r.v!==r.body.v)
+                out.push({...r,v:r.body.v,body:{...r.body,v:r.v}});
+            for(const k of ['a','b','body'])if(r[k])
+                for(const child of rewrite(r[k]))out.push({...r,[k]:child});
+            return out;
+        };
+        const target=symbolicText(C.folTree,{});
+        return rewrite(P[0].folTree).some(r=>symbolicText(r,{})===target);
+    }
     function quantifiedNegationReplacement(P,C) {
         if(P.length !== 1 || !P[0].folTree || !C.folTree) return false;
         const match = (r,c) => {
@@ -10574,8 +10652,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'two disjunctions with complementary disjuncts give the disjunction of their remaining alternatives',
           test: (P, C) => claimResolvents(P).some(claimIs(C)) },
         { id: 'explosion', name: 'explosion',
-          gloss: 'a claim and its negation classically entail any conclusion; a weak challenge is not a negation',
-          test: (P, C) => P.length === 2 && claimDenies(P[0], P[1]) },
+          gloss: 'a contradiction, or a claim and its negation, classically entails any conclusion; a weak challenge is not a negation',
+          test: (P, C) => (P.length === 1 && P[0].kind === 'bottom') || (P.length === 2 && claimDenies(P[0], P[1])) },
         { id: 'negation-elimination', name: 'Negation Elimination',
           gloss: 'remove any positive even number of consecutive negations, including within a formula, without changing the remaining claim',
           test: (P, C) => claimReplaces('negation-elimination', P, C) },
@@ -10660,6 +10738,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'if A, then B gives if A, then A and B',
           test: (P, C) => P.length === 1 && claimConditionalViews(P[0]).some(p => claimConditionalViews(C).some(c =>
               claimSame(c.conds[0], p.conds[0]) && c.cons.kind === 'and' && sameClaims(c.cons.parts, [p.conds[0], p.cons]))) },
+        { id: 'quantifier-commutation', name: 'Quantifier Commutation',
+          gloss: 'exchange one adjacent pair of universal quantifiers or one adjacent pair of existential quantifiers, preserving variable bindings; mixed quantifiers cannot generally be exchanged',
+          test: (P,C) => quantifiedCommutationReplacement(P,C) },
         { id: 'quantifier-negation', name: 'quantifier negation',
           gloss: '"not all F are G" is "some F are not G", and "it is not the case that some F is G" is "no F is G"',
           test: (P, C) => quantifiedNegationReplacement(P,C) || claimRestated(P, C) === 'quantifier-negation' },
@@ -10749,6 +10830,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         conclusions = (conclusions || []).filter(Boolean);
         if (premises.concat(conclusions).some(claimHasUnresolvedReference)) return null;
         if (!conclusions.length) return null;
+
         if (premises.length === 1) {
             const same = conclusions.find(claimIs(premises[0]));
             if (same) return same.kind === 'unestablished' ? DEDUCTIVE_DIRECT_CHALLENGE : attack ? DEDUCTIVE_DIRECT_DENIAL : DEDUCTIVE_SAME_CLAIM;
@@ -10759,8 +10841,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function logicalTheorem(text) {
         if(logicalTheoremCache.has(text))return logicalTheoremCache.get(text);
         const read=parseClaimFull(text), f=read.form;
+
         const safe=p=>p && !p.counterfactual && !p.unresolvedReference &&
             (p.kind==='bottom' || p.kind==='pred' || p.kind==='identity' ||
+             (['all','some'].includes(p.kind) && !!p.folTree) ||
              (p.kind==='atom' && (read.symbolic || /^[a-z]$/.test(p.text))) ||
              (p.kind==='not' && safe(p.inner)) ||
              (['and','or'].includes(p.kind) && p.parts.every(safe)) ||
@@ -10768,7 +10852,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let rule=null;
         if(!read.notes.length && safe(f)) {
             if(f.kind==='if') {
-                rule=certifyStep(f.conds,[f.cons],false);
+                // Keep the written implication boundary before trying the
+                // equivalent flattened chain of conditional antecedents.
+                if(f.folTree?.op==='imp') {
+                    const premise=symbolicToClaim(f.folTree.a), conclusion=symbolicToClaim(f.folTree.b);
+                    rule=certifyStep([premise],[conclusion],false);
+                    if(!rule && premise.kind==='and')rule=certifyStep(premise.parts,[conclusion],false);
+                }
+                if(!rule)rule=certifyStep(f.conds,[f.cons],false);
                 if(!rule && f.conds.length===1 && f.conds[0].kind==='and')
                     rule=certifyStep(f.conds[0].parts,[f.cons],false);
             }
@@ -10791,7 +10882,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // map's own words wherever it can be -- and kept only if those words read
     // back as a conclusion the check certifies.
     const DERIVE_SKIPS = new Set(['explosion', 'and-intro', 'and-elim', 'or-intro', 'existential-introduction', 'universal-elimination',
-        'absorption', 'quantifier-negation', 'double-negation', 'de-morgan', 'transposition', 'material-implication',
+        'absorption', 'quantifier-commutation', 'quantifier-negation', 'double-negation', 'de-morgan', 'transposition', 'material-implication',
         'material-equivalence', 'exportation', 'distribution', 'tautology', 'conversion', 'contraposition',
         'premise-not-established', 'false-premise', 'conclusion-not-established', 'unsound-argument',
         DEDUCTIVE_SAME_CLAIM.id, DEDUCTIVE_DIRECT_DENIAL.id]);

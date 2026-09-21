@@ -19,6 +19,7 @@ const SOURCE = process.argv[2] || 'argument-mapper-r27.html';
 const BUILD = path.join('docs', 'index.html');
 
 const SUITES = [
+    'quantifier-commutation-r27-test.js',
     'layout-r23-tests.js',
     'layout-r23-box-collision-test.js',
     'layout-r23-depth-channel-test.js',
@@ -73,6 +74,7 @@ const SUITES = [
     'warrant-r27-test.js',
     'language-r27-expanded-test.js',
     'language-r27-position-rules-test.js',
+    'language-r27-audit-test.js',
     'negation-r27-test.js',
     'logical-theorem-r27-test.js',
     'conditional-truth-r27-test.js',
