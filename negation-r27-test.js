@@ -19,10 +19,13 @@ const symbolic = s => /^(?:[PQRS]|not | or | )+$/.test(s) ? s.replaceAll('not ',
 const rule = (p,c) => call(`x => certifyStep(x.p.map(s => parseClaim(s)),[parseClaim(x.c)],false)?.id || null`,{p:p.map(symbolic),c:symbolic(c)});
 
 try {
+ // Negation Elimination is double negation elimination: two negations, as the
+ // main connective. Four at once, or two inside a part, is not one step of it.
  for(let n=2;n<=14;n++) for(let remove=2;remove<=n;remove+=2) {
   for(const wrap of [s=>s,s=>'('+s+') ∨ Q',s=>'Q unless '+s,s=>'('+s+') → Q']) {
-   const p=wrap('~'.repeat(n)+'P'), c=wrap('~'.repeat(n-remove)+'P');
-   check(rule([p],c)==='negation-elimination',p+' => '+c);
+   const p=wrap('~'.repeat(n)+'P'), c=wrap('~'.repeat(n-remove)+'P'), got=rule([p],c);
+   if (remove===2 && wrap('X')==='X') check(got==='negation-elimination',p+' => '+c);
+   else check(got!=='negation-elimination',p+' => '+c+' is not negation elimination');
   }
  }
  for(let n=2;n<=14;n++) {
@@ -31,7 +34,7 @@ try {
  }
  check(call(()=>!richTextEnabled&&!document.getElementById('richtext-toggle').checked),'Rich Text starts off');
  check(call(()=>renderRichText('~~old~~').includes('<del>old</del>')),'strikethrough still works');
- check(rule(['P ∨ Q','P → R','Q → R'],'R')==='constructive-dilemma','shared consequent cases');
+ check(rule(['P ∨ Q','P → R','Q → R'],'R')==='proof-by-cases','shared consequent cases');
  check(rule(['P ∨ Q','P → R','Q → S'],'R ∨ S')==='constructive-dilemma','general dilemma');
  check(!rule(['P ∨ Q','P → R','Q → S'],'R'),'do not discard other consequent');
  check(!rule(['P'],'~~~~P') || rule(['P'],'~~~~P')!=='negation-elimination','elimination cannot introduce negations');

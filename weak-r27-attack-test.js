@@ -122,6 +122,13 @@ const ROOTS = [
 ];
 
 // Forks: a two-premise weak objection, and a two-premise support inside it.
+// A group of four co-premises with a blank among them (reported 2026-09-22:
+// the fork looked as if it skipped a box). Every statement gets a tick.
+const BLANK = [
+    N('M2', 'contention', [
+        Object.assign(N('B4', 'support'), { texts: ['P', '', 'When Mary leaves the room, she learns something new.', 'If she learns something new, there are non-physical facts.'] })
+    ], { x: 30000, y: 30000 })
+];
 const FORK = [
     N('M', 'contention', [
         N('S', 'support', [
@@ -282,6 +289,13 @@ const J = JSON.stringify;
         ok(allTrue(fork.weakFork) && allTrue(fork.weakConn), 'a two-premise weak objection: its fork and its connector are dashed', J(fork));
         ok(allTrue(fork.innerFork) && allTrue(fork.innerConn), 'a two-premise support inside it: dashed as well', J(fork));
         ok(allFalse(fork.ordinaryFork), "an ordinary objection's fork beside it stays solid", J(fork));
+
+        // A blank co-premise is a statement like any other: the fork draws a
+        // tick for each box and one bar across them, so none is left hanging.
+        const blank = T(W, `__c.load(${J(BLANK)}); drawLines();
+            return { paths: document.querySelectorAll('#lines-svg path[data-fork="B4"]').length,
+                     boxes: document.querySelectorAll('#group-B4 .node').length };`);
+        ok(blank.boxes === 4 && blank.paths === 5, 'four co-premises, one of them blank: a tick for each and one bar', J(blank));
 
         const borders = T(W, `__c.load(${J(TREES)});
             var st = function (id) { var b = __c.box(id); return b ? getComputedStyle(b).borderTopStyle : null; };

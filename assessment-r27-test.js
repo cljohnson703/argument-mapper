@@ -26,12 +26,12 @@ try {
             return { status: v.status, label: VERDICT_LABEL[v.status], why: claimVerdictWhy(verdict, v), rules: steps.map(s => [s.childId, s.rule && s.rule.name]) };
         };
         const unchallenged = read();
-        objection.children = [n('W', 'weak-rebuttal', ['It has not been shown that zombies are metaphysically possible.'])];
+        objection.children = [n('W', 'weak-rebuttal', ['If the evidence is thin, then it has not been shown that zombies are metaphysically possible.', 'The evidence is thin.'])];
         const weaklyRebutted = read();
         // Two additional inference layers between the weak challenge and the objection.
         objection.children = [n('S', 'support', ['Poe is a raven.', 'If Poe is a raven, then zombies are metaphysically possible.'], [
             n('T', 'support', ['Poe is a bird.', 'If Poe is a bird, then Poe is a raven.'], [
-                n('U', 'weak-rebuttal', ['It has not been shown that Poe is a bird.'])
+                n('U', 'weak-rebuttal', ['If the evidence is thin, then it has not been shown that Poe is a bird.', 'The evidence is thin.'])
             ])
         ])];
         const nested = read();
@@ -39,18 +39,20 @@ try {
         const restored = read();
         root.children = [];
         const bare = read();
-        root.children = [n('A', 'support', [root.texts[0]])];
+        // A support that argues (one that restates its box is none).
+        root.children = [n('A', 'support', ['If Poe is a raven, then consciousness is not non-physical.', 'Poe is a raven.'])];
         const supported = read();
         root.children.push(objection);
         const conflict = read();
-        objection.children = [n('W2', 'weak-rebuttal', ['It has not been shown that zombies are metaphysically possible.'])];
+        objection.children = [n('W2', 'weak-rebuttal', ['If the evidence is thin, then it has not been shown that zombies are metaphysically possible.', 'The evidence is thin.'])];
         const supportedWeakDefense = read();
-        objection.children = [n('R2', 'rebuttal', ['Zombies are not metaphysically possible.'])];
+        // A rebuttal that argues (a bare denial is no argument).
+        objection.children = [n('R2', 'rebuttal', ['If zombies are inconceivable, then zombies are not metaphysically possible.', 'Zombies are inconceivable.'])];
         const supportedStrongDefense = read();
         const plainText = root.texts[0];
         root.texts[0] = "From 'Zombies are metaphysically possible' and 'If zombies are metaphysically possible, then consciousness is non-physical', we cannot conclude that consciousness is non-physical";
         root.children = [objection];
-        objection.children = [n('W3', 'weak-rebuttal', ['It has not been shown that zombies are metaphysically possible.'])];
+        objection.children = [n('W3', 'weak-rebuttal', ['If the evidence is thin, then it has not been shown that zombies are metaphysically possible.', 'The evidence is thin.'])];
         const qualifiedWeakDefense = read();
         root.texts[0] = plainText;
         const note = n('N', 'note', ['A note']);

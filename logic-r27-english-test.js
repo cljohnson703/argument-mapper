@@ -115,7 +115,7 @@ const CORPUS = {
         ['exact-denial words are denials', ['The argument is invalid', 'The argument is not valid']],
         ['able to is can', ['We can leave', 'We are able to leave']],
         ['unable to is can not', ["We can't leave", 'We cannot leave', 'We are not able to leave', "We aren't able to leave", "We're unable to leave", 'We are unable to leave']],
-        ['no before an object', ['This gives you no reason', 'This does not give you a reason', "This doesn't give you any reason"]],
+        ['no before an object', ['This gives you no reason', "This doesn't give you any reason", 'This does not give you a single reason']],
         ['false is not true', ['Functionalism is false', 'Functionalism is not true', "Functionalism isn't true", 'Functionalism is untrue']],
         ['curly apostrophes', ["The ground isn’t wet", "The ground isn't wet"]],
         ['neither nor, of predicates', ['Poe is neither black nor white', 'Poe is not black and Poe is not white']],
@@ -167,7 +167,7 @@ const CORPUS = {
             'If it rains, then the ground is wet, and if it snows, then the roads close']],
         ['if without then: quantified and denied parts', ['If no ravens are white, Poe is not white', 'If no ravens are white, then Poe is not white']],
         ['biconditional', ['It rains if and only if the ground is wet', 'It rains iff the ground is wet', 'It rains just in case the ground is wet',
-            'It rains exactly when the ground is wet', 'If it rains, then the ground is wet, and if the ground is wet, then it rains']],
+            'It rains exactly when the ground is wet']],
         // ---- Quantifiers ----
         ['all', ['All ravens are black', 'Every raven is black', 'Each raven is black', 'Any raven is black', 'All of the ravens are black',
             'All the ravens are black', 'Every single raven is black', 'Each and every raven is black', 'Everything that is a raven is black',
@@ -264,7 +264,7 @@ const CORPUS = {
         ['existential introduction', ['Socrates is a person and Socrates is wise'], 'Someone is wise', 'EI, someone'],
         ['existential syllogism', ['There are ravens that are black', 'All black things are dark'], 'Some ravens are dark', 'ES, there are'],
         ['existential syllogism', ['Certain ravens fly', 'Everything that flies is a bird'], 'Some ravens are birds', 'ES, certain, plain verb'],
-        [null, ['If any raven is white, then the theory is false', 'Some raven is white'], 'The theory is false', 'MP needs its condition spelled as written: "any raven is white" is not "some raven is white"'],
+        ['modus ponens', ['If any raven is white, then the theory is false', 'Some raven is white'], 'The theory is false', 'MP: "any raven is white" in a condition is "some raven is white", one claim (quantifier words are logic)'],
         // ---- Strict matching: a claim a rule needs twice is spelled the same both times ----
         ['modus ponens', ['If God exists, then evil is an illusion', 'God exists'], 'Evil is an illusion', 'MP, a capital that begins a sentence is no difference'],
         ['modus ponens', ['If Caesar crossed the Rubicon, then the Republic fell', 'Caesar crossed the Rubicon'], 'The Republic fell', 'MP, proper nouns spelled alike'],
@@ -273,7 +273,7 @@ const CORPUS = {
         [null, ['If the ground is wet, then the match is off', 'Ground is wet'], 'The match is off', 'MP, the article differs'],
         [null, ['If the raven is black, then Poe is dark', 'The ravens are black'], 'Poe is dark', 'MP, the number differs'],
         ['modus ponens', ["If zombies aren't conceivable, then physicalism is true", 'Zombies are not conceivable'], 'Physicalism is true', 'MP, a contraction is one wording with its words'],
-        [null, ['If all ravens are black, then Poe is black', 'Every raven is black'], 'Poe is black', 'MP, a repeated quantifier spelled two ways'],
+        ['modus ponens', ['If all ravens are black, then Poe is black', 'Every raven is black'], 'Poe is black', 'MP, a repeated quantifier spelled two ways: one claim'],
         [null, ['If it rains, then the ground is wet', 'It rains'], 'The Ground is wet', 'MP, the conclusion spelled differently'],
         ['modus tollens', ['If the Republic fell, then Caesar won', "Caesar didn't win"], 'It is not the case that the Republic fell', 'MT, denials spelled any way'],
         [null, ['If the Republic fell, then Caesar won', "Caesar didn't win"], 'The republic did not fall', 'MT, the denied claim spelled differently'],
@@ -281,7 +281,8 @@ const CORPUS = {
         [null, ['All Ravens are black', 'Poe is a raven'], 'Poe is black', 'UMP, capital letters differ'],
         ['universal modus tollens', ['All humans are mortal', 'Zeus is not mortal'], 'Zeus is not human', 'UMT'],
         ['universal modus tollens', ['No humans are immortal', 'Zeus is immortal'], 'Zeus is not human', 'UMT, no'],
-        ['universal modus tollens', ['Everyone who understands the argument accepts the conclusion', 'Mary does not accept the conclusion'], 'Mary does not understand the argument', 'UMT, everyone who'],
+        ['universal modus tollens', ['Everyone who understands the argument accepts the conclusion', 'Mary does not accept the conclusion', 'Mary is a person'], 'Mary does not understand the argument', 'UMT, everyone who'],
+        [null, ['Everyone who understands the argument accepts the conclusion', 'Mary does not accept the conclusion'], 'Mary does not understand the argument', 'UMT, everyone who, without "Mary is a person"'],
         ['universal modus tollens', ['∀x (H(x) → M(x))', '¬M(z)'], '¬H(z)', 'UMT, symbols'],
         [null, ['All humans are mortal', 'Zeus is mortal'], 'Zeus is human', 'affirming the consequent, universally'],
         ['biconditional elimination', ['It rains if and only if the ground is wet', 'It rains'], 'The ground is wet', 'BiE'],
@@ -290,7 +291,8 @@ const CORPUS = {
         [null, ['If it rains, then the ground is wet, and if the ground is wet, then it rains', 'It rains'], 'The ground is wet', 'two conditionals written out are two claims, not a biconditional'],
         ['modus tollens', ['If any raven is white, then the theory is false', 'The theory is not false'], 'No raven is white', 'MT, any in a condition'],
         ['disjunctive syllogism', ['Either no raven is white or the survey erred', 'Some raven is white'], 'The survey erred', 'DS, no denied by some'],
-        ['conjunction elimination', ['It rains if and only if the ground is wet'], 'If the ground is wet, then it rains', 'AndE, a biconditional'],
+        [null, ['It rains if and only if the ground is wet'], 'If the ground is wet, then it rains', 'a biconditional is not a conjunction: material equivalence, then conjunction elimination'],
+        ['material equivalence', ['It rains if and only if the ground is wet'], 'If it rains, then the ground is wet, and if the ground is wet, then it rains', 'material equivalence writes a biconditional out'],
         [null, ['All ravens are not white'], 'If Poe is a raven, then Poe is not white', 'ambiguous: all ... not'],
         [null, ['Ravens are black'], 'If Poe is a raven, then Poe is black', 'a generic is not all'],
         [null, ['Most ravens are black'], 'If Poe is a raven, then Poe is black', 'most is not all'],
@@ -323,7 +325,7 @@ const CORPUS = {
         ['Lights may not produce consciousness', 'unread'],
         ['Lights should not produce consciousness', 'unread'],
         ['Lights need not produce consciousness', 'unread'],
-        ['Even if it rains, the match goes on', 'unread'],
+        ['Even if it rains, the match goes on', 'ambiguous'],
         ['The ground is wet because it rains', 'unread'],
         ['It rains, so the ground is wet', 'unread'],
         ['Either it is raining and it is cold, or it is snowing', null],
@@ -359,7 +361,7 @@ const HELD_OUT = {
         ['symbolic negation', ['¬P', '~P', '!P', '-P', 'It is not the case that P']],
         ['symbolic universal', ['∀x (P(x) → Q(x))', '∀x(P(x) -> Q(x))', '(x)(Px ⊃ Qx)', '∀y (P(y) → Q(y))', '∀x P(x) → Q(x)', '$\\forall x (P(x) \\to Q(x))$']],
         ['symbolic existential', ['∃x (P(x) ∧ Q(x))', '(∃x)(Px & Qx)', '∃y(P(y) ∧ Q(y))']],
-        ['quantifier negation, symbols', ['¬∀x P(x)', '∃x ¬P(x)', '~(x)Px']],
+        ['a denied universal, symbols', ['¬∀x P(x)', '~(x)Px']],
         ['relations, up to variable names', ['∀x∀y (L(x,y) → L(y,x))', '∀y∀x (L(y,x) → L(x,y))']]
     ],
     different: [
@@ -370,11 +372,12 @@ const HELD_OUT = {
         ['Qualia exist', "Qualia don't exist"],
         ['Every philosopher is a physicalist', 'Some philosophers are not physicalists'],
         ['P ∧ Q', '¬P ∨ ¬Q'],
-        ['∀x P(x)', '∃x ¬P(x)'],
+        // In symbols a denial is as written: "∃x ¬P(x)" is quantifier negation's, from "¬∀x P(x)".
+        ['∀x P(x)', '¬∀x P(x)'],
         ['P', '~P']
     ],
     args: [
-        ['universal modus ponens', ['Everyone who understands the argument accepts the conclusion', 'Mary understands the argument'], 'Mary accepts the conclusion', 'UMP, relative clause'],
+        ['universal modus ponens', ['Everyone who understands the argument accepts the conclusion', 'Mary understands the argument', 'Mary is a person'], 'Mary accepts the conclusion', 'UMP, relative clause'],
         ['universal modus ponens', ['All humans are mortal', 'Socrates is human'], 'Socrates is mortal', 'UMP, English'],
         ['universal modus ponens', ['∀x (P(x) → Q(x))', 'P(a)'], 'Q(a)', 'UMP, symbols'],
         ['universal modus ponens', ['(x)(Fx ⊃ Gx)', 'Fa'], 'Ga', 'UMP, Copi'],
@@ -382,7 +385,7 @@ const HELD_OUT = {
         ['modus tollens', ['P -> Q', '~Q'], '~P', 'MT, symbols'],
         ['disjunctive syllogism', ['P v Q', '~P'], 'Q', 'DS, symbols'],
         ['conjunction elimination', ['P & Q'], 'Q', 'AndE, symbols'],
-        ['Negation Elimination', ['¬¬P'], 'P', 'DNE, symbols'],
+        ['double-negation elimination', ['¬¬P'], 'P', 'DNE, symbols'],
         ['hypothetical syllogism', ['P ⊃ Q', 'Q ⊃ R'], 'P ⊃ R', 'HS, symbols'],
         ['universal elimination', ['∀x F(x)'], 'F(a)', 'UE, symbols'],
         ['existential introduction', ['F(a)'], '∃x F(x)', 'EI, symbols'],
@@ -425,7 +428,7 @@ const DERIVATIONS = [
     [['If something is conscious, then physicalism is false', 'Physicalism is not false'], 'Nothing is conscious', 'modus tollens'],
     [['Either God does not exist or evil is an illusion', 'Evil is not an illusion'], 'God does not exist', 'disjunctive syllogism'],
     [['Either God does not exist or evil is an illusion', 'God exists'], 'Evil is an illusion', 'disjunctive syllogism'],
-    [['It is not true that zombies are not possible'], 'Zombies are possible', 'Negation Elimination'],
+    [['It is not true that zombies are not possible'], 'Zombies are possible', 'double-negation elimination'],
     [['If functionalism is true, and if zombies are possible, then physicalism is false', 'Functionalism is true'], 'If zombies are possible, then physicalism is false', 'modus ponens'],
     [['If it rains and it is cold, then it snows', 'If it snows, then the roads close'], 'If it rains and it is cold, then the roads close', 'hypothetical syllogism'],
     [['If God exists, then evil is an illusion', 'Evil is not an illusion'], 'God does not exist', 'modus tollens'],
@@ -450,8 +453,10 @@ const DERIVATIONS = [
     [['If machines cannot think, then the Turing test fails', 'The Turing test does not fail'], 'Machines can think', 'modus tollens'],
     [["If the bill passes, the economy won't recover", 'The economy will recover'], 'The bill does not pass', 'modus tollens'],
     [['If ravens fly, then ravens have wings', 'Ravens do not have wings'], 'Ravens do not fly', 'modus tollens'],
-    [['Everyone who understands the argument accepts the conclusion', 'Mary does not accept the conclusion'], 'Mary does not understand the argument', 'universal modus tollens'],
-    [['All who crossed the Rubicon were brave', 'Caesar crossed the Rubicon'], 'Caesar was brave', 'universal modus ponens'],
+    // "Everyone who", "all who": persons -- Mary's and Caesar's being one is a premise.
+    [['Everyone who understands the argument accepts the conclusion', 'Mary does not accept the conclusion'], null],
+    [['Everyone who understands the argument accepts the conclusion', 'Mary is a person who understands the argument'], 'Mary accepts the conclusion', 'universal modus ponens'],
+    [['All who crossed the Rubicon were brave', 'Caesar is a person who crossed the Rubicon'], 'Caesar was brave', 'universal modus ponens'],
     [['Every Roman who crossed the Rubicon was brave', 'Caesar was not brave'], 'Caesar is not a Roman who crossed the Rubicon', 'universal modus tollens'],
     [['If Socrates is human, then Socrates is mortal.', 'Socrates is human.'], 'Socrates is mortal.', 'modus ponens'],
     // "If X, Y": conclusions keep the premises' way with "then"
@@ -470,17 +475,17 @@ const DERIVATIONS = [
     // Strict: a claim a rule needs twice must be spelled the same way; capitals and names are kept
     [['If the Republic fell, then Caesar won', 'The republic fell'], null],
     [['If the ground is wet, then the match is off', 'The ground  is wet'], 'The match is off', 'modus ponens'],
-    [['If all ravens are black, then Poe is black', 'Every raven is black'], null],
+    [['If all ravens are black, then Poe is black', 'Some raven is black'], null],
     [['All Ravens are black', 'Poe is a raven'], null],
     [['If the Republic fell, then Caesar won', 'The Republic fell'], 'Caesar won', 'modus ponens'],
     [['All Greeks are mortal', 'Socrates is a Greek'], 'Socrates is mortal', 'universal modus ponens'],
     [['If God exists, then evil is an illusion', 'Evil is not an illusion'], 'God does not exist', 'modus tollens'],
     // Symbols
-    [['P -> (Q -> R)', 'P', 'Q'], 'R', 'modus ponens'],
+    [['P -> (Q -> R)', 'P', 'Q'], 'R', 'modus ponens, conditions together'],
     [['P -> (Q -> R)', 'P'], 'Q -> R', 'modus ponens'],
     [['(P ∨ Q) → R', '¬R'], '¬(P ∨ Q)', 'modus tollens'],
     [['P ∨ Q', 'P → R', 'Q → S'], 'R ∨ S', 'constructive dilemma'],
-    [['¬¬P'], 'P', 'Negation Elimination'],
+    [['¬¬P'], 'P', 'double-negation elimination'],
     [['A ⊃ B', 'B ⊃ C'], 'A ⊃ C', 'hypothetical syllogism'],
     [['\\forall x (Fx \\to Gx)', 'Fa'], 'Ga', 'universal modus ponens'],
     [['∀x(Human(x) → Mortal(x))', 'Human(socrates)'], 'Mortal(socrates)', 'universal modus ponens'],
@@ -498,14 +503,14 @@ const MORE_RULES = [
     ['biconditional elimination', ['P ↔ Q', '¬Q'], '¬P', 'BiE, denials in symbols'],
     [null, ['It rains if and only if the ground is wet', 'It does not rain'], 'The ground is wet', 'BiE, not a denial given one'],
     ["De Morgan’s laws", ['It is not the case that both it rains and it snows'], 'It does not rain or it does not snow', 'DM, not both'],
-    ["De Morgan’s laws", ['Neither does it rain nor does it snow'], 'It is not the case that it rains or it snows', 'DM, neither'],
+    ["De Morgan’s laws", ['Neither does it rain nor does it snow'], 'It is not the case that either it rains or it snows', 'DM, neither'],
     ["De Morgan’s laws", ['¬(P ∧ Q)'], '¬P ∨ ¬Q', 'DM, symbols'],
     ["De Morgan’s laws", ['If it is not the case that both it rains and it snows, then the match is off'], 'If it does not rain or it does not snow, then the match is off', 'DM, inside a condition'],
     [null, ['It is not the case that both it rains and it snows'], 'It does not rain and it does not snow', 'DM, not the wrong way'],
-    ['double negation', ['God exists'], 'It is not the case that it is not the case that God exists', 'DN, introduction'],
-    ['double negation', ['The argument is not impossible'], 'The argument is possible', 'DN, a denial word and "not"'],
-    ['Negation Elimination', ['If it is not the case that it is not the case that it rains, then the ground is wet'], 'If it rains, then the ground is wet', 'DN, inside a condition'],
-    ['Negation Elimination', ['It is not the case that it is not the case that God exists'], 'God exists', 'DNE still named as before'],
+    ['double-negation replacement', ['God exists'], 'It is not the case that it is not the case that God exists', 'double negation, a replacement rule on by default since r27.32'],
+    ['double-negation elimination', ['The argument is not impossible'], 'The argument is possible', 'a denial word and "not": two denials, the main connective'],
+    ['double-negation replacement', ['If it is not the case that it is not the case that it rains, then the ground is wet'], 'If it rains, then the ground is wet', 'inside a condition: double-negation replacement reaches it, double-negation elimination would not'],
+    ['double-negation elimination', ['It is not the case that it is not the case that God exists'], 'God exists', 'DNE still named as before'],
     ['transposition', ['If it rains, then the ground is wet'], 'If the ground is not wet, then it does not rain', 'Trans'],
     ['transposition', ['P → Q'], '¬Q → ¬P', 'Trans, symbols'],
     [null, ['If it rains, then the ground is wet'], 'If it does not rain, then the ground is not wet', 'the converse of the inverse is not transposition'],
@@ -518,14 +523,16 @@ const MORE_RULES = [
     ['exportation', ['(P ∧ Q) → R'], 'P → (Q → R)', 'Exp, symbols'],
     ['distribution', ['P ∧ (Q ∨ R)'], '(P ∧ Q) ∨ (P ∧ R)', 'Dist'],
     ['distribution', ['(P ∨ Q) ∧ (P ∨ R)'], 'P ∨ (Q ∧ R)', 'Dist, back'],
-    ['tautology', ['P ∨ P'], 'P', 'Taut'],
+    ['idempotence', ['P ∨ P'], 'P', 'idempotence (an extension, on by default; off, the dilemma on P -> P does it)'],
+    ['proof by cases', ['P → P', 'P → P', 'P ∨ P'], 'P', 'P ∨ P by a dilemma on P → P: one consequent, so proof by cases'],
+    ['constructive dilemma', ['P → Q', 'R → S', 'P ∨ R'], 'Q ∨ S', 'different consequents: the constructive dilemma proper'],
     ['absorption', ['If it rains, then the ground is wet'], 'If it rains, then it rains and the ground is wet', 'Abs'],
     ['reductio', ['If God exists, then evil is an illusion', 'If God exists, then evil is not an illusion'], 'God does not exist', 'reductio'],
-    ['reductio', ['P → ¬P'], '¬P', 'reductio, one premise'],
+    ['consequentia mirabilis', ['P → ¬P'], '¬P', 'a claim that implies its own denial (a familiar step; the basis reductio takes two conditionals)'],
     [null, ['If God exists, then evil is an illusion', 'If God exists, then evil is real'], 'God does not exist', 'reductio needs a claim and its denial'],
     ['quantifier negation', ['Not all ravens are black'], 'Some ravens are not black', 'QN'],
     ['quantifier negation', ['It is not the case that some raven is white'], 'No raven is white', 'QN, some'],
-    [null, ['Every raven is black'], 'All ravens are black', 'the same claim in other quantifier words is no rule'],
+    [null, ['Every raven is black'], 'All ravens are black', 'the same claim in other quantifier words is the same claim: it only restates its box'],
     ['conversion', ['No ravens are fish'], 'No fish are ravens', 'conversion, E'],
     ['conversion', ['Some philosophers are dualists'], 'Some dualists are philosophers', 'conversion, I'],
     [null, ['All ravens are birds'], 'All birds are ravens', 'an A-form does not convert'],
@@ -605,14 +612,14 @@ function reportCorpus(name, res) {
                 quantified: key('Every Roman crossed the Rubicon') === key('All Romans crossed the Rubicon') &&
                     denies('Every Roman crossed the Rubicon', 'Some Roman did not cross the Rubicon'),
                 presentNotPast: key('Ravens need water') === key('Ravens do need water') && key('Ravens need water') !== key('Ravens did need water'),
-                ump: (certifyStep(['All who crossed the Rubicon were brave', 'Caesar crossed the Rubicon'].map(function (t) { return parseClaim(t); }),
+                ump: (certifyStep(['All who crossed the Rubicon were brave', 'Caesar crossed the Rubicon', 'Caesar is a person'].map(function (t) { return parseClaim(t); }),
                     [parseClaim('Caesar was brave')], false) || {}).name
             };`);
         ok(past.regular && past.regular.every(Boolean), 'a regular past tense and its "did not" deny each other — crossed, closed, stopped, tried, died, agreed, rebelled', J(past.regular));
         ok(past.irregular && past.irregular.every(Boolean), 'and an irregular one — went, saw, had', J(past.irregular));
         ok(past.emphatic === true && past.quantified === true, '"did cross" says "crossed", and quantified past tenses read and deny alike', J(past));
         ok(past.presentNotPast === true, 'a present tense ending in -ed ("need") is not read as a past', J(past));
-        ok(past.ump === 'universal modus ponens', '"All who crossed the Rubicon were brave" and "Caesar crossed the Rubicon" give "Caesar was brave"', J(past.ump));
+        ok(past.ump === 'universal modus ponens', '"All who crossed the Rubicon were brave", "Caesar crossed the Rubicon" and "Caesar is a person" give "Caesar was brave"', J(past.ump));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
     /* ---------------- 2b. denials, hedges, generics, word forms ---------------- */
@@ -650,8 +657,8 @@ function reportCorpus(name, res) {
         ok(d.noObject === true, '"gives you no reason" denies "gives you a reason", and so does "doesn\'t give you any reason"', J(d.noObject));
         ok(d.exact === true && d.contraries === true,
             'words that are exactly denials deny ("invalid", "non-physical", "unable to"), and "able to" is "can"; contraries and look-alikes do not', J([d.exact, d.contraries]));
-        ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true && /should as presumably/.test(d.hedge.why || '') && /direct denial/.test(d.hedge.why || ''),
-            '"We can\'t leave" against "We should be able to leave" is flagged: it holds only on the hedge reading', J(d.hedge));
+        ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true && /should as presumably/.test(d.hedge.why || '') && /only denies the box it objects to: a denial is not an argument/.test(d.hedge.why || ''),
+            '"We can\'t leave" against "We should be able to leave" is flagged: on the hedge reading it only denies its box, which is no argument', J(d.hedge));
         ok(J(d.generic) === J([null, null, null, null]) && d.individual === 'universal modus ponens',
             'a generic, an indefinite, and "it" are never one thing a quantifier\'s case is about; a name is', J([d.generic, d.individual]));
         ok(d.forms && d.forms.hoped === false && d.forms.hopped === true && d.forms.learnt === true && d.forms.men === 'universal modus ponens' && d.forms.news === null,
@@ -678,14 +685,15 @@ function reportCorpus(name, res) {
                 derived: step(['If the evidence is weak, then it is not known that God exists', 'The evidence is weak']),
                 denial: step(['God does not exist']),
                 none: step(['The evidence is weak']),
-                misspelled: step(['It has not been shown that God Exists'])
+                misspelled: step(['It has not been shown that God Exists']),
+                misspelledDerived: step(['If the evidence is weak, then it is not known that God Exists', 'The evidence is weak'])
             };`);
-        ok(Array.isArray(w.wordings) && w.wordings.every(x => x === '✓ direct challenge'),
-            'a weak objection saying its box has not been established, in any of the common wordings, is checked and passes', J(w.wordings));
-        ok(w.derived === '✓ modus ponens' && w.denial === '✓ direct denial',
-            'so does one whose premises derive that by a rule, or that state the box\'s denial', J([w.derived, w.denial]));
-        ok(w.none === '? not recognized' && w.misspelled === '✗ spelled differently',
-            'one that derives neither does not pass, and a misspelled box is pointed out', J([w.none, w.misspelled]));
+        ok(Array.isArray(w.wordings) && w.wordings.every(x => x === '✗ bare challenge'),
+            'a weak objection that only says its box has not been established, in any of the common wordings, is a bare challenge: no argument', J(w.wordings));
+        ok(w.derived === '✓ modus ponens' && w.denial === '✗ bare denial',
+            'so does one whose premises derive that by a rule; one that only states the box\'s denial is a bare denial, no argument', J([w.derived, w.denial]));
+        ok(w.none === '? not recognized' && w.misspelled === '✗ bare challenge' && w.misspelledDerived === '✗ spelled differently',
+            'one that derives neither does not pass; a bare challenge is one however it is spelled, and a misspelled box is pointed out where spelling stands in the way', J([w.none, w.misspelled, w.misspelledDerived]));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
     /* ---------------- 2d. more rules ---------------- */
@@ -756,7 +764,7 @@ function reportCorpus(name, res) {
         group('formulas give theirs in the premises’ own symbols', r => r.text !== null && symbolic(r));
         group('premises no generative rule uses all of get nothing — affirming the consequent, a lone conjunction, a biconditional, unrelated claims', r => r.text === null);
         const each = T(W, `return ${J(['modus ponens', 'modus tollens', 'hypothetical syllogism', 'constructive dilemma', 'destructive dilemma',
-            'disjunctive syllogism', 'Negation Elimination', 'universal modus ponens', 'universal syllogism', 'existential syllogism'])};`);
+            'disjunctive syllogism', 'double-negation elimination', 'universal modus ponens', 'universal syllogism', 'existential syllogism'])};`);
         ok(Array.isArray(each) && each.every(name => results.some(r => r.good && r.rule === name)),
             'every generative rule derives a conclusion somewhere above', J(each));
         const skips = T(W, `return {
@@ -792,8 +800,8 @@ function reportCorpus(name, res) {
         ok(cap && cap.rule === 'modus ponens' && /‘republic’ and ‘Republic’ differ in capital letters/.test(cap.text),
             'a claim a rule needs twice, spelled with different capitals, is a near miss: the rule it would follow by, and the letters that differ', J(cap));
         ok(plain && plain.rule === null && plain.text === null, 'a step spelled alike is no near miss', J(plain));
-        ok(words && /‘every raven is black’ and ‘all ravens are black’ are worded differently/.test(words.text),
-            'a claim needed twice and worded two ways is named, even where both ways say the same', J(words));
+        ok(words && words.rule === null && words.text === null,
+            'quantifier words are logic: "every raven is black" and "all ravens are black" are one claim, so no near miss', J(words));
         const spaced = T(W, `return ${J([
             [['If it rains, then the ground is wet', 'It rains'], 'The ground  is wet'],
             [['If  it rains, then the ground is wet', 'It rains'], 'The ground is wet'],
@@ -1190,11 +1198,11 @@ function reportCorpus(name, res) {
             var list = { open: document.getElementById('logic-modal-backdrop').classList.contains('open'), summary: document.getElementById('logic-modal-summary').textContent };
             closeDeductiveCheck();
             var weakRebuttal = JSON.parse(JSON.stringify(O));
-            weakRebuttal.children = [{ id: 'WR', type: 'weak-objection', texts: ['It has not been shown that evil exists'], collapsed: [], targetIndex: 1, children: [] }];
+            weakRebuttal.children = [{ id: 'WR', type: 'weak-objection', texts: ['If the evidence of evil is disputed, then it has not been shown that evil exists', 'The evidence of evil is disputed'], collapsed: [], targetIndex: 1, children: [] }];
             state.trees = MAP([weakRebuttal]); render();
             var stands = read();
             var weakened = JSON.parse(JSON.stringify(S));
-            weakened.children = [{ id: 'W', type: 'weak-objection', texts: ['It has not been shown that the universe is caused'], collapsed: [], targetIndex: 1, children: [] }];
+            weakened.children = [{ id: 'W', type: 'weak-objection', texts: ['If the cosmological evidence is disputed, then it has not been shown that the universe is caused', 'The cosmological evidence is disputed'], collapsed: [], targetIndex: 1, children: [] }];
             state.trees = MAP([weakened]); render();
             var unestablished = read();
             state.trees = MAP([]); render();

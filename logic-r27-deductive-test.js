@@ -83,7 +83,7 @@ const J = JSON.stringify;
 //   ├─ [B] "Poe is a bird"                                                   not certified
 //   ├─ [C] objection "Poe is a crow"                                         not certified
 //   ├─ [D] objection "If Poe is white, then Poe is not black" + "Poe is white"  modus ponens, to the denial
-//   ├─ [E] weak objection "It is not the case that Poe is black"    a direct denial
+//   ├─ [E] weak objection "It is not the case that Poe is black"    a bare denial: not certified
 //   └─ [NT] an attached note (from an older map)                    not a step
 //   plus a second tree for the conjunction, and a free note
 const MAP = [
@@ -146,14 +146,15 @@ const MAP = [
             ["Consciousness doesn't depend on the brain", 'N(P:consciousness|~depend on the brain)'],
             ['Lights must not produce consciousness', 'P:lights|~must not produce consciousness'],
             ['It is not the case that it rains', 'N(P:it|~rain)'],
-            ['The sky is blue and grass is green', 'C[P:grass|=green;P:the sky|=blue]'],
+            // In order: order and grouping are content (commutation and association change them).
+            ['The sky is blue and grass is green', 'C[P:the sky|=blue;P:grass|=green]'],
             ['Either it is raining or it is snowing', 'D[P:it|=raining;P:it|=snowing]'],
             ['If it rains, then the ground is wet', 'I(P:it|~rain>P:the ground|=wet)'],
             ['If it rains then the ground is wet', 'I(P:it|~rain>P:the ground|=wet)'],
-            ['If it rains, and if it is cold, then it snows', 'I(P:it|=cold&P:it|~rain>P:it|~snow)'],
-            ['If it rains and it is cold, then it snows', 'I(C[P:it|=cold;P:it|~rain]>P:it|~snow)'],
+            ['If it rains, and if it is cold, then it snows', 'I(P:it|~rain&P:it|=cold>P:it|~snow)'],
+            ['If it rains and it is cold, then it snows', 'I(C[P:it|~rain;P:it|=cold]>P:it|~snow)'],
             ['It rains only if it is cloudy', 'I(P:it|~rain>P:it|=cloudy)'],
-            ['If it rains, then if it is cold, then it snows', 'I(P:it|=cold&P:it|~rain>P:it|~snow)'],
+            ['If it rains, then if it is cold, then it snows', 'I(P:it|~rain&P:it|=cold>P:it|~snow)'],
             ['**Poe** is a _raven_', 'P:poe|=raven'],
             ['Poe is a raven.', 'P:poe|=raven']
         ];
@@ -177,8 +178,8 @@ const MAP = [
             phrasalAnd: parseClaim('A mere series of flashing lights and control circuitry can produce consciousness').kind === 'pred',
             empty: parseClaim('   ') === null
         };`);
-        ok(same.order && same.plural && same.article && same.distinct && same.conditions && same.verbForms && same.empty,
-            'the same claim in different words reads the same, and different claims do not', J(same));
+        ok(!same.order && same.plural && same.article && same.distinct && !same.conditions && same.verbForms && same.empty,
+            'the same claim in different words reads the same; different claims, and the same parts in another order, do not', J(same));
         ok(same.exportation === true,
             '"if X, then if Y, then Z" is "if X, and if Y, then Z" (exportation), and still not "if X and Y, then Z"', J(same));
         ok(same.asWritten === true,
@@ -272,8 +273,8 @@ const MAP = [
         // [the rule, premises, conclusion, what the case shows, is it an objection?]
         const CASES = [
             // Arguments from real maps.
-            ['modus ponens', [ZOMBIE_P1, 'In functionalism, zombies are not metaphysically possible.', 'Functionalism is not ruled out.'], ZOMBIE_C,
-                'two conditions, each given: one modus ponens on three premises'],
+            ['modus ponens, conditions together', [ZOMBIE_P1, 'In functionalism, zombies are not metaphysically possible.', 'Functionalism is not ruled out.'], ZOMBIE_C,
+                'two conditions, each given: one step with "conditions together" on (the default)'],
             ['modus tollens', ['If functionalism is true, then a mere series of flashing lights and control circuitry can produce consciousness.',
                 "A mere series of flashing lights and control circuitry can't produce consciousness."], 'Functionalism is not true.', "modus tollens through can't"],
             ['universal elimination', ['All things that must depend on other non-physical factors are non-physical.'],
@@ -282,14 +283,14 @@ const MAP = [
             ['modus ponens', ['If it rains, then the ground is wet', 'It rains'], 'The ground is wet', 'modus ponens'],
             ['modus ponens', ['If functionalism is true and zombies are impossible, then physicalism is safe', 'Functionalism is true and zombies are impossible'],
                 'Physicalism is safe', 'a condition written as a conjunction, given as one premise'],
-            ['modus ponens', ['If it rains, then if it is cold, then it snows', 'It rains', 'It is cold'], 'It snows',
-                'a nested conditional is one conditional with two conditions (exportation): one modus ponens'],
+            ['modus ponens, conditions together', ['If it rains, then if it is cold, then it snows', 'It rains', 'It is cold'], 'It snows',
+                'a nested conditional is one conditional with two conditions: both given, one step'],
             ['modus ponens', ['If it rains, then if it is cold, then it snows', 'It rains'], 'If it is cold, then it snows', '... given one condition, the conditional on the other'],
-            ['modus ponens', ['If it rains, and if it is cold, then it snows', 'It is cold'], 'If it rains, then it snows', '... whichever condition is given'],
-            ['modus tollens', ['If it rains, then if it is cold, then it snows', 'It does not snow', 'It is cold'], 'It is not the case that it rains', 'modus tollens on a nested conditional'],
+            [null, ['If it rains, and if it is cold, then it snows', 'It is cold'], 'If it rains, then it snows', '... not the second condition first: that takes commutation too'],
+            [null, ['If it rains, then if it is cold, then it snows', 'It does not snow', 'It is cold'], 'It is not the case that it rains', 'modus tollens on a nested conditional, with modus ponens on its other condition: two rules'],
             ['modus tollens', ['If it rains, then the ground is wet', 'The ground is not wet'], 'It is not the case that it rains', 'modus tollens'],
-            ['modus tollens', ['If it rains, and if it is cold, then it snows', 'It does not snow', 'It is cold'], 'It is not the case that it rains',
-                'modus tollens on two conditions: the other condition holds, so the remaining one is denied'],
+            [null, ['If it rains, and if it is cold, then it snows', 'It does not snow', 'It is cold'], 'It is not the case that it rains',
+                'modus tollens on two conditions, the other one given: modus ponens and modus tollens, two rules'],
             ['modus tollens', ['If all ravens are black, then Poe is black', 'Poe is not black'], 'Some raven is not black', 'modus tollens concluding the denial of a universal'],
             ['modus tollens', ['If every raven is black, then Poe is black', "Poe isn't black"], 'Not every raven is black', '... in its other wording'],
             ['modus tollens', ['If functionalism is true, then zombies are inconceivable', "It's not the case that zombies are inconceivable"], "Functionalism isn't true",
@@ -299,8 +300,8 @@ const MAP = [
             ['hypothetical syllogism', ['If it rains, then the ground is wet', 'If the ground is wet, then the match fails'], 'If it rains, then the match fails', 'hypothetical syllogism'],
             ['constructive dilemma', ['If it rains, then the match is cancelled', 'If it snows, then the roads will close', 'Either it rains or it snows'],
                 'The match is cancelled or the roads will close', 'constructive dilemma'],
-            ['constructive dilemma', ['If it rains, then the match is cancelled', 'If it snows, then the match is cancelled', 'It rains or it snows'],
-                'The match is cancelled', 'constructive dilemma with one consequent'],
+            ['proof by cases', ['If it rains, then the match is cancelled', 'If it snows, then the match is cancelled', 'It rains or it snows'],
+                'The match is cancelled', 'a dilemma whose consequents are the same: proof by cases'],
             ['destructive dilemma', ['If it rains, then the match is cancelled', 'If it snows, then the roads will close',
                 'Either the match is not cancelled or the roads will not close'], 'Either it does not rain or it does not snow', 'destructive dilemma'],
             ['destructive dilemma', ['If it rains, then the match is cancelled', 'If it rains, then the roads will close',
@@ -316,8 +317,8 @@ const MAP = [
             ['disjunctive syllogism', ['It is raining or it is snowing or it is hailing', 'It is not raining'], 'It is snowing or it is hailing',
                 '... one denied, two left'],
             ['disjunctive syllogism', ['Either all ravens are black or the survey is wrong', 'Some raven is not black'], 'The survey is wrong', 'a disjunct denied by its contradictory'],
-            ['Negation Elimination', ['It is not the case that it is not the case that it rains'], 'It rains', 'Negation Elimination'],
-            ['Negation Elimination', ["It is not the case that functionalism isn't true"], 'Functionalism is true', '... with the inner denial on the verb'],
+            ['double-negation elimination', ['It is not the case that it is not the case that it rains'], 'It rains', 'double-negation elimination'],
+            ['double-negation elimination', ["It is not the case that functionalism isn't true"], 'Functionalism is true', '... with the inner denial on the verb'],
             ['existential introduction', ['Poe is a raven'], 'Something is a raven', 'existential introduction'],
             ['existential introduction', ['Poe is a raven and Poe is black'], 'Some raven is black', '... from a conjunction about one thing'],
             ['universal elimination', ['All ravens are black'], 'If Poe is a raven, then Poe is black', 'universal elimination'],
@@ -328,22 +329,22 @@ const MAP = [
             ['existential syllogism', ['There is a raven', 'All ravens are black'], 'Something is black', '... from "there is a"'],
             ['existential syllogism', ['Some ravens are black', 'All black things are dark'], 'Some ravens are dark', '... with a subject'],
             ['existential syllogism', ['Some ravens are pets', 'No pets are wild'], 'Some ravens are not wild', '... with "no"'],
-            ['same claim', ['Poe is a raven'], 'Poe is a raven', 'a premise that says what its box says'],
+            [null, ['Poe is a raven'], 'Poe is a raven', 'a premise that only says what its box says restates it: no argument'],
             ['quantifier negation', ['Some raven is not black'], 'Not all ravens are black', '... and a quantifier negated, by quantifier negation'],
-            ['direct denial', ['It is not the case that Poe is black'], 'Poe is black', 'an objection that states the denial', true],
+            [null, ['It is not the case that Poe is black'], 'Poe is black', 'an objection that only states the denial is a bare denial, not an argument', true],
             ['modus ponens', ['If Poe is white, then Poe is not black', 'Poe is white'], 'Poe is black', 'an objection deriving the denial', true],
             ['modus tollens', ['If Poe is black, then Poe is dark', 'Poe is not dark'], 'Poe is black', "... by any rule", true],
-            ['direct denial', ['Functionalism is true'], 'Functionalism is not true', "an objection to a denial may state the claim denied", true],
+            [null, ['Functionalism is true'], 'Functionalism is not true', "... nor one that only restates the claim a denial denies", true],
             // One step, one rule, every premise used.
-            [null, ['If functionalism is true and zombies are impossible, then physicalism is safe', 'Functionalism is true', 'Zombies are impossible'], 'Physicalism is safe',
-                'a condition written as a conjunction needs the conjunction first: two rules'],
+            ['modus ponens, conditions together', ['If functionalism is true and zombies are impossible, then physicalism is safe', 'Functionalism is true', 'Zombies are impossible'],
+                'Physicalism is safe', 'a condition written as a conjunction, given as its conjuncts: "if A and B, then C" is "if A, and if B, then C"'],
             ['universal modus ponens', ['All ravens are black', 'Poe is a raven'], 'Poe is black', 'from a general rule straight to its case: one step'],
             ['universal modus ponens', ['∀x (R(x) → B(x))', 'R(p)'], 'B(p)', '... in symbols'],
             [null, ['All ravens are black', 'Poe is black'], 'Poe is a raven', '... but not backwards'],
             [null, ['If it rains, and if it is cold, then it snows', 'It rains'], 'It snows', 'a condition not given'],
             [null, ['If it rains, then the ground is wet', 'It rains', 'The sky is blue'], 'The ground is wet', 'a premise the rule does not use'],
-            [null, ['There is a raven that is black'], 'Something is black', 'this needs existential elimination'],
-            ['double negation', ['It rains'], 'It is not the case that it is not the case that it rains', 'double negation, introduced'],
+            ['conjunction elimination under ∃', ['There is a raven that is black'], 'Something is black', 'a rule inside "some": the raven that is black is black'],
+            ['double-negation replacement', ['It rains'], 'It is not the case that it is not the case that it rains', 'double negation, a replacement rule on by default since r27.32'],
             [null, ['Poe is black'], 'Poe is black', 'an objection that agrees with its box', true],
             // Never certified.
             [null, [ZOMBIE_P1, 'In functionalism, zombies are not metaphysically possible.'], ZOMBIE_C, 'a condition missing'],
@@ -377,12 +378,30 @@ const MAP = [
         ok(wrong.length === 0, 'each rule certifies what it should, one rule to a step, and nothing else is certified (' + CASES.length + ' arguments)',
             wrong.map(([c, g]) => c[3] + ': got ' + g + ', expected ' + c[0]).join(' | '));
         const names = T(W, `return DEDUCTIVE_RULES.map(function (r) { return [r.id, r.name, !!r.gloss]; });`);
-        const STANDARD = ['Contradiction', 'identity symmetry', 'identity transitivity', 'identity substitution', 'modus ponens', 'modus tollens', 'hypothetical syllogism', 'constructive dilemma', 'destructive dilemma',
-            'biconditional elimination', 'conjunction introduction', 'conjunction elimination', 'disjunction introduction', 'disjunctive syllogism',
-            'resolution', 'explosion', 'Negation Elimination', 'existential introduction', 'universal elimination', 'universal modus ponens', 'universal modus tollens',
-            'universal syllogism', 'existential syllogism', 'reductio', 'absorption', 'Quantifier Commutation', 'quantifier negation', 'double negation', 'De Morgan’s laws',
-            'transposition', 'Negated Conditional', 'Negated Biconditional', 'material implication', 'material equivalence', 'exportation', 'distribution', 'tautology', 'conversion', 'contraposition',
-            'a premise not established', 'a false premise', 'conclusion not established', 'an unsound argument'];
+        const STANDARD = ['Contradiction', 'predicate congruence', 'subalternation', 'identity symmetry',
+            'identity transitivity', 'identity introduction', 'identity substitution', 'modus ponens',
+            'modus ponens, conditions together', 'modus tollens', 'hypothetical syllogism', 'proof by cases',
+            'constructive dilemma', 'destructive dilemma', 'biconditional elimination', 'substitution of equivalents', 'biconditional introduction',
+            'conjunction introduction', 'conjunction elimination', 'disjunction introduction', 'disjunctive syllogism',
+            'conjunctive syllogism', 'resolution', 'explosion', 'double-negation elimination',
+            'existential introduction', 'existential elimination', 'universal elimination', 'universal modus ponens',
+            'universal modus tollens', 'universal syllogism', 'existential syllogism', 'categorical syllogism',
+            'reductio', 'rule instances', 'negation introduction', 'indirect proof',
+            'consequentia mirabilis', 'absorption', 'change of bound variable', 'Quantifier Commutation',
+            'vacuous quantifier', 'vacuous quantifier, anywhere', 'rules of passage', 'quantifier distribution',
+            'quantifier distribution, anywhere', 'quantifier negation', 'conversion', 'contraposition',
+            'De Morgan’s laws', 'transposition', 'Negated Conditional', 'Negated Biconditional',
+            'material implication', 'material equivalence', 'exportation', 'Boolean absorption',
+            '⊥ laws', 'distribution', 'commutation', 'association',
+            'idempotence', 'a premise not established', 'a false premise', 'conclusion not established',
+            'an unsound argument', 'a rule under a quantifier'];
+        // The optional ones, kept apart: double-negation replacement and its
+        // "anywhere" partner, the zero-premise shortcuts, and the catch-alls.
+        const OPTIONAL = ['double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+            'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
+            'instances up to the replacements'];
+        const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);
+        ok(J(optionalNames) === J(OPTIONAL), 'and these are the optional rules, switched on by name', J(optionalNames));
         ok(Array.isArray(names) && J(names.map(r => r[1])) === J(STANDARD) && names.every(r => r[2]),
             'the Standard package has exactly these rules, each with a gloss', J(Array.isArray(names) ? names.map(r => r[1]) : names));
     }
@@ -394,7 +413,7 @@ const MAP = [
             var steps = collectDeductiveSteps(state.trees);
             return { count: steps.length,
                      rows: steps.map(function (s) { return { child: s.childId, parent: s.parentId, box: s.boxIdx, attack: s.attack,
-                        premises: s.premiseTexts.length, rule: s.rule ? s.rule.id : null, unchecked: !!s.unchecked }; }) };`);
+                        premises: s.premiseTexts.length, rule: s.rule ? s.rule.id : null, unchecked: !!s.unchecked, bare: !!s.bare }; }) };`);
         const row = id => (s.rows || []).find(r => r.child === id) || {};
         ok(s.count === 7 && !(s.rows || []).some(r => r.child === 'NT'),
             'a step for every support and every objection, weak or not, and none for a note', J(s));
@@ -403,8 +422,8 @@ const MAP = [
         ok(row('B').rule === null, 'a support the check cannot read is a step all the same, uncertified', J(row('B')));
         ok(row('D').attack === true && row('D').rule === 'modus-ponens',
             'an objection is checked against the DENIAL of the box it objects to: its modus ponens derives "Poe is not black"', J(row('D')));
-        ok(row('E').attack === true && row('E').rule === 'direct-denial',
-            'a weak objection is checked too: one that states the denial passes, as does one that says the box is not established', J(row('E')));
+        ok(row('E').attack === true && row('E').rule === null && row('E').bare === true,
+            'a weak objection is checked too: one that only states the denial is a bare denial, and not certified', J(row('E')));
         ok(row('C').attack === true && row('C').rule === null, 'an objection that does not derive the denial is uncertified', J(row('C')));
         ok(row('GA').parent === 'G' && row('GA').rule === 'and-intro' && row('GAA').rule === null,
             'the conjunction step is certified, and the support under it is judged on its own', J([row('GA'), row('GAA')]));
@@ -441,11 +460,11 @@ const MAP = [
                      rows: rows, unchanged: JSON.stringify(state.trees) === before };`);
         const r = id => (p.rows || []).find(x => x.step === id) || {};
         // G's conjunction remains valid, but GAA fails to establish its first premise.
-        ok(p.open === true && /^Main contentions: unwarranted, unwarranted · 4 of 7 steps certified$/.test(p.summary || ''),
+        ok(p.open === true && /^Main contentions: unwarranted, unwarranted · 3 of 7 steps certified$/.test(p.summary || ''),
             'the list opens, gives the main contentions’ verdicts, and counts the certified steps', J([p.open, p.summary]));
         ok(Array.isArray(p.rows) && p.rows.length === 7, 'one row per step', J(p.rows && p.rows.length));
-        ok(/modus ponens/.test(r('A').rule || '') && /direct denial/.test(r('E').rule || '') && /not recognized/.test(r('B').rule || ''),
-            'a certified row names its rule; an uncertified one says only that the check does not recognize it', J([r('A').rule, r('E').rule, r('B').rule]));
+        ok(/modus ponens/.test(r('A').rule || '') && /✗\s*bare denial/.test(r('E').rule || '') && /not recognized/.test(r('B').rule || ''),
+            'a certified row names its rule; a bare denial says so; an uncertified one says only that the check does not recognize it', J([r('A').rule, r('E').rule, r('B').rule]));
         ok(J(r('A').premises) === J(['If Poe is a raven, then Poe is black', 'Poe is a raven']) && /^∴\s*Poe is black/.test(r('A').conclusion || ''),
             'a row shows the premises as written and the box they support', J(r('A')));
         ok(/^∴ not:\s*Poe is black/.test(r('D').conclusion || ''), "an objection's row concludes the denial of the box it objects to", J(r('D')));
@@ -517,8 +536,8 @@ const MAP = [
             var both = t ? t.textContent : null;
             toggleDeductiveLive();
             return { mp: mp, both: both };`);
-        ok(edits.mp === '✓ modus ponens' && edits.both === '? not recognized',
-            'the tags follow edits; a condition written as a conjunction, given as two premises, would take two rules, and a step is one', J(edits));
+        ok(edits.mp === '✓ modus ponens, conditions together' && edits.both === '✓ modus ponens, conditions together',
+            'the tags follow edits; conditions given one by one, and the conjuncts of one condition, are each one step while "conditions together" is on', J(edits));
 
         const one = T(W, `state.trees = ${J(MAP)}; ensureCollabFields(state); render();
             window.__hints = []; var realHint = showHintToast; showHintToast = function (t) { window.__hints.push(t); return true; };
@@ -544,7 +563,7 @@ const MAP = [
             'with more selected it checks the rest, and once all are checked, Shift+K unchecks them', J(one));
         ok(one.contention && one.contention.tags === 0 && /doesn’t derive anything obvious on its own/.test(one.contention.hint || ''),
             'a main contention has no step to check: Shift+K looks for a parent to derive from it, and says when there is none', J(one.contention));
-        ok(one.weak && J(one.weak.tags) === J(['✓ direct denial']), 'Shift+K checks a weak objection’s step too', J(one.weak));
+        ok(one.weak && J(one.weak.tags) === J(['✗ bare denial']), 'Shift+K checks a weak objection’s step too: a bare denial is tagged so', J(one.weak));
 
         const menu = T(W, `state.trees = ${J(MAP)}; ensureCollabFields(state); selectedIds = []; render();
             var items = function () { return Array.prototype.slice.call(document.querySelectorAll('#context-menu .ctx-item')).map(function (b) { return b.textContent.trim(); }); };

@@ -31,9 +31,9 @@ try {
         check(rule([text,'~P'],'Q') === 'disjunctive-syllogism','plain unless: '+text);
         check(!rule([text,'P'],'Q'),'no affirming a disjunct: '+text);
     }
-    for (const pair of [['If ~P, then Q','Q if ~P'],['Q or ~P','~P or Q']]) {
-        check(call(`x => claimSame(parseClaim(x[0]),parseClaim(x[1]))`,pair),'mixed negation in other connectives: '+pair);
-    }
+    check(call(`x => claimSame(parseClaim(x[0]),parseClaim(x[1]))`,['If ~P, then Q','Q if ~P']),'mixed negation in other connectives: If ~P, then Q / Q if ~P');
+    // Order is content: "Q or ~P" and "~P or Q" are two claims, commutation the step between them.
+    check(!call(`x => claimSame(parseClaim(x[0]),parseClaim(x[1]))`,['Q or ~P','~P or Q']) && rule(['Q or ~P'],'~P or Q') === 'commutation','order is content: Q or ~P, ~P or Q, by commutation');
     check(call(`() => stripClaimMarkup('Q unless ~P') === 'Q unless ~P'`),'preserve single tilde in text cleanup');
     check(call(`() => stripClaimMarkup('~~obsolete~~') === 'obsolete'`),'paired Markdown strikethrough still strips');
     for (const text of ['Q unless ~P','Unless ~P, Q']) {
@@ -93,7 +93,7 @@ try {
     check(rule(['P','not P'],'Q') === 'explosion','classical explosion');
     check(rule(['not P','P'],'Q') === 'explosion','explosion order');
     check(rule(['If P, then Q','If P, then not Q'],'not P') === 'reductio','retain reductio');
-    check(rule(['If P, then not P'],'not P') === 'reductio','retain one-premise reductio');
+    check(rule(['If P, then not P'],'not P') === 'consequentia-mirabilis','retain the one-premise form, now its own rule');
     check(!rule(['If P, then Q','If R, then not Q'],'not P'),'different assumptions are not reductio');
     check(call(`() => deriveConclusion(['P ∨ Q','¬P ∨ R'])?.rule.id === 'resolution'`),'derive resolution');
     check(call(`() => deriveConclusion(['P','not P']) === null`),'do not invent an arbitrary conclusion');

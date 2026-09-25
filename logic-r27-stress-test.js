@@ -336,7 +336,8 @@ function symbolicGenerator(rand) {
         // Minimal: leave out brackets that precedence makes unneeded (not around
         // ↔, and not on the left of →, which groups to the right).
         const needless = () => sp.minimal && parent && f.op !== 'iff' && parent !== 'iff' &&
-            (RANK[f.op] > RANK[parent] || (f.op === parent && (f.op === 'and' || f.op === 'or')) || (f.op === 'imp' && parent === 'imp' && side === 'b'));
+            // A same-kind part keeps its brackets: a chain is a list of its own (association regroups it).
+            (RANK[f.op] > RANK[parent] || (f.op === 'imp' && parent === 'imp' && side === 'b'));
         const wrap = s => top || needless() ? s : open + s + close;
         switch (f.op) {
             case 'letter': return f.name.slice(2, -1).toUpperCase();
@@ -394,7 +395,7 @@ function symbolicGenerator(rand) {
             ['conjunction elimination', [O.And(A, B)], A],
             ['disjunction introduction', [A], O.Or(B, A)],
             ['disjunctive syllogism', [O.Or(A, B), neg(A)], B],
-            ['Negation Elimination', [O.Not(O.Not(A))], A],
+            ['double-negation elimination', [O.Not(O.Not(A))], A],
             ['existential introduction', [pa(F, nF)], O.Some('x', px(F, nF))],
             ['existential introduction (pair)', [O.And(pa(F, nF), pa(G, nG))], some(F, nF, G, nG)],
             ['universal elimination', [O.All('x', px(F, nF))], pa(F, nF)],
@@ -410,7 +411,6 @@ function symbolicGenerator(rand) {
             ['quantifier negation (not some)', [O.Not(some(F, nF, G, nG))], O.All('x', O.Imp(px(F, nF), neg(px(G, nG))))],
             ['quantifier negation (not everything)', [O.Not(O.All('x', px(F, nF)))], O.Some('x', neg(px(F, nF)))],
             ['quantifier negation (not something)', [O.Not(O.Some('x', px(F, nF)))], O.All('x', neg(px(F, nF)))],
-            ['double negation', [A], O.Not(O.Not(A))],
             ['De Morgan (and)', [O.Not(O.And(A, B))], O.Or(neg(A), neg(B))],
             ['De Morgan (or)', [O.Not(O.Or(A, B))], O.And(neg(A), neg(B))],
             ['De Morgan (back)', [O.And(neg(A), neg(B))], O.Not(O.Or(A, B))],
@@ -421,7 +421,7 @@ function symbolicGenerator(rand) {
             ['exportation', [O.Imp(O.And(A, B), C)], O.Imp(A, O.Imp(B, C))],
             ['distribution', [O.And(A, O.Or(B, C))], O.Or(O.And(A, B), O.And(A, C))],
             ['distribution (or)', [O.Or(A, O.And(B, C))], O.And(O.Or(A, B), O.Or(A, C))],
-            ['tautology', [O.Or(A, A)], A],
+            ['constructive dilemma (A or A)', [O.Imp(A, A), O.Imp(A, A), O.Or(A, A)], A],
             ['conversion (E)', [all(F, false, G, true)], all(G, false, F, true)],
             ['conversion (I)', [some(F, false, G, false)], some(G, false, F, false)],
             ['contraposition', [all(F, nF, G, nG)], O.All('x', O.Imp(neg(px(G, nG)), neg(px(F, nF))))],
@@ -654,8 +654,11 @@ const makeEnglish = (function () {
             if (r < 0.85) return quant();
             return vpJoin();
         }
+        // A denial in front takes in all of a junction, or a conditional, when the
+        // words say so ("both", "either", the condition first); otherwise it is flagged.
+        const whole = c => c.junction === 'and' ? 'both ' + c.text : c.junction === 'or' ? 'either ' + c.text : c.post ? 'if ' + c.post[0].text + ', then ' + c.post[1].text : c.text;
         const denial = c => c.neg && chance(0.6) ? c.neg() :
-            { text: c.negs && c.negs.length && chance(0.8) ? pick(c.negs) : 'it is not the case that ' + c.text, f: O.Not(c.f), kind: 'simple', negs: [c.text], negated: true };
+            { text: c.negs && c.negs.length && chance(0.8) ? pick(c.negs) : 'it is not the case that ' + whole(c), f: O.Not(c.f), kind: 'simple', negs: [c.text], negated: true };
 
         // ---- compounds ----
         const wide = c => /^(?:it is not the case that|it is false that) /.test(c.text) || c.kind === 'vp' || / (?:and|or|nor) /.test(c.text);
@@ -664,22 +667,22 @@ const makeEnglish = (function () {
             { text: 'if ' + a.text + ', ' + b.text, f: O.Imp(a.f, b.f) }
         ]) : wide(a) ? pick([
             { text: 'if ' + a.text + ', then ' + b.text, f: O.Imp(a.f, b.f) },
-            { text: b.text + ' if ' + a.text, f: O.Imp(a.f, b.f) },
-            { text: b.text + ' provided that ' + a.text, f: O.Imp(a.f, b.f) }
+            { text: b.text + ' if ' + a.text, f: O.Imp(a.f, b.f), post: [a, b] },
+            { text: b.text + ' provided that ' + a.text, f: O.Imp(a.f, b.f), post: [a, b] }
         ]) : pick([
             { text: 'if ' + a.text + ', then ' + b.text, f: O.Imp(a.f, b.f) },
             { text: 'if ' + a.text + ', ' + b.text, f: O.Imp(a.f, b.f) },
-            { text: b.text + ' if ' + a.text, f: O.Imp(a.f, b.f) },
-            { text: a.text + ' only if ' + b.text, f: O.Imp(a.f, b.f) },
-            { text: b.text + ' provided that ' + a.text, f: O.Imp(a.f, b.f) }
+            { text: b.text + ' if ' + a.text, f: O.Imp(a.f, b.f), post: [a, b] },
+            { text: a.text + ' only if ' + b.text, f: O.Imp(a.f, b.f), post: [a, b] },
+            { text: b.text + ' provided that ' + a.text, f: O.Imp(a.f, b.f), post: [a, b] }
         ]);
         const disj = (a, b) => wide(a) ? { text: 'either ' + a.text + ' or ' + b.text, f: O.Or(a.f, b.f) } : pick([
             { text: 'either ' + a.text + ' or ' + b.text, f: O.Or(a.f, b.f) },
-            { text: a.text + ' or ' + b.text, f: O.Or(a.f, b.f) },
+            { text: a.text + ' or ' + b.text, f: O.Or(a.f, b.f), junction: 'or' },
             { text: a.text + ' unless ' + b.text, f: O.Or(a.f, b.f) }
         ]);
         const conj = (a, b) => wide(a) ? { text: 'both ' + a.text + ' and ' + b.text, f: O.And(a.f, b.f) } : pick([
-            { text: a.text + ' and ' + b.text, f: O.And(a.f, b.f) },
+            { text: a.text + ' and ' + b.text, f: O.And(a.f, b.f), junction: 'and' },
             { text: 'both ' + a.text + ' and ' + b.text, f: O.And(a.f, b.f) }
         ]);
         const iff = (a, b) => wide(a) && !wide(b) ? iff(b, a) : pick([
@@ -720,7 +723,7 @@ const makeEnglish = (function () {
                         const first = / and is \w+$/.test(v.text) ? v.text.replace(/ and is \w+$/, '') : v.text.replace(/ is (?:both )?(\w+) and \w+$/, ' is $1');
                         return ['conjunction elimination (predicates)', [v], { text: first, f: v.f.a }]; },
                 () => ['disjunction introduction', [A], { text: 'either ' + A.text + ' or ' + B.text, f: O.Or(A.f, B.f) }],
-                () => { if (A.negated) return ['conjunction introduction', [A, B], conj(A, B)]; const nA = denial(A); return ['Negation Elimination', [{ text: 'it is not the case that ' + nA.text, f: O.Not(nA.f) }], A]; },
+                () => { if (A.negated) return ['conjunction introduction', [A, B], conj(A, B)]; const nA = denial(A); return ['double-negation elimination', [{ text: 'it is not the case that ' + nA.text, f: O.Not(nA.f) }], A]; },
                 () => { const p = pick(pool.adjs.concat(pool.verbs)); return ['existential introduction', [{ text: name + ' is ' + S.an + ' ' + S.sg + ' and ' + name + ' ' + vpSg(p, false), f: O.And(P(S, name), P(p, name)) }], { text: pick(['some ' + S.sg + ' ' + vpSg(p, false), 'at least one ' + S.sg + ' ' + vpSg(p, false)]), f: O.Some('x', O.And(P(S, 'x'), P(p, 'x'))) }]; },
                 () => { const p = pick(pool.adjs.concat(pool.verbs)); return ['existential introduction (something)', [{ text: name + ' ' + vpSg(p, false), f: P(p, name) }], { text: 'something ' + vpSg(p, false), f: O.Some('x', P(p, 'x')) }]; },
                 () => { const p = pick(pool.adjs.concat(pool.verbs)); return ['universal elimination', [{ text: 'everything ' + vpSg(p, false), f: O.All('x', P(p, 'x')) }], { text: name + ' ' + vpSg(p, false), f: P(p, name) }]; },
@@ -824,10 +827,10 @@ const moreEnglish = (function () {
         // Objects: "owns a car" / "owns no car" / "does not own any car";
         // "knows something" / "knows nothing" / "does not know anything".
         const OBJECTS = [
-            { s: 'owns', base: 'own', prop: '~own car', pos: 'a car', npi: 'owns any car', some: 'some car', negs: [['owns no car', 'own no car'], ['does not own any car', 'do not own any car'], ['does not own a car', 'do not own a car'], ["doesn't own any car", "don't own any car"]] },
+            { s: 'owns', base: 'own', prop: '~own car', pos: 'a car', npi: 'owns any car', some: 'some car', negs: [['owns no car', 'own no car'], ['does not own any car', 'do not own any car'], ['does not own a single car', 'do not own a single car'], ["doesn't own any car", "don't own any car"]] },
             { s: 'knows', base: 'know', prop: '~know something', pos: 'something', npi: 'knows anything', some: 'something', negs: [['knows nothing', 'know nothing'], ['does not know anything', 'do not know anything'], ["doesn't know anything", "don't know anything"]] },
             { s: 'sees', base: 'see', prop: '~see someone', pos: 'someone', npi: 'sees anyone', some: 'someone', negs: [['sees no one', 'see no one'], ['does not see anyone', 'do not see anyone']] },
-            { s: 'meets', base: 'meet', prop: '~meet somebody', pos: 'somebody', npi: 'meets anybody', some: 'somebody', negs: [['meets nobody', 'meet nobody'], ['does not meet anybody', 'do not meet anybody']] }
+            { s: 'meets', base: 'meet', prop: '~meet someone', pos: 'somebody', npi: 'meets anybody', some: 'somebody', negs: [['meets nobody', 'meet nobody'], ['does not meet anybody', 'do not meet anybody']] }
         ];
         const objClaim = (name, o, neg) => neg
             ? { text: name + ' ' + pick(o.negs)[0], f: O.Not(P({ prop: o.prop }, name)) }
@@ -854,8 +857,8 @@ const moreEnglish = (function () {
                 () => ['objects: modus tollens', [{ text: 'if ' + X + ' ' + o.s + ' ' + o.pos + ', then ' + X + ' ' + sg(p, false), f: O.Imp(P({ prop: o.prop }, X), P(p, X)) }, { text: X + ' ' + sg(p, true), f: O.Not(P(p, X)) }], objClaim(X, o, true)],
                 () => ['objects: no ... any', [{ text: 'no ' + S.sg + ' ' + o.npi, f: O.All('x', O.Imp(P(S, 'x'), O.Not(P({ prop: o.prop }, 'x')))) },
                     { text: X + ' is ' + S.an + ' ' + S.sg, f: P(S, X) }], objClaim(X, o, true)],
-                () => ['fallacy: not ... some', [opaque('notsome', X + ' does not ' + o.base + ' ' + o.some)], { text: 'it is not the case that ' + X + ' ' + o.s + ' ' + o.some, f: O.Not(P({ prop: '~' + o.base + ' ' + o.some }, X)) }],
-                () => ['fallacy: free choice any', [{ text: 'if ' + X + ' can not beat a player, then ' + X + ' is weak', f: O.Imp(O.Not(P({ prop: '~can beat player' }, X)), P({ prop: '=weak' }, X)) }, { text: X + ' is not weak', f: O.Not(P({ prop: '=weak' }, X)) }],
+                () => ['fallacy: not ... some', [opaque('notsome', X + ' does not ' + o.base + ' ' + o.some)], { text: 'it is not the case that ' + X + ' ' + o.s + ' ' + o.some, f: O.Not(P({ prop: o.prop }, X)) }],
+                () => ['fallacy: free choice any', [{ text: 'if ' + X + ' can not beat any player, then ' + X + ' is weak', f: O.Imp(O.Not(P({ prop: '~can beat player' }, X)), P({ prop: '=weak' }, X)) }, { text: X + ' is not weak', f: O.Not(P({ prop: '=weak' }, X)) }],
                     { text: X + ' can beat any player', f: P({ prop: '~can beat any player' }, X) }],
                 // modals
                 () => ['modal: can ... or', [{ text: X + ' can ' + v1.base + ' or ' + v2.base, f: O.Or(P({ prop: '~can ' + v1.base }, X), P({ prop: '~can ' + v2.base }, X)) }, { text: X + ' cannot ' + v1.base, f: O.Not(P({ prop: '~can ' + v1.base }, X)) }], { text: X + ' can ' + v2.base, f: P({ prop: '~can ' + v2.base }, X) }],
@@ -897,7 +900,9 @@ const moreEnglish = (function () {
             const cap = G.cap;
             const nA = G.denial(A);
             const r = rand();
-            if (r < 0.25) return { label: 'weak: ' + words, kind: 'weak-objection', premises: [cap(words + ' ' + A.text)], parent: cap(A.text), certify: true };
+            // Alone, it only says that its box has not been established: a
+            // bare challenge, no argument.
+            if (r < 0.25) return { label: 'weak: ' + words, kind: 'weak-objection', premises: [cap(words + ' ' + A.text)], parent: cap(A.text), certify: false, bare: true };
             if (r < 0.35) return { label: 'weak (denial side): ' + words, kind: 'weak-objection', premises: [cap(words + ' ' + A.text)], parent: cap(nA.text), certify: whether, soft: true };
             if (r < 0.45) return { label: 'weak, other claim: ' + words, kind: 'weak-objection', premises: [cap(words + ' ' + A.text)], parent: cap(B.text), certify: false, soft: true };
             if (r < 0.55) return { label: 'weak as objection: ' + words, kind: 'objection', premises: [cap(words + ' ' + A.text)], parent: cap(A.text), certify: false };
@@ -924,16 +929,23 @@ const moreEnglish = (function () {
                 }
             }
             // counterfactuals
+            // [antecedent, its denial, consequent, its denial] as a
+            // counterfactual says them, then as plain claims: the "would"
+            // belongs to the "if" (the user, 2026-09-24).
             const CF = [
-                ['it had rained', 'it had not rained', 'the match would have been cancelled', 'the match would not have been cancelled'],
-                ['Poe had been a raven', 'Poe had not been a raven', 'Poe would have been black', 'Poe would not have been black'],
-                ['the vase had been dropped', 'the vase had not been dropped', 'the vase would have broken', 'the vase would not have broken']
+                ['it had rained', 'it had not rained', 'the match would have been cancelled', 'the match would not have been cancelled',
+                    'it rained', 'it did not rain', 'the match was cancelled', 'the match was not cancelled'],
+                ['Poe had been a raven', 'Poe had not been a raven', 'Poe would have been black', 'Poe would not have been black',
+                    'Poe was a raven', 'Poe was not a raven', 'Poe was black', 'Poe was not black'],
+                ['the vase had been dropped', 'the vase had not been dropped', 'the vase would have broken', 'the vase would not have broken',
+                    'the vase was dropped', 'the vase was not dropped', 'the vase broke', 'the vase did not break']
             ];
-            const [c, nc, q, nq] = pick(CF);
+            const [c, nc, q, nq, cP, ncP, qP, nqP] = pick(CF);
             const [c2, , q2, nq2] = pick(CF.filter(x => x[0] !== c));
             const k = rand();
-            if (k < 0.2) return { label: 'counterfactual modus ponens', kind: 'support', premises: [cap('if ' + c + ', then ' + q), cap(c)], parent: cap(q), certify: true };
-            if (k < 0.4) return { label: 'counterfactual modus tollens', kind: 'support', premises: [cap('if ' + c + ', then ' + q), cap(nq)], parent: cap(nc), certify: true };
+            if (k < 0.2) return { label: 'counterfactual modus ponens', kind: 'support', premises: [cap('if ' + c + ', then ' + q), cap(cP)], parent: cap(qP), certify: true };
+            if (k < 0.3) return { label: 'counterfactual modus tollens', kind: 'support', premises: [cap('if ' + c + ', then ' + q), cap(nqP)], parent: cap(ncP), certify: true };
+            if (k < 0.4) return { label: 'counterfactual modus ponens to a "would" said alone', kind: 'support', premises: [cap('if ' + c + ', then ' + q), cap(cP)], parent: cap(q), certify: false };
             if (k < 0.55) return { label: 'counterfactual transposition', kind: 'support', premises: [cap('if ' + c + ', then ' + q)], parent: cap('if ' + nq + ', then ' + nc), certify: false };
             if (k < 0.7) return { label: 'counterfactual material implication', kind: 'support', premises: [cap('either ' + nc + ' or ' + q)], parent: cap('if ' + c + ', then ' + q), certify: false };
             if (k < 0.85) return { label: 'counterfactual exportation', kind: 'support', premises: [cap('if ' + c + ' and ' + c2 + ', then ' + q)], parent: cap('if ' + c + ', then if ' + c2 + ', then ' + q), certify: false };
@@ -951,9 +963,10 @@ const moreEnglish = (function () {
 // objection, W weak objection.
 const HARD_CASES = [
     // ---- "any", "some" and polarity ----
-    ['no', 'S', ['If Poe can not beat a player, then Poe is weak', 'Poe is not weak'], 'Poe can beat any player', 'free-choice "any" is not the "a" a denial takes'],
-    ['modus tollens', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat a player', '"any" in a condition is "a"'],
-    ['modus tollens', 'S', ['If Poe can beat a player, then Poe is a champion', 'Poe is not a champion'], 'Poe cannot beat a player', 'MT with "a player"'],
+    ['no', 'S', ['If Poe can not beat any player, then Poe is weak', 'Poe is not weak'], 'Poe can beat any player', 'free-choice "any" is not the "any" a denial takes'],
+    ['modus tollens', 'S', ['If Poe can not beat a player, then Poe is weak', 'Poe is not weak'], 'It is not the case that Poe can not beat a player', '"can not beat a player" is flagged and left whole: modus tollens holds of it as it stands'],
+    ['modus tollens', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat any player', '"any" in a condition is "a"'],
+    ['modus tollens', 'S', ['If Poe can beat a player, then Poe is a champion', 'Poe is not a champion'], 'Poe cannot beat any player', 'MT with "a player"'],
     ['no', 'O', ['Poe does not like some raven'], 'Poe likes some raven', '"not ... some" does not deny "some"'],
     ['yes', 'O', ['Poe does not own any car'], 'Poe owns a car', '"not ... any" denies "a"'],
     ['yes', 'O', ['Poe owns no car'], 'Poe owns a car', '"no" before an object denies "a"'],
@@ -989,11 +1002,11 @@ const HARD_CASES = [
     ['conjunction elimination', 'S', ['No raven or crow is white'], 'No crow is white', 'nouns joined under "no"'],
 
     // ---- indefinites, generics, numbers ----
-    ['direct denial', 'O', ['A raven is not black'], 'A raven is black', 'an indefinite and its denial, read as a generic\'s are'],
+    ['yes', 'O', ['A raven is not black'], 'A raven is black', 'an indefinite and its denial (a bare denial)'],
     ['no', 'O', ['One raven is not black'], 'One raven is black', '"one raven"'],
     ['no', 'S', ['Ravens are black', 'Poe is a raven'], 'Poe is black', 'a generic has exceptions'],
     ['no', 'S', ['A raven is black', 'Poe is a raven'], 'Poe is black', 'an indefinite'],
-    ['direct denial', 'O', ['Ravens are not black'], 'Ravens are black', 'a generic and its denial (as textbooks read them)'],
+    ['yes', 'O', ['Ravens are not black'], 'Ravens are black', 'a generic and its denial (a bare denial)'],
     ['no', 'S', ['Exactly one raven is black'], 'Some raven is black', '"exactly one" is not read'],
     ['no', 'S', ['Two ravens are black', 'All ravens are birds'], 'Two birds are black', 'numbers are not read'],
     ['no', 'S', ['Only one raven is black', 'Poe is black'], 'Poe is a one raven', '"only one" is not "only"'],
@@ -1010,8 +1023,13 @@ const HARD_CASES = [
 
     // ---- counterfactuals ----
     ['no', 'S', ['If it had rained, then the match would have been cancelled'], 'If the match would not have been cancelled, then it had not rained', 'counterfactuals do not transpose'],
-    ['modus ponens', 'S', ['If it had rained, then the match would have been cancelled', 'It had rained'], 'The match would have been cancelled', 'counterfactual modus ponens'],
-    ['modus tollens', 'S', ['If it had rained, then the match would have been cancelled', 'The match would not have been cancelled'], 'It had not rained', 'counterfactual modus tollens'],
+    ['modus ponens', 'S', ['If it had rained, then the match would have been cancelled', 'It rained'], 'The match was cancelled', 'counterfactual modus ponens: the "would" belongs to the "if"'],
+    ['modus tollens', 'S', ['If it had rained, then the match would have been cancelled', 'The match was not cancelled'], 'It did not rain', 'counterfactual modus tollens'],
+    ['no', 'S', ['If it had rained, then the match would have been cancelled', 'It rained'], 'The match would have been cancelled', 'a "would" said alone is not what the conditional gives'],
+    ['modus tollens', 'S', ['If God existed, there would be no evil', 'There is evil'], 'God does not exist', 'a present counterfactual: "existed" is the present'],
+    ['amb', 'S', ['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], 'Mary did not know everything', '... the past a reading, offered'],
+    ['modus ponens', 'S', ['If Mary were rich, Mary would be happy', 'Mary is rich'], 'Mary is happy', '"were" is "is"'],
+    ['no', 'S', ['Mary would not be surprised'], 'Mary is not surprised', 'said alone, "would" stays'],
     ['no', 'S', ['If it had rained and it had been cold, then it would have snowed'], 'If it had rained, then if it had been cold, then it would have snowed', 'counterfactuals do not export'],
     ['no', 'S', ['If Poe were a raven, then Poe would be black', 'If Poe were black, then Poe would be happy'], 'If Poe were a raven, then Poe would be happy', 'counterfactuals do not chain (and the wording differs anyway)'],
     ['no', 'S', ['If it would rain, then it would snow', 'If it would snow, then it would be cold'], 'If it would rain, then it would be cold', 'counterfactual hypothetical syllogism'],
@@ -1024,7 +1042,8 @@ const HARD_CASES = [
     ['biconditional elimination', 'S', ['Poe flies if, and only if, it is warm', 'It is warm'], 'Poe flies', '"if, and only if,"'],
     ['amb', 'S', ['If it rains, then the ground is wet, and the match is off'], 'The match is off', '"and" after the comma'],
     ['modus ponens', 'S', ['If it rains, then the ground is wet and the match is off', 'It rains'], 'The ground is wet and the match is off', 'no comma: all consequent'],
-    ['De Morgan’s laws', 'S', ['It is not the case that it rains or it snows'], 'It does not rain and it does not snow', '"it is not the case that" takes in the "or"'],
+    ['amb', 'S', ['It is not the case that it rains or it snows'], 'It does not rain and it does not snow', '"it is not the case that" before an "or": all of it, or only its first part -- flagged'],
+    ['De Morgan’s laws', 'S', ['It is not the case that either it rains or it snows'], 'It does not rain and it does not snow', '"either" says the denial takes in the "or"'],
     ['conjunction elimination', 'S', ['Poe thinks and is wise'], 'Poe is wise', 'verb phrases joined after a plain verb'],
     ['no', 'O', ['Not surprisingly, Poe is black'], 'Surprisingly, Poe is black', '"not surprisingly" denies nothing'],
     ['no', 'S', ['Not necessarily, Poe is black'], 'Poe is not black', '"not necessarily" is not "not"'],
@@ -1034,54 +1053,59 @@ const HARD_CASES = [
     ['no', 'S', ['Poe is black, and so is Fido'], 'Poe is black', 'a clause cut short leaves its sentence unread'],
 
     // ---- formulas ----
-    ['no', 'S', ['∀x∀x∀y R(x,y)'], '∀z∀z∀z R(z,z)', 'bound variables are not confused'],
+    ['universal elimination under ∀∀∀', 'S', ['∀x∀x∀y R(x,y)'], '∀z∀z∀z R(z,z)', 'bound variables are not confused: the outer quantifiers are vacuous, so this is valid'],
+    ['no', 'S', ['∀x∃x∀y R(x,y)'], '∀z R(z,z)', 'bound variables are not confused: the inner ∃x binds the x of R'],
+    ['no', 'S', ['∀x∀y∃x R(x,y)'], '∀z R(z,z)', 'bound variables are not confused: the innermost ∃x binds the x of R'],
     ['modus ponens', 'S', ['∀x Fx → ∃x Gx', '∀x Fx'], '∃x Gx', 'a later quantifier over the same variable'],
     ['disjunctive syllogism', 'S', ['(P ∨ Q) ∨ R', '¬(P ∨ Q)'], 'R', 'a denial of two disjuncts at once'],
-    ['disjunctive syllogism', 'S', ['It rains or it snows or the match is off', 'It is not the case that it rains or it snows'], 'The match is off', 'a denial of two disjuncts at once, in English'],
-    ['tautology', 'S', ['Fb v Fb'], 'Fb', '"Fb v Fb"'],
+    ['disjunctive syllogism', 'S', ['It rains or it snows or the match is off', 'It is not the case that either it rains or it snows'], 'The match is off', 'a denial of two disjuncts at once, in English'],
+    ['idempotence', 'S', ['Fb v Fb'], 'Fb', '"Fb v Fb": idempotence, an extension on by default'],
+    ['proof by cases', 'S', ['Fb → Fb', 'Fb → Fb', 'Fb v Fb'], 'Fb', '"Fb v Fb" by a dilemma on "Fb → Fb"'],
     ['universal elimination', 'S', ['(x)Hx'], 'Ha', 'Copi "(x)Hx"'],
     ['universal elimination', 'S', ['∀xFx'], 'Fa', '"∀xFx" with no space'],
 
     // ---- weak objections: what has not been established ----
-    ['direct challenge', 'W', ['We cannot conclude that God exists'], 'God exists', '"we cannot conclude that"'],
-    ['direct challenge', 'W', ["We can't conclude that God exists"], 'God exists', '"we can\'t conclude that"'],
-    ['direct challenge', 'W', ['It cannot be concluded that God exists'], 'God exists', '"it cannot be concluded that"'],
-    ['direct challenge', 'W', ['It does not follow that God exists'], 'God exists', '"it does not follow that"'],
-    ['direct challenge', 'W', ['There is no evidence that God exists'], 'God exists', '"there is no evidence that"'],
-    ['direct challenge', 'W', ['We have no reason to believe that God exists'], 'God exists', '"we have no reason to believe that"'],
-    ['direct challenge', 'W', ['It has yet to be shown that God exists'], 'God exists', '"it has yet to be shown that"'],
-    ["direct challenge", 'W', ["It's not been shown that God exists"], 'God exists', '"it\'s not been shown"'],
-    ['direct challenge', 'W', ['Nobody has shown that God exists'], 'God exists', '"nobody has shown that"'],
-    ['direct challenge', 'W', ['This does not show that God exists'], 'God exists', '"this does not show that"'],
-    ['direct challenge', 'W', ['The argument fails to establish that God exists'], 'God exists', '"the argument fails to establish that"'],
-    ['direct challenge', 'W', ['It is not obvious that God exists'], 'God exists', '"it is not obvious that"'],
-    ['direct challenge', 'W', ['It is doubtful that God exists'], 'God exists', '"it is doubtful that"'],
-    ['direct challenge', 'W', ['It is unclear whether God exists'], 'God exists', '"it is unclear whether"'],
-    ['direct challenge', 'W', ['It is unclear whether God exists'], 'God does not exist', '"whether": neither side is established'],
-    ['direct challenge', 'W', ['It is an open question whether God exists'], 'God does not exist', '"an open question whether"'],
-    ['direct challenge', 'W', ['It remains to be seen whether God exists'], 'God exists', '"it remains to be seen whether"'],
-    ['direct challenge', 'W', ['For all we know, God does not exist'], 'God exists', '"for all we know, not P"'],
-    ['direct challenge', 'W', ['That God exists has not been established'], 'God exists', '"that P has not been established"'],
+    // Alone, each only says that its box has not been established: a bare
+    // challenge, no argument (the user, 2026-09-24).
+    ['bare', 'W', ['We cannot conclude that God exists'], 'God exists', '"we cannot conclude that"'],
+    ['bare', 'W', ["We can't conclude that God exists"], 'God exists', '"we can\'t conclude that"'],
+    ['bare', 'W', ['It cannot be concluded that God exists'], 'God exists', '"it cannot be concluded that"'],
+    ['bare', 'W', ['It does not follow that God exists'], 'God exists', '"it does not follow that"'],
+    ['bare', 'W', ['There is no evidence that God exists'], 'God exists', '"there is no evidence that"'],
+    ['bare', 'W', ['We have no reason to believe that God exists'], 'God exists', '"we have no reason to believe that"'],
+    ['bare', 'W', ['It has yet to be shown that God exists'], 'God exists', '"it has yet to be shown that"'],
+    ["bare", 'W', ["It's not been shown that God exists"], 'God exists', '"it\'s not been shown"'],
+    ['bare', 'W', ['Nobody has shown that God exists'], 'God exists', '"nobody has shown that"'],
+    ['bare', 'W', ['This does not show that God exists'], 'God exists', '"this does not show that"'],
+    ['bare', 'W', ['The argument fails to establish that God exists'], 'God exists', '"the argument fails to establish that"'],
+    ['bare', 'W', ['It is not obvious that God exists'], 'God exists', '"it is not obvious that"'],
+    ['bare', 'W', ['It is doubtful that God exists'], 'God exists', '"it is doubtful that"'],
+    ['bare', 'W', ['It is unclear whether God exists'], 'God exists', '"it is unclear whether"'],
+    ['bare', 'W', ['It is unclear whether God exists'], 'God does not exist', '"whether": neither side is established'],
+    ['bare', 'W', ['It is an open question whether God exists'], 'God does not exist', '"an open question whether"'],
+    ['bare', 'W', ['It remains to be seen whether God exists'], 'God exists', '"it remains to be seen whether"'],
+    ['bare', 'W', ['For all we know, God does not exist'], 'God exists', '"for all we know, not P"'],
+    ['bare', 'W', ['That God exists has not been established'], 'God exists', '"that P has not been established"'],
     ['no', 'W', ['We cannot conclude that God exists'], 'God does not exist', '"that": only P is not established'],
     ['no', 'O', ['We cannot conclude that God exists'], 'God exists', 'an objection needs a denial'],
     ['no', 'S', ['It has not been shown that God exists'], 'God does not exist', 'ignorance is no disproof'],
-    ['no', 'W', ["There is no evidence that some crows aren't wise"], 'Some crow is not wise', 'a claim in other words is not the box, even when not established'],
-    ["direct challenge","W",["That God exists is not warranted"],"God exists","\"that P is not warranted\""],
-    ["direct challenge","W",["We are not warranted in believing that God exists"],"God exists","\"we are not warranted in believing that\""],
-    ["direct challenge","W",["It is not warranted to conclude that God exists"],"God exists","\"it is not warranted to conclude that\""],
-    ["direct challenge","W",["There is insufficient warrant for believing that God exists"],"God exists","\"there is insufficient warrant for believing that\""],
-    ["direct challenge","W",["We lack warrant for concluding that God exists"],"God exists","\"we lack warrant for concluding that\""],
-    ["direct challenge","W",["There is not sufficient warrant for concluding that God exists"],"God exists","\"there is not sufficient warrant for\""],
-    ["direct challenge","W",["Warrant for believing that God exists is lacking"],"God exists","\"warrant for believing that P is lacking\""],
-    ["direct challenge","W",["The belief that God exists is not warranted"],"God exists","\"the belief that P is not warranted\""],
-    ["direct challenge","W",["We can't necessarily conclude that God exists"],"God exists","\"we can't necessarily conclude that\""],
-    ["direct challenge","W",["Nothing shows that God exists"],"God exists","\"nothing shows that\""],
-    ["direct challenge","W",["The jury is still out on whether God exists"],"God does not exist","\"the jury is still out on whether\""],
-    ["direct challenge","W",["Perhaps God does not exist"],"God exists","\"perhaps not P\""],
-    ["direct challenge","W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\""],
-    ["direct challenge","W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\""],
-    ["direct challenge","W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\""],
-    ["direct challenge","W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\""],
+    ['bare', 'W', ["There is no evidence that some crows aren't wise"], 'Some crow is not wise', 'a claim in other quantifier words is the box: quantifier words are logic'],
+    ["bare", "W",["That God exists is not warranted"],"God exists","\"that P is not warranted\""],
+    ["bare", "W",["We are not warranted in believing that God exists"],"God exists","\"we are not warranted in believing that\""],
+    ["bare", "W",["It is not warranted to conclude that God exists"],"God exists","\"it is not warranted to conclude that\""],
+    ["bare", "W",["There is insufficient warrant for believing that God exists"],"God exists","\"there is insufficient warrant for believing that\""],
+    ["bare", "W",["We lack warrant for concluding that God exists"],"God exists","\"we lack warrant for concluding that\""],
+    ["bare", "W",["There is not sufficient warrant for concluding that God exists"],"God exists","\"there is not sufficient warrant for\""],
+    ["bare", "W",["Warrant for believing that God exists is lacking"],"God exists","\"warrant for believing that P is lacking\""],
+    ["bare", "W",["The belief that God exists is not warranted"],"God exists","\"the belief that P is not warranted\""],
+    ["bare", "W",["We can't necessarily conclude that God exists"],"God exists","\"we can't necessarily conclude that\""],
+    ["bare", "W",["Nothing shows that God exists"],"God exists","\"nothing shows that\""],
+    ["bare", "W",["The jury is still out on whether God exists"],"God does not exist","\"the jury is still out on whether\""],
+    ["bare", "W",["Perhaps God does not exist"],"God exists","\"perhaps not P\""],
+    ["bare", "W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\""],
+    ["bare", "W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\""],
+    ["bare", "W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\""],
+    ["bare", "W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\""],
     ["amb","O",["God does not necessarily exist"],"God necessarily exists","\"not necessarily\": the modal sense is flagged"],
     ["amb","O",["Poe is not necessarily black"],"Poe is necessarily black","\"is not necessarily\": the modal sense is flagged"],
     ["no","O",["Poe is not necessarily guilty"],"Poe is guilty","\"not necessarily\" denies nothing"],
@@ -1101,7 +1125,7 @@ const HARD_CASES = [
     ["a premise not established","S",["It has not been shown that there is no infinite regress"],"We cannot conclude from the premises that everything has a cause and that there is no infinite regress that God exists","\"from the premises that P1 and that P2\""],
     ["a premise not established","S",["It has not been shown that there is no infinite regress"],"'Everything has a cause' and 'There is no infinite regress' do not show that God exists","\"P1 and P2 do not show that P\""],
     ["no","S",["It has not been shown that there is no infinite regress"],"God exists does not follow from 'Everything has a cause' and 'There is no infinite regress'","\"does not follow from\" says invalid"],
-    ["direct challenge","W",["We can't conclude that consciousness arises from the brain"],"Consciousness arises from the brain","a claim with \"from\" in it is not a claim about an argument"],
+    ["bare", "W",["We can't conclude that consciousness arises from the brain"],"Consciousness arises from the brain","a claim with \"from\" in it is not a claim about an argument"],
     ["no","O",["It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'"],"We can't conclude that God exists","denying a claim about one argument is no denial of the outright claim"],
     ["no","S",["If the universe is caused, then we can't conclude that God exists","It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'"],"The universe is not caused","modus tollens: a claim about one argument is not the outright claim it resembles"],
     ['modus ponens', 'W', ['If the evidence is circumstantial, then we cannot conclude that Poe is guilty', 'The evidence is circumstantial'], 'Poe is guilty', 'derived by modus ponens'],
@@ -1113,8 +1137,12 @@ const HARD_CASES = [
 const VC = { C: 'God exists' };
 const V_S = () => ({ id: 'S', type: 'support', texts: ['If the universe is caused, then God exists', 'The universe is caused'], collapsed: [], children: [] });
 const V_O = () => ({ id: 'O', type: 'objection', texts: ['If evil exists, then God does not exist', 'Evil exists'], collapsed: [], children: [] });
-const V_W = (id, text) => ({ id, type: 'weak-objection', texts: [text], collapsed: [], children: [] });
-const V_R = (id, text) => ({ id, type: 'objection', texts: [text], collapsed: [], children: [] });
+// A weak objection that argues (a bare challenge is no argument).
+const V_W = (id, text) => ({ id, type: 'weak-objection', texts: ['If the evidence is thin, then ' + text.charAt(0).toLowerCase() + text.slice(1), 'The evidence is thin'],
+    collapsed: [], children: [] });
+// A rebuttal that argues for its denial (a bare denial is no argument).
+const V_R = (id, text) => ({ id, type: 'objection', texts: ['If the evidence is misleading, then ' + text.charAt(0).toLowerCase() + text.slice(1), 'The evidence is misleading'],
+    collapsed: [], children: [] });
 const V_at = (child, idx) => Object.assign(child, { targetIndex: idx });
 const V_tree = (id, texts, children, type) => ({ id, type: type || 'contention', texts, collapsed: [], x: 30000, y: 30000, children });
 const V_REL = "We can't conclude that God exists from 'If the universe is caused, then God exists' and 'The universe is caused'";
@@ -1180,7 +1208,7 @@ window.__stress = (function () {
             n++;
             var trees = [{ id: 'M' + n, type: 'contention', texts: [parent], collapsed: [], children: [{ id: 'S' + n, type: kind, texts: premises.slice(), collapsed: [], children: [] }] }];
             var s = collectDeductiveSteps(trees)[0];
-            return { rule: s.rule ? s.rule.name : null, ambiguous: s.ambiguous, why: s.why ? s.why.text : null };
+            return { rule: s.rule ? s.rule.name : null, ambiguous: s.ambiguous, why: s.why ? s.why.text : null, bare: !!s.bare, bareChallenge: !!s.bareChallenge };
         },
         derive: function (texts) { var d = deriveConclusion(texts); return d ? { rule: d.rule.name, text: d.text } : null; },
         verdict: function (trees) {
@@ -1206,7 +1234,12 @@ window.__stress = (function () {
         const groups = new Map();
         HARD_CASES.forEach(([expect, kind, premises, parent, label], i) => {
             const s = app.step(premises, parent, kinds[kind]);
-            const good = expect === 'yes' ? !!s.rule : expect === 'no' ? !s.rule : expect === 'amb' ? !s.rule && s.ambiguous : s.rule === expect;
+            // An objection that only states its box's denial is a bare denial
+            // -- no argument, but a "yes": it denies. A weak objection that only
+            // says its box has not been established is a bare challenge.
+            const good = expect === 'yes' ? !!s.rule || (kind === 'O' && s.bare) : expect === 'no' ? !s.rule && !(kind === 'O' && s.bare) && !(kind === 'W' && s.bareChallenge)
+                : expect === 'bare' ? !s.rule && (kind === 'W' ? s.bareChallenge : s.bare)
+                : expect === 'amb' ? !s.rule && s.ambiguous : s.rule === expect;
             // the sections of the list, by the comment lines they sit under
             const g = groups.get(kind) || { n: 0, bad: [] };
             g.n++;
@@ -1216,7 +1249,7 @@ window.__stress = (function () {
         const S = groups.get('S') || { n: 0, bad: [] }, Ob = groups.get('O') || { n: 0, bad: [] }, Wk = groups.get('W') || { n: 0, bad: [] };
         ok(S.bad.length === 0, 'supports: ' + S.n + ' hard cases certify, stay uncertified, or are flagged as they should', sample(S.bad));
         ok(Ob.bad.length === 0, 'objections: ' + Ob.n + ' hard cases deny or do not deny as they should', sample(Ob.bad));
-        ok(Wk.bad.length === 0, 'weak objections: ' + Wk.n + ' ways of saying a claim has not been established', sample(Wk.bad));
+        ok(Wk.bad.length === 0, 'weak objections: ' + Wk.n + ' ways of saying a claim has not been established, each alone a bare challenge', sample(Wk.bad));
     }
 
     /* ---------------- 2. formulas at random ---------------- */
@@ -1329,7 +1362,7 @@ window.__stress = (function () {
             if (!e.soft) {
                 stats.expected++;
                 const t = app.step(e.premises, e.parent, e.kind);
-                if (!!t.rule !== e.certify) stats.wrong.push(e.label + ': ' + e.premises.join(' | ') + ' => ' + e.parent + ', got ' + (t.rule || 'nothing'));
+                if (!!t.rule !== e.certify || (e.bare && !t.bareChallenge)) stats.wrong.push(e.label + ': ' + e.premises.join(' | ') + ' => ' + e.parent + ', got ' + (t.rule || (t.bareChallenge ? 'a bare challenge' : 'nothing')));
             }
         }
         ok(stats.misread.length === 0 && stats.foreign.length === 0, stats.read + ' sentences each read as what they mean (or are left whole, flagged)', sample(stats.misread.concat(stats.foreign)));

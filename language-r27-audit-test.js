@@ -120,6 +120,8 @@ try {
  const morphology=JSON.parse(fs.readFileSync('language-data/audit.json','utf8'));
  for(const {singular,plural} of morphology.nouns.filter(x=>x.disposition==='imported plural')) {
    check(rule([`All ${plural} are observable`,`Poe is a ${singular}`],'Poe is observable')==='universal-modus-ponens','noun inference: '+plural+'/'+singular);
+   // No existential import, people included (2026-09-22): "all people are P"
+   // is "∀x (person(x) → P(x))", true if there are no people.
    check(!rule([`All ${plural} are observable`],`Some ${plural} are observable`),'no existential import: '+plural);
  }
  for(const [plural,{singular}] of Object.entries(variants.nounVariants)) {
@@ -140,7 +142,7 @@ try {
  check(!rule(['~⊥'],'P'),'not bottom does not explode');
  check(!rule(['P -> ⊥'],'Q'),'conditional bottom does not explode');
  check(!rule([`We cannot conclude that ${a}`,a],'Q'),'weak objection does not explode');
- check(rule(['~P -> ⊥'],'P')==='reductio','retain classical reductio');
+ check(rule(['~P -> ⊥'],'P')==='indirect-proof','retain classical reductio, now named indirect proof');
  check(call(()=>!logicalTheorem('P v ~P') && !logicalTheorem('P -> P')),'no automatic arbitrary tautologies');
  check(errors.length===0,errors.join('; '));
  assert.equal(failures.length,0,failures.join('\n'));

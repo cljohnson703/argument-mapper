@@ -25,19 +25,82 @@ try {
  }
  check(!rule(['~~P v (~P v Q)'],'~~P -> (~P v Q)'),'opposite parity is invalid');
  check(rule(['~(P v ~P) -> (P & ~P)','(P & ~P) -> ⊥'],'~(P v ~P) -> ⊥')==='hypothetical-syllogism','excluded middle proof: HS');
- check(rule(['~(P v ~P) -> ⊥'],'P v ~P')==='reductio','excluded middle proof: reductio');
+ check(rule(['~(P v ~P) -> ⊥'],'P v ~P')==='indirect-proof','excluded middle proof: indirect proof');
+ // Excluded middle from the basis alone, every extension off: with N for
+ // ~(P v ~P), "N -> ~P", so "N -> (P v ~P)" and "N -> ~N"; ~N; P v ~P. No
+ // curried instance ("(P v ~P) -> (N -> ⊥)" is exportation's work), no absorption.
+ call(()=>{ setDeductiveRule([].concat.apply([], DEDUCTIVE_EXTENSIONS.map(g => g.rules)), false); setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "core"; })[0].rules, true); });
+ {
+  // Every line of the library's derivation (logic-r27-basis-proofs.js), checked
+  // in the app: rule instances, hypothetical syllogism, exportation, the one
+  // reductio the basis has, and Negation Elimination. The ⊥ form of reductio
+  // is derived on the way (negIntro), not assumed.
+  const N='~(P v ~P)', E='(P v ~P)', inst=t=>call(x=>{ const r=logicalTheorem(x); return r ? r.rule.id : null; },t);
+  const printN = n => n.op === 'andN' ? '(' + n.parts.map(printN).join(' ∧ ') + ')'
+    : n.op === 'not' ? '¬' + (/^(?:pred|letter|not|bottom)$/.test(n.a.op) ? printN(n.a) : '(' + printN(n.a) + ')')
+    : /^(?:and|or|imp|iff)$/.test(n.op) ? '(' + printN(n.a) + ' ' + { and: '∧', or: '∨', imp: '→', iff: '↔' }[n.op] + ' ' + printN(n.b) + ')'
+    : n.op === 'bottom' ? '⊥' : n.name;
+  const BP = require('./logic-r27-basis-proofs.js')(printN);
+  const proof = new BP.Proof(), top = new BP.Top(proof);
+  BP.lem(top, { op: 'letter', name: 'P' });
+  const bad = proof.lines.map((ln, i) => {
+    const text = printN(ln.f);
+    const got = ln.from === 'theorem' ? inst(text) : rule(ln.from.map(k => printN(proof.lines[k].f)), text);
+    return got ? null : (i + 1) + '. ' + text;
+  }).filter(Boolean);
+  check(!bad.length && proof.lines.length > 20, 'P v ~P from the basis alone, every extension off, in ' + proof.lines.length + ' lines, each certified -- ' + (bad.slice(0, 2).join(' | ') || 'all good'));
+  check(inst('(P & ~P) -> ⊥') === 'contradiction-introduction' && inst('(P -> ⊥) -> ~P') === 'def-negation',
+    'Contradiction is a rule instance of a core rule; "(P -> ⊥) -> ~P" is an axiom, half of what ¬ abbreviates');
+  check(!inst('(P v ~P) -> ('+N+' -> ⊥)'), 'a curried form, "(P v ~P) -> (N -> ⊥)", is no rule instance');
+  check(!rule(['P -> (~(P v ~P) -> ⊥)'],'~(P v ~P) -> (P -> ⊥)'),'with every extension off, the conditions of a conditional do not trade places in one step');
+ }
+ call(()=>{ state.logic = null; claimRulesCache = null; });
+ check(rule(['P -> (~(P v ~P) -> ⊥)'],'~(P v ~P) -> (P -> ⊥)')==='commutation','with the defaults, commutation lets them trade places, and the proof is shorter');
  check(rule(['P','~P'],'⊥')==='contradiction-introduction','contradiction from co-premises');
  check(!rule(['P','Q'],'⊥'),'consistent premises do not imply bottom');
- for(const t of ['~(P v ~P) -> (P & ~P)','(P & ~P) -> ⊥','~~~P -> ~P','~P -> (~P v Q)','Q -> (~P v Q)'])
+ // Rule instances come from the basis only.
+ for(const t of ['(P & ~P) -> ⊥','~~~P -> ~P','~P -> (~P v Q)','Q -> (~P v Q)','P -> (P v P)','(P & (P v P)) -> P',
+  '((P -> Q) & (Q -> R)) -> (P -> R)','((P & Q) -> R) -> (P -> (Q -> R))','(P & Q) -> (Q & P)'])
   check(call(x=>!!logicalTheorem(x),t),'logical theorem: '+t);
- for(const t of ['⊥','P','P v ~P','P -> P','(P v Q) -> (P v Q)','P -> Q','(P v Q) -> P',"We can't conclude that P",'∀x P(x)'])
+ for(const t of ['⊥','P','P v ~P','P -> P','(P v Q) -> (P v Q)','P -> Q','(P v Q) -> P',"We can't conclude that P",'∀x P(x)','∀x (F(x) → F(x))',
+  '(P & Q) -> (P & Q)'])
   check(call(x=>!logicalTheorem(x),t),'no automatic warrant: '+t);
+ // Since r27.30, a conditional that states the step of any switched-on rule
+ // needs no support -- not only the core ones.
+ for(const [t,id] of [['~(P v ~P) -> (~P & ~~P)','de-morgan'],['~(P -> P) -> (P & ~P)','negated-conditional'],
+  [' ((P -> Q) & ~Q) -> ~P'.trim(),'modus-tollens'],['((P v Q) & ~P) -> Q','disjunctive-syllogism']])
+  check(call(x=>logicalTheorem(x)?.rule.id,t)===id,'a rule instance while its rule is on: '+t);
+ check(call(()=>{ setDeductiveRule(['de-morgan'], false);
+  const off = !logicalTheorem('~(P v ~P) -> (~P & ~~P)'); setDeductiveRule(['de-morgan'], true); return off; }),
+  'switch the rule off and its conditional needs support again');
+ // "(P -> ⊥) -> ~P" is an axiom now: half of what ¬ abbreviates.
+ check(call(x=>logicalTheorem(x)?.rule.id,'(P -> ⊥) -> ~P')==='def-negation','the ¬ definition is an axiom, either way round');
+ // Since r27.30 a conditional stating any switched-on rule's step needs no
+ // support: these state indirect proof and consequentia mirabilis.
+ check(call(x=>logicalTheorem(x)?.rule.id,'(~P -> ⊥) -> P')==='indirect-proof','indirect proof, as a rule instance');
+ check(call(x=>logicalTheorem(x)?.rule.id,'(P -> ~P) -> ~P')==='consequentia-mirabilis','consequentia mirabilis, as a rule instance');
+ // Absorption is an extension now, so its instance is no automatic warrant;
+ // with it on, it still takes its step. "P -> P" is proved from the basis in
+ // six lines, Contradiction to Negation Elimination (logic-r27-basis-test.js).
+ check(call(x=>logicalTheorem(x)?.rule.id,'(P -> Q) -> (P -> (P & Q))')==='absorption' && rule(['P -> Q'],'P -> (P & Q)')==='absorption',
+  'absorption is a familiar step now, and its conditional states that step, so it needs no support while the rule is on');
+ check(call(x=>!!logicalTheorem(x),'(P & ~P) -> ⊥') && rule(['(P & ~P) -> ⊥'],'P -> (~P -> ⊥)')==='exportation' &&
+  rule(['P -> (~P -> ⊥)','(~P -> ⊥) -> ~~P'],'P -> ~~P')==='hypothetical-syllogism' &&
+  rule(['P -> ~~P','~~P -> P'],'P -> P')==='hypothetical-syllogism',
+  'P -> P proved from rule instances: Contradiction, exportation, the derived "(~P -> ⊥) -> ~~P", Negation Elimination, hypothetical syllogism');
+ check(rule(['P -> P','P -> P','P v P'],'P')==='proof-by-cases' && rule(['P -> P'],'~P v P')==='material-implication' && !rule(['P -> P'],'P v ~P'),
+  'with it, P v P gives P by proof by cases, and ~P v P follows by material implication (P v ~P by commutation after it)');
+ // Extra instances, when a map switches them on.
+ check(call(()=>{ setDeductiveRule(['instance-restatement','instance-excluded-middle'], true);
+  const on = !!logicalTheorem('P -> P') && !!logicalTheorem('P v ~P') && !!logicalTheorem('∀x (F(x) → F(x))');
+  setDeductiveRule(['instance-restatement','instance-excluded-middle'], false);
+  return on && !logicalTheorem('P -> P') && !logicalTheorem('P v ~P'); }),'extra rule instances, P -> P and P v ~P, when switched on');
  check(call(()=>parseClaim('⊥').kind==='bottom' && claimKey(parseClaim('⊥'))!==claimKey(parseClaim('P'))),'bottom is its own logical constant');
  const ui=call(()=>{
   const n=(id,type,texts,children=[])=>({id,type,texts:Array.isArray(texts)?texts:[texts],children,collapsed:[],x:30000,y:30000});
-  const leaves=n('L','support',['~(P v ~P) -> (P & ~P)','(P & ~P) -> ⊥']);
-  const middle=n('S','support','~(P v ~P) -> ⊥',[leaves]);
-  const root=n('M','contention','P v ~P',[middle]);state.trees=[root];
+  const leaves=n('L','support',['P -> (P v P)']);
+  const middle=n('S','support',['P -> (P & (P v P))','(P & (P v P)) -> P'],[leaves]);
+  const root=n('M','contention','P -> P',[middle]);state.trees=[root];
   deductiveLive=true;render();const steps=collectDeductiveSteps(state.trees);
   const out={steps:steps.every(s=>!!s.rule),warrant:claimMapVerdict(state.trees,steps)('M',0).status,
    tags:document.querySelectorAll('.logical-theorem-tag').length,

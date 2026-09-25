@@ -145,7 +145,7 @@ try {
             };
             const accepted = run();
             root.children[0].children.push({id:'W',type:'weak-rebuttal',
-                texts:['It has not been shown that zombies are metaphysically possible'],children:[]});
+                texts:['If E, then it has not been shown that zombies are metaphysically possible','E'],children:[]});
             return {accepted,undercut:run()};
         }`,{text:`${frame} that ${C} from ${P.map(p => '"'+p+'"').join(' and ')}.`,p:P});
         check(map.accepted.status === 'refuted' && map.accepted.mp &&
@@ -191,16 +191,18 @@ try {
             return { status: vv('M', 0).status, rule: st.rule && st.rule.name, target: !!st.warrantTarget,
                 why: st.warrantTarget && warrantStepExplanation(st, vv) }; };
         const accepted = run();
-        a.children = [n('W', 'weak-rebuttal', ['It has not been shown that zombies are metaphysically possible'])];
+        a.children = [n('W', 'weak-rebuttal', ['If E, then it has not been shown that zombies are metaphysically possible', 'E'])];
         const challenged = run();
-        a.children[0].children = [n('R', 'rebuttal', ['It is not the case that it has not been shown that zombies are metaphysically possible'])];
+        // A rebuttal that argues against the challenge's evidence (a bare
+        // denial is no argument).
+        a.children[0].children = [Object.assign(n('R', 'rebuttal', ['If F, then not E', 'F']), { targetIndex: 1 })];
         const restored = run();
         a.children = []; a.texts.reverse(); const reordered = run();
         a.texts.push('Poe is a raven'); const extra = run();
         a.texts = input.p.slice(0, 1); const missing = run();
         a.texts = ['Zombies are conceivable', input.p[1]]; const changed = run();
         a.texts = input.p; a.type = 'support'; const wrongDirection = run();
-        a.type = 'objection'; a.children = [n('W', 'weak-rebuttal', ['It has not been shown that zombies are metaphysically possible'])];
+        a.type = 'objection'; a.children = [n('W', 'weak-rebuttal', ['If E, then it has not been shown that zombies are metaphysically possible', 'E'])];
         state.trees = [root]; selectedIds = []; deductiveLive = true; render(); openDeductiveCheck();
         return { accepted, challenged, restored, reordered, extra, missing, changed, wrongDirection,
             tag: document.querySelector('.derivation-tag[data-step="A"]').title,
@@ -257,12 +259,12 @@ try {
         const snapshot = () => { const ss = collectDeductiveSteps([root]); const vv = claimMapVerdict([root], ss);
             return { status: vv('M',0).status, rule: ss[0].rule && ss[0].rule.name }; };
         a.children = [{id:'S',type:'support',texts:['Poe is a raven','If Poe is a raven, then zombies are metaphysically possible'],children:[
-            {id:'W',type:'weak-rebuttal',texts:['It has not been shown that Poe is a raven'],children:[]}
+            {id:'W',type:'weak-rebuttal',texts:['If E, then it has not been shown that Poe is a raven','E'],children:[]}
         ]}];
         const nested = snapshot();
         root.texts = ['The premises "Poe is a bird" and "Grass is green" do not establish that Poe is black'];
         a.texts = ['Poe is a bird','Grass is green'];
-        a.children = [{id:'W',type:'weak-rebuttal',texts:['It has not been shown that Poe is a bird'],children:[]}];
+        a.children = [{id:'W',type:'weak-rebuttal',texts:['If E, then it has not been shown that Poe is a bird','E'],children:[]}];
         const uncertified = snapshot();
         return {nested, uncertified};
     }`, { main, p: P });

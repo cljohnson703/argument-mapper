@@ -32,7 +32,8 @@ const cases=[
     ['∀x ∀y R(x,y)','R(a,b)',null],
     ['∀x (P(x) ∧ Q(x))','P(a)',null],
     ['∀x ∃y R(x,y)','∃y R(y,y)',null],
-    ['∀x ∀y R(x,y)','∀y R(y,y)',null],
+    // Valid, and one rule applied under the shared ∀: universal elimination under ∀.
+    ['∀x ∀y R(x,y)','∀y R(y,y)','under-all-universal-elimination'],
     ['∀x ∃y R(x,y)','∃y ∀x R(x,y)',null],
     ['∃x P(x)','P(a)',null],
     ['P(a)','∀x P(x)',null],
@@ -57,7 +58,7 @@ try{
         const support={id:'S',type:'support',texts:['For every individual x, x is tall'],children:[]};
         const root={id:'M',type:'contention',texts:['Ada is tall'],children:[support]};
         const run=()=>{const steps=collectDeductiveSteps([root]);return {label:VERDICT_LABEL[claimMapVerdict([root],steps)('M',0).status],rule:steps[0]?.rule?.id};};
-        const accepted=run();support.children=[{id:'W',type:'weak-objection',texts:['It has not been shown that for every individual x, x is tall'],children:[]}];
+        const accepted=run();support.children=[{id:'W',type:'weak-objection',texts:['If E, then it has not been shown that for every individual x, x is tall','E'],children:[]}];
         const challenged=run();return accepted.label==='✓ Warranted'&&challenged.label==='✗ Unwarranted'&&accepted.rule==='universal-elimination'&&challenged.rule==='universal-elimination';
     }`),'nested English works with weak challenges without changing validity');
     const model=call(`()=>{

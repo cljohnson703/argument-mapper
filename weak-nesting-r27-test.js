@@ -15,22 +15,29 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
 try {
     const result = dom.window.eval(`(() => {
         const n = (id, type, text, children=[]) => ({id,type,texts:[text],children,collapsed:[],x:30000,y:30000});
+        // A weak move argues: "if E, then it has not been shown that X", and E
+        // (a bare "it has not been shown that X" is no argument). One against
+        // it challenges its evidence, box 1.
+        const argue = (id, type, evidence, claim, children=[], targetIndex) => Object.assign(n(id, type, evidence, children),
+            { texts: ['If ' + evidence + ', then ' + claim, evidence] }, targetIndex === undefined ? {} : { targetIndex });
         const read = trees => {
             const steps=collectDeductiveSteps(trees), verdict=claimMapVerdict(trees,steps), v=verdict('M',0);
             return {status:v.status,label:VERDICT_LABEL[v.status],why:claimVerdictWhy(verdict,v),
                 steps:steps.map(st=>({id:st.childId,rule:st.rule?.id,state:verdict.stepState(st),counterexample:st.counterexample}))};
         };
-        const support=n('S','support','P');
-        const weak=n('W','weak-objection','It has not been shown that P');
+        // A support that argues (one that restates its box is none).
+        const support=Object.assign(n('S','support','Q'),{texts:['If Q, then P','Q']});
+        const weak=argue('W','weak-objection','E','it has not been shown that P');
         const root=n('M','contention','P',[support,weak]);
         const active=read([root]);
-        weak.children=[n('WW','weak-rebuttal','It has not been shown that it has not been shown that P')];
+        weak.children=[argue('WW','weak-rebuttal','F','it has not been shown that E',[],1)];
         const weakOnWeak=read([root]);
-        weak.children[0].children=[n('WWW','weak-objection','It has not been shown that it has not been shown that it has not been shown that P')];
+        weak.children[0].children=[argue('WWW','weak-objection','G','it has not been shown that F',[],1)];
         const threeWeak=read([root]);
-        weak.children=[n('R','rebuttal','It is not the case that it has not been shown that P')];
+        // A rebuttal that argues (a bare denial is no argument).
+        weak.children=[Object.assign(n('R','rebuttal','Q'),{texts:['If Q, then it is not the case that E','Q'],targetIndex:1})];
         const strongDefense=read([root]);
-        weak.children=[n('WW','weak-rebuttal','It has not been shown that it has not been shown that P')];
+        weak.children=[argue('WW','weak-rebuttal','F','it has not been shown that E',[],1)];
         const premise=n('P0','support','P',[weak]);
         const outer=n('M','contention','P',[premise]);
         const buried=read([outer]);
@@ -40,7 +47,8 @@ try {
         const unknown=read([root]);
         root.children=[support,n('AMB','objection','For every individual x, x vaguely frobniculates somebody')];
         const ambiguous=read([root]);
-        const contested=n('M','contention','P',[n('PS','support','P',[n('PW','weak-objection','It has not been shown that P')]),n('NO','objection','not P')]);
+        const contested=n('M','contention','P',[Object.assign(n('PS','support','S',[argue('PW','weak-objection','E','it has not been shown that S',[],1)]),{texts:['If S, then P','S']}),
+            Object.assign(n('NO','objection','R'),{texts:['If R, then not P','R']})]);
         const unsettledSupport=read([contested]);
 
         // A bounded independent oracle for chains of already certified attacks.
@@ -66,11 +74,12 @@ try {
             chains.push({kinds,expected,actual});
         }
         // Quoted warrant claims need an actual grounded undercut, not just a hedge.
-        const a=n('A','objection','P');
-        const w=n('UW','weak-rebuttal','It has not been shown that P');a.children=[w];
-        const qualified=n('M','contention',"We cannot conclude that P from 'P'",[a]);
+        // The argument named is modus ponens (one from 'P' to 'P' only restates).
+        const a=Object.assign(n('A','objection','Q'),{texts:['Q','If Q, then P']});
+        const w=argue('UW','weak-rebuttal','E','it has not been shown that Q',[],0);a.children=[w];
+        const qualified=n('M','contention',"We cannot conclude that P from 'Q' and 'If Q, then P'",[a]);
         const qualifiedGrounded=read([qualified]);
-        w.children=[n('UWW','weak-objection','It has not been shown that it has not been shown that P')];
+        w.children=[argue('UWW','weak-objection','F','it has not been shown that E',[],1)];
         const qualifiedUnsettled=read([qualified]);
         const qualifiedInvalid=read([n('M','contention',"We cannot conclude that P from 'Q'",[n('IQ','objection','Q')])]);
         // A valid entailment requiring more than one permitted move is not

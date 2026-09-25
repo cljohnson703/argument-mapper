@@ -19,13 +19,13 @@ try{
     let r=read([m,p,conditional]);check(r.steps.length===1&&r.steps[0].rule,'linked MP');check(r.v('M',0).status==='established','linked warrant');
     m.children=[p];m.crossRefs=[[arg('A','support',['P'],[ref('C')])]];
     r=read([m,conditional]);check(r.steps.length===1&&r.steps[0].rule,'mixed MP replaces incomplete child inference');
-    const q=n('Q','support','Q');m.crossRefs[0].push(arg('B','support',[],[ref('Q')]));
+    const q=n('Q','support','Q and R');m.crossRefs[0].push(arg('B','support',[],[ref('Q')]));
     r=read([m,conditional,q]);check(r.steps.length===2&&r.steps.every(s=>s.rule),'independent mixed and linked groups');
     m.crossRefs=[[arg('A','support',[],[ref('P')]),arg('B','support',[],[ref('C')])]];m.children=[];
     r=read([m,p,conditional]);check(r.steps.length===2&&r.steps.every(s=>!s.rule),'independent arguments never pool premises');
     m.crossRefs=[[ref('P'),ref('C')]];check(read([m,p,conditional]).steps.length===0,'legacy links remain informational');
-    for(const kind of REFERENCE_ARGUMENT_KINDS){const source=n('X','support',kind==='support'?'Q':isWeakType(kind)?'It has not been shown that Q':'not Q');m.crossRefs=[[arg('A',kind,[],[ref('X')])]];r=read([m,source]);const expected=kind==='support'?'support':isWeakType(kind)?'weak-objection':'objection';check(r.steps[0].kind===expected&&r.steps[0].rule,'role '+kind);check(r.v.stepState(r.steps[0])==='active','active '+kind);}
-    m.crossRefs=[[arg('A','support',[],[ref('P'),ref('C')])]];p.children=[n('W','weak-objection','It has not been shown that P')];
+    for(const kind of REFERENCE_ARGUMENT_KINDS){const source=n('X','support',kind==='support'?'Q and R':isWeakType(kind)?['If E, then it has not been shown that Q','E']:'R and it is not the case that Q');m.crossRefs=[[arg('A',kind,[],source.texts.map((_,j)=>ref('X',j)))]];r=read([m,source]);const expected=kind==='support'?'support':isWeakType(kind)?'weak-objection':'objection';check(r.steps[0].kind===expected&&r.steps[0].rule,'role '+kind);check(r.v.stepState(r.steps[0])==='active','active '+kind);}
+    m.crossRefs=[[arg('A','support',[],[ref('P'),ref('C')])]];p.children=[n('W','weak-objection',['If E, then it has not been shown that P','E'])];
     r=read([m,p,conditional]);check(r.steps.find(s=>s.referenceArgument).rule,'validity independent of premise warrant');check(r.v('M',0).status==='unestablished','linked premise weak challenge propagates');p.children=[];
     const a=n('A','support','P'),b=n('B','support','P');a.crossRefs=[[arg('AA','support',[],[ref('B')])]];b.crossRefs=[[arg('BB','support',[],[ref('A')])]];
     r=read([a,b]);check(r.steps.every(s=>s.circular&&r.v.stepState(s)==='pending'),'cycle pending');

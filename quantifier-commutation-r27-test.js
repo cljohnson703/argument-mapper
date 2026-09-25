@@ -29,7 +29,12 @@ try {
  ];
  for(const [p,c] of positives){
   check(rule([p],c)==='quantifier-commutation','direct '+p);
-  check(call(x=>logicalTheorem('('+x[0]+') -> ('+x[1]+')')?.rule.id,[p,c])==='quantifier-commutation','certificate '+p);
+  // A conditional that states the step needs no support while the rule and
+  // "rule instances" are both on (r27.30); switch the rule off and it does.
+  check(call(x=>logicalTheorem('('+x[0]+') -> ('+x[1]+')')?.rule.id,[p,c])==='quantifier-commutation','its conditional is a rule instance '+p);
+  check(call(x=>{ setDeductiveRule(['quantifier-commutation'], false);
+    const r = logicalTheorem('('+x[0]+') -> ('+x[1]+')'); setDeductiveRule(['quantifier-commutation'], true); return !r; },[p,c]),
+    'switched off, no free instance '+p);
  }
  check(rule(['There is an individual x such that there is an individual y such that x admires y'],
  'There is an individual y such that there is an individual x such that x admires y')==='quantifier-commutation','explicit English binders');
@@ -45,7 +50,7 @@ try {
  for(const [p,c,id] of [
  ['R(a,b)','∃x R(x,b)','existential-introduction'],
  ['∃x R(x,b)','∃y ∃x R(x,y)','existential-introduction'],
- ['∀x R(x)','R(a)','universal-elimination']
+ ['∀x R(x)','R(a)','axiom-q1']            // Q1 itself, now that the basis is Hilbert's
  ])check(call(x=>logicalTheorem('('+x[0]+') -> ('+x[1]+')')?.rule.id,[p,c])===id,'quantified certificate '+p);
  for(const s of ['P v ~P','P -> P','(∃x R(x)) -> R(a)','(∀x ∃y R(x,y)) -> (∃y ∀x R(x,y))'])check(!call(x=>logicalTheorem(x),s),'no automatic license '+s);
  // Exhaust every binary relation on a two-element domain using an independent evaluator.

@@ -788,10 +788,18 @@ function byChild(routes) {
                 routes.map(route => route.d).join('; '));
         }
 
-        // A locked singleton fan must retain the exact endpoint midpoint.
-        // Here compact packing moves it beneath the foreign tall right box;
-        // layout therefore enlarges only this parent's corridor.  The source
-        // is a co-premise fork, exercising its additional 15px lift.
+        // A lone line bends at its exact endpoint midpoint -- unless a taller
+        // co-premise stands there (the user, 2026-09-25). Here compact packing
+        // moves it beneath the foreign tall right box, so it bends just below
+        // that box, and the child row keeps the minimal gap (50px) below the
+        // tallest co-premise rather than dropping to carry the midpoint clear.
+        // The source is a co-premise fork, exercising its additional 15px lift.
+        const tallBottomOf = rootId => Math.max(...Array.from(window.document.querySelectorAll('#group-' + rootId + ' > .node'))
+            .map(node => node.getBoundingClientRect().bottom));
+        const bendsJustBelow = (route, tallBottom, lift) => !!route &&
+            Math.abs(route.start.y - (tallBottom + 50 - lift)) < 0.5 &&
+            channelY(route) >= tallBottom + 16.025 - 0.001 && channelY(route) <= tallBottom + 16.025 + 0.1 &&
+            channelY(route) <= route.start.y - 10 + 0.01;
         {
             const left = leaf('locked-left', 0);
             const forkChild = parent('locked-fork-child', 2, []);
@@ -814,8 +822,9 @@ function byChild(routes) {
             ok(route && route.parentBox === '1' && audit.nodeHits.length === 0,
                 'R8e: targetIndex-aware locked route clears both foreign tall statements',
                 audit.nodeHits.join('; '));
-            near(channelY(route), route.end.y + (route.start.y - route.end.y) / 2, 0.01,
-                'R8f: locked co-premise-child route remains at its exact endpoint midpoint');
+            ok(bendsJustBelow(route, tallBottomOf('locked-root'), 15),
+                'R8f: the child row keeps the minimal gap; the lone co-premise-child route bends just below the tall statement in its way',
+                JSON.stringify({ start: route && route.start.y, channel: channelY(route), tall: tallBottomOf('locked-root') }));
         }
 
         {
@@ -835,8 +844,9 @@ function byChild(routes) {
             ok(route && route.parentBox === '1' && audit.nodeHits.length === 0,
                 'R8g: targetIndex-aware locked leaf route clears foreign tall statement',
                 audit.nodeHits.join('; '));
-            near(channelY(route), route.end.y + (route.start.y - route.end.y) / 2, 0.01,
-                'R8h: locked leaf route remains at its exact endpoint midpoint');
+            ok(bendsJustBelow(route, tallBottomOf('locked-leaf-root'), 0),
+                'R8h: the child row keeps the minimal gap; the lone leaf route bends just below the tall statement in its way',
+                JSON.stringify({ start: route && route.start.y, channel: channelY(route), tall: tallBottomOf('locked-leaf-root') }));
         }
 
         // A center-line can be mathematically outside a statement while its
@@ -872,8 +882,10 @@ function byChild(routes) {
                 !visibleStrokeHit,
                 'R8i: visible route stroke clears a foreign statement at a subpixel near-graze',
                 route ? route.d : 'missing route');
-            near(channelY(route), foreign.bottom + nodeRouteGuard, 0.02,
-                'R8j: near-graze corridor uses the exact pixel minimum');
+            ok(route && channelY(route) >= foreign.bottom + nodeRouteGuard - 0.001 && channelY(route) <= foreign.bottom + nodeRouteGuard + 0.1 &&
+                Math.abs(route.start.y - (foreign.bottom + 50)) < 0.5,
+                'R8j: at a near-graze the route bends at the pixel minimum below the foreign statement, and the row keeps the minimal gap',
+                JSON.stringify({ start: route && route.start.y, channel: channelY(route), foreign: foreign.bottom }));
         }
 
         dom.window.close();
