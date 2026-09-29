@@ -815,10 +815,12 @@ function reportCorpus(name, res) {
             deductiveChecked.clear(); refreshDerivationTags();
             return tag ? { text: tag.textContent, title: tag.title } : null;
         });`);
-        ok(Array.isArray(spaced) && spaced[0] && spaced[0].text === '✗ extra space' &&
-           /Without the extra space, this would follow by modus ponens, but ‘The ground {2}is wet’ has an extra space/.test(spaced[0].title) &&
-           spaced[1] && spaced[1].text === '✗ extra space' && /‘If {2}it rains, then the ground is wet’ has an extra space/.test(spaced[1].title),
-            'an extra space anywhere in a step -- between two logic words too -- holds it back, tagged "✗ extra space"', J(spaced));
+        // r27.53 (the user, 2026-09-28): "maybe keep extra spaces under an '✗ typo?' tag";
+        // the tag offers the fix, and says what the fixed box gives.
+        ok(Array.isArray(spaced) && spaced[0] && spaced[0].text === '✗ typo?' &&
+           /has a typo: two spaces after “ground”/.test(spaced[0].title) && /the step follows by modus ponens\. Click to fix the box\.$/.test(spaced[0].title) &&
+           spaced[1] && spaced[1].text === '✗ typo?' && /has a typo: two spaces after “If”/.test(spaced[1].title),
+            'an extra space anywhere in a step -- between two logic words too -- holds it back, tagged "✗ typo?", with its fix', J(spaced));
         ok(spaced[2] && spaced[2].text === '✓ modus ponens', 'spaces at the end of a box are nothing', J(spaced[2]));
         ok(quant && quant.rule === 'universal modus ponens' && /‘Raven’ and ‘raven’ differ in capital letters/.test(quant.text),
             'so is a quantifier whose words are spelled otherwise in its case', J(quant));

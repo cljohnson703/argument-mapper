@@ -4,6 +4,167 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### September 28, evening: what is believed, "again", and past verbs joined (r27.55)
+
+* **A pronoun in what somebody believes or says reads as any other.** The user: "In 'Mary believes that she is late', if that's all the content we have, then 'she' refers to 'Mary'." Since r27.38 such a pronoun had been kept as written wherever the believer might be its referent, to keep Castañeda's she* apart. That was the check's own rule, not the user's; r27.54 had wrongly called it their decision. Now:
+  * "Mary believes that she is late" is read as "Mary believes that Mary is late", and the box says so;
+  * "Mary told Ann that she is late" asks which;
+  * "The teacher said that she praised her" has no referent for "her", since "she" is the teacher;
+  * what "I", "we", "you" or "they" believe gives no "she", as before ("We conclude that she is surprised").
+
+  A pronoun that a quantifier or "a …" earlier in its own clause binds is settled there: "Every teacher loves her job", "A teacher loves her job".
+* **"Again" keeps the roles** (the user asked for the check). "Again" says the same thing happened before, with the same participants in the same places. So where a clause with "again" has the verb of an earlier clause, its subject pronoun is that clause's subject, and its object pronoun that clause's object. "Mary praised Ann, and then she praised her again" is read as "… then Mary praised Ann again". Without "again" ("… then she praised her"), it is still asked, since Ann may have praised Mary back. With another verb ("… she thanked her again"), the earlier thanking is not in the box, so it is asked too.
+* **Past verbs joined are each said of the subject** (the user asked for the fix). "Some teacher left and cried" now gives "Some teacher cried" by conjunction elimination under ∃, as "sings and dances" did. "Mary left and cried" gives "Mary cried", and "left the room and cried" works too. Not split:
+  * "Mary bought bread and milk", since "milk" is no past-tense verb there;
+  * "Mary washed and dried the dishes", since the dishes were washed too, and "Mary washed" alone would lose that.
+
+  "Some teacher left" and "Some teacher cried" still do not give "Some teacher left and cried": it need not be the same teacher.
+* **Found on the way:** the name reader took the "that" of "said that the dog …" for a determiner, so "the dog" kept "her" from being Mary. "The sheep" can be many, so "If the sheep are hungry, then they are noisy" reads "they" as the sheep.
+* **Tests.** The basis test checks "again" with and without it; the pronoun in a belief read in, asked about, or missing; binding in its own clause; past verbs joined and what stays whole. The she* tests now assert the user's rule. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 144 of 144; the pronoun generator 0 wrong of 261.
+
+### September 28, later: one referent is the referent, and what a clause can be the subject of (r27.54)
+
+* **A pronoun that can be one thing only is that thing, with no question.** The user, of "? pronoun" (r27.53): "Mustn't 'she' in the teacher sentence refer to the teacher, as that's the only available referent? Granted, someone might have meant 'she' was someone else, but they'd need to fix that themselves. The sentences are supposed to be analyzed as standalone sentences." They were right; "? pronoun" is gone. The box is read with the referent in, and a note says how ("read with “she” as “the teacher”"). Two cases need care:
+  * **After "a teacher" or "someone"**, writing "the teacher" in would lose the link once the box is split: "A teacher left and the teacher cried" is two claims, and the second may be about another teacher. So the pronoun that opens the next clause is dropped instead: "A teacher left and she cried" is read as "A teacher left and cried", one claim about one teacher (whether every, some, or in general is still asked). Where the pronoun cannot be dropped ("A teacher left and Bob praised her"), the box is read as one claim.
+  * **A pronoun kept for the believer's sake is not read in** ("Mary believes that she is late", Castañeda's she*), and neither is one the warrant reader already flags as naming no premises or conclusion ("its conclusion").
+
+  "According to the teacher, she left" now says that "she" has no referent: the phrase in front says in whose view the rest holds, and names no referent (r27.50's rule for claims kept whole). An unquoted name there still counts ("In Hamlet, … she" may be Hamlet, as the user pointed out).
+* **"It" is what a clause says only where a clause could be the subject.** The user: "If Poe is a raven, then it is black" should have "it" refer to Poe, "Analogously for the cat sentence. If there's a general rule for this, that would be great". There is one, and it is syntactic in the sense that matters. Whether a predicate can take a clause as its subject is a fact about the predicate:
+  * "That the vase is broken surprised Mary" is English;
+  * "That Poe is a raven is black" is not, nor "that the cat bit Mary bit her again".
+
+  So an "it" before a predicate no clause can be the subject of is a thing. The same goes for an object "it" of a verb no clause can be the object of ("dropped it"). This covers colours, sizes, shapes, weights, materials and textures, bodily states, what bodies do, and what only the living do (see, meet, praise, love). A predicate not on those lists leaves the question the user chose in r27.53. A fact can surprise, show, help, give, tell, cost or be a problem, so those are left out on purpose.
+
+  The user had suggested the first clause's shape: an adjective after "is" in the vase sentence, a noun phrase in the raven sentence. That does not settle it. "Poe is a raven, and it surprised Mary" can be about the fact. "The vase is broken and it is heavy" cannot. What decides is what is said of "it".
+* **The cat sentence.** "The cat bit Mary and then it bit her again": "it" is the cat, and "her" is Mary. The user's point about "again" is right: a repetition keeps the first event's roles. The rules the user adopted give the same answer without it, though. A name is someone unless the box says otherwise, so "it" is not Mary. An object is not its own clause's subject, so "her" is not the cat. Only where the box made Mary a cat too would "again" be what decides.
+* **Tests.** The basis test and the warrant test check the following:
+  * a pronoun read in, including "A teacher left and cried" and the one-claim case;
+  * Poe, the cat, "the book is heavy" and "dropped the vase";
+  * the vase and "Poe … surprised Mary" still asked;
+  * "According to the teacher", and "In Hamlet" still asked;
+  * she* left alone;
+  * the warrant reader's unnamed conclusion.
+
+  Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 144 of 144; the pronoun generator 0 wrong of 261.
+
+### September 28: nothing to ask, "it" after a clause, and typos (r27.53)
+
+* **Where a pronoun can be nothing in its box, the step says so; it does not ask.** The user: "In 'Every teacher left and she cried', 'she' has no referent, so, there's nothing to ask rather than to inform the user of the missing referent." There are now three outcomes, from one analysis of what each open pronoun in the box may be:
+  * **✗ no referent**, when there is nothing to choose. The step says why and offers nothing:
+    * "every teacher" reaches no pronoun outside its own clause;
+    * "The teacher is tired and he cried and she laughed": "he" and "she" are two people and the box names one, so one of them is missing a referent, as the user pointed out;
+    * "The teacher is tired and the teacher praised her": "her" is not the subject of its own clause ("that would be 'herself'", in the user's words);
+    * "After the storm, she left": nothing before it is someone;
+    * "Mary chased it" and "The cat chased it": what comes before it is someone, or is its own clause's subject.
+  * **? ambiguous**, when it may be two or more things. The note names them ("“she” may be “Mary” or “Mary’s dog”"), and the chooser offers each.
+  * **? pronoun**, when it can be one thing only, but the check does not read it in as the box stands. "A teacher left and she cried" offers "A teacher left and the teacher cried"; "someone" is offered as "the person".
+
+  An offer gives every open pronoun its referent at once. It also writes in the names the check already reads for pronouns, so each offer is the box as the check reads it, and every pronoun offer in the test corpus reads back.
+* **An "it" after a whole clause is asked about** (the user's choice (a)). It may be the thing, or what the clause says: "The vase is broken and it surprised Mary" offers "… and the vase surprised Mary" and "… and the fact that the vase is broken surprised Mary". The same goes for "The book is old and it is heavy", "If the vase is broken, then it is worthless", "When the vase broke, it surprised Mary" and "The cat bit Mary and then it bit her again". Where nothing before it is a thing, the fact is the one reading ("Mary left and it surprised Bob": "? pronoun"). Not asked about:
+  * an "it" that stands for nothing: weather ("it rains", "it doesn't rain", "it is cold" where nothing before it is a thing); "it is clear that …"; "it is not the case that …"; "it is not warranted to conclude that …"; "it does not follow that …";
+  * an "it" a quantifier binds ("If a raven sings, then it is black");
+  * "its" with a noun before it, as decided in r27.51 for the user's Mary step;
+  * an object whose own clause has another subject ("The box is so heavy that Bob cannot lift it": the box).
+* **Typos, fixed with a button** (the user: "if it detects double spaces or any other algorithmically detectable errors that are fixable, have it suggest the fix and allow the user to press a button to okay it"). Placed like "? grammar" (the user's choice from three mockups) and tagged **✗ typo?** (the user: "maybe keep extra spaces under an '✗ typo?' tag"). What counts as a typo:
+  * two spaces or more between words, or a tab;
+  * a space before a comma, semicolon, colon or stop;
+  * no space after a comma or semicolon between words, or after a sentence's stop ("left.Mary");
+  * a small word twice ("the the"), a comma or semicolon twice, or a stop twice.
+
+  Quotations, `code`, formulas, link targets, an ellipsis, numbers ("1,000"), "e.g.", "had had" and symbolic boxes are left alone. The step waits until the box is fixed. The box is read as fixed meanwhile, so the chooser can say what the fixed box gives ("Poe is black. — the step follows by modus ponens") and "Fix the box" writes it in. The chooser shows the box as typed, spaces kept. The old "✗ extra space" near miss is "✗ typo?" too, and Derive Parent says "Without the typo, …". Not done: "a"/"an" (in this app "a is F" uses "a" as a name) and misspellings (no dictionary).
+* **Two clauses read as things.** Both are older, and both came up in this audit:
+  * "That the vase is broken surprised Mary" was split into "that the vase is broken", "that the vase is surprised" and "that the vase is Mary". A clause as the subject is now one claim, as "the fact that …" already was.
+  * "The vase is broken, which is sad" gave "the vase is sad". No noun comes before "which", so it is what the clause says; the sentence is kept whole. After a noun ("Poe is a raven, which is black") it is still a relative clause.
+* **The user's question: should a "that" clause that could stand alone as a sentence be read the same way everywhere?** Yes: a relative clause always has a gap, a missing subject or object that "that", "which" or "who" stands for ("the book that Mary read _"). A complement clause is whole ("clear that it's raining": "it's raining" stands alone). "Who" and "which" clauses always have the gap, so they are never complements. On the surface, though, the test cannot tell a gap from a verb used without an object: "Mary read" stands alone, yet "the book that Mary read" is a relative clause. So the check applies it through the word before "that":
+  * an adjective or a participle ("clear", "known") takes only a whole clause;
+  * a plain noun ("book", "raven") takes only a relative clause;
+  * a content noun ("claim", "fact") takes either ("the claim that Mary made" and "the claim that Mary left"). The check keeps these whole and matches them as written.
+* **Tests.** The basis test checks the three outcomes and their reasons, the offers and their read-back, (a) and what it leaves alone, the two clause readings, and the typo check with what it leaves alone. The English test asserts "✗ typo?" with its fix. A browser session opens "✗ typo?" on "Poe  is black.", and "Fix the box" gives modus ponens. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus passes 144 of 144; the pronoun generator 0 wrong of 261.
+
+### September 25, late night: pronouns after any clause, the "it" of "it is clear that", and a cleanup (r27.52)
+
+The user asked for a search for "anything else we need to add/fix/remove". What it found:
+
+* **A "he" or "she" after any clause goes back to the one someone before it.** "The teacher is tired and she cried" read "she" as the teacher, but "The teacher left and she cried" was asked about: only a clause with "is" gave a referent. Now the subject of any earlier clause does ("the teacher", "my mother", "this student"), provided the words before the pronoun in the box give no one else. Still asked about:
+  * "The teacher praised the student and she cried" (two people);
+  * "Every teacher left and she cried" (a quantifier does not reach across "and");
+  * "A teacher left and she cried";
+  * "The storm raged and she left" (no one).
+
+  So "The teacher left and she cried" gives "The teacher cried" by conjunction elimination, and "If the teacher left, then she cried" with "The teacher left" gives it by modus ponens. An animal counts, as it already did after "is": in "The dog barked and she ran", "she" is the dog.
+* **One someone is not both a "he" and a "she".** "The teacher is tired and he cried and she laughed" had read both as the teacher. It is asked about now, as it already was with a name ("Mary left and he cried and she laughed").
+* **An object pronoun is not the subject of its own clause, wherever the box names that subject.** "The teacher is tired and the teacher praised her" (and "… and she praised her") read "her" as the teacher of the first clause, and passed. English would say "herself", so it is asked about now. A pronoun subject's gender also settles the other gender: in "The teacher is tired and she told the boy that he left", "she" is the teacher, so "he" is the boy.
+* **The "it" of "it is clear that" stands for what follows.** "It is clear that the cat bit Mary", "Bob left and it is obvious that Mary cried", "… it is hard to say whether …" and "… it is a fact that …" were asked about, as if the "it" were a pronoun with no referent. Worse, "clear that Mary cried" was read as a relative clause, "it is clear, and Mary cried it", which the flag hid. Now:
+  * a "that" after an adjective or a participle ("clear", "known", "hard to say whether"), after a content noun ("the fact that", "the claim that"), or in "so … that" and "such … that" begins no relative clause. The words are kept whole and matched as written; "a raven that Mary loves" still is a relative clause;
+  * the "it" of "it is clear / obvious / known / hard to say … that, whether, if, why …", and of "it is a fact / a pity / a mystery … that", stands for what follows. It asks for no referent, and it is no earlier thing: "The book is old and it is clear that Mary cried" says nothing of the book;
+  * what follows is read as any clause is: "It is clear that she left" asks who she is, and so does "It seems that she left", which had not been checked. An "it" there that stands for nothing asks for no referent ("It seems that it rained"; "It is clear that it rained" had been asked about); "It seems that it broke" asks what broke;
+  * "It is a claim that Mary made" and "It is hard to read" keep an "it" that is a thing, and ask what it is.
+
+  "It is clear that P" is not read as P, as "It is known that P" is not: the check does not use what "clear" says.
+* **A pronoun subject's predicate sees the earlier clauses**, as every other predicate has since r27.51: in "The box is heavy and it is so heavy that Bob cannot lift it", both are the box.
+* **The chooser settles every pronoun at once.** "Lenore admired Poe and she praised him" offered "… Lenore praised him" and "… Poe praised him". Each still had a pronoun, so both were greyed out ("put it in your own words"). Now each offer gives every open pronoun its someone, with a "he" and a "she" as two people and an object other than its clause's subject: "… Lenore praised Poe" and "… Poe praised Lenore". Where no one in the box can be the pronoun, nothing is offered ("Poe wrote his poem and she read it": "his" is Poe, so "she" is no one). "That the cat" (from "it is clear that the cat bit Mary …") is no longer offered as a someone. Every pronoun offer in the test corpus now reads back.
+* **Help** says what the pronoun rules are now: a box stands alone; a pronoun is its one name or its one someone; "? ambiguous" offers the box with each someone in place; the "it" of "it is clear that" stands for what follows.
+* **Removed.** The color key's hide toggle and its CSS: the button went in r27.20, Help shows the legend always, and only a test called the toggle. Also five names nothing used: `claimInAttitude`, `targetBottomRel`, `CLAIM_PAST_OF`, `CLAIM_SAME_IN_PAST`, and a rectangle measured for the + buttons.
+* **A question put to the user.** After a clause, "it" may be the fact that clause states. "The vase is broken and it surprised Mary" reads "it" as the vase, so it gives "The vase surprised Mary", though what surprised Mary is more likely that the vase is broken ("The claim is false and it shows that Mary lied" too). After a clause without "is", "it" stays as written ("The vase fell and it surprised Mary": the vase or its falling), so no step goes through it.
+* **Tests.** The basis test checks the following:
+  * the someone after any clause, and what stays asked;
+  * "he" and "she" as two people;
+  * the object pronoun and its subject named earlier;
+  * the "it" of "it is clear that", what follows it, and the "it" that is a thing;
+  * the "that" that begins no relative clause;
+  * the offers that settle every pronoun.
+
+  The color key test asserts that nothing hides the legend. A browser session opens the chooser on "Lenore admired Poe and she praised him", picks "… Lenore praised Poe", and the step becomes conjunction elimination. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus passes 144 of 144.
+
+### September 25, night: an emphatic "do", "at all", and the light theme's pill (r27.51)
+
+* **An emphatic "do" says no more than the plain verb.** The user, of "We do conclude that she is surprised when she leaves the room": "'do' isn't fundamentally changing anything here." The reader now takes "We do conclude that P" as "we conclude that P", "Poe does sing" as "Poe sings", and "Poe did sing" as "Poe sang", in a claim kept whole too. The key had read them so already, but the words had not, so "Poe does sing" had been "spelled differently" from "Poe sings". Some uses stay as written:
+  * "do" with an object, which is the verb "do" ("does the dishes", "did well", "do so");
+  * a question ("Do we conclude that P?");
+  * a "did" that alone says the tense, where the past is spelled as the present ("did beat") or is also a present verb ("did wind", "did bear").
+
+  "Does quiz" is written "quizzes" (the third person now doubles a "z" after one vowel).
+* **"At all" only stresses a claim.** "Mary is not at all surprised" is "Mary is not surprised"; "if she is at all surprised" is "if she is surprised" (to any degree). It stays where it says "every": "at all times", "at all costs".
+* **"No longer" does not hide the one who concludes.** In "we would no longer conclude that she is surprised", the one who concludes is "we": "no", "longer", "any more", "even", "just", "ever", "again", "always" and the like now stand between a believer and the verb, as "not" and "would" do. So the "she" is read as the box's name, where it had been kept as written. What "no longer" itself says is a question put to the user (below).
+* **The Unwarranted pill in the light theme.** It had kept the dark theme's pale amber, about 1.9:1 against a white box. It now takes the light theme's dark amber, #8a6100 (about 5.6:1), which its ambiguous tags use already.
+* **"Would no longer" is "would not" in what a "would" conditional says would follow** (the user's choice). "No longer X" says two things: X is not so, and it was so before. Readings differ only on where "before" is: in how things actually are, or earlier in the imagined case. The check uses only the first part, which every reading shares; the note says so and commits to neither. The user asked whether this forces one disambiguation over another. It does not, since everything drawn from it holds on every reading:
+  * modus ponens gives "we would not conclude X", which either reading entails;
+  * modus tollens goes from "We do conclude X", which contradicts the "not X" that either reading asserts.
+
+  The one assumption is the one the check makes for every "would" conditional since r27.46: the then-part speaks of the same time as the premise it meets. A change still to come ("we would eventually no longer conclude X", "would soon no longer ...") is not read as "not", so modus tollens is not recognized there. Elsewhere "no longer" stays as written: "We no longer conclude X" is not "We do not conclude X", since it also says that once we did (and from "we do not conclude X" nothing gives "we no longer conclude X"). The user's step as written now passes: "If …, then we would no longer conclude that she is at all surprised when she leaves the room" with "We do conclude that Mary is surprised when she leaves the room" gives modus tollens. Its second box needs the name: a "she" there names no one in its box (r27.50).
+* **A gendered pronoun and a neutral one** (the user's rule, which they chose to adopt). Their rule: "when there are two pronouns and two referents, if one pronoun is gendered and the other is neutral, and if the two possible referents are such that one is gendered and the other is not, then the gendered pronoun goes to the gendered referent, and the neutral pronoun goes to the neutral referent." It rests on three constraints English applies:
+  * "it" is never a person, and a personal name names a person unless the box says otherwise;
+  * a subject and an object of one clause are two things unless the pronoun is reflexive;
+  * in one sentence a thing keeps one pronoun, so what the box calls "it" it does not also call "she".
+
+  So an animal the box calls "it" -- the one thing a referential "it" or "its" there can be -- competes with no name for "he" or "she", and that "it" is not asked about. "The cat bit Mary and then it bit her again": "her" is Mary. The pronoun is still asked about where the box does not say what it calls the animal ("Mary's dog barked and she ran"), or where its "it" may be two things ("Mary's dog chased the ball and she caught it").
+* **A pronoun asked about offers its referents** (the user's suggestion: "incorporate the user's chosen suggested disambiguation into the node"). The reading chooser already wrote a chosen reading into its box, but a pronoun asked about had no readings. It now offers the box with each someone the pronoun may be put in its place: the names before it, and the people and animals ("Mary's dog barked and Mary ran" or "Mary's dog barked and Mary's dog ran"; "a teacher" becomes "the teacher"). Each reading is marked where it gives the step, and "Rewrite the box this way" writes it in. A reading reads back though the box keeps a question it had anyway and does not block with ("when" may say when or why).
+* **A possessive opens a subject.** "Mary's dog barked", "my dog barked" and "that dog barked" had been read as one claim each: with a plain verb, a subject could begin only with "a", "an" or "the". So "Mary's dog barked and Mary ran" is now two claims, and gives "Mary ran" by conjunction elimination. "This gives you no reason" keeps "this" as its subject.
+* **A pronoun in a predicate** may go back to the claim's own subject ("The teacher loves her job"; "The cat chased its tail") or to someone in an earlier clause ("The teacher left and the student praised her": the teacher). An object cannot go back to the subject of its own clause: "The teacher praised her" is asked about, since English would say "herself".
+* **Tests.** The basis test checks the following:
+  * the emphatic "do" and where it stays;
+  * "at all" and where it stays;
+  * the user's step as written, and that "no longer" alone is no denial;
+  * the pronoun rule and what it leaves asked;
+  * the pronoun's offered readings and their read-back;
+  * possessive subjects;
+  * pronouns in predicates;
+  * the pill's colour.
+
+  A browser session opens the chooser on "Mary's dog barked and she ran", picks "…and Mary ran", and the step becomes conjunction elimination.
+
+### September 25, evening: a pronoun tracks its referent (r27.50)
+
+* **Inside what "we" conclude, "she" is the box's name.** The user's step against S5: "If while in the room, Mary has acquired all the physical facts …, then we would not conclude that she is surprised when she leaves the room" with "We conclude that Mary is surprised when she leaves the room" was "? not recognized". The user: "Pronouns should track referent in the node so that each unambiguous use of the pronoun is linked as interchangeable with the referent." A pronoun inside what somebody believes, concludes or says had never been read as the box's name (r27.38). That rule protects the de se reading: "Mary believes that she is late" may be about Mary as she thinks of herself (Castañeda's she*). But that reading needs the believer to be the referent. Now the pronoun is kept as written only where the believer may be its referent ("Mary believes that she …", "Bob said that she …", "Mary thinks that we believe that she …"). Where the believer is "I", "we", "you" or "they", the pronoun reads as the box's one name, like any other. So both boxes say "Mary is surprised when Mary leaves the room", and the step is modus tollens.
+* **A pronoun with nothing to go back to is asked about, in a claim kept whole too.** With "she" in both boxes, the step had passed, because the two were matched as written, and the second box names nobody. Its "she" is now asked about ("a pronoun has no uniquely determined referent in this premise; name its referent explicitly"). This holds inside what "we" conclude, and in a claim the reader keeps whole ("She is surprised when she leaves the room", "In the story, she is surprised"), which had never been checked.
+* **A "he" or "she" goes back only to someone in its box.** The user: "The nodes are supposed to be standalone, intelligible sentences whose pronouns only refer to referent within the node." So "After the storm, she left" is asked about, since "the storm" is no one. A "he" or "she" needs exactly one of the following before it in its clause: the box's one name (read for it); "someone", "everyone", "no one" and the like; or a noun phrase whose noun is a person or an animal ("When the teacher arrives, she opens the door"; "If a student cheats, he fails"; "We believe that every mother loves her child"; "When the dog barks, he wags his tail"). A believer who may be its referent also keeps it as written. A phrase in front that says in what story, place or view the rest holds ("in the story") is no referent.
+* **Another person or animal before it makes it ambiguous.** "Mary's mother left, and she cried", "Mary saw the teacher, and she smiled" and "Mary's dog barked and she ran" are no longer read as Mary: "she" may be the other person, or the dog. The user, of the dog: "Do you think that is unambiguous?" It is not. The sentence had been an r27.33 test of the possessive ending ("Mary's" names Mary), which now uses "Mary's car stalled and she ran". Two things compete with no one:
+  * a noun after "is", which says what someone is ("Mary is a teacher, and she is tired" is Mary);
+  * the subject of an object pronoun's own clause, which English would refer to with "herself" ("Mary left because the teacher scolded her" and "Mary left because the dog bit her" are Mary).
+* **A name in quotation marks is mentioned, not used.** The user: "In 'Hamlet', Ophelia is mad, and she drowns" -- "she" could only refer to the used name "Ophelia" (in single, double or curly quotation marks). A quoted pronoun is no pronoun either ("Byron wrote 'She Walks in Beauty'"). Unquoted, "In Hamlet, …" could suggest that Ophelia is inside Hamlet, as the user pointed out, and it gives two names: its pronoun is asked about, with a note saying to put the title in quotation marks.
+* **"Apparently" is no name.** "Apparently, she is late" had read "she" as "Apparently", the capitalized first word. A hedge, a frame or an empty word in front ("Apparently", "Usually", "Moreover") is no longer counted as a name.
+* **Tests.** The basis test checks the following: the user's step (as written: modus tollens; with a lone "she": asked); the believer rule; "the storm"; the rival person and its exceptions; quoted titles and pronouns; and "Apparently". The fuzzers are unchanged: English 0 unsound and 0 misread of 20,280 steps, three-premise 0 of 3,000, crash 0 errors in 4,000; the adversarial corpus passes 144 of 144.
+
 ### September 25, later: nothing to rebut, and narrow mode's vertical spacing (r27.49)
 
 * **Narrow mode, as the user specified it.** The spacing between co-premises is minimized. The tallest co-premise sets the minimal vertical distance to the children of the group. Where first cousins must share horizontal space, more weight goes to the side with more co-premises; otherwise each parent is centered above its children. Vertical spacing is minimized, and so is the horizontal spacing between siblings that are not co-premises. The minimal parent-to-child gap is 50px; each extra routing channel adds 14px.

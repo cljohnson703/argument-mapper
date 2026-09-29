@@ -301,7 +301,9 @@ try {
         check(result.flag && !result.certified, 'unresolved or competing referents prevent certification: ' + sentence);
     }
     check(call(`() => (certifyStep(['Poe is a raven', 'If Poe is a raven, then it is black'].map(parseClaim),
-        [parseClaim('Poe is black')], false) || {}).name`) === 'modus ponens', 'resolved local pronoun participates in a certified inference');
+        [parseClaim('Poe is black')], false) || {}).name`) === 'modus ponens' &&
+        call(`() => (certifyStep(['Ada is tall', 'If Ada is tall, then she is kind'].map(parseClaim),
+        [parseClaim('Ada is kind')], false) || {}).name`) === 'modus ponens', 'resolved local pronoun participates in a certified inference');
     for (const [inflected,base] of [['lies','lie'], ['dies','die'], ['ties','tie'], ['vies','vie'], ['belies','belie'],
         ['underlies','underlie'], ['unties','untie'], ['quizzes','quiz'], ['whizzes','whiz'], ['buses','bus'],
         ['busses','bus'], ['focuses','focus'], ['focusses','focus'], ['gases','gas'], ['biases','bias'], ['aliases','alias']]) {

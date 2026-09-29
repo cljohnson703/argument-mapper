@@ -363,8 +363,8 @@ try {
             'an object pronoun in the name\'s own clause is somebody else -- English would say "herself" -- but across a clause it is the name');
         ok(normed('Mary is tired. Her work is done') === "mary is tired. mary's work is done" && normed('Mary hurt herself') === 'mary hurt herself',
             'a capitalized pronoun is no second name, and "herself" is not "her"');
-        ok(normed("Mary's dog barked and she ran") === "mary's dog barked and mary ran" &&
-            normed('The cat bit Mary and then it bit her again') === 'the cat bit mary and then it bit mary again' &&
+        ok(normed("Mary's car stalled and she ran") === "mary's car stalled and mary ran" &&
+            normed('The storm hit Mary and then it hit her again') === 'the storm hit mary and then it hit mary again' &&
             normed('Mary and her sister left') === "mary and mary's sister left",
             'a possessive name is still that name, and an adverb after the pronoun ends the clause rather than being owned');
         ok(normed('Mary said he loves her') === 'mary said he loves her' &&
@@ -378,17 +378,18 @@ try {
             normed('When she exits the room, Mary learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
             normed('She met Mary') === 'she met mary',
             'a pronoun may come first in a clause that waits for its main one, and nowhere else');
-        // Inside what somebody believes, says or knows, a pronoun is kept as
-        // written: "she" there may be Mary as she thinks of herself (de se).
-        ok(normed('Mary believes that she is late') === 'mary believes that she is late' &&
-            normed('Mary said that the dog bit her') === 'mary said that the dog bit her' &&
-            normed('Mary knows that she is in the room') === 'mary knows that she is in the room' &&
-            !rule(['Mary believes that she is late'], 'Mary believes that Mary is late'),
-            'a pronoun inside what somebody believes or says is not the name, and the two claims are not one');
-        ok(ev('return claimNotes("Bob believes that it rains").length === 0 && claimNotes("Mary believes that she is late").length === 0;') &&
+        // Inside what somebody believes, says or knows, a pronoun reads as any
+        // other (the user, 2026-09-28: "In 'Mary believes that she is late', if
+        // that's all the content we have, then 'she' refers to 'Mary'").
+        ok(normed('Mary believes that she is late') === 'mary believes that mary is late' &&
+            normed('Mary said that the dog bit her') === 'mary said that the dog bit mary' &&
+            normed('Mary knows that she is in the room') === 'mary knows that mary is in the room' &&
+            ev('return claimSame(parseClaim("Mary believes that she is late"), parseClaim("Mary believes that Mary is late"));'),
+            'a pronoun inside what somebody believes or says is the box\'s one name, as anywhere else, and the two claims are one');
+        ok(ev('return claimNotes("Bob believes that it rains").length === 0 && claimNotes("Mary believes that she is late").some(function (n) { return /"she" is read as "Mary"/.test(n.message); });') &&
             normed('When Mary exits the room, she learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
             normed('Mary knows her brother') === "mary knows mary's brother",
-            'and such a clause is matched as written, not flagged -- while a pronoun outside one still reads');
+            'and the box says so, as it does outside one; an "it" of the weather there asks nothing');
         // "Just in case" is a biconditional here, and the box says so.
         ok(/if and only if/.test(ev('return (claimNotes("Bob runs just in case Mary runs")[0] || {}).message || "";')) &&
             ev('return claimNotes("Bob runs if and only if Mary runs").length;') === 0 &&
@@ -894,8 +895,8 @@ try {
                 'There are non-physical facts about color sensations.') === 'modus ponens, conditions together',
             'the Mary\'s Room steps pass in their own words: "would" with "when", a time frame, "and sees ..." in the when-clause, and "its" with its noun before it');
         ok(ev('return claimDenies(parseClaim("Mary is surprised when she leaves the room"), parseClaim("Mary is not surprised when she leaves the room"));') === true &&
-            tagOf(['Mary eats it', 'If Mary eats it, then Mary is full'], 'Mary is full')[0] === '? ambiguous',
-            '"not" at a time is the denial of what is so then; a pronoun with nothing before it in its clause is still asked', '');
+            tagOf(['Mary eats it', 'If Mary eats it, then Mary is full'], 'Mary is full')[0] === '\u2717 no referent',
+            '"not" at a time is the denial of what is so then; a pronoun with nothing before it in its box has no referent, and the step says so', '');
         // The Evaluation Overview: a click on a note shows its box; no Go to or Delete; a trash can.
         const panel = ev(`var calls = [], real = panToNodeBox; panToNodeBox = function (id, idx) { calls.push([id, idx]); };
             state.trees = [{ id: 'M', type: 'contention', texts: ['Poe is black'], collapsed: [], x: 30000, y: 30000, children: [],
@@ -1018,6 +1019,253 @@ try {
         ok(ev('var t = "Bob thinks that Poe is black, and Fido is white.", n = parseClaimFull(t).notes.filter(function (x) { return x.kind === "ambiguous"; })[0];' +
                 'var w = claimReadingWords(n.readings[0], t); return w === "Fido is white, and Bob thinks that Poe is black." && claimReadingRoundTrips({ text: t, site: n.site }, 0, w);'),
             '"Bob thinks that P, and Q", with Q a claim of its own, is offered as "Q, and Bob thinks that P", and reads back so');
+    }
+    // ---- r27.50: a pronoun tracks its referent in the box ----
+    {
+        const tagOf = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
+            { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+        const normed = t => ev('return normalizeClaimText(' + J(t) + ');').replace(/\uE000/g, '');
+        const asks = t => ev('return parseClaimFull(' + J(t) + ').notes.some(function (n) { return n.kind === "ambiguous" && n.pronoun; });');
+        // The user's step (2026-09-25): "she" in what "we" conclude is Mary,
+        // the box's one name; the de se reading needs Mary to be the one who
+        // concludes. With no name in the box, "she" is asked about.
+        const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
+        const O1 = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would not conclude that she is surprised when she leaves the room.';
+        ok(tagOf([O1, 'We conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' &&
+            tagOf([O1, 'We conclude that she is surprised when she leaves the room.'], S5, 'objection') === '\u2717 no referent' &&
+            normed('We conclude that Mary is surprised when she leaves the room') === 'we conclude that mary is surprised when mary leaves the room',
+            'a pronoun in what "we" conclude is the box\'s one name ("she" is Mary); with no name in the box it has no referent (said, not asked: the user, 2026-09-28), so a lone "she" is never matched with another box\'s');
+        ok(normed('Mary believes that she is late') === 'mary believes that mary is late' && normed('Bob believes that she is late') === 'bob believes that bob is late' &&
+            normed('When Mary left, she thought that she was late') === 'when mary left, mary thought that mary was late' &&
+            normed('Mary is late, and we all think that she is tired') === 'mary is late, and we all think that mary is tired',
+            'the one who believes is a referent like any other (since 2026-09-28); where it is "we", "I", "you" or "they", it is none, and the pronoun reads as the name');
+        ok(asks('We conclude that she is surprised when she leaves the room.') && asks('I think that she is late.') && asks('She is surprised when she leaves the room.') &&
+            asks('In the story, she is surprised.') && asks('Apparently, she is late.') &&
+            !asks('When the teacher arrives, she opens the door.') && !asks('If a student cheats, he fails.') && !asks('We believe that every mother loves her child.') &&
+            !asks('Mary believes that she is late.') && !asks('When Mary exits the room, she learns a new fact.'),
+            'a "he" or "she" with nothing before it to go back to is asked about, in a claim kept whole too; a noun phrase before it, a quantifier, or a believer who may be its referent keeps it as written');
+        ok(normed('Apparently, she is late') === 'apparently, she is late' && normed('Usually, he is early') === 'usually, he is early',
+            'a hedge or frame word in front ("Apparently", "Usually") is no name for "she"');
+        // The user: "The nodes are supposed to be standalone, intelligible
+        // sentences whose pronouns only refer to referent within the node."
+        ok(asks('After the storm, she left.') && asks('The storm is violent, and she left.') && asks('We conclude that after the storm, she left.') &&
+            !asks('The teacher is late, and she is tired.') && !asks('When the dog barks, he wags his tail.'),
+            'a "he" or "she" goes back only to someone -- a person or an animal -- in its box: "the storm" is no one, so it is asked about');
+        ok(asks("Mary's mother left, and she cried.") && asks('Mary saw the teacher, and she smiled.') &&
+            asks('When the teacher arrives, Mary opens the door and she smiles.') &&
+            normed('Mary is a teacher, and she is tired') === 'mary is a teacher, and mary is tired' &&
+            normed('Mary left because the teacher scolded her') === 'mary left because the teacher scolded mary' &&
+            asks("Mary's dog barked and she ran.") && normed('Mary left because the dog bit her') === 'mary left because the dog bit mary',
+            'another person or animal before the pronoun leaves it ambiguous ("Mary\'s dog barked and she ran": the dog may be "she"), and it is asked about -- but not a noun after "is", nor the subject of an object pronoun\'s own clause');
+        const titleNote = ev('return parseClaimFull("In Hamlet, Ophelia is mad, and she drowns.").notes.map(function (n) { return n.message; }).join(" | ");');
+        ok(normed("In 'Hamlet', Ophelia is mad, and she drowns") === "in 'hamlet', ophelia is mad, and ophelia drowns" &&
+            normed('In "Hamlet", Ophelia is mad, and she drowns') === 'in "hamlet", ophelia is mad, and ophelia drowns' &&
+            normed('In \u2018Hamlet\u2019, Ophelia is mad, and she drowns') === "in 'hamlet', ophelia is mad, and ophelia drowns" &&
+            !asks("In 'Hamlet', Ophelia is mad, and she drowns.") && asks('In Hamlet, Ophelia is mad, and she drowns.') &&
+            /put it in quotation marks/.test(titleNote) &&
+            normed("Byron wrote 'She Walks in Beauty'") === "byron wrote 'she walks in beauty'" && !asks("Byron wrote 'She Walks in Beauty'."),
+            'a name in quotation marks is mentioned, not used: "she" can only be Ophelia; unquoted, "Hamlet" is asked about, with a note to quote the title; a quoted "She" is no pronoun', titleNote);
+    }
+    // ---- r27.51: "do", "at all", "no longer", the light theme's pill ----
+    {
+        const tagOf = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
+            { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+        const normed = t => ev('return normalizeClaimText(' + J(t) + ');').replace(/\uE000/g, '');
+        // The user: "'do' isn't fundamentally changing anything here."
+        ok(normed('We do conclude that Mary is surprised') === 'we conclude that mary is surprised' && normed('Poe does sing') === 'poe sings' &&
+            normed('Poe did sing') === 'poe sang' && normed('Ada does quiz') === 'ada quizzes' &&
+            normed('Mary does the dishes') === 'mary does the dishes' && normed('Mary did well') === 'mary did well' && normed('We do so') === 'we do so' &&
+            normed('Ada did beat') === 'ada did beat' && normed('Do we conclude that Poe sings') === 'do we conclude that poe sings' &&
+            tagOf(['If Poe is a raven, then Poe sings.', 'Poe is a raven.'], 'Poe does sing.') === '\u2713 modus ponens',
+            'an emphatic "do" says no more than the plain verb in its tense; "do" with an object, a question, and a "did" that alone says the tense stay');
+        ok(normed('Mary is not at all surprised') === 'mary is not surprised' && normed('Mary is not surprised at all') === 'mary is not surprised' &&
+            normed('We must win at all costs') === 'we must win at all costs' && normed('Mary is calm at all times') === 'mary is calm at all times' &&
+            tagOf(['If Poe is a raven, then Poe is not at all white.', 'Poe is white.'], 'Poe is a raven.', 'objection') === '\u2713 modus tollens',
+            '"at all" only stresses a claim ("not at all surprised"), except where it says "every" ("at all times")');
+        // The user's step, with "not" (and "do", "at all"); "no longer" does
+        // not hide the one who concludes.
+        const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
+        const O1 = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would not conclude that she is at all surprised when she leaves the room.';
+        ok(tagOf([O1, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' &&
+            normed('Then we would no longer conclude that Mary is late and that she is tired') === 'then we would no longer conclude that mary is late and that mary is tired',
+            'the user\'s modus tollens passes with "do" and "at all"; "no longer" stands between "we" and "conclude", as "not" does');
+        // The light theme's Unwarranted pill (the dark theme's pale amber was
+        // about 1.9:1 on a white box).
+        ok(/body\.bg-light\s*\{[^}]*--logic-unwarranted:\s*#8a6100/.test(Array.from(W.document.querySelectorAll('style')).map(x => x.textContent).join('\n')),
+            'in the light theme the Unwarranted pill is dark amber, as its ambiguous tags are');
+        const asks = t => ev('return parseClaimFull(' + J(t) + ').notes.some(function (n) { return n.kind === "ambiguous" && n.pronoun; });');
+        // "Would no longer" in a would-conditional: "would not". The user's step, as written.
+        const O1b = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would no longer conclude that she is at all surprised when she leaves the room.';
+        const longer = ev('return parseClaimFull(' + J(O1b) + ').notes.filter(function (n) { return /no longer/.test(n.message); }).length;');
+        ok(tagOf([O1b, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' && longer === 1 &&
+            ev('return !claimSame(parseClaim("We no longer conclude that Poe is white"), parseClaim("We do not conclude that Poe is white"));'),
+            'the user\'s step as written: "we would no longer conclude" is "we would not conclude" in what the conditional says would follow, noted once -- and "we no longer conclude" alone is not "we do not conclude"');
+        // The user's pronoun rule: what the box calls "it" is not its "she".
+        // Its "it" is the cat (r27.54: no clause can be the subject of "bit her
+        // again"), and "her" is Mary.
+        ok(normed('The cat bit Mary and then it bit her again') === 'the cat bit mary and then it bit mary again' && !asks('The cat bit Mary and then it bit her again') &&
+            normed('The cat bit Mary, and it ran, and she cried') === 'the cat bit mary, and it ran, and mary cried' &&
+            asks("Mary's dog barked and she ran.") && asks("Mary's dog chased the ball and she caught it.") && asks('It is clear that the cat bit Mary and she cried.'),
+            'an animal the box calls "it" is not also its "he" or "she" ("her" is Mary); where the box does not say what it calls the animal, or its "it" may be two things, the pronoun is still asked about');
+        // A pronoun asked about offers its referents; the chosen one reads back.
+        const offered = ev(`var t = "Mary's dog barked and she ran.", n = parseClaimFull(t).notes.filter(function (x) { return x.pronoun; })[0];
+            return { words: n.readings.map(function (l) { return claimReadingWords(l, t); }),
+                back: n.readings.map(function (l, i) { return claimReadingRoundTrips({ text: t, site: n.site }, i, claimReadingWords(l, t)); }),
+                chosen: claimKey(parseClaim(t, { site: n.site, reading: 0 })) === claimKey(parseClaim("Mary's dog barked and Mary ran.")) };`);
+        ok(J(offered.words) === J(["Mary's dog barked and Mary ran.", "Mary's dog barked and Mary's dog ran."]) && offered.back.every(Boolean) && offered.chosen &&
+            tagOf(["Mary's dog barked and Mary ran."], 'Mary ran.') === '\u2713 conjunction elimination',
+            'a pronoun asked about offers the box with each someone it may be in its place; a choice reads back, and "Mary\'s dog barked and Mary ran" gives "Mary ran"', J(offered));
+        // A pronoun in a predicate: the claim's subject, an earlier clause --
+        // not, for an object, its own subject.
+        ok(!asks('The teacher loves her job.') && asks('The teacher praised her.') && !asks('The teacher left and the student praised her.') &&
+            !asks('The cat chased its tail.') && asks('Mary chased it.'),
+            'a pronoun in a predicate may go back to the claim\'s subject or an earlier clause, but an object not to the subject of its own clause');
+        ok(ev('return claimKey(parseClaim("Mary\'s dog barked")) === "P:mary\'s dog|~did barked" && claimKey(parseClaim("This gives you no reason")) === "N(P:this|~give you reason)";'),
+            'a possessive or "my" opens a subject ("Mary\'s dog barked"); "this" before a verb is the subject itself');
+    }
+    // ---- r27.52: the someone a pronoun goes back to; the "it" of "it is clear that" ----
+    {
+        const tagOf = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
+            { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+        const asks = t => ev('return parseClaimFull(' + J(t) + ').notes.some(function (n) { return n.kind === "ambiguous" && n.pronoun; });');
+        const plain = t => String(key(t)).replace(/\uE000/g, '');
+        const offers = t => ev(`var t = ${J(t)}, n = parseClaimFull(t).notes.filter(function (x) { return x.pronoun; })[0];
+            return n ? n.readings.map(function (l, i) { var w = claimReadingWords(l, t); return claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; }) : null;`);
+        // After any clause, not only "the teacher is tired": the one someone before it.
+        ok(plain('The teacher left and she cried.') === 'C[P:the teacher|~did left;P:the teacher|~did cried]' && !asks('The teacher left and she cried.') &&
+            tagOf(['The teacher left and she cried.'], 'The teacher cried.') === '\u2713 conjunction elimination' &&
+            tagOf(['If the teacher left, then she cried.', 'The teacher left.'], 'The teacher cried.') === '\u2713 modus ponens' &&
+            asks('The teacher praised the student and she cried.') && asks('Every teacher left and she cried.') && asks('The storm raged and she left.') &&
+            !asks('A teacher left and she cried.'),
+            'a "he" or "she" after a clause whose subject is the one someone before it is that someone -- not where the box gives two, a quantifier, or no one ("a teacher" is read in: r27.54)');
+        // A "he" and a "she" are two people, as with a name.
+        ok(asks('The teacher is tired and he cried and she laughed.') && asks('The teacher left and he cried and she laughed.') &&
+            asks('Mary left and he cried and she laughed.') && !asks('The teacher is tired and she told the boy that he left.'),
+            'one someone is not both a "he" and a "she": asked, as with a name -- but two people may be');
+        // An object pronoun is not its clause's subject, named earlier or not.
+        ok(asks('The teacher is tired and she praised her.') && asks('The teacher is tired and the teacher praised her.') && asks('The teacher praised her.') &&
+            !asks('The teacher praised the student and the student thanked her.') && !asks('The teacher is tired and she said that her car broke.'),
+            'an object pronoun is not the subject of its own clause, wherever the box names that subject; a possessive may be');
+        // The "it" of "it is clear that": what follows, not a thing.
+        ok(!asks('It is clear that the cat bit Mary.') && !asks('Bob left and it is obvious that Mary cried.') && !asks('Bob left and it is hard to say whether Mary cried.') &&
+            !asks('It is a fact that Mary cried.') && !asks('It is unclear why Mary cried.') &&
+            plain('Bob left and it is clear that Mary cried.') === 'C[P:bob|~did left;P:it|=clear that mary cried]' &&
+            plain('The book is old and it is clear that Mary cried.') === 'C[P:the book|=old;P:it|=clear that mary cried]',
+            'the "it" of "it is clear that", "it is hard to say whether", "it is a fact that" stands for what follows: no referent is asked for, and it is no earlier thing',
+            J(['It is clear that the cat bit Mary.', 'Bob left and it is obvious that Mary cried.', 'Bob left and it is hard to say whether Mary cried.', 'It is a fact that Mary cried.', 'It is unclear why Mary cried.'].map(asks).concat([key('Bob left and it is clear that Mary cried.'), key('The book is old and it is clear that Mary cried.')])));
+        ok(asks('It is clear that she left.') && asks('It seems that she left.') && !asks('The teacher left and it is clear that she cried.') &&
+            asks('It is a claim that Mary made.') && asks('It is hard to read.') && asks('It is so heavy that Bob cannot lift it.'),
+            'what follows it is read as any clause ("it is clear that she left" asks who she is); "it is a claim that Mary made", "it is hard to read" have an "it" that is a thing');
+        ok(!asks('It seems that it rained.') && !asks('It is clear that it rained.') && !asks('Bob left and it seems that it is raining.') &&
+            !asks('It seems that it has been raining.') && asks('It seems that it broke.') && asks('It is clear that it has a tail that wags.'),
+            'an "it" in what follows that stands for nothing ("it rained", "it is raining", "it is clear that") asks for no referent; one that is a thing does');
+        // "That" after an adjective, a participle, a content noun, or "so": no relative clause.
+        ok(plain('Bob left and it is known that Mary cried.') === 'C[P:bob|~did left;P:it|=known that mary cried]' &&
+            plain('The box is so heavy that Bob cannot lift it.') === 'P:the box|=so heavy that bob can not lift the box' && !asks('The box is so heavy that Bob cannot lift it.') &&
+            plain('Poe is a raven that Mary loves.') === 'C[P:poe|=raven;P:mary|~love poe]',
+            '"clear that Mary cried", "known that ...", "so heavy that ..." are no relative clauses ("Mary cried it"); "a raven that Mary loves" is one',
+            J([key('Bob left and it is known that Mary cried.'), key('The box is so heavy that Bob cannot lift it.'), asks('The box is so heavy that Bob cannot lift it.'), key('Poe is a raven that Mary loves.')]));
+        // Offers settle every pronoun at once.
+        ok(J(offers('Lenore admired Poe and she praised him')) === J(['Lenore admired Poe and Lenore praised Poe', 'Lenore admired Poe and Poe praised Lenore']) &&
+            J(offers('Lenore admired Poe and she praised her.')) === J(['Lenore admired Poe and Lenore praised Poe.', 'Lenore admired Poe and Poe praised Lenore.']) &&
+            J(offers('It is clear that the cat bit Mary and she cried.')) === J(['It is clear that the cat bit Mary and the cat cried.', 'It is clear that the cat bit Mary and Mary cried.']) &&
+            J(offers('Poe wrote his poem and she read it')) === J([]),
+            'a pronoun asked about is offered with every open pronoun given someone at once -- a "he" and a "she" two people, an object not its subject -- and each offer reads back; "that the cat" is no someone', J([offers('Lenore admired Poe and she praised him'), offers('It is clear that the cat bit Mary and she cried.')]));
+    }
+    // ---- r27.53: no referent said, not asked; "it" after a clause; typos ----
+    {
+        const tagOf = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
+            { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+        // The pronoun note: 'missing', 'ambiguous' (with its offers), or 'read' (one
+        // referent, read in: since r27.54), with the box's reading.
+        const note = t => ev(`var t = ${J(t)}, r = parseClaimFull(t), n = r.notes.filter(function (x) { return x.pronoun || x.typo; })[0];
+            return n ? { kind: n.typo ? 'typo' : n.auto ? 'read' : n.missing ? 'missing' : 'ambiguous', message: n.message, key: r.form ? claimKey(r.form) : null,
+                offers: (n.readings || []).map(function (l, i) { var w = n.typo ? l : claimReadingWords(l, t); return n.typo || claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; }) } : null;`);
+        const kind = t => { const n = note(t); return n ? n.kind : null; };
+        // The user's cases: nothing to ask, so the step says the referent is missing.
+        const every = note('Every teacher left and she cried.'), both = note('The teacher is tired and he cried and she laughed.'), herself = note('The teacher is tired and the teacher praised her.');
+        ok(every.kind === 'missing' && /“every teacher” reaches no pronoun outside its own clause/.test(every.message) &&
+            both.kind === 'missing' && /“he” and “she” are two people, and the box names only “the teacher”/.test(both.message) &&
+            herself.kind === 'missing' && /“her” is not “the teacher”, the subject of its own clause \(that would be “herself”\)/.test(herself.message) &&
+            tagOf(['Every teacher left and she cried.'], 'The teacher cried.') === '\u2717 no referent' &&
+            kind('After the storm, she left.') === 'missing' && kind('The cat chased it.') === 'missing' && kind('It is heavy.') === 'missing',
+            'a pronoun with nothing in its box to refer to is said to have none, not asked about: a quantifier reaches no pronoun past its clause, "he" and "she" are two people, an object is not its own clause\'s subject', J([every, both, herself]));
+        // Several: asked, with the offers. One: that one, read in (the user, 2026-09-28:
+        // "Mustn't 'she' in the teacher sentence refer to the teacher, as that's the
+        // only available referent?"). After "a teacher", the "she" that opens the next
+        // clause is dropped -- "A teacher left and cried", one teacher -- and where it
+        // cannot be, the box is read as one claim.
+        const dog = note("Mary's dog barked and she ran."), teacher = note('A teacher left and she cried.'), praised = note('A teacher left and Bob praised her.');
+        ok(dog.kind === 'ambiguous' && J(dog.offers) === J(["Mary's dog barked and Mary ran.", "Mary's dog barked and Mary's dog ran."]) &&
+            teacher.kind === 'read' && teacher.key === key('A teacher left and cried.') && /“she” as “the teacher”/.test(teacher.message) &&
+            praised.kind === 'read' && /^A:/.test(praised.key) && note('Someone knocked, and she was angry.').key === key('Someone knocked and was angry.') &&
+            tagOf(["Mary's dog barked and she ran."], 'Mary ran.') === '? ambiguous',
+            'two or more referents: "? ambiguous", with each; one: read in, and said -- after "a teacher", "A teacher left and cried", else one claim', J([dog, teacher, praised]));
+        // (a): an "it" after a whole clause may be the thing or what the clause says --
+        // where a clause could be its predicate's subject: "that the vase is broken
+        // surprised Mary" is English, "that Poe is a raven is black" is not (r27.54).
+        const vase = note('The vase is broken and it surprised Mary.'), cat = note('The cat bit Mary and then it bit her again.'), poe = note('If Poe is a raven, then it is black.');
+        ok(vase.kind === 'ambiguous' && J(vase.offers) === J(['The vase is broken and the vase surprised Mary.', 'The vase is broken and the fact that the vase is broken surprised Mary.']) &&
+            cat.kind === 'read' && cat.key === key('The cat bit Mary and then the cat bit Mary again.') &&
+            poe.kind === 'read' && poe.key === key('If Poe is a raven, then Poe is black.') &&
+            note('The book is old and it is heavy.').key === key('The book is old and the book is heavy.') &&
+            note('Mary saw the vase and dropped it.').key === key('Mary saw the vase and dropped the vase.') &&
+            kind('Poe is a raven, and it surprised Mary.') === 'ambiguous' &&
+            kind('Mary left and it surprised Bob.') === 'read' && kind('If the vase is broken, then it is worthless.') === 'ambiguous' &&
+            tagOf(['The vase is broken and it surprised Mary.'], 'The vase surprised Mary.') === '? ambiguous' &&
+            tagOf(['The vase is broken and the vase surprised Mary.'], 'The vase surprised Mary.') === '\u2713 conjunction elimination',
+            'an "it" after a whole clause may be the thing or what the clause says, and is asked about (the user\'s choice, 2026-09-28) -- but not where no clause could be its predicate\'s subject ("is black", "bit her again", "is heavy", "dropped it"): there it is the thing', J([vase, cat, poe]));
+        ok(kind('It is clear that it is raining.') === null && kind("It is clear that it's raining.") === null && kind('It seems that it rained.') === null &&
+            kind('The cat chased its tail.') !== 'ambiguous' && kind('The teacher left and she cried.') !== 'ambiguous' && kind('If a raven sings, then it is black.') === null &&
+            kind('Mary believes that she is late.') === null &&
+            kind('If it rains, and if it is cold, then it snows.') === null && kind('It is not the case that it rains.') === null &&
+            kind('If it rains, then it is not warranted to conclude that everything is a philosopher.') === null && kind('The box is so heavy that Bob cannot lift it.') !== 'ambiguous',
+            'no question: an "it" that stands for nothing ("it is clear that it\'s raining", "it is cold", "it is not the case that"), "its" with its noun, a pronoun a quantifier binds, and an object whose clause has another subject');
+        // r27.54: a phrase in front names no referent; only the living see, and a fact may help.
+        const framed = note('According to the teacher, she left.');
+        ok(framed.kind === 'missing' && /“According to the teacher” says in whose view, or where, the rest holds/.test(framed.message) &&
+            note('The dog saw Mary and then it saw her again.').key === key('The dog saw Mary and then the dog saw Mary again.') &&
+            kind('The vase broke and it helped Mary.') === 'ambiguous' && kind('In Hamlet, Ophelia is mad, and she drowns.') === 'ambiguous' &&
+            ev('var n = parseClaimFull(\'The argument from "Poe is black" and "If Poe is black, then Fido is white" does not establish its conclusion.\').notes; return n.some(function (x) { return x.reference; }) && !n.some(function (x) { return x.pronoun; });'),
+            '"according to the teacher" names no referent (an unquoted name there still may: "In Hamlet"); "saw her again" takes no clause as subject, "helped Mary" may; an unnamed conclusion stays the warrant reader\'s note', J(framed));
+        // r27.55: "again" keeps the roles of what happened before (the user, 2026-09-28).
+        const again = note('Mary praised Ann, and then she praised her again.');
+        ok(again.kind === 'read' && again.key === key('Mary praised Ann, and then Mary praised Ann again.') &&
+            kind('Mary praised Ann, and then she praised her.') === 'ambiguous' && kind('Mary praised Ann and then she thanked her again.') === 'ambiguous' &&
+            note('The teacher praised the student and then she praised her again.').key === key('The teacher praised the student and then the teacher praised the student again.'),
+            '"again" with the same verb: its subject is the one who did it before, its object the one it was done to -- without "again", or with another verb, still asked', J(again));
+        // r27.55: in what somebody believes or says, a pronoun reads as any other.
+        ok(kind('Mary told Ann that she is late.') === 'ambiguous' && kind('The teacher said that she praised her.') === 'missing' &&
+            note('The teacher believes that she is late.').key === key('The teacher believes that the teacher is late.') &&
+            kind('Every teacher loves her job.') === null && kind('A teacher loves her job.') === null && kind('We conclude that she is surprised.') === 'missing',
+            'a pronoun in what is believed or said: one referent read in, two asked about, none said; bound by "every teacher" or "a teacher" in its own clause, settled');
+        // r27.55: past verbs joined are each said of the subject.
+        const joined = (ps, c) => tagOf(ps, c);
+        ok(joined(['Some teacher left and cried.'], 'Some teacher cried.') === '\u2713 conjunction elimination under \u2203' &&
+            joined(['Mary left and cried.'], 'Mary cried.') === '\u2713 conjunction elimination' &&
+            joined(['Every teacher left the room and cried.'], 'Every teacher cried.') === '\u2713 conjunction elimination under \u2200' &&
+            joined(['Mary bought bread and milk.'], 'Mary milked.') !== '\u2713 conjunction elimination' &&
+            joined(['Mary washed and dried the dishes.'], 'Mary washed.') !== '\u2713 conjunction elimination' &&
+            !/^\u2713/.test(joined(['Some teacher left.', 'Some teacher cried.'], 'Some teacher left and cried.')),
+            '"left and cried", "left the room and cried": each said of the subject, under "some" and "every" too -- not "bought bread and milk", not "washed and dried the dishes", and two "some"s are not one');
+        // A clause is no thing: "that ..." as a subject, "which" after an adjective.
+        ok(key('That the vase is broken surprised Mary.').replace(//g, '') === 'A:that the vase is broken surprised mary' &&
+            key('The vase is broken, which is sad.') === 'P:the vase|=broken which is sad' && key('Poe is a raven, which is black.') === key('Poe is a raven that is black.'),
+            '"That the vase is broken surprised Mary" is one claim (it had been "that the vase is Mary" and more); "which" after "broken" is no relative clause on the vase; after a noun it still is');
+        // Typos: "✗ typo?", with the fix; the box is read as fixed, and the step waits for it.
+        const typo = note('Mary  left the  room.'), twice = note('The the raven is black.');
+        ok(typo.kind === 'typo' && /two spaces after “Mary”; two spaces after “the”/.test(typo.message) && J(typo.offers) === J(['Mary left the room.']) &&
+            twice.kind === 'typo' && J(twice.offers) === J(['The raven is black.']) &&
+            J(['Poe is black , and Fido is white.', 'Poe is black,and Fido is white.', 'Poe is black.Fido is white.', 'Poe is black,, and Fido is white.', 'Poe is black..'].map(function (t) { return note(t).offers[0]; })) ===
+                J(['Poe is black, and Fido is white.', 'Poe is black, and Fido is white.', 'Poe is black. Fido is white.', 'Poe is black, and Fido is white.', 'Poe is black.']) &&
+            ['Wait... Poe is black.', 'Bob said "the  cat" twice.', 'It costs 1,000 dollars.', 'E.g. Poe is black.', 'Bob had had enough.', 'P  \u2227  Q'].every(function (t) { var n = note(t); return !n || n.kind !== 'typo'; }) &&
+            tagOf(['If Poe is black, then Fido is white.', 'Poe  is black.'], 'Fido is white.') === '\u2717 typo?' &&
+            ev('return claimKey(parseClaim("Poe  is black")) === claimKey(parseClaim("Poe is black"));'),
+            'a typo -- extra spaces, a space before a comma or none after one, "the the", ",," -- is "\u2717 typo?" with its fix; quotations, an ellipsis, numbers, "e.g.", "had had" and formulas are left alone; the box is read as fixed, and the step waits for the fix', J([typo, twice]));
     }
     ok(errors.length === 0, 'no JSDOM script errors', errors.join('; '));
 } finally {

@@ -321,20 +321,12 @@ const T = (W, body) => {
             var rows = g ? g.querySelectorAll('.color-key-row').length : 0;
             var text = g ? g.textContent.replace(/\\s+/g, ' ') : '';
             var b = document.getElementById('key-btn');
-            var r = { rows: rows, text: text, edges: g ? g.querySelectorAll('svg').length : -1, inHelp: !!g.closest('#help-panel'), noButton: !b };
-            toggleColorKey();
-            r.afterHide = { hidden: document.body.classList.contains('color-key-hidden'), stored: localStorage.getItem('argmap-color-key'), visible: getComputedStyle(g).display !== 'none' };
-            toggleColorKey();
-            r.afterShow = { hidden: document.body.classList.contains('color-key-hidden'), stored: localStorage.getItem('argmap-color-key') };
-            return r;`);
-        key.afterHide = key.afterHide || {}; key.afterShow = key.afterShow || {};
+            return { rows: rows, text: text, edges: g ? g.querySelectorAll('svg').length : -1, inHelp: !!g.closest('#help-panel'), noButton: !b,
+                noToggle: typeof toggleColorKey === 'undefined' };`);
         ok(key.rows === 4 && key.edges === 1 && /Main argument/.test(key.text) && /Objection/.test(key.text) && /Rebuttal/.test(key.text) &&
            /Weak objection or rebuttal/.test(key.text),
             'the toolbar has a color key: three colors, and one dotted-line row for weak objections and rebuttals', JSON.stringify({ rows: key.rows, edges: key.edges, text: key.text }));
-        ok(key.inHelp && key.noButton, 'the legend is in Help without a toolbar button', JSON.stringify(key));
-        ok(key.afterHide.hidden && key.afterHide.stored === '0' && key.afterHide.visible &&
-           !key.afterShow.hidden && key.afterShow.stored === '1',
-            'the View button hides and shows it, and remembers the choice', JSON.stringify([key.afterHide, key.afterShow]));
+        ok(key.inHelp && key.noButton && key.noToggle, 'the legend is in Help without a toolbar button, and nothing hides it', JSON.stringify(key));
     }
 
     /* ---------------- 8. SVG export ---------------- */
