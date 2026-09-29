@@ -4,6 +4,121 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### September 29: "and then" in words, verbs in order, three claims, and "each" without asking (r27.58)
+
+* **The logical form of "A and then B"** (the user: "It's not A -> B but A & B? Or something else? If we use temporal logic ..., it's A & <F>B?").
+  * Not A → B: a conditional asserts neither part.
+  * The checker reads it as A ∧ B ∧ O, where O ("A's time is before B's") is a letter of its own that it does not analyze.
+  * In tense logic, A ∧ ⟨F⟩B is the form of the claim made at the time of A: A now, B later. From it B follows only as "B will be".
+  * Arguments mostly narrate in the past, where the whole is shifted back: "Mary left and then Bob cried" is P(B ∧ PA) in Prior's notation (Bob cried, and before that Mary had left). With events it is ∃e∃e′(leave(e, m) ∧ cry(e′, b) ∧ e before e′, both before now).
+  * Each of these gives A and B, each in its own tense, and "A and B"; "A and B" gives none of them. The checker agrees on all of that, because each part keeps its tense in its words ("Bob cried" and "Bob will cry" are different claims).
+  * What it does not do is reason about the order itself: "A and then B" and "B and then C" do not give "A and then C".
+  * The present tense is read as it is in "Poe flies", not as "now". So "Mary leaves and then Bob cries" is taken as a narrative and gives "Bob cries"; said now, it would give only "Bob will cry". Left as is; the user may choose to have it asked.
+* **English wordings, not brackets** (the user: "Weren't we avoiding brackets and using 'either... or' and 'both... and' to indicate parentheses?"; chose "Ask, with English wordings"). "And then" beside "or", "if", "unless" or a denial is asked about, as "and" is there, with both readings in words to write in:
+  * "or": "Either A and then B, or C" and "A, and then either B or C"; the other way round, "Either A or B, and then C" and "Either A, or B and then C".
+  * "if" or "unless" after: "C if first A and then B" and "(1) C if A, and then (2) B"; with the "and then" before, "If C, then A and then B" and "(1) A, and then (2) B if C".
+  * A denial: "It is not the case that first A and then B" and "(1) It is not the case that A, and then (2) B".
+
+  "First … and then" groups a sequence as "both … and" groups a list, where a clause begins ("that first …", "if first …"), not in "the first raven". A numbered list may end in "and then". Every wording reads back as its reading. Brackets still work.
+* **Verbs under one subject keep their order** (the user, of "Mary left and then cried and laughed": "Mary's crying and laughing come after she left"). Nothing stands between "then" and the verbs after it, so it takes them all in:
+  * "Mary left and then cried and laughed": she left, and then cried and laughed;
+  * "Mary left and cried and then laughed": she left and cried, and then laughed;
+  * a comma before a later "and" sets that verb apart: in "Mary left and then cried, and laughed", when she laughed is not said.
+
+  Lists of clauses are still asked about (the user: "Keep asking"). There "then" stands inside its own clause ("and then Bob cried and Ann laughed").
+* **"Alice and Bob left and then Carol cried"** (the user: "Should it be three claims?"). Yes: Alice left and Bob left, and then Carol cried. A clause with a subject of its own now ends the verb phrase of a joined subject, except inside a that-clause, which runs to the end. The same sentence with plain "and" had the same bug.
+* **Said of each, without asking** (the user, of "Mary and her sister left": "This only has one reading, no?"; chose "Verbs alone, plural nouns"). The check now reads these as said of each of the two, with a note:
+  * verbs with nothing after them: "left", "did not leave", "can swim", "left early", "left and cried";
+  * "are" with a plural noun and no article or number before it: "are ravens", "are black ravens".
+
+  Still asked:
+  * adjectives: "are tall", "will be late";
+  * verbs with objects: "ate the pizza", "met Carol";
+  * numbers: "are two philosophers".
+
+  Kin and company ("are brothers", "are classmates", "are strangers") join "are friends" as what two are to each other, said of the two together.
+* **Verb lists with commas.**
+  * "Mary left, cried, and laughed" had been read as "left cried" and "laughed", and "Mary left and cried, and laughed" as having "and" for a subject. Both are three verbs now.
+  * "Mary washed and dried the dishes" is kept whole, as r27.55 decided.
+* **The syntax tree** (the user: "Maybe we need an internal syntax tree so the checker can disambiguate a little more easily"; chose "After these fixes"). This is next, in stages, each checked against every suite and fuzzer:
+  1. a tagger and chunker, used first for subject and verb-phrase boundaries and by the pronoun analysis;
+  2. coordination built on it;
+  3. the forms last.
+* **Found, not fixed (for the tree):**
+  * An article, a word the reader does not know as an adjective ("first", "black"), a noun and a verb are not read as a clause. So "The black raven left and then the dog cried", "The first raven left and the dog cried" and "Mary saw the first raven and Bob cried" are each one claim, with or without "then".
+  * "The second cried" (a noun phrase with no noun) is not read.
+* **Tests.** The basis test checks:
+  * every English wording offered, and that each reads back as its reading;
+  * "first … and then" and where it groups; numbered "and then";
+  * verb lists in order and with commas;
+  * the three claims of "Alice and Bob left and then Carol cried";
+  * "each" without asking, with the questions that remain.
+
+  The stress test and the adversarial corpus now expect "Poe and Fido are ravens" to give "Poe is a raven" (said of each), and "Poe and Fido are tall" to be asked. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 145 of 145; the pronoun generator 0 wrong of 261; "and then" 0 unsound of 282 certified (1,677 steps, two seeds). Of the readings offered for sentences quoted in the tests, 143 do not read back (144 at r27.57); the one new sentence is new to the tests, "Alice and Bob said that Carol left and Dan cried", whose "both" wording does not read back, as with plain "and".
+
+### September 28, late night: together without asking, "James", and "and then" (r27.57)
+
+* **What only two can do together** (the user: "Read some predicates as 'together' without asking"). The check no longer asks "each, or together?" when only the together reading makes sense. It reads the predicate as said of the two together, and the box says so. There are two kinds:
+  * **What takes two**, with nothing after it:
+    * verbs: "met", "married", "collided", "agreed", "quarreled", "collaborated";
+    * states: "are friends", "are alike", "are similar", "are equal", "are a couple".
+  * **Using up a whole thing**: "ate the whole pizza", "drank all the wine", "spent the entire budget". A whole pizza is eaten once.
+
+  So "Alice and Bob ate the whole pizza" no longer gives "Bob ate the whole pizza", and nothing is asked. "Alice and Bob ate the pizza", "Alice and Bob met Carol" and "Alice and Bob are tall" are still asked about.
+* **"James left."** A name in -s that opens the box is read as a name, not as a generic, when:
+  * the verb after it shows no number (a past, "will", "can");
+  * and it is no plural of a noun the reader knows.
+
+  "Socrates will die" and "Descartes doubted" ask nothing. "Ravens left" is still asked about as a generic.
+* **"A and then B"** (the user: "Should it? I don't get the concern"). It should: B follows from "A and then B". The concern is only the other direction. "A and then B" says more than "A and B": it says the order too. So:
+  * it gives A, B, and "A and B" (conjunction elimination);
+  * none of these gives it, and neither do A and B as two premises;
+  * "B and then A" is another claim;
+  * its denial is no De Morgan: "it is not the case that (A and then B)" does not give "not A or not B".
+
+  "A and then B" is now a claim of its own kind, and conjunction elimination is the only rule that takes it. Modus ponens and tollens take it whole, as a condition or a consequent. In a truth table it is A, B, and a letter of its own for the order.
+
+  Before, "Mary left and then Bob cried" was read as one predicate ("left and then Bob cried", said of Mary), so nothing followed from it. "If A and then B, then C" was split at the first "then", as though the conditional's "then" came after "A and".
+* **"And then" in lists.**
+  * "A and then B and then C" is one chain.
+  * Beside another "and", the commas say which joins the whole, as they do for "and" beside "or":
+    * "A and then B, and C": the two, and C;
+    * "A, and then B and C": A, and then the two;
+    * with no commas, or commas on both, the box is marked ? ambiguous. Both groupings are offered, and either can be written in.
+  * Beside "or", "if" or "it is not the case that", where the same words with "and" would be asked about, the box asks for brackets: "(A and then B) or C".
+  * Brackets were not enough before: "(A and then B) or C" was asked about as if "and" and "or" were at the same level.
+  * Inside what is read as one claim, "and then" stays in that claim's words, as "and" does. "Mary believes that Ann left and then Bob cried" is one belief.
+* **"Mary and her sister left"** had been split after "Mary and her". A possessive now opens a noun phrase as "the" does: "Mary and her sister", "Mary and Bob's sister". Its question no longer shows a hidden name mark, and the together reading keeps the names' capitals.
+* **Found, not fixed:**
+  * "Mary left and then cried and laughed" reads "left and then cried" as one verb phrase. Nothing follows from that phrase alone, so no wrong step is certified.
+  * "Alice and Bob left and then Carol cried" is read as one claim and asked about as each or together, as "Alice and Bob left and Carol cried" is.
+  * The readings written in for "Mary and her sister left" say "Mary's sister" where the box said "her sister". The reading is the same; the words are not.
+* **Tests.** The basis test checks the together-only predicates, "James", "A and then B" (what it gives and what does not give it), its lists, groupings and brackets, and the possessive subjects. The r27.56 each/together test now uses "Alice and Bob ate the pizza". Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 144 of 144; the pronoun generator 0 wrong of 261. A new "and then" fuzzer checks each certified step against a truth table in which "A and then B" is A, B and a letter of its own for the order: 0 unsound of 282 certified (1,677 steps, two seeds). Of the readings offered for sentences quoted in the tests, 144 do not read back when written in, against 173 at the last commit; the two new ones are test names, not arguments.
+
+### September 28, night: each or together, and a sweep (r27.56)
+
+* **"Alice and Bob ate the whole pizza."** The user: in the ordinary sense it does not follow that Bob ate the whole pizza, and the inference should not go through. It did not go through before either: the check asks whether what is said of "Alice and Bob" is said of each or of the two together, and certifies nothing until that is answered. But neither answer could be written into the box:
+  * "Alice and Bob, each, ate the whole pizza" was read as two claims, "Alice" and "Bob, each, ate the whole pizza";
+  * "Alice and Bob, together, ate …" read as a different claim from the together reading it was meant to give.
+
+  Now "X and Y each …" is read as "both X and Y …" (said of each), and "together" (after the subject, before "are", or at the end) is one wording of the one claim about the two. The chooser offers "Both Alice and Bob ate the whole pizza" and "Alice and Bob together ate the whole pizza", and either can be written in.
+* **The linguistics, for the record.** A subject of two joined names can take its predicate of each (distributively: "Alice and Bob slept") or of the two as one (collectively: "Alice and Bob met"). "Together" makes the collective reading explicit, but the reading is there without it. What rules out "each" for the pizza is the predicate: a single whole pizza can be eaten only once. The check does not yet know such predicates; the user is asked (below).
+* **What a sweep of the test sentences found, and fixed:**
+  * "Jones is late and Jones cried": a name ending in -s that opens a joined clause was read as a verb continuing the phrase before ("Jones is [late and Jones cried]"). This affects philosophers' names too: Descartes, Hobbes, Socrates.
+  * The weather's "it" in "it is cloudy" and "it had been cold" was flagged by the reader: where the analysis finds no pronoun wanting a referent, nothing is flagged.
+  * In "Mary left and then she hurt her", "her" had been read as Mary. "She" is Mary, so "her" has no referent.
+  * In "Mary said he loves her", the reason given is now that "he" and "her" are two people and the box names only Mary, not that "her" is Mary.
+  * "The storm hit Mary" is no thing: a noun phrase ends before a name or an unchanged past ("hit").
+  * "It is not the case that …": "the case" is no referent.
+  * A binder must be of the pronoun's kind: "a poem" does not bind "her" in "Poe wrote a poem about her".
+  * A plural that opens a clause may be what "they" is ("Ravens are black and they fly"); "English" is no name.
+  * A box the reader has already read ("Ravens are black and they fly") keeps that reading, and only says how its pronouns were read.
+* **Found, not fixed:**
+  * "James left": a name ending in -s that opens the box loses its capital when read, and is asked about as a generic ("all, some, or most?"). "James is late" is not asked, since "is" shows it is one.
+  * "A and then B": the second part keeps its "then", so "B" alone does not follow.
+  * "Mary and her sister left" is split in the wrong place.
+* **Tests.** The basis test checks the each/together readings, written in and read back, and "each" as "both"; and each fix above. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 144 of 144; the pronoun generator 0 wrong of 261.
+
 ### September 28, evening: what is believed, "again", and past verbs joined (r27.55)
 
 * **A pronoun in what somebody believes or says reads as any other.** The user: "In 'Mary believes that she is late', if that's all the content we have, then 'she' refers to 'Mary'." Since r27.38 such a pronoun had been kept as written wherever the believer might be its referent, to keep Castañeda's she* apart. That was the check's own rule, not the user's; r27.54 had wrongly called it their decision. Now:

@@ -294,7 +294,6 @@ try {
     {
         // A pronoun takes the one name its own claim gives, and the reading
         // says so; with two names it is left alone and flagged.
-        console.log('   DEBUG codes:', J([ev('return normalizeClaimText("She met Mary");').split('').map(function (c) { return c.charCodeAt(0); }), 'she met mary'.split('').map(function (c) { return c.charCodeAt(0); })]));
         // normalizeClaimText marks a proper name with U+E000; strip it here.
         const normed = t => ev('return normalizeClaimText(' + J(t) + ');').replace(/\uE000/g, '');
         ok(normed('When Mary exits the room, she learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
@@ -1183,7 +1182,7 @@ try {
         // The pronoun note: 'missing', 'ambiguous' (with its offers), or 'read' (one
         // referent, read in: since r27.54), with the box's reading.
         const note = t => ev(`var t = ${J(t)}, r = parseClaimFull(t), n = r.notes.filter(function (x) { return x.pronoun || x.typo; })[0];
-            return n ? { kind: n.typo ? 'typo' : n.auto ? 'read' : n.missing ? 'missing' : 'ambiguous', message: n.message, key: r.form ? claimKey(r.form) : null,
+            return n ? { kind: n.typo ? 'typo' : n.auto || n.kind === 'unread' ? 'read' : n.missing ? 'missing' : 'ambiguous', message: n.message, key: r.form ? claimKey(r.form) : null,
                 offers: (n.readings || []).map(function (l, i) { var w = n.typo ? l : claimReadingWords(l, t); return n.typo || claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; }) } : null;`);
         const kind = t => { const n = note(t); return n ? n.kind : null; };
         // The user's cases: nothing to ask, so the step says the referent is missing.
@@ -1252,6 +1251,147 @@ try {
             joined(['Mary washed and dried the dishes.'], 'Mary washed.') !== '\u2713 conjunction elimination' &&
             !/^\u2713/.test(joined(['Some teacher left.', 'Some teacher cried.'], 'Some teacher left and cried.')),
             '"left and cried", "left the room and cried": each said of the subject, under "some" and "every" too -- not "bought bread and milk", not "washed and dried the dishes", and two "some"s are not one');
+        // r27.56: "Alice and Bob ate the pizza": each, or together -- asked where it
+        // decides the step, and either reading can be written into the box. (The
+        // user's "ate the whole pizza" is read as together since r27.57, below.)
+        const pizza = ev(`var t = 'Alice and Bob ate the pizza.', n = parseClaimFull(t).notes.filter(function (x) { return /each, or of them together/.test(x.message); })[0];
+            return n.readings.map(function (l, i) { var w = claimReadingWords(l, t); return claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; });`);
+        ok(J(pizza) === J(['Both Alice and Bob ate the pizza.', 'Alice and Bob together ate the pizza.']) &&
+            tagOf(['Alice and Bob ate the pizza.'], 'Bob ate the pizza.') === '? ambiguous' &&
+            tagOf(['Alice and Bob together ate the whole pizza.'], 'Bob ate the whole pizza.') === '? not recognized' &&
+            key('Alice and Bob each ate the whole pizza.') === key('Both Alice and Bob ate the whole pizza.') &&
+            key('Alice and Bob ate the whole pizza together.') === key('Alice and Bob together ate the whole pizza.') &&
+            key('Poe and Fido together are ravens.') === key('Poe and Fido are ravens together.'),
+            '"Alice and Bob ate the pizza" does not give "Bob ate the pizza" unasked; "Both Alice and Bob ..." and "Alice and Bob together ..." are its readings, written in and read back; "each" is "both"', J(pizza));
+        // r27.57 (the user: "(b) Read some predicates as 'together' without asking"):
+        // what takes two, and using up a whole thing, are said of the two together,
+        // with a note; the rest is still asked about.
+        const said = t => ev(`var r = parseClaimFull(${J(t)}); return { key: r.form ? claimKey(r.form) : null, notes: r.notes.map(function (n) { return n.kind + ': ' + n.message; }) };`);
+        const met = said('Alice and Bob met.'), friends = said('Alice and Bob are friends.'), whole = said('Alice and Bob ate the whole pizza.');
+        ok(met.key === key('Alice and Bob together met.') && J(met.notes) === J(['unread: "met" is said of the two together: what takes two']) &&
+            friends.key === key('Alice and Bob together are friends.') && /what takes two/.test(friends.notes.join(' ')) &&
+            whole.key === key('Alice and Bob together ate the whole pizza.') && /a whole thing is used up once/.test(whole.notes.join(' ')) &&
+            tagOf(['Alice and Bob ate the whole pizza.'], 'Bob ate the whole pizza.') === '? not recognized' &&
+            tagOf(['Alice and Bob met.'], 'Bob met.') === '? not recognized' &&
+            ['Alice and Bob ate the pizza.', 'Alice and Bob met Carol.', 'Alice and Bob are tall.'].every(t => said(t).notes.some(n => /^ambiguous: .*each, or of them together/.test(n))),
+            '"met", "are friends", "ate the whole pizza" are said of the two together, unasked and noted, and give nothing of each; "ate the pizza", "met Carol", "are tall" are still asked about',
+            J([met, friends, whole]));
+        // r27.57: "James left" -- a name in -s at the start of the box, before a verb
+        // that shows no number, is a name; a plural of a known noun is still a generic.
+        ok(said('James left.').notes.length === 0 && key('James left.').replace(/\uE000/g, '') === 'P:james|~did left' &&
+            said('Socrates will die.').notes.length === 0 && said('Descartes doubted.').notes.length === 0 &&
+            said('Ravens left.').notes.some(n => /"ravens" without "all" is a generic/.test(n)),
+            '"James left", "Socrates will die", "Descartes doubted" ask nothing; "Ravens left" is asked about as a generic');
+        // r27.57: "A and then B" (the user: "Should it? I don't get the concern") gives
+        // A, B and "A and B"; it says the order besides, so neither "A and B" nor A
+        // and B apart give it, and "B and then A" is another claim.
+        ok(key('Mary left and then Bob cried.').replace(/\uE000/g, '') === 'T[P:mary|~did left;P:bob|~did cried]' &&
+            tagOf(['Mary left and then Bob cried.'], 'Bob cried.') === '✓ conjunction elimination' &&
+            tagOf(['Mary left and then Bob cried.'], 'Mary left.') === '✓ conjunction elimination' &&
+            tagOf(['Mary left and then Bob cried.'], 'Mary left and Bob cried.') === '✓ conjunction elimination' &&
+            tagOf(['Mary left and Bob cried.'], 'Mary left and then Bob cried.') === '? not recognized' &&
+            tagOf(['Mary left.', 'Bob cried.'], 'Mary left and then Bob cried.') === '? not recognized' &&
+            tagOf(['Mary left and then Bob cried.'], 'Bob cried and then Mary left.') === '? not recognized' &&
+            tagOf(['Mary left and then Bob cried.'], 'Bob cried and Mary left.') === '? not recognized' &&
+            tagOf(['It is not the case that (Mary left and then Bob cried).'], 'Either Mary did not leave, or Bob did not cry.') === '? not recognized' &&
+            tagOf(['It is not the case that Mary left and then Bob cried.'], 'It is not the case that (Mary left and then Bob cried).') === '? ambiguous' &&
+            tagOf(['If Mary left and then Bob cried, then Ann laughed.', 'Mary left and then Bob cried.'], 'Ann laughed.') === '✓ modus ponens' &&
+            tagOf(['If Mary left and then Bob cried, then Ann laughed.', 'Mary left and Bob cried.'], 'Ann laughed.') === '? not recognized' &&
+            key('Mary left and then cried.') === key('Mary left and then she cried.'),
+            '"A and then B" gives A, B and "A and B", and is given by none of them; "B and then A" is another claim; its denial is no De Morgan; "if A and then B, then C" keeps its condition whole');
+        // Lists: a chain is one claim; beside an "and" the commas say which joins the
+        // whole, or the box is asked about with both groupings to write in; beside
+        // "or" it is asked about (English wordings since r27.58, below) and brackets
+        // settle it too; inside a that-clause it stays in the words.
+        const chain = ev(`var t = 'Mary left and then Bob cried and Ann laughed.', n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+            return n ? n.readings.map(function (l, i) { var w = claimReadingWords(l, t); return claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; }) : null;`);
+        const plain = t => key(t).replace(/\uE000/g, '');
+        ok(plain('Mary left and then Bob cried and then Ann laughed.') === 'T[P:mary|~did left;P:bob|~did cried;P:ann|~did laughed]' &&
+            plain('Mary left and then Bob cried, and Ann laughed.') === 'C[T[P:mary|~did left;P:bob|~did cried];P:ann|~did laughed]' &&
+            plain('Mary left, and then Bob cried and Ann laughed.') === 'T[P:mary|~did left;C[P:bob|~did cried;P:ann|~did laughed]]' &&
+            J(chain) === J(['Mary left, and then Bob cried and Ann laughed.', 'Mary left and then Bob cried, and Ann laughed.']) &&
+            said('Mary left and then Bob cried or Ann laughed.').notes.some(n => /^ambiguous: "and then" and "or" can group this two ways/.test(n)) &&
+            plain('(Mary left and then Bob cried) or Ann laughed.') === 'D[T[P:mary|~did left;P:bob|~did cried];P:ann|~did laughed]' &&
+            plain('Mary left and then (Bob cried or Ann laughed).') === 'T[P:mary|~did left;D[P:bob|~did cried;P:ann|~did laughed]]' &&
+            plain('If Mary left and then Bob cried, then Ann laughed.') === 'I(T[P:mary|~did left;P:bob|~did cried]>P:ann|~did laughed)' &&
+            plain('Mary believes that Ann left and then Bob cried.') === 'P:mary|~believe that ann left and then bob cried' &&
+            tagOf(['Mary left and then Bob cried and then Ann laughed.'], 'Mary left and Ann laughed.') === '✓ conjunction elimination' &&
+            tagOf(['Mary left and then Bob cried and then Ann laughed.'], 'Mary left and then Ann laughed.') === '? not recognized',
+            'a chain of "and then" is one claim; with an "and" beside it, the commas group it or both groupings are offered and read back; "or" beside it is asked about, and brackets settle it; a that-clause keeps it', J(chain));
+        // r27.57: "Mary and her sister left", "Mary and Bob's sister left": a
+        // possessive opens a noun phrase, as "the" does. (Said of each since r27.58.)
+        ok(plain('Mary and her sister left.') === "C[P:mary|~did left;P:mary's sister|~did left]" &&
+            plain("Mary and Bob's sister left.") === "C[P:mary|~did left;P:bob's sister|~did left]",
+            'the joined subject of "Mary and her sister left" is "Mary and her sister"');
+        // r27.58 (the user: "Weren't we avoiding brackets and using 'either... or' and
+        // 'both... and'?"; "Ask, with English wordings"): "and then" beside "or",
+        // "if", "unless" or a denial is asked about with wordings to write in --
+        // "either ... or", "first ... and then" (a sequence grouped, as "both ...
+        // and" groups a list), and numbering -- each read back as its reading.
+        const offers = t => ev(`var t = ${J(t)}, n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+            return n ? [n.message].concat(n.readings.map(function (l, i) { var w = claimReadingWords(l, t); return claimReadingRoundTrips({ text: t, site: n.site }, i, w) ? w : 'NOT BACK: ' + w; })) : null;`);
+        const scopes = [offers('Mary left and then Bob cried or Ann laughed.'), offers('Mary left or Bob cried and then Ann laughed.'),
+            offers('Ann laughed if Mary left and then Bob cried.'), offers('Mary left and then Bob cried if Ann laughed.'),
+            offers('Ann laughed unless Mary left and then Bob cried.'), offers('It is not the case that Mary left and then Bob cried.')];
+        ok(J(scopes) === J([
+            ['"and then" and "or" can group this two ways', 'Either Mary left and then Bob cried, or Ann laughed.', 'Mary left, and then either Bob cried or Ann laughed.'],
+            ['"and then" and "or" can group this two ways', 'Either Mary left or Bob cried, and then Ann laughed.', 'Either Mary left, or Bob cried and then Ann laughed.'],
+            ['"if" can take in all of what comes before or after it, or only part of it', 'Ann laughed if first Mary left and then Bob cried.', '(1) Ann laughed if Mary left, and then (2) Bob cried.'],
+            ['"if" can take in all of what comes before or after it, or only part of it', 'If Ann laughed, then Mary left and then Bob cried.', '(1) Mary left, and then (2) Bob cried if Ann laughed.'],
+            ['"unless" can take in all of what comes before or after it, or only part of it', 'Ann laughed unless first Mary left and then Bob cried.', '(1) Ann laughed unless Mary left, and then (2) Bob cried.'],
+            ['"it is not the case that" can deny all of the "and then", or only its first part', 'It is not the case that first Mary left and then Bob cried.', '(1) It is not the case that Mary left, and then (2) Bob cried.']]) &&
+            plain('First Mary left and then Bob cried.') === 'T[P:mary|~did left;P:bob|~did cried]' &&
+            plain('It is not the case that first Mary left and then Bob cried.') === 'N(T[P:mary|~did left;P:bob|~did cried])' &&
+            plain('(1) Ann laughed if Mary left, and then (2) Bob cried.') === 'T[I(P:mary|~did left>P:ann|~did laughed);P:bob|~did cried]' &&
+            J(ev("return ['mary saw the first raven and then bob cried', 'it is not the case that first mary left and then bob cried'].map(function (t) { return claimPairGroups(claimTopLevelMask(t)).map(function (g) { return t.slice(g.from, g.end); }); });"))
+                === J([[], ['first mary left and then bob cried']]) &&
+            tagOf(['It is not the case that first Mary left and then Bob cried.'], 'Either Mary did not leave, or Bob did not cry.') === '? not recognized',
+            '"and then" beside "or", "if", "unless" and a denial: each question offers two English wordings, and each reads back as its reading; "first ... and then" groups; "the first" does not', J(scopes));
+        // r27.58 (the user, of "Mary left and then cried and laughed": "Mary's crying
+        // and laughing come after she left"): verbs under one subject -- "then"
+        // takes in the verbs after it, and those before it came first; a comma
+        // before a later "and" sets it apart. Verb lists with commas are read.
+        ok(plain('Mary left and then cried and laughed.') === 'T[P:mary|~did left;C[P:mary|~did cried;P:mary|~did laughed]]' &&
+            plain('Mary left and cried and then laughed.') === 'T[C[P:mary|~did left;P:mary|~did cried];P:mary|~did laughed]' &&
+            plain('Mary left and then cried, and laughed.') === 'C[T[P:mary|~did left;P:mary|~did cried];P:mary|~did laughed]' &&
+            plain('Mary left, cried, and then laughed.') === 'T[C[P:mary|~did left;P:mary|~did cried];P:mary|~did laughed]' &&
+            plain('Mary left, cried, and laughed.') === 'C[P:mary|~did left;P:mary|~did cried;P:mary|~did laughed]' &&
+            plain('Mary left and cried, and laughed.') === 'C[P:mary|~did left;P:mary|~did cried;P:mary|~did laughed]' &&
+            plain('Mary washed and dried the dishes.') === 'P:mary|~did washed and dried the dishes' &&
+            tagOf(['Mary left and then cried and laughed.'], 'Mary cried and laughed.') === '✓ conjunction elimination' &&
+            tagOf(['Mary left and then cried and laughed.'], 'Mary left.') === '✓ conjunction elimination',
+            '"Mary left and then cried and laughed": the crying and laughing after the leaving; verb lists with commas are three verbs, not "left cried" or a subject "and"');
+        // r27.58 (the user, of "Alice and Bob left and then Carol cried": "three
+        // claims"): a clause with its own subject ends a joined subject's verb
+        // phrase -- not inside a that-clause.
+        ok(plain('Alice and Bob left and then Carol cried.') === 'T[C[P:alice|~did left;P:bob|~did left];P:carol|~did cried]' &&
+            plain('Alice and Bob left and Carol cried.') === 'C[C[P:alice|~did left;P:bob|~did left];P:carol|~did cried]' &&
+            tagOf(['Alice and Bob left and then Carol cried.'], 'Carol cried.') === '✓ conjunction elimination' &&
+            said('Alice and Bob said that Carol left and Dan cried.').notes.some(n => /^ambiguous: .*each, or of them together/.test(n)),
+            '"Alice and Bob left and then Carol cried" is Alice and Bob leaving, and then Carol crying; a that-clause still runs to the end');
+        // r27.58 (the user, of "Mary and her sister left": "This only has one
+        // reading"; "Verbs alone, plural nouns"): said of each, unasked, with a note.
+        const sister = said('Mary and her sister left.');
+        ok(sister.notes.includes('unread: "left" is said of each of them: with nothing after the verb, there is nothing for them to share') &&
+            !sister.notes.some(n => /^ambiguous/.test(n)) &&
+            plain('Poe and Fido are ravens.') === 'C[P:poe|=raven;P:fido|=raven]' &&
+            said('Poe and Fido are ravens.').notes.includes('unread: "are ravens" is said of each of them: a plural noun is said of each one') &&
+            plain('Alice and Bob did not leave.') === 'C[N(P:alice|~did left);N(P:bob|~did left)]' &&
+            tagOf(['Mary and her sister left.'], 'Mary left.') === '✓ conjunction elimination' &&
+            tagOf(['Poe and Fido are ravens.'], 'Fido is a raven.') === '✓ conjunction elimination' &&
+            ['Alice and Bob are tall.', 'Alice and Bob ate the pizza.', 'Alice and Bob met Carol.', 'Alice and Bob will be late.', 'Alice and Bob are two philosophers.']
+                .every(t => said(t).notes.some(n => /^ambiguous: .*each, or of them together/.test(n))) &&
+            key('Alice and Bob are brothers.') === key('Alice and Bob together are brothers.'),
+            'verbs alone and "are" + a plural noun are said of each, unasked and noted; adjectives, objects and numbers are still asked; "are brothers" is said of the two together');
+        // r27.56: what the sweep found.
+        ok(key('Jones is late and Jones cried.').replace(/\uE000/g, '') === 'C[P:jones|=late;P:jones|~did cried]' &&
+            kind('It rains only if it is cloudy.') === null && kind('If it had rained and it had been cold, then it would have snowed.') === null &&
+            kind('It is not the case that both it rains and it is cold.') === null &&
+            kind('Mary left and then she hurt her.') === 'missing' && kind('Poe wrote a poem about her.') === 'missing' &&
+            /“he” and “her” are two people/.test((note('Mary said he loves her.') || {}).message || '') &&
+            note('The storm hit Mary and then it hit her again.').message.indexOf('“the storm”') >= 0 &&
+            (note('Ravens are black and they fly.') || {}).kind === 'read' && key('Ravens are black and they fly.').replace(/\uE000/g, '') === 'C[P:ravens|=black;P:ravens|~fly]',
+            'a name ending in -s opens a clause of its own; the weather\'s "it" asks nothing; "her" after "she" is someone else; "the storm hit Mary" is no thing; a plural may be "they"');
         // A clause is no thing: "that ..." as a subject, "which" after an adjective.
         ok(key('That the vase is broken surprised Mary.').replace(//g, '') === 'A:that the vase is broken surprised mary' &&
             key('The vase is broken, which is sad.') === 'P:the vase|=broken which is sad' && key('Poe is a raven, which is black.') === key('Poe is a raven that is black.'),

@@ -996,7 +996,10 @@ const HARD_CASES = [
     ['conjunction elimination', 'S', ['Neither Poe nor Fido is a raven'], 'Poe is not a raven', '"neither X nor Y is"'],
     ['disjunctive syllogism', 'S', ['Either Poe or Fido is a raven', 'Poe is not a raven'], 'Fido is a raven', '"either X or Y is"'],
     ['conjunction elimination', 'S', ['Both Poe and Fido are ravens'], 'Fido is a raven', '"both X and Y are"'],
-    ['amb', 'S', ['Poe and Fido are ravens'], 'Poe is a raven', '"X and Y are": each, or together'],
+    // r27.58 (the user: "Verbs alone, plural nouns"): a plural noun is said of each, unasked;
+    // an adjective is still asked about.
+    ['conjunction elimination', 'S', ['Poe and Fido are ravens'], 'Poe is a raven', '"X and Y are" + a plural noun: each'],
+    ['amb', 'S', ['Poe and Fido are tall'], 'Poe is tall', '"X and Y are" + an adjective: each, or together'],
     ['conjunction elimination', 'S', ['All ravens and crows are black'], 'All crows are black', 'nouns joined under "all"'],
     ['no', 'S', ['Some ravens and crows are black'], 'Crows are black', 'nouns joined under "some"'],
     ['conjunction elimination', 'S', ['No raven or crow is white'], 'No crow is white', 'nouns joined under "no"'],

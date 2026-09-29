@@ -2391,9 +2391,10 @@
         <h3>Check the logic</h3>
         <p>Turn on <strong>Deductive</strong> to check one inference at a time. A rule tag means the conclusion follows from the stated premises; it does not certify their truth. <strong>Not recognized</strong> means the checker cannot certify the step. Click a canvas tag for details.</p>
         <p>Symbolic precedence, tightest first: <code>~</code>, <code>&amp;</code>, <code>∨</code>, <code>→</code>, <code>↔</code>. Conditionals associate to the right. Use parentheses to make grouping and quantifier scope explicit. In English they group too, and so do <em>both … and</em>, <em>either … or</em> and <em>neither … nor</em>: <em>if P, then both Q and R</em>, <em>either P or Q, and R</em>. Where the words leave the grouping open — <em>P iff Q iff R</em>, <em>if P, then Q iff R</em>, <em>necessarily, P iff Q</em>, a list of three after <em>then</em> — the box is marked <strong>?</strong> ambiguous. Numbering says where a list begins: <em>if P, then (1) A, (2) B, and (3) C</em>.</p>
+        <p><em>A and then B</em> says A, B, and their order. It gives <em>A</em>, <em>B</em> and <em>A and B</em>; none of these gives it, and <em>B and then A</em> is another claim. <em>A and then B and then C</em> is one chain, and <em>first A and then B</em> groups one, as <em>both … and</em> groups a list. Verbs under one subject keep their order: in <em>Mary left and then cried and laughed</em>, she cried and laughed after she left. Beside another clause’s <em>and</em>, the commas say which joins the whole (<em>A and then B, and C</em>; <em>A, and then B and C</em>), or the box is marked <strong>?</strong> ambiguous, with both to write in. So it is beside <em>or</em>, <em>if</em>, <em>unless</em> or a denial, with the readings in words: <em>either A and then B, or C</em> and <em>A, and then either B or C</em>; <em>C if first A and then B</em> and <em>(1) C if A, and then (2) B</em>.</p>
         <p>A box holds one claim. <em>Because</em>, <em>since</em>, <em>therefore</em>, <em>so</em>, <em>hence</em> and their like put a reason inside a box (<em>P because Q</em>), a whole inference (<em>P, so Q</em>), or a claim that says it was inferred (<em>therefore P</em>). Such a box is marked <strong>✗</strong>, and no step with it is checked: give the reason a box of its own below, or leave the word out. <em>Given that</em> may mean <em>because</em> or <em>if</em>, so it is marked <strong>?</strong> for you to say which.</p>
         <p>A step needs a reason. An objection whose only premise states the denial of the box it objects to is marked <strong>✗ bare denial</strong>, and a support whose only premise repeats its box <strong>✗ restates its box</strong>: give the reasons as their premises. A weak objection whose only premise says that its box has not been established is marked <strong>✗ bare challenge</strong>: a challenge needs reasons too — “If we lack reasons to think that P, then we can’t conclude that P” and “We lack reasons to think that P” give it by modus ponens. None of these carries any force in the verdict unless its box is argued for below it: then its step is <strong>✓ argued below</strong>, and stands or falls with that argument. One that is not argued for needs no answer: a rebuttal of it has nothing to rebut, and is marked <strong>✗ nothing to rebut</strong> (an objection to a restatement, <strong>✗ nothing to object to</strong>), with no force either.</p>
-        <p>Some boxes ask before their steps are checked. A generic — <em>Mosquitoes carry malaria</em>, <em>A raven is black</em>, or <em>a raven</em> in an if-clause — may mean all of them, some, most, or what holds in general with exceptions. Where the answer decides whether a step follows (<em>Mosquitoes carry malaria</em> and <em>Bob is a mosquito</em>, so <em>Bob carries malaria</em>), the tag says <strong>? generic</strong>, and clicking it writes your answer into the box; where the step follows whatever it means, nothing is asked. (Nor where a kind is spoken of: <em>zombies are possible</em>.) A slip of agreement — <em>conscious mental occurrences causes …</em> — is marked <strong>? grammar</strong>, with the verb or the noun made to agree for you to choose. A typo that can be put right without asking what the box means — two spaces, a space before a comma or none after one, <em>the the</em>, <em>,,</em> — is marked <strong>✗ typo?</strong>, and clicking it offers the box fixed; its step waits for the fix.</p>
+        <p>Some boxes ask before their steps are checked. A generic — <em>Mosquitoes carry malaria</em>, <em>A raven is black</em>, or <em>a raven</em> in an if-clause — may mean all of them, some, most, or what holds in general with exceptions. Where the answer decides whether a step follows (<em>Mosquitoes carry malaria</em> and <em>Bob is a mosquito</em>, so <em>Bob carries malaria</em>), the tag says <strong>? generic</strong>, and clicking it writes your answer into the box; where the step follows whatever it means, nothing is asked. (Nor where a kind is spoken of: <em>zombies are possible</em>.) A slip of agreement — <em>conscious mental occurrences causes …</em> — is marked <strong>? grammar</strong>, with the verb or the noun made to agree for you to choose. Two names joined may take what is said of each, or of the two together: <em>Alice and Bob ate the pizza</em> is asked about where the answer decides the step, with <em>Both Alice and Bob ate …</em> and <em>Alice and Bob together ate …</em> to write in. What only two can do together is read so without asking, and the box says so: what takes two (<em>met</em>, <em>are friends</em>, <em>are alike</em>), and using up a whole thing (<em>ate the whole pizza</em>, which is eaten once). So is what is said of each: a verb with nothing after it (<em>Mary and her sister left</em>), and a plural noun (<em>Poe and Fido are ravens</em>). A typo that can be put right without asking what the box means — two spaces, a space before a comma or none after one, <em>the the</em>, <em>,,</em> — is marked <strong>✗ typo?</strong>, and clicking it offers the box fixed; its step waits for the fix.</p>
         <p>In a conditional with <em>would</em>, the <em>would</em> belongs to the <em>if</em>: from <em>If she knew everything, she would not be surprised</em> and <em>She is surprised</em>, modus tollens gives <em>She does not know everything</em>. <em>Knew</em> after <em>if</em> is read as the present; for the past write <em>had known</em>, and the step offers that reading where it is the one that works. Said alone, <em>She would not be surprised</em> keeps its <em>would</em>; <em>should</em> in its place hedges or says what ought to be, and <em>She is surprised</em> refutes neither. <em>She is not surprised when she leaves</em> denies <em>She is surprised when she leaves</em>.</p>
         <p>The <strong>Standard</strong> basis is Hilbert’s: the axioms shown in the <strong>Logic</strong> panel, every universal closure of one, and modus ponens as the only rule — enough for every valid first-order argument. Every other rule is derivable from it and is a step the Logic panel can switch off; the familiar ones are on: the classical rules of inference and replacement, the fifteen valid categorical syllogisms, quantifier negation, the rules of passage, and identity. Any rule also applies under a quantifier its premises share with the conclusion (<em>modus ponens under ∀</em>), and a conditional that states a rule’s step, universally quantified or not, needs no support: <code>∀x ((F(x) ∧ G(x)) → F(x))</code>.</p>
         <p>A box stands alone: its pronouns go back only to what it says. A pronoun is read as the one name the box gives (and the box says so), or as the one someone it speaks of (<em>The teacher left and she cried</em>; <em>Mary believes that she is late</em>) — not where two genders mean two people. <em>Again</em> keeps the roles of what happened before: in <em>Mary praised Ann, and then she praised her again</em>, she is Mary and her is Ann. Where a pronoun can be one thing only, it is that thing, and the box says how it is read (<em>A teacher left and she cried</em> is read as <em>A teacher left and cried</em>: one teacher). Where the box leaves open who it is (<em>Mary’s dog barked and she ran</em>), the tag says <strong>? ambiguous</strong>, and clicking it offers the box with each in its place, to write into the box. An <em>it</em> after a whole clause may be the thing or what the clause says (<em>The vase is broken and it surprised Mary</em>), and is asked about, unless no clause could be the subject of what is said of it: <em>If Poe is a raven, then it is black</em> is about Poe. Where nothing in the box can be it (<em>After the storm, she left</em>; <em>Every teacher left and she cried</em>; <em>The teacher praised her</em>, which would say <em>herself</em>), there is nothing to ask: the tag says <strong>✗ no referent</strong>, and the box needs to say who or what it is. The <em>it</em> of <em>it is clear that …</em> or <em>it seems that …</em> stands for what follows. <em>Poe is Edgar</em> and <em>Dr. Jekyll is Mr. Hyde</em> are identities; <em>Ada is the winner</em> is not, since a description is no second name. A name never goes into what somebody believes, what might be, or what is said of the name itself.</p>
@@ -2799,7 +2800,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-28 r27.55';
+    const APP_BUILD = '2026-09-29 r27.58';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -8129,7 +8130,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_PRONOUN_KIND = { he: 'm', him: 'm', his: 'm', she: 'f', her: 'f', it: 'n', its: 'q', they: 'p', them: 'p', their: 'p' };
     const CLAIM_AMBIENT_WORDS = /^(?:cold|hot|warm|cool|chilly|mild|humid|windy|sunny|cloudy|foggy|stormy|rainy|wet|dry|dark|light|late|early|noon|midnight|night|day|morning|evening|freezing|icy|quiet|noisy|time)$/;
     function claimPronounReadingsUncached(t) {
-        const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false };
+        const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
         if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said)) return none;
         const nameSites = (claimPronounSites(t) || {}).sites || [];
         const read = new Set(nameSites.map(x => x.at));
@@ -8179,10 +8180,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         toks.forEach((x, k) => {
             // A name: capitalized, and no hedge, frame or function word;
             // "Clark Kent" is one.
-            if (/^[A-Z][a-z]/.test(x.w)) {
+            // "Ravens are black": a plural before "are", no name.
+            const opensClause = k === 0 || clauses.some(c => c.from === k);
+            if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && /^(?:are|were|have|do)$/.test(toks[k + 1].l) && claimPluralWord(x.l)) { last = null; }
+            else if (/^[A-Z][a-z]/.test(x.w)) {
                 const name = x.w.replace(/['\u2019]s$/, ''), lower = name.toLowerCase();
                 if (!(CLAIM_NOT_A_NAME.has(lower) || CLAIM_SPEAKER_WORDS.has(lower) || CLAIM_FRAME_WORDS.has(lower) || CLAIM_EMPTY_WORDS.has(lower) ||
-                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower])) {
+                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower] || CLAIM_NATIONAL_ADJECTIVES.has(lower))) {
                     if (last && last.k === k - 1 && !/['\u2019]s$/.test(last.raw)) { last.words += ' ' + name; last.k = k; last.k1 = k; last.raw = x.w; }
                     else { last = { at: x.at, k0: k, k, k1: k, raw: x.w, words: name, kind: 'person', name: true }; add(last); }
                     // "Mary's dog": the name, and what follows it.
@@ -8190,18 +8194,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 } else last = null;
             } else last = null;
             if (/^(?:everyone|everybody|anyone|anybody|nobody|everything|anything|nothing)$/.test(x.l) || (x.l === 'one' && toks[k - 1] && toks[k - 1].l === 'no') ||
-                (/^(?:every|each|no|any|all)$/.test(x.l) && toks[k + 1] && /^[a-z]/.test(toks[k + 1].l))) { quantified.push({ at: x.at, k0: k, words: x.l === 'one' ? 'no one' : /^(?:every|each|no|any|all)$/.test(x.l) ? x.l + ' ' + toks[k + 1].l : x.l }); return; }
+                (/^(?:every|each|no|any|all)$/.test(x.l) && toks[k + 1] && /^[a-z]/.test(toks[k + 1].l))) {
+                const noun = /^(?:every|each|no|any|all)$/.test(x.l) ? base(toks[k + 1].l) : x.l;
+                const kind = /^(?:everyone|everybody|anyone|anybody|nobody|one)$/.test(noun) || CLAIM_HE_OR_SHE_NOUNS.has(noun) ? 'person'
+                    : CLAIM_HE_OR_SHE_ANIMALS.has(noun) ? 'animal' : 'thing';
+                quantified.push({ at: x.at, k0: k, kind, words: x.l === 'one' ? 'no one' : /^(?:every|each|no|any|all)$/.test(x.l) ? x.l + ' ' + toks[k + 1].l : x.l });
+                return;
+            }
             if (/^(?:someone|somebody)$/.test(x.l)) { add({ at: x.at, k0: k, k1: k, words: 'the person', kind: 'person', indef: true }); return; }
             if (x.l === 'something') { add({ at: x.at, k0: k, k1: k, words: 'the thing', kind: 'thing', indef: true }); return; }
             if (!/^(?:the|a|an|this|that|some|one|another|my|your|our|their|his|her|its)$|'s$/.test(x.l)) return;
-            if (k > 0 && CLAIM_COPULA_BEFORE.test(toks[k - 1].l)) return;                 // what something is
+            if (k > 0 && (CLAIM_COPULA_BEFORE.test(toks[k - 1].l) ||                           // what something is
+                (k > 1 && /^(?:not|never|also|still|really|just|always|indeed|then|now)$/.test(toks[k - 1].l) && CLAIM_COPULA_BEFORE.test(toks[k - 2].l)))) return;
             if (/^(?:this|that)$/.test(x.l) && toks[k + 1] && (/^[A-Z]/.test(toks[k + 1].w) || CLAIM_PRONOUN_KIND[toks[k + 1].l] ||   // "that Bob", "that it": a clause
                 /^(?:the|a|an|this|that|these|those|some|one|another|my|your|our|their|his|her|its|every|each|no|any|i|we|you)$|'s$/.test(toks[k + 1].l))) return;
             const np = [];
             for (let j = k + 1; j < toks.length && np.length < 3; j++) {
                 const y = toks[j], prev = np[np.length - 1];
                 if (!/^[a-z]/.test(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) || CLAIM_RELATIVES.has(y.l) || CLAIM_PREPOSITIONS.has(y.l) ||
-                    CLAIM_PRONOUN_KIND[y.l]) break;
+                    CLAIM_PRONOUN_KIND[y.l] || /^[A-Z]/.test(y.w) || (prev && CLAIM_PAST_UNCHANGED.has(y.l))) break;
                 // A verb after the noun ends it: "the vase fell", "the dog barks".
                 if (prev && !/'s$/.test(prev.l) && (claimPluralWord(prev.l) || (claimPastStem(y.l) !== null && !claimKnownAdjective(y.l)) || claimEndsInS(y.l))) break;
                 np.push(y);
@@ -8220,6 +8231,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (claimPluralWord(head.l) && !CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1: k + np.length, words: say(np.length), kind: 'many', indef });
             else if (!CLAIM_HE_OR_SHE_NOUNS.has(head.l) && !CLAIM_HE_OR_SHE_ANIMALS.has(head.l)) add({ at: x.at, k0: k, k1: k + np.length, words: say(np.length), kind: 'thing', indef });
         });
+        // A plural that opens a clause before its verb: "Ravens are black and
+        // they fly", "English premises give their conclusion".
+        clauses.forEach(c => {
+            const run = [];
+            for (let j = c.from; j < c.to && run.length < 3; j++) {
+                const y = toks[j];
+                if (!/^[a-z]/.test(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) || CLAIM_PRONOUN_KIND[y.l]) break;
+                run.push(y);
+                if (claimPluralWord(y.l) && !/'s$/.test(y.l)) {
+                    const next = toks[j + 1];
+                    if (next && (CLAIM_VERB_MARKERS.has(next.l) || claimPastStem(next.l) !== null || /^[a-z]+$/.test(next.l) && !CLAIM_FUNCTION_WORDS.has(next.l)))
+                        add({ at: run[0].at, k0: run[0] === toks[c.from] ? c.from : j, k1: j,
+                            words: run.map((z, i) => i === 0 && z.at === 0 && /^[A-Z][a-z]/.test(z.w) && !CLAIM_NATIONAL_ADJECTIVES.has(z.l) ? z.w.toLowerCase() : z.w).join(' '), kind: 'many' });
+                    break;
+                }
+            }
+        });
         // A name the box says is no one: "Poe is a raven".
         cands.filter(c => c.name).forEach(c => {
             const k = c.k + 1;
@@ -8237,17 +8265,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (w === 'it') {
                 if (claimDummyItNext(next) || (/^(?:is|was)$/.test(next[0] || '') && next.slice(1, 5).some(x => /^(?:who|whom)$/.test(x)))) continue;
                 // "It is cold": the weather, where nothing before it is a thing.
-                if (/^(?:is|was|will|would|could|might|may|must|can|should)$/.test(next[0] || '') &&
-                    CLAIM_AMBIENT_WORDS.test(next.slice(1, 4).filter(x => !/^(?:be|been|not|very|so|too|quite|getting|becoming)$/.test(x))[0] || '') &&
+                if (/^(?:is|was|will|would|could|might|may|must|can|should|shall|has|have|had)$/.test(next[0] || '') &&
+                    CLAIM_AMBIENT_WORDS.test(next.slice(1, 5).filter(x => !/^(?:be|been|being|have|has|had|not|very|so|too|quite|getting|becoming|still|already)$/.test(x))[0] || '') &&
                     !cands.some(c => c.at < m.index && (c.kind === 'thing' || c.kind === 'animal' || c.thingToo))) continue;
             }
             const k = toks.findIndex(x => x.at === m.index);
             if (k < 0) continue;
             // Bound in its own clause by a quantifier, or "a ...", before it:
             // "every teacher loves her job", "a teacher loves her job".
-            const own = innerOf(k);
-            if (own >= 0 && (quantified.some(q => q.k0 >= inner[own].from && q.k0 < k) ||
-                cands.some(c => (c.indef || /^(?:someone|somebody|something)$/.test(toks[c.k0].l)) && c.k0 >= inner[own].from && c.k0 < k))) continue;
+            const own = innerOf(k), kindOf = CLAIM_PRONOUN_KIND[w];
+            const binds = kd => kindOf === 'm' || kindOf === 'f' ? kd === 'person' || kd === 'animal' : kindOf === 'p' ? true : kd === 'thing' || kd === 'animal';
+            if (own >= 0 && (quantified.some(q => q.k0 >= inner[own].from && q.k0 < k && binds(q.kind)) ||
+                cands.some(c => (c.indef || /^(?:someone|somebody|something)$/.test(toks[c.k0].l)) && c.k0 >= inner[own].from && c.k0 < k && binds(c.kind)))) continue;
             open.push({ at: m.index, w: m[0], l: w, kind: CLAIM_PRONOUN_KIND[w], k, ci: clauseOf(k), ii: innerOf(k), next });
         }
         if (!open.length) return none;
@@ -8258,6 +8287,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 !CLAIM_OBJECT_PREPOSITIONS.has(toks[p.k - 1].l) && /^[a-z]/.test(toks[p.k - 1].l));
         // The subject of a clause: what opens it, or -- a clause that opens
         // with its verb ("and dropped it") -- the one before's.
+        // The one before an object's verb: "he loves her" -- "that" or no "that".
+        const nearSubject = p => {
+            if (p.k > 0 && (CLAIM_PREPOSITIONS.has(toks[p.k - 1].l) || CLAIM_OBJECT_PREPOSITIONS.has(toks[p.k - 1].l) || /^(?:about|of|for|with|to|at|on|in)$/.test(toks[p.k - 1].l))) return null;
+            let j = p.k - 2;
+            while (j >= 0 && (CLAIM_VERB_MARKERS.has(toks[j].l) || /^(?:not|never|also|then|still|really|just|always|often|already|again)$/.test(toks[j].l) || /^[a-z]{3,}ly$/.test(toks[j].l))) j--;
+            if (j < 0 || (p.ii >= 0 && j < inner[p.ii].from)) return null;
+            const pron = open.find(q => q.k === j);
+            if (pron) return { pron };
+            const site = nameSites.find(x => x.at === toks[j].at);
+            if (site) { const cand = cands.find(c => c.name && c.words.toLowerCase() === String(site.becomes).toLowerCase()); if (cand) return { cand }; }
+            const cand = cands.find(c => c.k1 === j || (c.name && c.k === j));
+            return cand ? { cand } : null;
+        };
         const subjectOf = ii => {
             for (let c = ii; c >= 0; c--) {
                 const k0 = inner[c].from;
@@ -8265,6 +8307,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (cand) return { cand };
                 const pron = open.find(x => x.k === k0);
                 if (pron) return { pron };
+                // A pronoun the name reader answered: that name.
+                const site = nameSites.find(x => x.at === (toks[k0] || {}).at);
+                if (site) { const named = cands.find(x => x.name && x.words.toLowerCase() === String(site.becomes).toLowerCase()); if (named) return { cand: named }; }
                 if (!toks[k0] || CLAIM_VERB_MARKERS.has(toks[k0].l) || !/^[a-z]/.test(toks[k0].l) || CLAIM_FUNCTION_WORDS.has(toks[k0].l)) return null;
                 if (claimPastStem(toks[k0].l) === null && !claimEndsInS(toks[k0].l)) return null;
             }
@@ -8272,7 +8317,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const slots = [];
         open.forEach(p => {
-            const subj = object(p) && p.ii >= 0 ? subjectOf(p.ii) : null;
+            const subj = object(p) && p.ii >= 0 ? nearSubject(p) || subjectOf(p.ii) : null;
             const not = subj && subj.pron && subj.pron.kind === p.kind ? slots.find(x => x.members.includes(subj.pron)) || null : null;
             let slot = slots.find(x => x.kind === p.kind && x.not === not);
             if (!slot) slots.push(slot = { kind: p.kind, not, members: [], exclude: [] });
@@ -8289,7 +8334,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (x.kind === 'n' && first.l === 'it' && first.ci > 0 && !claimNoClauseSubject(first.next) &&
                 !(object(first) && claimNoClauseSubject([toks[first.k - 1].l]))) {
                 const before = clauses[first.ci - 1], said2 = clauseText(before);
-                if (said2 && claimLooksLikeClause(normalizeClaimText(said2))) {
+                const hasVerb = toks.slice(before.from, before.to).some(y => CLAIM_VERB_MARKERS.has(y.l) || claimPastStem(y.l) !== null || (claimEndsInS(y.l) && !claimPluralWord(y.l)));
+                if (said2 && hasVerb && claimLooksLikeClause(normalizeClaimText(said2))) {
                     const opener = cands.find(c => c.k0 === before.from && c.name);
                     list = list.concat([{ at: toks[before.from].at, words: 'the fact that ' + (opener || /^I\b/.test(said2) ? said2 : said2.charAt(0).toLowerCase() + said2.slice(1)), fact: said2 }]);
                 }
@@ -8701,6 +8747,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             .replace(/\b([A-Z])\.(?=\s+[A-Z])/g, '$1')
             .trim();
         return expandClaimContractions(claimDropShorthands(markClaimSpelling(claimResolvePronouns(plain))).replace(/[’‘]/g, "'"))
+            // "Alice and Bob each ate the pizza": said of each -- "both Alice
+            // and Bob ate the pizza".
+            .replace(/^((?:\S+ ){0,3}\S+) and ((?:\S+ ){0,3}?\S+?),? each,? (?=[a-z\uE000])/, (m, a, b) => /^(?:both|either|neither)$/.test(a.split(' ')[0]) ? m : 'both ' + a + ' and ' + b + ' ')
             // Explicit regional spellings only; preserve marked proper names and unknown words.
             .replace(/(?<![\w\uE000'-])[a-z]+(?![\w\uE000'-])/g, w => CLAIM_VENDOR_MORPHOLOGY.spellings[w] || w)
             // "We do conclude that P", "Poe does sing": an emphatic "do" in an
@@ -9171,8 +9220,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
         }
         // Clauses joined: "the roads close and the schools close", "Bob sings
-        // iff Mary dances".
-        const joined = claimSplitTop(s, /\s*,?\s+(?:and|or|if and only if|iff|just in case|only if|if|unless)\s+/);
+        // iff Mary dances", "Mary left and then Bob cried".
+        const joined = claimSplitTop(s, /\s*,?\s+(?:and(?:(?:\s+|-)then,?)?|or|if and only if|iff|just in case|only if|if|unless)\s+/);
         if (joined.length > 1 && claimLooksLikeClause(joined[0]) && claimLooksLikeClause(joined[joined.length - 1])) return true;
         // A name and a verb in -s: "Socrates runs", "the mind depends on x";
         // after a name, at any length ("Mary learns a new fact about ...").
@@ -9219,7 +9268,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const first = claimWord(tokens[0]);
         const notQuantifier = first === 'not' && /^(?:all|every|a|one|everything|everyone|everybody|any)$/.test(claimWord(tokens[1] || ''));
         return (tokens.length === 1 && !/^[a-z]$/.test(first)) || (first === 'not' && !notQuantifier) || first === 'if' || CLAIM_VERB_MARKERS.has(first) ||
-            (claimEndsInS(tokens[0]) && !CLAIM_SUBJECT_PRONOUNS.has(first) && tokens.length <= 3 && claimMainVerbIndex(tokens) <= 0) ||
+            (claimEndsInS(tokens[0]) && !CLAIM_SUBJECT_PRONOUNS.has(first) && !/^\uE000/.test(tokens[0]) && tokens.length <= 3 && claimMainVerbIndex(tokens) <= 0 &&
+                // "ravens cried": a subject, and its verb in the past.
+                !(tokens.length > 1 && claimPastStem(claimWord(tokens[1])) !== null && !claimKnownAdjective(tokens[1]))) ||
             // "sees a ripe red tomato": a verb in -s and its object -- a noun
             // is not followed by "a" or "the".
             (claimEndsInS(tokens[0]) && !CLAIM_SUBJECT_PRONOUNS.has(first) && !/^\uE000/.test(tokens[0]) && tokens.length > 1 &&
@@ -9312,18 +9363,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "Both", "either" and "neither" group, as brackets do: each opens a group
     // that holds its own "and", "or" or "nor" and runs on to a comma with a
     // connective after it, or to the end ("both A and B, and C"; "A and either
-    // B or C"). The groups blanked in a top-level mask.
+    // B or C"). So does "first" with its "and then", where a clause begins
+    // ("it is not the case that first A and then B"; not "the first raven").
+    // The groups blanked in a top-level mask.
     // The groups, each { from, pair, after, end }: where its word stands, where
     // its "and", "or" or "nor" stands and ends, and where the group ends. A
     // group inside the first part of another ends at that other's pair.
     function claimPairGroups(masked) {
-        const OPEN = { both: 'and', either: 'or', neither: 'nor' };
-        const re = /(?<![a-z\uE000])(both|either|neither|and|or|nor)(?![a-z])/g, stack = [], groups = [];
+        const OPEN = { both: 'and', either: 'or', neither: 'nor', first: 'and then' };
+        const re = /(?<![a-z\uE000])(both|either|neither|first|and(?:\s+|-)then|and|or|nor)(?![a-z])/g, stack = [], groups = [];
         let m;
         while ((m = re.exec(masked))) {
-            if (OPEN[m[1]]) { stack.push({ need: OPEN[m[1]], at: m.index }); continue; }
+            const w = /^and.+then$/.test(m[1]) ? 'and then' : m[1];
+            if (w === 'first' && !/(?:^|[,;:]|(?:^|\s)(?:that|if|unless|then|either|or|and|but|when|whenever|because|since|whether))\s*$/.test(masked.slice(0, m.index))) continue;
+            if (OPEN[w]) { stack.push({ need: OPEN[w], at: m.index }); continue; }
             for (let k = stack.length - 1; k >= 0; k--)
-                if (stack[k].need === m[1]) { groups.push({ from: stack[k].at, pair: m.index, after: m.index + m[0].length }); stack.length = k; break; }
+                if (stack[k].need === w) { groups.push({ from: stack[k].at, pair: m.index, after: m.index + m[0].length }); stack.length = k; break; }
         }
         groups.forEach(g => {
             const e = /,\s*(?:and|or|but|nor)(?![a-z])/.exec(masked.slice(g.after));
@@ -9378,7 +9433,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let from = 0, c;
             while ((c = cre.exec(gm))) { pieces.push(g.text.slice(from, c.index)); from = c.index + c[0].length; }
             pieces.push(g.text.slice(from));
-            if (i === 0 && pieces.length > 1 && pieces.every(claimLooksLikeClause)) {
+            if (i === 0 && pieces.length > 1 && pieces.every(p => claimLooksLikeClause(p) && !/^(?:and|or|but|nor)\s/.test(p))) {
                 pieces.forEach(p => out.push({ text: p, sep: ',' }));
             } else out.push(g);
         });
@@ -10332,7 +10387,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // referent is the referent).
                     if (!symbolic && form && !claimReadState.notes.some(n => n.pronoun) && claimFormHasIt(read0, true)) {
                         const r = claimPronounReadings(claimBoxRaw);
-                        if (r.auto && r.auto.text !== claimBoxRaw) claimPronounQuestion();
+                        // Read already -- "Ravens are black and they fly": say
+                        // so, and keep the reading.
+                        if (r.auto && r.auto.text !== claimBoxRaw && !claimFormHasIt(form, true) && !r.auto.whole) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true });
+                        else if (r.auto && r.auto.text !== claimBoxRaw) claimPronounQuestion();
                     }
                     const auto = !symbolic && claimReadState.notes.find(n => n.pronoun && n.auto);
                     // Read again: what the first reading noted goes, but for this.
@@ -10607,6 +10665,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Asked once a box, offering the box with each someone the pronoun
         // may be in its place; an answer is read by parseClaimFull.
         const flag = () => {
+            // No pronoun there that wants a referent (the weather's "it is
+            // cloudy", one a quantifier binds): nothing to flag.
+            if (claimBoxRaw && claimPronounReadings(claimBoxRaw).none) return form;
             claimPronounQuestion();
             return Object.assign({}, form, { unresolvedReference: true });
         };
@@ -11517,15 +11578,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (let k = 0; k < marks.length; k++) {
             let item = s.slice(marks[k].end, k + 1 < marks.length ? marks[k + 1].at : end).trim();
             if (k + 1 < marks.length) {
-                const j = /\s*[,;]?\s*(?:\b(and|or)\s*)?$/.exec(item);
-                if (j[1]) joins.push(j[1]);
+                const j = /\s*[,;]?\s*(?:\b(and\s+then|and|or)\s*)?$/.exec(item);
+                if (j[1]) joins.push(j[1].replace(/\s+/g, ' '));
                 item = item.slice(0, j.index);
             }
             items.push(item.replace(/[,;]+$/, '').trim());
         }
         if (items.some(t => !t || !claimLooksLikeClause(t))) return s;
         if (joins.some(w => w !== joins[joins.length - 1])) return s;       // "and" and "or" mixed
-        return prefix + '(' + claimListWords(items.map(t => '(' + t + ')'), joins.length ? joins[joins.length - 1] : 'and', false) + ')' + suffix;
+        // "(1) A, and then (2) B": a sequence, each item after the one before.
+        const word = joins.length ? joins[joins.length - 1] : 'and', bracketed = items.map(t => '(' + t + ')');
+        return prefix + '(' + (word === 'and then' && joins.length === items.length - 1 ? bracketed.join(' and then ')
+            : claimListWords(bracketed, word, false)) + ')' + suffix;
     }
     // A conditional with "would" (the user, 2026-09-24): its "would" belongs
     // to the conditional -- "if she has this property, then it follows that
@@ -11740,6 +11804,156 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             .map(label => ({ label, build: () => readClaim(label) })), false, { generic: true, subject });
         return chosen || null;
     }
+    // "A and then B": A, and B after it -- a claim of its own kind. Both
+    // parts follow, and so does "A and B"; but it says the order besides, so
+    // "A and B" does not give it, nor A and B apart, and "B and then A" is
+    // another claim. No rule for "and" but elimination takes it. "A, and then
+    // B, and then C" is one chain. Beside another "and", the commas say which
+    // joins the whole, as they do for "and" beside "or" -- "A and then B, and
+    // C": the two, and C; "A, and then B and C": A, and then the two -- or the
+    // box is asked about. Inside what is read as one claim ("Mary believes
+    // that Ann left and then Bob cried") it stays in that claim's words.
+    // Beside "or", "if" and the like, where an "and" would be asked about, so
+    // is it: brackets settle it.
+    const CLAIM_AND_THEN = /(,?)\s+and(?:\s+|-)then,?\s+/g;
+    const claimThenUntokened = v => typeof v === 'string' ? v.replace(/\band-then\b/g, 'and then')
+        : Array.isArray(v) ? v.map(claimThenUntokened)
+        : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, claimThenUntokened(x)])) : v;
+    // English wordings for "and then" beside "or", "if", "unless" or a denial,
+    // where "and" would be asked about (the user, 2026-09-29: "either ... or"
+    // and "both ... and", not brackets): "first ... and then" groups a sequence
+    // as "both ... and" groups a list, and numbering sets its parts apart. The
+    // question and its two wordings, or null.
+    function claimThenScopeReadings(text, cut) {
+        const after = text.slice(cut.end);
+        let m;
+        if ((m = CLAIM_DENIAL_FRONT.exec(text))) {
+            const start = text.length - m[2].length;
+            if (cut.at > start) {
+                const a = text.slice(start, cut.at);
+                return { message: '"' + m[1] + '" can deny all of the "and then", or only its first part',
+                    labels: [m[1] + ' first ' + a + ' and then ' + after, '(1) ' + m[1] + ' ' + a + ', and then (2) ' + after] };
+            }
+        }
+        if ((m = claimMatchTop(text, /^(.+?),?\s+(if|unless)\s+(.+)$/))) {
+            const [, left, marker, right] = m, start = text.length - right.length;
+            const message = '"' + marker + '" can take in all of what comes before or after it, or only part of it';
+            if (cut.at > start) {
+                const a = text.slice(start, cut.at);
+                return { message, labels: [left + ' ' + marker + ' first ' + a + ' and then ' + after, '(1) ' + left + ' ' + marker + ' ' + a + ', and then (2) ' + after] };
+            }
+            if (cut.end <= left.length) {
+                const a = text.slice(0, cut.at), b = text.slice(cut.end, left.length);
+                return { message, labels: [(marker === 'if' ? 'if ' + right + ', then ' : 'unless ' + right + ', ') + a + ' and then ' + b,
+                    '(1) ' + a + ', and then (2) ' + b + ' ' + marker + ' ' + right] };
+            }
+        }
+        const ors = [...claimPairMask(claimTopLevelMask(text)).matchAll(/,?\s+or\s+/g)];
+        if (ors.length === 1) {
+            const o = ors[0], end = o.index + o[0].length, message = '"and then" and "or" can group this two ways';
+            if (o.index >= cut.end) {
+                const a = text.slice(0, cut.at), b = text.slice(cut.end, o.index), c = text.slice(end);
+                return { message, labels: ['either ' + a + ' and then ' + b + ', or ' + c, a + ', and then either ' + b + ' or ' + c] };
+            }
+            if (end <= cut.at) {
+                const a = text.slice(0, o.index), b = text.slice(end, cut.at);
+                return { message, labels: ['either ' + a + ' or ' + b + ', and then ' + after, 'either ' + a + ', or ' + b + ' and then ' + after] };
+            }
+        }
+        return null;
+    }
+    function readThenClaim(text) {
+        const st = claimReadState;
+        if (!st || /^(?:if|when|whenever|unless)\s/.test(text)) return null;
+        // "First A and then B": the sequence, grouped.
+        const opened = /^first,?\s+/.exec(text);
+        if (opened) {
+            const g = claimPairGroups(claimTopLevelMask(text)).find(g => g.from === 0);
+            if (g && g.end >= text.length) return readClaim(text.slice(opened[0].length));
+        }
+        // An "and then" at the top, not inside a group of its own.
+        const cuts = [...claimPairMask(claimTopLevelMask(text)).matchAll(CLAIM_AND_THEN)]
+            .map(m => ({ at: m.index, end: m.index + m[0].length, comma: !!m[1], token: /and-then/.test(m[0]) }));
+        if (!cuts.length) return null;
+        // The words with each "and then" an "and", and where each of those is.
+        let joined = '', from = 0;
+        const thens = [];
+        cuts.forEach(c => { joined += text.slice(from, c.at) + (c.comma ? ',' : ''); thens.push(joined.length); joined += ' and '; from = c.end; });
+        joined += text.slice(from);
+        // Each join between two parts: an "and then" or an "and", with a comma
+        // or without -- or null, where an "and then" is inside a part.
+        const joinsOf = parts => {
+            let at = 0;
+            const spans = [];
+            for (const p of parts) {
+                const i = p.src ? joined.indexOf(p.src, at) : -1;
+                if (i < 0) return null;
+                spans.push([i, at = i + p.src.length]);
+            }
+            return spans.slice(1).map((sp, k) => ({ then: thens.some(x => x >= spans[k][1] && x < sp[0]), comma: /,/.test(joined.slice(spans[k][1], sp[0])) }));
+        };
+        // Verbs joined under one subject keep no words of their own ("Mary left
+        // and then cried and laughed"): the list's joins, in order.
+        const verbJoins = parts => {
+            if (!parts.every(p => !p.src)) return null;
+            const seps = [...claimPairMask(claimTopLevelMask(joined)).matchAll(/,?\s+and\s+|,\s+/g)];
+            return seps.length !== parts.length - 1 ? null
+                : seps.map(sp => ({ then: thens.some(x => x >= sp.index && x < sp.index + sp[0].length), comma: /,/.test(sp[0]), verbs: true }));
+        };
+        const joinsIn = f => {
+            if (!f || f.kind !== 'and' || f.iff || f.parts.length < 2) return null;
+            const joins = joinsOf(f.parts) || verbJoins(f.parts);
+            return joins && joins.filter(j => j.then).length === thens.length ? joins : null;
+        };
+        const mark = st.notes.length, sites = st.sites;
+        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous').length;
+        const whole = readClaim(joined), joins = joinsIn(whole);
+        if (joins) {
+            const parts = whole.parts;
+            if (joins.every(j => j.then)) return { kind: 'then', parts, src: text };
+            // Grouped at one kind of join, the other kind inside each group.
+            const words = (g, w) => g.every(p => p.src) ? { src: g.map(p => p.src).join(w) } : {};
+            const grouped = outer => {
+                const groups = [[parts[0]]];
+                joins.forEach((j, k) => { if (j.then === outer) groups.push([parts[k + 1]]); else groups[groups.length - 1].push(parts[k + 1]); });
+                const inner = g => g.length === 1 ? g[0] : outer ? Object.assign(claimList('and', g), words(g, ' and '))
+                    : Object.assign({ kind: 'then', parts: g }, words(g, ' and then '));
+                return outer ? { kind: 'then', parts: groups.map(inner), src: text } : Object.assign(claimList('and', groups.map(inner)), { src: text });
+            };
+            const commaThen = joins.some(j => j.then && j.comma), commaAnd = joins.some(j => !j.then && j.comma);
+            if (commaThen !== commaAnd) return grouped(commaThen);
+            // Verbs under one subject: "then" takes in the verbs after it, and
+            // those before it came first (the user, 2026-09-29, of "Mary left
+            // and then cried and laughed": "Mary's crying and laughing come
+            // after she left"). A list of clauses is asked about.
+            if (joins[0].verbs) return grouped(true);
+            return claimAmbiguous('"and then" and "and" can group this two ways', [true, false].map(outer => {
+                const f = grouped(outer);
+                const label = f.parts.map(p => p.src).join(outer ? ', and then ' : ', and ');
+                return { label, build: () => readClaim(label) };
+            }), true) || claimAtom(text);
+        }
+        // Not a list of its parts: what the "and then" is in is read with it
+        // kept whole, as a word of that claim ("and-then" while it is read).
+        const askedJoined = asked(mark);
+        st.notes.length = mark; st.sites = sites;
+        if (cuts.every(c => c.token)) return null;
+        let tokened = '';
+        from = 0;
+        cuts.forEach(c => { tokened += text.slice(from, c.at) + (c.comma ? ',' : '') + ' and-then '; from = c.end; });
+        tokened += text.slice(from);
+        const mark2 = st.notes.length, form = claimThenUntokened(readClaim(tokened));
+        for (let i = mark2; i < st.notes.length; i++) st.notes[i] = claimThenUntokened(st.notes[i]);
+        // A question "and" would raise here that "and then" does not -- which
+        // it groups with ("A and then B or C") -- is asked, in English.
+        if (asked(mark2) < askedJoined) {
+            st.notes.length = mark2; st.sites = sites;
+            const said = cuts.length === 1 ? claimThenScopeReadings(text, cuts[0]) : null;
+            if (said) return claimAmbiguous(said.message, said.labels.map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(text);
+            return claimAmbiguous('what "and then" joins, and what takes it in, can be read more than one way here: say which with "first … and then", "either … or", or by numbering the parts', [], true) || claimAtom(text);
+        }
+        return form;
+    }
     function readClaimUncached(text) {
         text = String(text || '').trim();
         const listed = claimNumberedList(text);
@@ -11753,6 +11967,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (text.length > 1 && /^[('"“]/.test(text) && claimTopLevelMask(text, true)) {
             return readClaim(text.slice(1, -1));
         }
+        const ordered = readThenClaim(text);
+        if (ordered) return ordered;
         const noteMark = claimReadState ? claimReadState.notes.length : 0;
         const would = claimWouldConditional(text);
         let form = would || readClaimWords(text);
@@ -12671,7 +12887,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function readConditionalFront(rest) {
         let condText, consText;
         const masked = claimTopLevelMask(rest);
-        const m = /\bthen,?\s+/.exec(masked);
+        // Not the "then" of "A and then B": that one is the condition's own.
+        const at = /\bthen,?\s+/g;
+        let m;
+        while ((m = at.exec(masked)) && /\band,?\s+$/.test(masked.slice(0, m.index)));
         if (m) {
             condText = rest.slice(0,m.index).trim().replace(/,$/,'').trim();
             consText = rest.slice(m.index+m[0].length).trim();
@@ -13074,10 +13293,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         if (attitudeVp && attitudeVp !== vp) form.src = subjectTokens.concat(attitudeVp).join(' ');
         const pluralVerb = /^(?:are|were|do|have|aren't|weren't|don't|haven't)$/.test(claimWord(vp[0])) || (k <= 0 && !claimEndsInS(vp[0]));
+        // "James left": a name in -s that opens the box has no capital mark to
+        // tell it by. Before a verb that shows no number (a past, a modal), and
+        // no plural of a noun the reader knows, it is a name, not a generic.
+        const nameInS = subjectTokens.length === 1 && !/^\uE000/.test(subjectTokens[0]) && claimEndsInS(subjectTokens[0]) && !!claimBoxRaw &&
+            new RegExp('^\\s*' + claimWord(subjectTokens[0]) + '\\b', 'i').test(claimBoxRaw) && /^\s*[A-Z]/.test(claimBoxRaw) &&
+            (claimPastStem(claimWord(vp[0])) !== null || /^(?:can|could|will|would|may|might|must|shall|should|did|cannot)$/.test(claimWord(vp[0]))) &&
+            !claimKnownPlural(subjectTokens[0]);
         // "Ravens are black" says something of ravens in general, and "it rains"
         // of nothing: neither names one thing a quantifier's case can be about.
         const bare = !/^(?:the|this|that|these|those|my|your|his|her|its|our|their)$/.test(first);
-        if ((bare && claimPluralWord(subjectTokens[subjectTokens.length - 1]) && pluralVerb) || /^(?:it|there)$/.test(claimWord(term))) {
+        if ((bare && claimPluralWord(subjectTokens[subjectTokens.length - 1]) && pluralVerb && !nameInS) || /^(?:it|there)$/.test(claimWord(term))) {
             claimNoIndividual(form);
         }
         // A predicate that splits ("are non-physical events": not physical,
@@ -13090,7 +13316,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                  !/^(?:one|two|three|four|five|six|seven|eight|nine|ten|twelve|hundred|thousand|million|certain|such|various|numerous|countless)$/.test(t))));   // "color sensations"
         // A generic -- "mosquitoes carry malaria" -- may mean all of them, some,
         // or most, or hold in general with exceptions: the box asks which.
-        if (generic && pluralVerb && predicated && !claimKindPredicate(vp)) {
+        if (generic && pluralVerb && predicated && !claimKindPredicate(vp) && !nameInS) {
             const denied = form.kind === 'not', positive = denied ? claimWithoutDenial(claimTokens(s)).join(' ') : s;
             const chosen = claimAmbiguous('"' + subjectTokens.join(' ') + '" without "all" is a generic: it may mean all of them, some, or most, or that it holds in general, with exceptions', [
                 denied ? 'no ' + positive : 'all ' + s, 'some ' + s, 'most ' + s, 'generally, ' + s
@@ -13098,6 +13324,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (chosen) return chosen;
         }
         return form;
+    }
+    // A plural of a noun the reader knows: "ravens", "teachers" -- not "James".
+    function claimKnownPlural(word) {
+        const w = claimWord(word);
+        if (CLAIM_IRREGULAR_PLURALS.has(w)) return true;
+        return [w.replace(/ies$/, 'y'), w.replace(/es$/, ''), w.replace(/s$/, '')].some(x => x !== w && (CLAIM_HE_OR_SHE_NOUNS.has(x) ||
+            CLAIM_HE_OR_SHE_ANIMALS.has(x) || CLAIM_THING_NOUNS.has(x) || CLAIM_CONTENT_NOUNS.has(x) || claimAdjectiveClass(x, '').cls !== 'unk'));
     }
     // Where a joined subject ends and a plain verb begins: "neither Rex nor
     // Fido | flies", "both the raven and the crow | fly", "ravens and crows |
@@ -13107,7 +13340,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const lead = /^(?:neither|either|both)$/.test(words[0]) ? 1 : 0;
         const joint = words.findIndex((w, i) => i > lead && /^(?:and|or|nor)$/.test(w));
         if (joint < 0) return -1;
-        const determiner = w => /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(w);
+        const determiner = w => /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(w) || /^\uE000?[a-z][a-z-]*'s$/.test(w);
         const phrase = (from, to) => to - from === 1 ? /^[a-z]/.test(words[from]) && !CLAIM_FUNCTION_WORDS.has(words[from]) && !CLAIM_VERB_MARKERS.has(words[from])
             : to - from === 2 && determiner(words[from]) && !CLAIM_FUNCTION_WORDS.has(words[from + 1]);
         if (!phrase(lead, joint)) return -1;
@@ -13121,12 +13354,77 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const verb = words[end];
         return CLAIM_FUNCTION_WORDS.has(verb) && !CLAIM_VERB_MARKERS.has(verb) ? -1 : end;
     }
+    // What two can only do together (the user, 2026-09-28, of "Alice and Bob
+    // ate the whole pizza": "the implicit 'together' keeps them from having
+    // performed the action individually"): what takes two, with nothing
+    // after it ("met", "are friends", "are alike"), and using up a whole thing
+    // ("ate the whole pizza": a whole pizza is eaten once). The reason, or null.
+    const CLAIM_TOGETHER_VERBS = new Set(('meet marry collide agree disagree confer correspond separate divorce part gather assemble ' +
+        'disperse unite reunite coincide intersect overlap converge diverge differ match rhyme correlate alternate interact quarrel cohabit ' +
+        'collaborate cooperate').split(' '));
+    const CLAIM_TOGETHER_STATES = new Set(('friends enemies rivals partners siblings cousins neighbors neighbours colleagues allies twins ' +
+        'married related alike similar different equal identical equivalent interchangeable synonymous compatible incompatible consistent ' +
+        'inconsistent distinct acquainted divorced separated apart united parallel adjacent brothers sisters relatives spouses lovers classmates ' +
+        'roommates teammates coworkers housemates flatmates strangers acquaintances companions comrades mates pals buddies peers contemporaries ' +
+        'counterparts opposites equals').split(' '));
+    const CLAIM_USE_UP_VERBS = new Set('eat drink finish consume devour spend burn destroy demolish empty drain exhaust deplete sell use'.split(' '));
+    // What is said of each of two joined names, without asking (the user,
+    // 2026-09-29, of "Mary and her sister left": "This only has one reading"):
+    // verbs with nothing after them -- nothing is there for the two to share,
+    // as a whole pizza is -- and "are" with a plural noun, with no article or number before
+    // it. The reason, or null. Adjectives and verbs with objects are asked.
+    const CLAIM_EACH_AFTER = new Set(('early late yesterday today tomorrow again too also home away out off down back twice once alone ' +
+        'there here now soon later first last').split(' '));
+    function claimEachOnly(vp) {
+        const toks = vp.filter(t => claimWord(t)), w = toks.map(claimWord);
+        if (!w.length) return null;
+        if (/^(?:are|were)$/.test(w[0])) {
+            const i = w[1] === 'not' ? 2 : 1, rest = toks.slice(i);
+            if (!rest.length || CLAIM_TOGETHER_STATES.has(w[w.length - 1])) return null;
+            const noun = rest[rest.length - 1];
+            return claimPluralWord(noun) && !claimKnownAdjective(noun) && rest.slice(0, -1).every(t => claimKnownAdjective(t)) ? 'a plural noun is said of each one' : null;
+        }
+        let i = 0;
+        while (i < w.length && /^(?:did|do|does|have|has|had|will|would|can|could|may|might|must|should|shall|not|never|also|then|finally|soon|both)$/.test(w[i])) i++;
+        const helped = w.slice(0, i).some(x => /^(?:did|do|does|have|has|had|will|would|can|could|may|might|must|should|shall)$/.test(x));
+        // Verbs alone, joined or not: "left", "left early", "left and then cried".
+        const pieces = [[]];
+        w.slice(i).forEach(x => /^(?:and|or|and-then)$/.test(x) ? pieces.push([]) : pieces[pieces.length - 1].push(x));
+        const verb = x => !CLAIM_VERB_MARKERS.has(x) && !/^(?:be|been|being)$/.test(x) && (claimPlainVerb(x) || claimPastStem(x) !== null ||
+            (helped && /^[a-z-]+$/.test(x) && !CLAIM_FUNCTION_WORDS.has(x) && !claimKnownAdjective(x)));
+        const alone = p => {
+            const q = p[0] === 'then' ? p.slice(1) : p;
+            return q.length > 0 && verb(q[0]) && !claimTogetherOnly(q) && q.slice(1).every(x => CLAIM_EACH_AFTER.has(x) || /^[a-z]{3,}ly$/.test(x));
+        };
+        return pieces.every(alone) ? 'with nothing after the verb, there is nothing for them to share' : null;
+    }
+    function claimTogetherOnly(vp) {
+        const w = vp.map(claimWord).filter(Boolean);
+        const bases = x => [x, CLAIM_IRREGULAR_PAST[x], x.replace(/ied$/, 'y'), x.replace(/ies$/, 'y'), x.replace(/(.)\1ed$/, '$1'),
+            x.replace(/es$/, ''), x.replace(/s$/, ''), x.replace(/ed$/, ''), x.replace(/d$/, '')].filter(Boolean);
+        let i = 0;
+        if (/^(?:are|were|be|been|is|was)$/.test(w[0])) {
+            i = 1;
+            if (w[i] === 'not') i++;
+            const said = w.slice(i).join(' ');
+            return /^(?:a couple|a pair|a team)$/.test(said) || (w.length === i + 1 && CLAIM_TOGETHER_STATES.has(w[i])) ? 'what takes two' : null;
+        }
+        while (i < w.length && /^(?:did|do|does|have|has|had|will|would|can|could|may|might|must|should|not|never|also|then|finally|soon)$/.test(w[i])) i++;
+        const verb = w[i] || '';
+        if (w.length === i + 1 && bases(verb).some(b => CLAIM_TOGETHER_VERBS.has(b))) return 'what takes two';
+        if (bases(verb).some(b => CLAIM_USE_UP_VERBS.has(b)) && /^(?:up\s+)?(?:the whole|the entire|all of the|all the)\s\S/.test(w.slice(i + 1).join(' ')))
+            return 'a whole thing is used up once';
+        return null;
+    }
     // Subjects joined: "neither Poe nor Fido is a raven", "either Poe or Fido
     // is", "both Poe and Fido are", "Poe or Fido is" -- said of each. "Poe and
     // Fido are ravens" may say it of each or of the two together ("are
     // friends", "met"): flagged when saying it of each would make the step
     // follow, and otherwise not read. Undefined when the subject is not joined.
     function readJoinedSubjects(subjectTokens, vp, s) {
+        // "Poe and Fido together are ravens": "together" read with the subject.
+        if (subjectTokens.length > 3 && claimWord(subjectTokens[subjectTokens.length - 1]) === 'together' && /\band\b/.test(subjectTokens.map(claimWord).join(' ')))
+            return readJoinedSubjects(subjectTokens.slice(0, -1), ['together'].concat(vp), s);
         const words = subjectTokens.map(claimWord);
         const after = (w, from) => words.indexOf(w, from || 0);
         let kind = null, split = -1, marked = false;
@@ -13138,13 +13436,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!kind) return undefined;
         // "A series of lights and circuitry": the nouns of a relation, one subject.
         if (words.slice(0, split).some(w => CLAIM_RELATION_WORDS.has(w))) return undefined;
+        // "Alice and Bob left and Carol cried" (the user, 2026-09-29: "three
+        // claims"): a clause with a subject of its own ends the verb phrase, and
+        // the two clauses are joined -- not inside a that-clause, which runs to
+        // the end, nor inside a relative clause.
+        for (let i = 1; i + 1 < vp.length; i++) {
+            const w = claimWord(vp[i]);
+            if (!/^(?:and|or|but|and-then)$/.test(w)) continue;
+            if (vp.slice(0, i).some(t => /^(?:that|whether|which|who|whom|if)$/.test(claimWord(t)))) break;
+            const r = w === 'and' && claimWord(vp[i + 1]) === 'then' ? i + 2 : i + 1, restTokens = vp.slice(r);
+            const lead = claimWord(restTokens[0] || '');
+            if (!restTokens.length || !lead || claimPlainVerb(restTokens[0]) || CLAIM_VERB_MARKERS.has(lead) ||
+                /^(?:not|never|also|then|to|in|on|at|by|with|for|from|of|as|than)$/.test(lead) || !claimLooksLikeClause(restTokens.join(' '))) continue;
+            const before = vp.slice(0, i).map(t => t.replace(/,+$/, '')), said = subjectTokens.concat(before).join(' ');
+            const left = readJoinedSubjects(subjectTokens, before, said), right = readClaim(restTokens.join(' '));
+            if (!left || !right) return claimAtom(s);
+            if (left.src === undefined) left.src = said;
+            return w === 'and-then' || r === i + 2 ? { kind: 'then', parts: [left, right] } : claimList(w === 'or' ? 'or' : 'and', [left, right]);
+        }
         const lead = /^(?:neither|either|both)$/.test(words[0]) ? 1 : 0;
         // "Poe, Fido, and Rex": the commas part the names before the last.
         const names = claimTokens(subjectTokens.slice(lead, split).join(' ').replace(/,\s*$/, '')).join(' ').split(/\s*,\s*/)
             .map(claimTokens).concat([subjectTokens.slice(split + 1)]);
-        if (/\b(?:each other|one another|together)\b/.test(vp.join(' '))) {
+        // Said of the two at once, as one claim: "Alice and Bob together ate
+        // the whole pizza" -- "together" after the subject or at the end.
+        const subjectSaid = subjectTokens.map(claimWord).join(' ').replace(/\s+/g, ' ').trim();
+        const togetherSaid = () => { const said = subjectSaid + ' together ' + vp.map(claimWord).filter(w => w && w !== 'together').join(' ');
+            return Object.assign(claimAtom(said), { src: said }); };
+        if (/\b(?:each other|one another)\b/.test(vp.join(' '))) {
             claimUnread('"each other", "one another" and "together" say something of the two at once, which is not read');
             return claimAtom(s);
+        }
+        if (vp.some(t => claimWord(t) === 'together')) {
+            claimUnread('"each other", "one another" and "together" say something of the two at once, which is not read');
+            return togetherSaid();
         }
         if (names.some(n => !n.length || n.length > 4 || n.some(t => CLAIM_QUANTIFIER_START.test(claimWord(t)) || /^(?:and|or|nor|either|neither|both|not)$/.test(claimWord(t)) ||
                 claimQualifierKind(claimWord(t)) || CLAIM_FRAME_WORDS.has(claimWord(t)) || CLAIM_FRAME_STARTS.has(claimWord(t))))) {
@@ -13161,9 +13486,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return kind === 'neither' ? claimList('and', forms.map(negateClaim)) : claimList(kind, forms);
         };
         if (kind !== 'and' || marked) return each() || claimAtom(s);
-        return claimAmbiguous('"' + subjectTokens.join(' ') + '" can be said of each, or of them together', [
-            { label: subjectTokens.join(' ') + ', each, ' + vp.join(' '), build: each },
-            { label: subjectTokens.join(' ') + ', together, ' + vp.join(' '), build: () => null }], false) || claimAtom(s);
+        const only = claimTogetherOnly(vp);
+        if (only) {
+            claimUnread('"' + vp.map(claimWord).join(' ') + '" is said of the two together: ' + only);
+            return togetherSaid();
+        }
+        const eachOnly = claimEachOnly(vp);
+        if (eachOnly) {
+            claimUnread('"' + vp.map(claimWord).join(' ') + '" is said of each of them: ' + eachOnly);
+            return each() || claimAtom(s);
+        }
+        return claimAmbiguous('"' + subjectSaid + '" can be said of each, or of them together', [
+            { label: 'both ' + subjectTokens.join(' ') + ' ' + vp.join(' '), build: each },
+            { label: subjectTokens.join(' ') + ' together ' + vp.join(' '), build: togetherSaid }], false) || claimAtom(s);
     }
     function claimNoIndividual(form) {
         if (!form) return form;
@@ -13272,10 +13607,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const partTokens = parts.map(claimTokens);
         const plainVerb = !head.length;
         const modal = head.length && !CLAIM_COPULAS.has(claimWord(CLAIM_NEGATED[lead] || lead)) && !/^(?:was|were)$/.test(claimWord(CLAIM_NEGATED[lead] || lead));
+        const past = t => claimPastStem(claimWord(t)) !== null && !claimKnownAdjective(t);
+        const pastList = plainVerb && partTokens.every(p => p.length && past(p[0])) &&
+            !(partTokens.slice(0, -1).some(p => p.length === 1) && partTokens[partTokens.length - 1].length > 1);
         const spreads = partTokens.every((p, i) => p.length && (i === 0 ||
             CLAIM_VERB_MARKERS.has(claimWord(p[0])) || claimWord(p[0]) === 'not' ||
-            (plainVerb ? claimEndsInS(p[0]) : !modal || partTokens.every(q => q.length === 1))));
-        if (!spreads || (plainVerb && !claimEndsInS(partTokens[0][0]))) return whole();
+            (plainVerb ? claimEndsInS(p[0]) || pastList : !modal || partTokens.every(q => q.length === 1))));
+        if (!spreads || (plainVerb && !claimEndsInS(partTokens[0][0]) && !pastList)) return whole();
         const positiveHead = negated ? [CLAIM_NEGATED[lead] || lead] : head;
         const predOf = p => {
             const own = CLAIM_VERB_MARKERS.has(claimWord(p[0]));
@@ -13739,6 +14077,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 });
                 return parts.length && parts.every(Boolean) ? parts.reduce((a, b) => ({ op: f.kind, a, b })) : null;
             }
+            case 'then': {
+                const parts = f.parts.map(claimToFol);
+                if (!parts.length || !parts.every(Boolean)) return null;
+                const saved = claimUnorderedKeys;
+                claimUnorderedKeys = false;
+                try { return { op: 'and', a: parts.reduce((a, b) => ({ op: 'and', a, b })), b: { op: 'letter', name: 'then ' + claimKey(f) } }; }
+                finally { claimUnorderedKeys = saved; }
+            }
             case 'if': {
                 if (f.counterfactual) return null;
                 const conds = f.conds.map(claimToFol), cons = claimToFol(f.cons);
@@ -14034,6 +14380,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'if': { const m = claimMergedIf(form); return (m.counterfactual ? 'J(' : 'I(') + claimInOrder(m.conds.map(key)).join('&') + '>' + key(m.cons) + ')'; }
             // A biconditional is its own claim, not the conjunction of its conditionals.
             case 'and': return (form.iff ? 'B[' : 'C[') + claimInOrder((claimUnorderedKeys ? claimFlatParts(form) : form.parts).map(key)).join(';') + ']';
+            // "A and then B": in its order, always -- the order is what it says.
+            case 'then': return 'T[' + form.parts.map(key).join(';') + ']';
             case 'or': return 'D[' + claimInOrder((claimUnorderedKeys ? claimFlatParts(form) : form.parts).map(key)).join(';') + ']';
         }
         return '?';
@@ -14091,6 +14439,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'not': if (claimWordingClose(a.inner, b.inner)) { claimNearMisses.push({ a, b, worded: true }); return true; }
                 return claimWordingDeep(a.inner, b.inner);
             case 'and': case 'or': return !!a.iff === !!b.iff && a.parts.length === b.parts.length && a.parts.every((p, i) => claimWordingDeep(p, b.parts[i]));
+            case 'then': return a.parts.length === b.parts.length && a.parts.every((p, i) => claimWordingDeep(p, b.parts[i]));
             case 'if': return !!a.counterfactual === !!b.counterfactual && claimWordingDeep(a.cons, b.cons) && a.conds.length === b.conds.length &&
                 a.conds.every((c, i) => claimWordingDeep(c, b.conds[i]));
             case 'unestablished': case 'unsound': case 'invalid':
@@ -14158,7 +14507,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimSameWords(a, b) {
         if (a.kind === 'identity' && b.kind === 'identity') return true; // explicit identity locutions share the same named operands
         const epistemic = f => f.kind === 'unestablished' || f.kind === 'unsound' || f.kind === 'invalid';
-        const leaf = f => f.kind !== 'and' && f.kind !== 'or' && f.kind !== 'if' && !epistemic(f);
+        const leaf = f => f.kind !== 'and' && f.kind !== 'or' && f.kind !== 'if' && f.kind !== 'then' && !epistemic(f);
         // "Not established" in the same words, of the same claim, from the same premises.
         if (epistemic(a) && a.kind === b.kind) {
             return ((a.kind === 'unestablished' && a.quotedPremises && b.quotedPremises) || !a.words || !b.words || claimWarrantWords(a.words) === claimWarrantWords(b.words)) &&
@@ -14200,6 +14549,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((a.kind === 'and' || a.kind === 'or') && a.kind === b.kind) {
             return claimUnorderedKeys ? sameClaims(claimFlatParts(a), claimFlatParts(b)) : claimsSameInOrder(a.parts, b.parts);
         }
+        if (a.kind === 'then' && b.kind === 'then') return a.parts.length === b.parts.length && a.parts.every((x, i) => claimSame(x, b.parts[i]));
         return true;
     }
     // Two lists alike member by member, in order -- or in any order, while
@@ -15765,8 +16115,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           }))) },
         { id: 'and-elim', name: 'conjunction elimination',
           gloss: 'a conjunction gives each of its conjuncts',
-          test: (P, C) => P.length === 1 && P[0].kind === 'and' && !P[0].iff &&
-              (P[0].parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && claimsWithinInOrder(C.parts, P[0].parts))) },
+          // "A and then B" too: it gives A, B, and "A and B" -- in its order.
+          test: (P, C) => P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
+              (P[0].parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, P[0].parts) ||
+                  (P[0].kind === 'then' && claimsSameInOrder(C.parts, P[0].parts))))) },
         { id: 'or-intro', name: 'disjunction introduction',
           gloss: 'a claim gives any disjunction it is one side of',
           test: (P, C) => P.length === 1 && C.kind === 'or' &&
@@ -16280,7 +16632,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
              (['all','some'].includes(p.kind) && !!p.folTree) ||
              (p.kind==='atom' && (read.symbolic || /^[a-z]$/.test(p.text))) ||
              (p.kind==='not' && safe(p.inner)) ||
-             (['and','or'].includes(p.kind) && p.parts.every(safe)) ||
+             (['and','or','then'].includes(p.kind) && p.parts.every(safe)) ||
              (p.kind==='if' && p.conds.every(safe) && safe(p.cons)));
         let rule=null, axiom=false;
         // "∀x θ": θ an axiom or a rule instance of an arbitrary thing, named by a new name.
@@ -16516,6 +16868,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return claimOriginalWords(form.subjectText, ctx.texts) + ' ' + claimOriginalWords(form.vpText, ctx.texts);
         }
         if (form.kind === 'and' || form.kind === 'or') return claimSayJunction(form.kind, form.parts.map(p => c => claimSayForm(p, c)), ctx);
+        if (form.kind === 'then') { const parts = form.parts.map(p => claimSayForm(p, ctx)); return parts.every(Boolean) ? parts.join(' and then ') : null; }
         if (form.kind === 'if') return claimSayConditional(form.conds.map(p => c => claimSayForm(p, c)), c => claimSayForm(form.cons, c), ctx);
         return null;
     }
@@ -16948,6 +17301,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'unsound': case 'invalid':
                 return 'the argument from ' + form.from.map(claimShowForm).join('; ') + (form.inner ? ' to ' + claimShowForm(form.inner) : '') + ' is ' + form.kind;
             case 'all': case 'some': return (form.kind === 'all' ? 'every ' : 'some ') + claimShowProp(form.subject) + ' ' + claimShowProp(form.predicate);
+            case 'then': return form.parts.map(claimShowForm).join(' and then ');
         }
         return '';
     }
