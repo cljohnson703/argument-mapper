@@ -246,8 +246,6 @@
     body.bg-light.focus-mode #focus-indicator:hover { background: #0d47a1; }
     /* Undo / Redo indicators — touch-only, hidden on desktop */
     #undo-indicator, #redo-indicator { display: none; }
-    /* Free-drop indicator — touch-only, hidden on desktop */
-    #freedrop-indicator { display: none; }
     /* Fullscreen indicator (replaces help button position) */
     #help-icon-topleft {
         position: fixed; top: 7px; left: 7px; z-index: 200;
@@ -356,6 +354,7 @@
     body.bg-light #logic-btn.active .hotkey { color: inherit; }
     body.toolbar-left #group-view #layout-btn { order: 1; }
     body.toolbar-left #group-view #depth-btn { order: 2; }
+    body.toolbar-left #group-view #click-edit-btn { order: 3; }
     /* Keep whole words inside their buttons when Advanced adds a scrollbar. */
     body.toolbar-left #group-file { display: grid; grid-template-columns: repeat(3,minmax(min-content,1fr)); }
     body.toolbar-left #group-file .toolbar-group-label { grid-column: 1 / -1; }
@@ -493,7 +492,7 @@
     body.toolbar-left #toolbar-position-btn { transform: rotate(0deg); }
     body.bg-light.toolbar-left #toolbar-content { background: #f0f0f0; box-shadow: 4px 0 6px rgba(0,0,0,0.1); }
     /* Shift help + present + focus indicators to clear the left toolbar */
-    #fullscreen-indicator, #zoomfit-indicator, #present-indicator, #focus-indicator, #undo-indicator, #redo-indicator, #freedrop-indicator { transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #fullscreen-indicator, #zoomfit-indicator, #present-indicator, #focus-indicator, #undo-indicator, #redo-indicator { transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     body.toolbar-left #fullscreen-indicator { left: 267px; }
     body.toolbar-left #zoomfit-indicator { left: 302px; }
     body.toolbar-left #present-indicator { left: 337px; }
@@ -523,12 +522,13 @@
     #focus-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
     #layout-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
     #placement-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
+    #click-edit-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
     /* The light theme's blanket toolbar-button rule (body.bg-light #toolbar
        button, #extra-toolbar button: 1,1,2) outranks the #id.active rules
        above (1,1,0), so these toggles never looked switched on in light mode
        even though the light palette defines --btn-active-*. */
     body.bg-light #labels-btn.active, body.bg-light #depth-btn.active, body.bg-light #focus-btn.active,
-    body.bg-light #layout-btn.active, body.bg-light #placement-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
+    body.bg-light #layout-btn.active, body.bg-light #placement-btn.active, body.bg-light #click-edit-btn.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: #fff; }
     .autosave-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #ccc; cursor: pointer; user-select: none; }
     button, .file-upload-label {
         background: var(--btn-bg, #3e3e42); color: #fff; border: 1px solid var(--btn-border, #555); padding: 6px 12px;
@@ -692,6 +692,15 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.4); white-space: pre-wrap;
     }
     body.bg-light .eval-tooltip { background: #f5f5f5; color: #222; border-color: #bbb; }
+    /* What a control does, on a touch screen: its tooltip, shown by pressing
+       and holding it (initTouchTips). */
+    .touch-tip { max-width: 260px; font-size: 13px; }
+    @media (pointer: coarse) {
+        .rendered-text .node-link { -webkit-touch-callout: none; }
+        button, .collapse-btn, .status-dot, .node-action-btn, #help-icon-topleft, #toolbar-toggle, #eval-overview-toggle,
+        #fullscreen-indicator, #zoomfit-indicator, #present-indicator, #focus-indicator, #undo-indicator, #redo-indicator,
+        #minimap-reopen, #minimap-close { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    }
 
     /* Evaluation note popover (click) */
     .eval-popover {
@@ -859,6 +868,12 @@
     .eval-comment-time { font-size: 10px; color: #777; margin-top: 1px; }
     .eval-comment-actions { position: absolute; right: 0; top: 0; display: none; gap: 4px; }
     .eval-comment:hover .eval-comment-actions { display: flex; }
+    /* Where nothing hovers (a touch screen), Reply, Edit and Delete stay shown. */
+    @media (hover: none) {
+        .eval-comment-actions { display: flex; }
+        .eval-comment-head { padding-right: 76px; }
+        .eval-comment-actions button { font-size: 15px; padding: 2px 5px; }
+    }
     .eval-comment-actions button {
         background: none; border: none; color: #888; cursor: pointer; font-size: 11px; padding: 0 2px;
     }
@@ -1210,8 +1225,22 @@
     .collapse-btn:hover { background: #999; transform: scale(1.1); }
     .collapse-btn .collapse-minus { display: inline-block; transform: translate(2px, 2px); }
     
-    .drag-handle { position: absolute; top: 4px; right: 6px; color: #555; font-size: 12px; cursor: grab; user-select: none; }
+    .drag-handle { position: absolute; top: 4px; right: 6px; color: #555; font-size: 12px; cursor: grab; user-select: none;
+        -webkit-touch-callout: none; -webkit-user-select: none; }
     .node:active .drag-handle { cursor: grabbing; }
+    /* Held still, the handle moves the box alone, and says so. */
+    .drag-handle.drag-handle-alone { color: var(--color-selected); }
+    /* A box dragged alone shows alone: its branch stays out of the drag. */
+    #drag-overlay.drag-alone-now .drag-branch { display: none; }
+    /* The resize grip, for a finger: touch screens draw no native one. */
+    .touch-grip { display: none; }
+    @media (pointer: coarse) {
+        .touch-grip { display: block; position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; touch-action: none; z-index: 14; color: #8a8a8a; }
+        .touch-grip::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 12px; height: 12px;
+            background: linear-gradient(135deg, transparent 0 44%, currentColor 44% 53%, transparent 53% 68%, currentColor 68% 77%, transparent 77%); }
+        body.nodes-light .touch-grip { color: #777; }
+        body.present-mode .touch-grip, body.review-mode .touch-grip { display: none; }
+    }
 
     /* Spatial Drop Zones (Inset shadows prevent jitter) */
     .drop-child { box-shadow: inset 0 -6px 0 var(--color-selected) !important; }
@@ -1248,6 +1277,9 @@
         display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
     #crossref-hint.visible { display: block; }
+    #crossref-hint button { margin-left: 10px; font: inherit; font-weight: 600; padding: 3px 12px; border-radius: 5px; cursor: pointer;
+        border: 1px solid var(--color-selected); background: var(--color-selected); color: #fff; }
+    @media (pointer: coarse) { #crossref-hint { font-size: 14px; padding: 8px 14px; } #crossref-hint button { padding: 7px 16px; } }
     #crossref-hint kbd { background: #1e1e1e; border: 1px solid #555; border-radius: 3px; padding: 1px 5px; font-family: monospace; font-size: 11px; }
     body.bg-light #crossref-hint { background: #f0f0f0; border-color: #ccc; color: #333; }
     body.bg-light #crossref-hint kbd { background: #fff; border-color: #bbb; }
@@ -1351,6 +1383,11 @@
         pointer-events: auto; cursor: pointer;
     }
     .rendered-text .node-link:hover { opacity: 0.8; }
+    /* A link to another box: blue and underlined whether or not it has been
+       followed; a box that is gone shows its last label, struck through. */
+    .rendered-text .box-link-missing { color: #e57373; text-decoration: line-through; cursor: help; }
+    .node.box-link-target { outline: 3px solid var(--color-selected); outline-offset: 3px; transition: outline-color 0.6s; }
+    #link-menu .link-menu-note { padding: 4px 10px 2px; font: 11px system-ui, sans-serif; opacity: 0.65; }
 
     /* Per-node text alignment (overrides default left-align) */
     /* Alignment is now per-text-box via inline style, no class needed */
@@ -1738,7 +1775,7 @@
         /* Compensate for the box-look buttons' 2.5px border in both themes. */
         #toolbar .toolbar-group button.node-look { padding: 6.5px 8.5px; }
         .zoom-btn { min-width: 40px !important; min-height: 40px !important; }
-        /* Larger drag handle */
+        /* Larger drag handles */
         .drag-handle { font-size: 18px !important; padding: 6px !important; }
         /* Larger collapse buttons */
         .collapse-btn { font-size: 14px !important; min-width: 28px; min-height: 24px; }
@@ -1799,45 +1836,23 @@
         body.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator { left: 194px; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator { left: 240px; }
 
-        /* Free-drop indicator — visible on touch devices */
-        #freedrop-indicator {
-            display: flex; position: fixed; z-index: 200;
-            width: 36px; height: 36px; border-radius: 4px; cursor: pointer;
-            background: #2d2d30; border: 1px solid #555;
-            align-items: center; justify-content: center;
-            bottom: 19px; left: 286px;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #freedrop-indicator svg { width: 20px; height: 20px; }
-        #freedrop-indicator:hover { background: var(--btn-bg); border-color: #c9c1b4; }
-        body.freedrop-mode #freedrop-indicator { background: var(--color-selected); border-color: var(--color-selected); }
-        body.freedrop-mode #freedrop-indicator svg * { color: #fff; }
-        body.freedrop-mode #freedrop-indicator:hover { background: #0090dd; }
-        body.bg-light #freedrop-indicator { background: #d0d0d0; border-color: #999; }
-        body.bg-light #freedrop-indicator:hover { background: #bbb; }
-        body.bg-light.freedrop-mode #freedrop-indicator { background: var(--color-selected); border-color: var(--color-selected); }
-        body.toolbar-left #freedrop-indicator { left: 546px; }
-        body.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 286px; }
 
         /* no-fullscreen: same one-slot shift at the touch step (46px). This is
            the row iPhone LANDSCAPE uses -- it is wide enough to miss the
            portrait block below, so without these the gap would close in
-           portrait only. All six survivors move up one place. */
+           portrait only. All five survivors move up one place. */
         body.no-fullscreen #undo-indicator     { left: 148px !important; }
         body.no-fullscreen #redo-indicator     { left: 194px !important; }
-        body.no-fullscreen #freedrop-indicator { left: 240px !important; }
         body.no-fullscreen.toolbar-left #zoomfit-indicator  { left: 270px !important; }
         body.no-fullscreen.toolbar-left #present-indicator  { left: 316px !important; }
         body.no-fullscreen.toolbar-left #focus-indicator    { left: 362px !important; }
         body.no-fullscreen.toolbar-left #undo-indicator     { left: 408px !important; }
         body.no-fullscreen.toolbar-left #redo-indicator     { left: 454px !important; }
-        body.no-fullscreen.toolbar-left #freedrop-indicator { left: 500px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator  { left: 10px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator  { left: 56px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator    { left: 102px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator     { left: 148px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator     { left: 194px !important; }
-        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 240px !important; }
     }
 
     /* Mobile: toolbar close button (hidden on desktop) */
@@ -2011,21 +2026,17 @@
         body.toolbar-left #toolbar-wrapper.collapsed ~ #zoomfit-indicator { left: 56px !important; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #present-indicator { left: 102px !important; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator { left: 148px !important; }
-        /* Undo / redo / freedrop — second row above main icons to avoid minimap overlap */
+        /* Undo / redo — second row above main icons to avoid minimap overlap */
         #undo-indicator { left: 10px !important; bottom: 58px !important; }
         #redo-indicator { left: 56px !important; bottom: 58px !important; }
         body.toolbar-left #undo-indicator { left: 10px !important; }
         body.toolbar-left #redo-indicator { left: 56px !important; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator { left: 10px !important; }
         body.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator { left: 56px !important; }
-        /* Free-drop portrait positions */
-        #freedrop-indicator { left: 102px !important; bottom: 58px !important; }
-        body.toolbar-left #freedrop-indicator { left: 102px !important; }
-        body.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 102px !important; }
 
         /* no-fullscreen, PORTRAIT. Only the bottom row held the fullscreen
            icon, so just that row shifts: 10/56/102, leaving three over three.
-           The undo/redo/freedrop lines below look redundant but are not --
+           The undo/redo lines below look redundant but are not --
            they restate the portrait values at the SAME specificity as the
            landscape rules above, which are more specific than this block's
            plain `body.toolbar-left #undo-indicator` and would otherwise win
@@ -2041,13 +2052,10 @@
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #focus-indicator   { left: 102px !important; }
         body.no-fullscreen #undo-indicator     { left: 10px !important; }
         body.no-fullscreen #redo-indicator     { left: 56px !important; }
-        body.no-fullscreen #freedrop-indicator { left: 102px !important; }
         body.no-fullscreen.toolbar-left #undo-indicator     { left: 10px !important; }
         body.no-fullscreen.toolbar-left #redo-indicator     { left: 56px !important; }
-        body.no-fullscreen.toolbar-left #freedrop-indicator { left: 102px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #undo-indicator     { left: 10px !important; }
         body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #redo-indicator     { left: 56px !important; }
-        body.no-fullscreen.toolbar-left #toolbar-wrapper.collapsed ~ #freedrop-indicator { left: 102px !important; }
 
         /* --- Minimap: align with bottom icons in portrait --- */
         #minimap-container { bottom: 14px !important; }
@@ -2189,6 +2197,7 @@
             <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every contested/rejected premise and evaluation note, click to jump to it (V)">Evaluations <span class="hotkey">V</span></button>
             <button id="logic-btn" onclick="toggleDeductiveLive()" title="Deductive check: tag every step with the rule that derives it, as you edit (K). Shift+K checks just the selected box's step; click a tag for the list of steps, or an ambiguous one for its readings.">Deductive <span class="hotkey">K</span></button>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Breadth: Narrow keeps the map tight (cousins share space) vs Wide (parents make room for every branch) — B">Breadth: Narrow <span class="hotkey">B</span></button>
+            <button id="click-edit-btn" onclick="toggleClickToEdit()" title="Editing: Double-click. A click selects a box; a double-click opens its text. Click for One click: a click (or tap) on a box opens its text straight away (Shift+E)">Editing: Double-click <span class="hotkey">Shift+E</span></button>
         </div>
         <div class="toolbar-group" id="group-file">
             <span class="toolbar-group-label">File</span>
@@ -2338,7 +2347,7 @@
         <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
     </svg>
 </div>
-<div id="present-indicator" onclick="togglePresentMode()" title="Presentation mode deactivated">
+<div id="present-indicator" onclick="togglePresentMode()" title="Present: a read-only view for showing the map; branches still open and close (P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="2" y="3" width="20" height="14" rx="2"/>
         <line x1="8" y1="21" x2="16" y2="21"/>
@@ -2346,7 +2355,7 @@
         <line id="present-slash" x1="4" y1="20" x2="20" y2="4" stroke="#e55" stroke-width="2.5"/>
     </svg>
 </div>
-<div id="focus-indicator" onclick="toggleFocusMode()" title="Focus mode off (F)">
+<div id="focus-indicator" onclick="toggleFocusMode()" title="Focus: light up the selected branch and dim the rest (F)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/>
         <circle cx="12" cy="12" r="3"/>
@@ -2365,20 +2374,13 @@
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
     </svg>
 </div>
-<div id="freedrop-indicator" onclick="toggleFreeDrop()" title="Free drop — drop anywhere without snapping">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2L12 16"/>
-        <polyline points="8 12 12 16 16 12"/>
-        <line x1="5" y1="22" x2="19" y2="22" stroke-dasharray="3 3"/>
-    </svg>
-</div>
 
 <div id="help-modal-backdrop" onclick="if(event.target===this)toggleHelp()">
     <div id="help-panel">
         <button id="help-close" onclick="toggleHelp()" aria-label="Close Help">✕</button>
         <h2>Argument Mapper Help</h2>
         <h3>Build an argument</h3>
-        <p>Start with a <strong>main contention</strong>. Select a box to add support, an objection, or a weak objection beneath it. <strong>Co-premises</strong> work together in one inference; separate child groups form separate arguments. Double-click a box to edit it. Right-click for more actions; on touch screens, press and hold.</p>
+        <p>Start with a <strong>main contention</strong>. Select a box to add support, an objection, or a weak objection beneath it. <strong>Co-premises</strong> work together in one inference; separate child groups form separate arguments. Double-click a box to edit it (or set <strong>Editing: One click</strong> to open a box’s text with one click or tap). Leaving the window mid-edit (Alt+Tab) keeps the box open for you to come back to. Right-click for more actions; on touch screens, press and hold.</p>
         <div id="group-color-key">
             <div class="color-key">
                 <div class="color-key-row"><span class="key-swatch key-main"></span><span>Main argument — white (dark gray in light theme)</span></div>
@@ -2403,9 +2405,13 @@
         <p><strong>✓ Warranted</strong> means the contention is established by the argument as presented; <strong>✗ Unwarranted</strong> can mean missing support or an unresolved challenge, not that the contention is false.</p>
         <h3>Reuse premises</h3>
         <p>Choose <strong>Add Cross-Reference…</strong> from a box’s menu, then click the original premise. Open the badge and drag references together to form an argument; right-click to set its type or include children. Drag a premise into <strong>Ungrouped</strong> to separate it. Ctrl/Alt-drag reuses it in another group. Ungrouped links and links to notes are informational.</p>
+        <p>To name another premise in a box’s words — <em>If S7 and S8, then S4</em> — right-click while editing the box, choose <strong>Link a premise…</strong>, and click the premise: its label goes in at the caret. The link always shows the label the premise has now, follows it wherever it moves, and takes you to it when clicked. The deductive check reads a link as the premise’s own words. (Shift+right-click while editing gives the browser’s own menu.)</p>
         <h3>Arrange and annotate</h3>
-        <p>Drop a box beside another to join its co-premises, below it to become a child, or above it to become a parent. <strong>Shift-drop</strong> avoids connecting. <strong>Placement: Free</strong> keeps boxes where you put them. Use the corner grip to resize and <strong>+/−</strong> to expand or collapse branches. A box moved among its co-premises takes its branch with it.</p>
+        <p>Drop a box beside another to join its co-premises, below it to become a child, or above it to become a parent. <strong>Shift-drop</strong> avoids connecting. To move a box without its children, hold its <strong>⠿</strong> handle still until it turns into <strong>✥</strong>, then drag; or hold <strong>Alt</strong> as you drop it; or choose <strong>Take Out of Branch</strong> from its menu, which lifts it out where it is. Its children stay where they are, as trees of their own. <strong>Placement: Free</strong> keeps boxes where you put them. Use the corner grip to resize and <strong>+/−</strong> to expand or collapse branches. A box moved among its co-premises takes its branch with it.</p>
         <p><strong>Implicit</strong> marks an unstated assumption; <strong>Given</strong> marks a premise taken as given. <strong>Evaluation</strong> adds statuses and comments; in the Evaluation Overview, click a note to show its box on the map, and use a note’s trash can to delete it. <strong>Review</strong> locks structural editing while allowing evaluations.</p>
+        <h3>On a touch screen</h3>
+        <p>Press and hold a box, or the canvas, for its menu; press and hold a button or icon to see what it does. With <strong>Editing: One click</strong> (where touch screens start) a tap opens a box’s text. Drag a box by <strong>⠿</strong> — hold it still until it turns into <strong>✥</strong> to move the box alone — and widen it by the lines in its bottom-right corner (double-tap them to reset its width). <strong>Select More…</strong> in a box’s menu selects several boxes, tap by tap. <strong>Link a Premise…</strong> and <strong>Link to Web Address…</strong> in a box’s menu put a link where its text was last edited; press and hold a link for its menu.</p>
+        <p>What a touch screen cannot do: on an iPhone or iPad no web page can save back to a file, so <strong>Save to File</strong> opens the share sheet — choose <strong>Save to Files</strong>, pick the folder, and replace the old copy. An iPhone has no Full Screen for web pages: hide the toolbar, or turn the phone sideways, for room. Keyboard shortcuts need a keyboard: the toolbar, the menus and taps do the same work.</p>
         <h3>Save and share</h3>
         <p><strong>Save to File</strong> keeps an editable JSON copy; <strong>Save As…</strong> chooses a new destination. Browser autosaves appear in <strong>Recent Maps</strong>. Check the save indicator to see whether a file is linked or the copy is browser-only. Export images for sharing, or use <strong>String Mode</strong> to edit the map as structured text. <strong>Collaborate</strong> shares a map for live editing; shared maps are stored online.</p>
         <details class="help-more">
@@ -2690,7 +2696,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         <div id="eval-logic-body"></div>
     </div>
 </div>
-<div id="eval-overview-toggle" onclick="toggleEvalOverview()" title="Toggle Evaluation Overview (V)">◀</div>
+<div id="eval-overview-toggle" onclick="toggleEvalOverview()" title="Evaluations: the list of every evaluation and comment on the map (V)">◀</div>
 
 <div id="logic-modal-backdrop" onclick="if(event.target===this)closeDeductiveCheck()">
     <div id="logic-modal">
@@ -2800,7 +2806,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-09-29 r27.58';
+    const APP_BUILD = '2026-09-29 r27.62';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -3953,6 +3959,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // attributes go through attrEsc now.
         const linkBlocks = [];
         const attrEsc = (v) => String(v).replace(/"/g, '&quot;');
+        // Links to other boxes ([S7](#box:...)): each shown by its box's label
+        // as the map now has it (see boxLinkHTML).
+        html = html.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+            linkBlocks.push({ box: true, src: m, label, ref, idx });
+            return `\x00LINK${linkBlocks.length - 1}\x00`;
+        });
         // Bare domains auto-link: final label must be >=2 letters
         // (so e.g./i.e. stay text), and the lookbehind keeps the tails of
         // emails and longer tokens from linking. (`!`-escaped forms were
@@ -4010,6 +4022,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // formatting; bare-URL inner text is left literal.
         html = html.replace(/\x00LINK(\d+)\x00/g, (_, idx) => {
             const b = linkBlocks[parseInt(idx)];
+            if (b.box) return boxLinkHTML(b.src, b.label, b.ref, b.idx);
             const inner = b.formatInner ? applyInline(b.text) : b.text;
             return `<a href="${attrEsc(b.href)}" data-src="${attrEsc(b.src)}" target="_blank" rel="noopener noreferrer" class="node-link">${inner}</a>`;
         });
@@ -4090,7 +4103,227 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // never reformats text already on the canvas.
     function isRawField(node, idx) { return !!(node && node.raw && node.raw[idx]); }
     function renderField(node, idx, t) {
-        return isRawField(node, idx) ? escapeRawText(t) : renderRichText(t);
+        return isRawField(node, idx) ? escapeRawText(t).replace(BOX_LINK_RE, (m, label, ref, i) => boxLinkHTML(m, label, ref, i)) : renderRichText(t);
+    }
+
+    // --- Premise links (the user, 2026-09-29) --------------------------------
+    // "If S7 and S8, then S4": a box's words may link other boxes. A link is
+    // shown by its box's label as the map now has it (the simple label when
+    // labels are off), and follows the box wherever it goes: it names the box
+    // by its id, not by its label. Written into the text as
+    // [S7](#box:1b9d6bcd), with ".N" after the id for a box after the first
+    // of its group; the id is cut to the fewest characters, eight or more,
+    // that no other box's id begins with. "#box:-" is a box that is gone.
+    // The deductive check reads a link as its box's words, in brackets.
+    const BOX_LINK_RE = /\[([^\]\n]*)\]\(#box:([A-Za-z0-9_-]+)(?:\.(\d+))?\)/g;
+    const hasBoxLinks = t => typeof t === 'string' && t.indexOf('](#box:') >= 0 && new RegExp(BOX_LINK_RE.source).test(t);
+    let boxLinkLabelCache = null;
+    function boxLinkNodes() {
+        const out = [];
+        (function walk(ns) { (ns || []).forEach(n => { out.push(n); walk(n.children); }); })(state.trees);
+        return out;
+    }
+    // The box a link names, as { node, idx }, or null.
+    function resolveBoxLink(ref, idx) {
+        if (!ref || ref === '-') return null;
+        const all = boxLinkNodes();
+        let node = all.find(n => n.id === ref) || null;
+        if (!node && ref.length >= 8) {
+            const hits = all.filter(n => String(n.id).startsWith(ref));
+            if (hits.length === 1) node = hits[0];
+        }
+        const i = Number(idx) || 0;
+        return node && typeof node.texts[i] === 'string' ? { node, idx: i } : null;
+    }
+    // Does a link's id name this node?
+    const boxLinkNames = (ref, id) => ref === id || (ref.length >= 8 && String(id).startsWith(ref));
+    function boxLinkShortId(id) {
+        id = String(id);
+        if (id.length <= 12) return id;
+        const others = boxLinkNodes().map(n => String(n.id)).filter(o => o !== id);
+        for (let k = 8; k < id.length; k++) { const p = id.slice(0, k); if (!others.some(o => o.startsWith(p))) return p; }
+        return id;
+    }
+    // A box's label as the map shows it, or its simple label with labels off.
+    function boxLinkLabel(id, idx) {
+        const key = id + '-' + (idx || 0);
+        const shown = currentLabels && currentLabels.get(key);
+        if (shown) return shown;
+        if (!boxLinkLabelCache) boxLinkLabelCache = computeSimpleLabels();
+        return boxLinkLabelCache.get(key) || '?';
+    }
+    function boxLinkMarkup(id, idx) {
+        return '[' + boxLinkLabel(id, idx) + '](#box:' + boxLinkShortId(id) + (idx ? '.' + idx : '') + ')';
+    }
+    // The text with each link's label brought up to date (its box as named now).
+    function refreshBoxLinkLabels(text) {
+        if (!hasBoxLinks(text)) return text;
+        return text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+            const hit = resolveBoxLink(ref, idx);
+            return hit ? '[' + boxLinkLabel(hit.node.id, hit.idx) + '](#box:' + ref + (idx ? '.' + idx : '') + ')' : m;
+        });
+    }
+    // The text with each link as its label, for places that show words only.
+    function boxLinksAsLabels(text) {
+        if (!hasBoxLinks(text)) return text;
+        return text.replace(BOX_LINK_RE, (m, label, ref, idx) => { const hit = resolveBoxLink(ref, idx); return hit ? boxLinkLabel(hit.node.id, hit.idx) : label; });
+    }
+    // `src` is the markup as it stands in the escaped HTML; `label` the label
+    // written into it, shown for a box that is gone.
+    function boxLinkHTML(src, label, ref, idx) {
+        const q = v => String(v).replace(/&(?![a-z]+;|#\d+;)/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const hit = resolveBoxLink(ref, idx);
+        if (!hit) return '<span class="box-link box-link-missing" data-src="' + q(src) + '" title="The linked box is gone (undo brings it back)">' + label + '</span>';
+        const said = stripClaimMarkup(boxLinksAsLabels(hit.node.texts[hit.idx])) || '(empty)';
+        return '<a href="#" class="node-link box-link" data-box-id="' + q(hit.node.id) + '" data-box-idx="' + hit.idx + '" data-src="' + q(src) +
+            '" title="' + q(said.length > 160 ? said.slice(0, 157) + '\u2026' : said) + '">' + q(boxLinkLabel(hit.node.id, hit.idx)) + '</a>';
+    }
+    // A box's words for the deductive check: each link read as its box's
+    // words, in brackets -- "If S7 and S8, then S4" as "If (P) and (Q), then
+    // (R)". A link back to a box on the way (`seen`, "id#idx") is read as its
+    // label, as is a box that is gone.
+    function claimWithBoxLinks(text, seen) {
+        if (!hasBoxLinks(text)) return text;
+        seen = seen || new Set();
+        return text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+            const hit = resolveBoxLink(ref, idx);
+            if (!hit) return label;
+            const key = hit.node.id + '#' + hit.idx;
+            if (seen.has(key) || seen.size > 8) return label;
+            const inner = String(claimWithBoxLinks(hit.node.texts[hit.idx], new Set([...seen, key]))).trim().replace(/[.!?]+$/, '').trim();
+            return inner ? '(' + inner + ')' : label;
+        });
+    }
+    // The links of a text that name a node whose boxes were renumbered, moved
+    // to the box each now is (see remapCrossRefsInTree); a box that went is
+    // "#box:-".
+    function remapBoxLinksInText(text, nodeId, map) {
+        if (!hasBoxLinks(text)) return text;
+        return text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+            if (!boxLinkNames(ref, nodeId)) return m;
+            const to = map(Number(idx) || 0);
+            return '[' + label + '](#box:' + (to ? boxLinkShortId(to.id) + (to.idx ? '.' + to.idx : '') : '-') + ')';
+        });
+    }
+    // Go to the box a link names: into view, selected, and marked a moment.
+    function goToBoxLink(id, idx) {
+        if (!panToNodeBox(id, idx)) return;
+        const el = document.querySelector('.node[data-node-id="' + cssEsc(id) + '"][data-node-idx="' + idx + '"]');
+        if (el) { el.classList.add('box-link-target'); setTimeout(() => el.classList.remove('box-link-target'), 1200); }
+    }
+    // A link is followed, not opened: no "#" in the address bar.
+    document.addEventListener('click', (e) => {
+        const a = e.target && e.target.closest && e.target.closest('a.box-link');
+        if (a) e.preventDefault();
+    }, true);
+    document.addEventListener('click', (e) => {
+        const a = e.target && e.target.closest && e.target.closest('a.box-link');
+        if (!a || boxLinkPicking || crossRefPicking) return;
+        e.stopPropagation();
+        goToBoxLink(a.dataset.boxId, Number(a.dataset.boxIdx) || 0);
+    });
+    // Making one: the menu of a box being edited, then a click on the box to
+    // link (as a reference is made). The edit so far is kept; the box opens
+    // again with the link at the caret -- or as it was, on Esc.
+    let boxLinkPicking = null;   // { sourceId, sourceIdx, start, end } while armed
+    // Where each box's text was last being edited, for a link put in from its
+    // menu (linkPremiseInto): { start, end, text } by "id-idx".
+    const boxCaret = new Map();
+    function boxCaretFor(nodeId, idx) {
+        const ctx = findNodeContext(state.trees, nodeId);
+        const t = ctx ? String(ctx.node.texts[idx] == null ? '' : ctx.node.texts[idx]) : '';
+        const c = boxCaret.get(nodeId + '-' + idx);
+        return c && c.text === t ? { start: c.start, end: c.end } : { start: t.length, end: t.length };
+    }
+    // From a box's menu -- a touch screen gives a text field no menu of the
+    // page's own: a link to a premise, at the caret last left in the box.
+    function linkPremiseInto(nodeId, idx) {
+        const c = boxCaretFor(nodeId, idx);
+        startBoxLinkPicking(nodeId, idx, c.start, c.end);
+    }
+    // ... or to a web address: the words last selected in it become the
+    // link, or the address goes in at the caret.
+    function linkWebAddressInto(nodeId, idx) {
+        const ctx = findNodeContext(state.trees, nodeId);
+        if (!ctx || typeof ctx.node.texts[idx] !== 'string' || reviewMode || collabReadOnly()) return;
+        const t = ctx.node.texts[idx], c = boxCaretFor(nodeId, idx);
+        let url = null;
+        try { url = prompt('Link URL:', 'https://'); } catch (_) {}
+        if (!url || url === 'https://') return;
+        const words = t.slice(c.start, c.end);
+        const link = words ? '[' + words + '](' + url + ')' : url;
+        const before = !words && c.start > 0 && /\S$/.test(t.slice(0, c.start)) ? ' ' : '';
+        pushHistory();
+        ctx.node.texts[idx] = t.slice(0, c.start) + before + link + t.slice(c.end);
+        render();
+        reopenBoxEditor(nodeId, idx, c.start + before.length + link.length);
+    }
+    // Selecting several boxes on a touch screen (the user, 2026-09-29): Select
+    // More… in a box's menu, then each tap adds a box to the selection or
+    // takes it out, as a Ctrl-click does, until Done (or Esc).
+    let selectMoreMode = false;
+    function startSelectMore() {
+        cancelCrossRefPicking();
+        cancelBoxLinkPicking(false);
+        selectMoreMode = true;
+        document.body.classList.add('select-more');
+        const hint = document.getElementById('crossref-hint');
+        hint.innerHTML = 'Tap boxes to add them to the selection or take them out<button type="button" id="select-more-done">Done</button>';
+        hint.classList.add('visible');
+        document.getElementById('select-more-done').onclick = (ev) => { ev.stopPropagation(); endSelectMore(); };
+    }
+    function endSelectMore() {
+        if (!selectMoreMode) return;
+        selectMoreMode = false;
+        document.body.classList.remove('select-more');
+        document.getElementById('crossref-hint').classList.remove('visible');
+    }
+    function startBoxLinkPicking(sourceId, sourceIdx, start, end) {
+        if (reviewMode || collabReadOnly()) return;
+        cancelCrossRefPicking();
+        endSelectMore();
+        const host = document.querySelector('.node[data-node-id="' + cssEsc(sourceId) + '"][data-node-idx="' + sourceIdx + '"]');
+        const ta = host && host.querySelector('textarea');
+        if (ta && document.activeElement === ta) ta.blur();
+        boxLinkPicking = { sourceId, sourceIdx, start, end };
+        document.getElementById('canvas').classList.add('picking-crossref');
+        const hint = document.getElementById('crossref-hint');
+        hint.innerHTML = 'Click the box to link into the text \u2014 <kbd>Esc</kbd> to cancel';
+        hint.classList.add('visible');
+    }
+    function cancelBoxLinkPicking(reopen) {
+        const p = boxLinkPicking;
+        if (!p) return;
+        boxLinkPicking = null;
+        document.getElementById('canvas').classList.remove('picking-crossref');
+        document.getElementById('crossref-hint').classList.remove('visible');
+        if (reopen) reopenBoxEditor(p.sourceId, p.sourceIdx, p.end);
+    }
+    function completeBoxLinkPicking(targetId, targetIdx) {
+        const p = boxLinkPicking;
+        if (!p) return;
+        const target = findNodeContext(state.trees, targetId);
+        if (!target || target.node.type === 'note') { showHintToast('A note is no premise: click a box to link to.', true); return; }
+        if (targetId === p.sourceId && targetIdx === p.sourceIdx) { cancelBoxLinkPicking(true); return; }
+        cancelBoxLinkPicking(false);
+        const ctx = findNodeContext(state.trees, p.sourceId);
+        if (!ctx || typeof ctx.node.texts[p.sourceIdx] !== 'string' || reviewMode || collabReadOnly()) return;
+        const t = ctx.node.texts[p.sourceIdx];
+        const a = Math.max(0, Math.min(p.start, t.length)), b = Math.max(a, Math.min(p.end, t.length));
+        const link = boxLinkMarkup(targetId, targetIdx);
+        // A space either side, where a word would otherwise touch it.
+        const before = a > 0 && /[^\s(\[]$/.test(t.slice(0, a)) ? ' ' : '', after = b < t.length && /^[^\s.,;:!?)\]]/.test(t.slice(b)) ? ' ' : '';
+        pushHistory();
+        ctx.node.texts[p.sourceIdx] = t.slice(0, a) + before + link + after + t.slice(b);
+        render();
+        reopenBoxEditor(p.sourceId, p.sourceIdx, a + before.length + link.length + after.length);
+    }
+    function reopenBoxEditor(id, idx, caret) {
+        const host = document.querySelector('.node[data-node-id="' + cssEsc(id) + '"][data-node-idx="' + idx + '"]');
+        if (!host || !enterEditMode(host)) return;
+        const ta = host.querySelector('textarea');
+        const c = Math.max(0, Math.min(caret, ta.value.length));
+        try { ta.setSelectionRange(c, c); } catch (e) {}
     }
     // Enumerate renderable rich-text elements (links, math, bold, italic,
     // bare URLs) as {start, end, plain}, non-overlapping, left-to-right, so
@@ -5260,7 +5493,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const statusLabel = status ? (status.charAt(0).toUpperCase() + status.slice(1)) : 'Note';
         const author = (ctx.node.statusAuthors && ctx.node.statusAuthors[idx]) || null;
         const byline = status && author ? ` (by ${author})` : '';
-        source.textContent = `${statusLabel}${byline} — ${ctx.node.texts[idx] || '(empty)'}`;
+        source.textContent = `${statusLabel}${byline} — ${boxLinksAsLabels(ctx.node.texts[idx]) || '(empty)'}`;
     }
     function collectEvaluations() {
         const out = [];
@@ -6562,6 +6795,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 b.onclick = (ev) => { ev.stopPropagation(); close(); fn(); };
                 menu.appendChild(b);
             };
+            if (a.classList.contains('box-link')) {
+                const src = a.getAttribute('data-src') || '';
+                add('Go to ' + a.textContent, () => goToBoxLink(a.dataset.boxId, Number(a.dataset.boxIdx) || 0));
+                add('Convert to plain text', () => rewriteLinkSource(id, idx, src, a.textContent));
+                menu.style.left = Math.min(e.clientX, window.innerWidth - 190) + 'px';
+                menu.style.top = Math.min(e.clientY, window.innerHeight - 100) + 'px';
+                document.body.appendChild(menu);
+                return;
+            }
                 const src = a.getAttribute('data-src') || '';
                 const href = a.getAttribute('href') || '';
                 add('Open link', () => { try { window.open(href, '_blank', 'noopener'); } catch (_) {} });
@@ -6896,7 +7138,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // box it held becomes the top of a tree of its own. All of them stay
     // where they were drawn, pinned, and then step clear of anything the
     // closed-up map now puts under them.
-    function convertSelectionToNotes() {
+    function convertSelectionToNotes() { liftSelectionOut(true); }
+    // Take Out of Branch (the user, 2026-09-29): the same, keeping each box
+    // what it is -- it lifts out on its own, where it was drawn, and its
+    // children stay in place, as trees of their own.
+    function takeOutOfBranch() {
+        if (reviewMode || collabReadOnly()) return;
+        liftSelectionOut(false);
+    }
+    function liftSelectionOut(asNotes) {
         const byNode = new Map();
         selectedIds.forEach(sel => {
             const ps = parseSel(sel);
@@ -6906,10 +7156,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (ps.hasBox) { if (ps.box < ctx.node.texts.length) byNode.get(ps.id).add(ps.box); }
             else ctx.node.texts.forEach((_, i) => byNode.get(ps.id).add(i));
         });
-        // Nothing to cut: every selected box is already a note on its own.
+        // Nothing to cut: every selected box is already on its own (a note, for notes).
         const alone = [...byNode.keys()].every(id => {
             const ctx = findNodeContext(state.trees, id);
-            return !ctx.parent && ctx.node.type === 'note' && ctx.node.texts.length === 1 && !ctx.node.children.length;
+            return !ctx.parent && (!asNotes || ctx.node.type === 'note') && ctx.node.texts.length === 1 && !ctx.node.children.length;
         });
         if (!byNode.size || alone) return;
         // Where everything is drawn, before anything moves.
@@ -6930,10 +7180,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const inPlace = !ctx.parent && ctx.node.texts.length === 1;
                 const note = inPlace ? ctx.node : removeNodePiece(id, i);
                 if (!note) return;
-                note.type = 'note';
-                // Notes are never implicit or given.
-                if (note.implicits) note.implicits = note.texts.map(() => false);
-                if (note.givens) note.givens = note.texts.map(() => false);
+                if (asNotes) {
+                    note.type = 'note';
+                    // Notes are never implicit or given.
+                    if (note.implicits) note.implicits = note.texts.map(() => false);
+                    if (note.givens) note.givens = note.texts.map(() => false);
+                }
                 note.children.forEach((c, k) => {
                     const p = groupAt.get(c.id);
                     const fx = (rect ? rect.left : CENTER_X) + k * 30, fy = (rect ? rect.bottom : CENTER_Y) + 80 + k * 30;
@@ -7287,6 +7539,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         });
         if (!cutItems.length) return;
         clipboard = cutItems; // clipboard is a LIST of nodes
+        // What named the cut boxes, for the first paste to take over.
+        const cutIds = new Set();
+        (function collect(ns) { ns.forEach(n => { cutIds.add(n.id); collect(n.children || []); }); })(cutItems);
+        clipboard.cut = { incoming: cutIncomingRefs(cutIds), used: false };
         selectedIds = []; render();
     }
 
@@ -7327,10 +7583,67 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         (function walk(ns){ns.forEach(n=>{const id=generateId();ids.set(n.id,id);n.id=id;walk(n.children||[]);});})(clones);
         const endpoint=r=>({...r,targetId:ids.get(r.targetId)||r.targetId});
         (function walk(ns){ns.forEach(n=>{
+            // A premise link to a box copied along names the copy.
+            if(Array.isArray(n.texts))n.texts=n.texts.map(t=>!hasBoxLinks(t)?t:t.replace(BOX_LINK_RE,(m,label,ref,idx)=>{
+                const old=[...ids.keys()].find(o=>boxLinkNames(ref,o));
+                return old?'['+label+'](#box:'+ids.get(old)+(idx?'.'+idx:'')+')':m;
+            }));
             if(n.crossRefs)n.crossRefs=n.crossRefs.map(rs=>(rs||[]).map(r=>isReferenceArgument(r)?{...r,argumentId:generateId(),childIds:(r.childIds||[]).map(id=>ids.get(id)||id),premises:(r.premises||[]).map(endpoint)}:endpoint(r)));
             walk(n.children||[]);
         });})(clones);
+        clones.idMap = ids;   // old id -> the copy's, for adoptCutIdentity
         return clones;
+    }
+    // A cut box's place in the map's references: the plain references other
+    // boxes have to it, taken before the render that drops them (references
+    // to a box that is gone are pruned; premise links and argument premises
+    // stay, as gone and missing).
+    function cutIncomingRefs(cutIds) {
+        const incoming = [];
+        (function walk(ns) {
+            (ns || []).forEach(n => {
+                (n.crossRefs || []).forEach((refs, idx) => (refs || []).forEach(r => {
+                    if (!isReferenceArgument(r) && cutIds.has(r.targetId)) incoming.push({ sourceId: n.id, sourceIdx: idx, targetId: r.targetId, targetIdx: r.targetIdx });
+                }));
+                walk(n.children);
+            });
+        })(state.trees);
+        return incoming;
+    }
+    // Cut and pasted, a box keeps its place: the first paste after a cut takes
+    // over what named the cut boxes -- premise links in other boxes' words,
+    // references, argument premises. Later pastes are copies.
+    function adoptCutIdentity(clones) {
+        const cut = clipboard && clipboard.cut, ids = clones && clones.idMap;
+        if (!cut || cut.used || !ids) return;
+        cut.used = true;
+        const newOf = ref => { for (const [o, n] of ids) if (boxLinkNames(ref, o)) return n; return null; };
+        (function walk(ns) {
+            (ns || []).forEach(n => {
+                if (Array.isArray(n.texts) && n.texts.some(hasBoxLinks)) n.texts = n.texts.map(t => !hasBoxLinks(t) ? t : t.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+                    const to = newOf(ref);
+                    return to ? '[' + label + '](#box:' + boxLinkShortId(to) + (idx ? '.' + idx : '') + ')' : m;
+                }));
+                (n.crossRefs || []).forEach(refs => (refs || []).forEach(r => {
+                    if (!isReferenceArgument(r)) return;
+                    r.premises = (r.premises || []).map(p => {
+                        if (!ids.has(p.targetId)) return p;
+                        const q = Object.assign({}, p, { targetId: ids.get(p.targetId) });
+                        delete q.missing;
+                        return q;
+                    });
+                }));
+                walk(n.children);
+            });
+        })(state.trees.concat(clones));
+        cut.incoming.forEach(r => {
+            const src = findNodeContext(state.trees, r.sourceId), to = ids.get(r.targetId);
+            if (!src || !to || typeof src.node.texts[r.sourceIdx] !== 'string') return;
+            if (!src.node.crossRefs) src.node.crossRefs = src.node.texts.map(() => []);
+            while (src.node.crossRefs.length < src.node.texts.length) src.node.crossRefs.push([]);
+            const list = src.node.crossRefs[r.sourceIdx];
+            if (!list.some(x => !isReferenceArgument(x) && x.targetId === to && x.targetIdx === r.targetIdx)) list.push({ targetId: to, targetIdx: r.targetIdx });
+        });
     }
     function pasteNode() {
         if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
@@ -7342,6 +7655,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (ctx && ctx.node.type === 'note' && clipboard.some(item => item.type !== 'note')) { refuseNoteConnection(); return; }
         pushHistory();
         const clones = cloneReferenceSubtrees(clipboard);
+        adoptCutIdentity(clones);
 
         if (!ctx) {
             // No (single) selection: float the clipboard items near the center
@@ -7394,7 +7708,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         pushHistory();
         let pos = psel.hasBox ? psel.box + 1 : ctx.node.texts.length;
         let firstPos = null;
-        cloneReferenceSubtrees(clipboard).forEach(c => {
+        const clones = cloneReferenceSubtrees(clipboard);
+        adoptCutIdentity(clones);   // before the join, which moves what names them onto the group
+        clones.forEach(c => {
             const p = joinAsCoPremise(ctx.node, pos, c);
             if (firstPos === null) firstPos = p;
             pos = p + c.texts.length;
@@ -7435,8 +7751,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const targetH = renderDiv.offsetHeight;
         renderDiv.style.display = 'none';
         ta.style.display = '';
+        // Premise links show the labels the boxes have now (see boxLinkLabel).
+        const fresh = refreshBoxLinkLabels(ta.value);
+        if (fresh !== ta.value) ta.value = fresh;
         ta.readOnly = false; ta.style.cursor = 'text';
         setEditHeight(ta, targetH);
+        // A link's words run longer than its label: the box grows to show them.
+        if (hasBoxLinks(ta.value)) { ta.style.height = '0'; ta.style.height = Math.max(targetH, ta.scrollHeight) + 'px'; scheduleLayout(); }
         ta.focus();
         ta.setSelectionRange(ta.value.length, ta.value.length);
         return true;
@@ -8176,6 +8497,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Who and what comes before a place in the box.
         const cands = [], quantified = [];
         const add = (c) => { if (!cands.some(d => d.at === c.at && d.kind === c.kind && d.words.toLowerCase() === c.words.toLowerCase())) cands.push(c); };
+        // The words as the phrases read them (stage one of the syntax tree):
+        // lower-case, a capital inside the sentence a name's, punctuation a
+        // word of its own.
+        const synWs = claimSynWords(toks.map((x, k) => /^[,;:.!?()]$/.test(x.w) ? x.w
+            : (k > 0 && /^[A-Z]/.test(x.w) && !/^[.!?]$/.test(toks[k - 1].w) ? '\uE000' : '') + x.l));
         let last = null;
         toks.forEach((x, k) => {
             // A name: capitalized, and no hedge, frame or function word;
@@ -8185,8 +8511,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && /^(?:are|were|have|do)$/.test(toks[k + 1].l) && claimPluralWord(x.l)) { last = null; }
             else if (/^[A-Z][a-z]/.test(x.w)) {
                 const name = x.w.replace(/['\u2019]s$/, ''), lower = name.toLowerCase();
+                // Not right after a determiner: "the Beatles" is that phrase's word.
+                const determined = k > 0 && /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(toks[k - 1].l) && claimSynPhraseEnd(synWs, k - 1) > k;
                 if (!(CLAIM_NOT_A_NAME.has(lower) || CLAIM_SPEAKER_WORDS.has(lower) || CLAIM_FRAME_WORDS.has(lower) || CLAIM_EMPTY_WORDS.has(lower) ||
-                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower] || CLAIM_NATIONAL_ADJECTIVES.has(lower))) {
+                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower] || CLAIM_NATIONAL_ADJECTIVES.has(lower) || determined)) {
                     if (last && last.k === k - 1 && !/['\u2019]s$/.test(last.raw)) { last.words += ' ' + name; last.k = k; last.k1 = k; last.raw = x.w; }
                     else { last = { at: x.at, k0: k, k, k1: k, raw: x.w, words: name, kind: 'person', name: true }; add(last); }
                     // "Mary's dog": the name, and what follows it.
@@ -8209,12 +8537,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (/^(?:this|that)$/.test(x.l) && toks[k + 1] && (/^[A-Z]/.test(toks[k + 1].w) || CLAIM_PRONOUN_KIND[toks[k + 1].l] ||   // "that Bob", "that it": a clause
                 /^(?:the|a|an|this|that|these|those|some|one|another|my|your|our|their|his|her|its|every|each|no|any|i|we|you)$|'s$/.test(toks[k + 1].l))) return;
             const np = [];
+            // Where the phrases end it: before its verb ("the vase fell", "the
+            // price increases were large").
+            const synEnd = claimSynPhraseEnd(synWs, k);
             for (let j = k + 1; j < toks.length && np.length < 3; j++) {
                 const y = toks[j], prev = np[np.length - 1];
+                if (synEnd > k + 1 && j >= synEnd) break;
                 if (!/^[a-z]/.test(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) || CLAIM_RELATIVES.has(y.l) || CLAIM_PREPOSITIONS.has(y.l) ||
-                    CLAIM_PRONOUN_KIND[y.l] || /^[A-Z]/.test(y.w) || (prev && CLAIM_PAST_UNCHANGED.has(y.l))) break;
-                // A verb after the noun ends it: "the vase fell", "the dog barks".
-                if (prev && !/'s$/.test(prev.l) && (claimPluralWord(prev.l) || (claimPastStem(y.l) !== null && !claimKnownAdjective(y.l)) || claimEndsInS(y.l))) break;
+                    CLAIM_PRONOUN_KIND[y.l] || (/^[A-Z]/.test(y.w) && !(synEnd > j)) || (prev && CLAIM_PAST_UNCHANGED.has(y.l) && !(synEnd > j))) break;
+                // A verb after the noun ends it, where the phrases do not say:
+                // "the vase fell", "the dog barks".
+                if (!(synEnd > k + 1) && prev && !/'s$/.test(prev.l) && (claimPluralWord(prev.l) || (claimPastStem(y.l) !== null && !claimKnownAdjective(y.l)) || claimEndsInS(y.l))) break;
                 np.push(y);
             }
             if (!np.length) return;
@@ -8830,6 +9163,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return t;
         }
         const single = last ? claimSingularOf(last) : last;
+        // A plural head before what follows it -- a phrase ("in the park"), a
+        // participle ("seen so far", "proposed by philosophers"), a clause
+        // ("that Mary saw") -- is made singular too, as the last word is:
+        // "all dogs in the park" names the kind "every dog in the park" does.
+        {
+            const words = t.split(/\s+/);
+            let participle = null;
+            try { participle = CLAIM_PARTICIPLE_SET; } catch (_) {}
+            const after = w => CLAIM_PREPOSITIONS.has(w) || CLAIM_RELATION_WORDS.has(w) || CLAIM_RELATIVES.has(w) || /[a-z]{2}ed$/.test(w) ||
+                (!!participle && participle.has(w) && !/s$/.test(w));
+            const p = words.findIndex((w, i) => i > 0 && after(w.replace(/^\uE000/, '')));
+            if (p > 0 && !/^\uE000/.test(words[p - 1]) && /^[a-z][a-z'-]*$/.test(words[p - 1])) {
+                const head = claimSingularOf(words[p - 1]);
+                if (head !== words[p - 1]) t = words.slice(0, p - 1).concat([head], words.slice(p)).join(' ');
+            }
+        }
         // The last word of a name of more than one word keeps its letters --
         // "Samuel Clemens" -- while a capitalized plural of a kind of people
         // is still a plural ("Ancient Greeks"). A capitalized word on its own
@@ -9246,7 +9595,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (claimEndsInS(tokens[v - 1]) && claimPlainVerb(tokens[v]) && /^[a-z]+$/.test(claimWord(tokens[v])) &&
                 !CLAIM_FUNCTION_WORDS.has(claimWord(tokens[v])) && v + 1 < tokens.length) return true;
         }
-        return false;
+        // A noun phrase and a sure verb group after it, as the phrases have it
+        // (stage one of the syntax tree): "the black raven left", "the first
+        // raven left" -- not "a mere series of flashing lights", whose
+        // "lights" may be a verb but is not known to be.
+        return claimSynClause(tokens);
     }
     const CLAIM_IRREGULAR_PLURALS = new Set(Object.keys(CLAIM_PLURAL_NOUNS));
     const CLAIM_FUNCTION_WORDS = new Set(['and', 'or', 'but', 'nor', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'under', 'through',
@@ -9401,7 +9754,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let last = 0, m;
         // Found in the text with its quotations and groups blanked out, which
         // keeps each separator where it is -- "both ... and" and its like too.
-        const top = claimPairMask(claimTopLevelMask(text));
+        let top = claimPairMask(claimTopLevelMask(text));
+        // Nor where the phrases put the join inside a verb's object (stage two).
+        {
+            const tokens = claimTokens(text), ws = claimSynWords(tokens), k = claimSynSubjectEnd(tokens);
+            const inner = k > 0 ? claimSynInnerJoins(ws, k) : new Set();
+            if (inner.size) {
+                let at = 0;
+                tokens.forEach((t, i) => {
+                    const p = text.indexOf(t, at);
+                    if (p < 0) return;
+                    if (inner.has(i)) top = top.slice(0, p) + CLAIM_MASK_FILL.repeat(t.length) + top.slice(p + t.length);
+                    at = p + t.length;
+                });
+            }
+        }
         while ((m = re.exec(top))) {
             parts.push(text.slice(last, m.index));
             seps.push(text.slice(m.index, m.index + m[0].length));
@@ -9409,6 +9776,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         if (!parts.length) return null;
         parts.push(text.slice(last));
+        // An "and" inside the subject, as the phrases have it, joins no
+        // clauses (stage two): "Poe, Fido and Rex fly" -- where what comes
+        // before it is no clause of its own ("R and it is not the case that
+        // Q", "the Senate closed, and it reopened" are two), and "and" and
+        // "or" are not both in it ("Poe and Fido or Rex fly" is asked).
+        {
+            const tokens = claimTokens(text), k = claimSynSubjectEnd(tokens);
+            const subject = tokens.slice(0, Math.max(k, 0)).map(claimWord);
+            if (k > 0 && !(subject.includes('and') && subject.includes('or'))) {
+                let at = 0, end = -1;
+                tokens.forEach((t, i) => { const p = text.indexOf(t, at); if (p >= 0) { if (i === k) end = p; at = p + t.length; } });
+                for (let i = 0; i < seps.length; i++) {
+                    const sepAt = parts.slice(0, i + 1).join('').length + seps.slice(0, i).join('').length;
+                    if (end > 0 && sepAt < end && !claimLooksLikeClause(parts[i])) {
+                        parts.splice(i, 2, parts[i] + seps[i] + parts[i + 1]); seps.splice(i, 1); i--;
+                    }
+                }
+                if (parts.length === 1) return null;
+            }
+        }
         let groups;
         if (!parts.some(claimLooksLikeClause) && !parts.slice(1).some(claimContinuesPhrase)) {
             groups = parts.map((p, i) => ({ text: p, sep: i ? seps[i - 1] : null }));
@@ -9416,7 +9803,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             groups = [];
             let current = parts[0], currentSep = null;
             for (let k = 1; k < parts.length; k++) {
-                if (claimLooksLikeClause(current) && !claimContinuesPhrase(parts[k]) && (!claimRelativeOpenAt(current) || claimHasOwnSubject(parts[k]))) {
+                // Whether a clause begins here, by the phrases (stage two of
+                // the syntax tree): in all that follows, not only up to the
+                // next "and" -- "Mary left and Bob and Ann cried".
+                const rest = parts.slice(k).map((p, i) => (i ? seps[k - 1 + i] : '') + p).join('');
+                // After a comma, only where a clause begins: ", or even suggest,
+                // that ..." keeps the break the comma makes, as before.
+                const found = claimSynClauseStart(claimTokens(rest.trim())), opens = found === false && /,/.test(seps[k - 1]) ? null : found;
+                // A relative or that-clause still open before it may go on over
+                // the "and" ("that a series of lights and circuitry cannot
+                // ..."): a subject plainly its own is needed there.
+                const own = (opens === null ? !claimContinuesPhrase(parts[k]) : opens) && (!claimRelativeOpenAt(current) || claimHasOwnSubject(parts[k]));
+                // Names or noun phrases listed with commas, no verb among them,
+                // are no clause: "Poe, Fido and Rex fly".
+                const listed = /,/.test(current) && (() => { const ct = claimTokens(current.trim()), cw = claimSynWords(ct);
+                    return claimSynNounPhrases(cw, 0).some(o => o.end === cw.length) && !claimSynClause(ct); })();
+                if (claimLooksLikeClause(current) && !listed && own) {
                     groups.push({ text: current, sep: currentSep });
                     current = parts[k]; currentSep = seps[k - 1];
                 } else {
@@ -9822,8 +10224,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const objRel = words.findIndex((w, i) => i > 0 && /^(?:that|whom|which)$/.test(w) && /^\uE000[a-z]/.test(tokens[i + 1] || ''));
         // "Clear that Mary left", "fact that Mary left": a claim of its own;
         // "so heavy that Bob cannot lift it", what follows from it.
-        if (objRel > 0 && (claimClauseHead(words.slice(0, objRel)) || words.slice(0, objRel).some(w => /^(?:so|such)$/.test(w)))) return null;
-        if (objRel > 0) {
+        // One inside another relative clause is that clause's: "student who
+        // reads books that Mary wrote" (below).
+        const nestedObjRel = objRel > 0 && /\b(?:that|who|which|whom)\b/.test(claimUnmarked(tokens.slice(0, objRel).join(' ')));
+        if (objRel > 0 && !nestedObjRel && (claimClauseHead(words.slice(0, objRel)) || words.slice(0, objRel).some(w => /^(?:so|such)$/.test(w)))) return null;
+        if (objRel > 0 && !nestedObjRel) {
             const head = normalizeClaimTerm(tokens.slice(0, objRel).join(' ')), rel = claimObjectRelativeProp(tokens.slice(objRel + 1));
             if (!head || !rel || /\b(?:that|who|which|whom)\b/.test(claimUnmarked(head))) return null;
             const headParts = claimHeadParts(head);
@@ -9838,7 +10243,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !/^\uE000/.test(tokens[i + 1]) && !CLAIM_FUNCTION_WORDS.has(words[i + 1]));
         if (v > 0) {
             const headText = tokens.slice(0, v).join(' '), head = normalizeClaimTerm(headText), vp = tokens.slice(v + 1);
-            if (vp.some(t => CLAIM_RELATIVES.has(claimWord(t))) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
+            // A relative clause of the verb's object is the verb phrase's own:
+            // "who reads books that Mary wrote" reads books-that-Mary-wrote.
+            const ownRelative = (t, i) => i > 1 && claimSynWord(vp[i - 1]).noun && !claimSynWord(vp[i - 1]).closed;
+            if (vp.some((t, i) => CLAIM_RELATIVES.has(claimWord(t)) && !ownRelative(t, i)) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
             const prop = verbPhraseProp(vp);
             if (!prop || !head) return null;
             const parts = [], headParts = claimHeadParts(head);
@@ -11793,7 +12201,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!st || st.quiet) return null;
         const plain = t => String(t || '').replace(/\uE000/g, '').trim();
         const conds = (conditional.conds || []).map(c => plain(c && c.src)).join(' \u0001 ');
-        const mine = st.notes.slice(noteMark).filter(n => n.kind === 'ambiguous' && n.generic && /^(?:a|an)\s/.test(plain(n.subject)) && conds.indexOf(plain(n.subject)) >= 0);
+        // Not one inside a that-clause: "premises that a mere series of lights
+        // ... can't produce consciousness" says what the premises hold.
+        const mine = st.notes.slice(noteMark).filter(n => n.kind === 'ambiguous' && n.generic && /^(?:a|an)\s/.test(plain(n.subject)) && conds.indexOf(plain(n.subject)) >= 0 &&
+            !/(?:^|\s)that\s/.test(conds.slice(0, conds.indexOf(plain(n.subject))).split('\u0001').pop() + ' '));
         if (!mine.length) return null;
         st.notes = st.notes.filter(n => mine.indexOf(n) < 0);
         const subject = plain(mine[0].subject), kind = subject.replace(/^(?:a|an)\s+/, '');
@@ -12983,12 +13394,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !/^(?:the|a|an|this|that|these|those|all|every|each|no|any|some|it|he|she|they|we|you|i|there|and|or|not)$/.test(claimWord(t)));
         if (!plain(firstTokens) || !plain(second)) return null;
         if (firstTokens.some((t, i) => i + 1 < firstTokens.length && claimPluralWord(t))) return null;      // "all ravens fly and crows are black"
-        // "Some ravens and crows" may be some of each, or some of the lot.
+        // "Some ravens and crows are black": some of each (the user,
+        // 2026-09-29) -- some ravens are, and some crows are. "Some ravens or
+        // crows": some of the one, or some of the other.
         const existential = /^(?:some|at least one)$/.test(det) || (det === 'any' && claimReadState.anyIsSome > 0);
-        if (existential && word === 'and') return null;
         const parts = [first, second.join(' ')].map(n => readClaim(det + ' ' + n + ' ' + vp));
         if (!parts.every(p => p && (p.kind === 'all' || p.kind === 'some'))) return null;
-        return claimList(existential ? 'or' : 'and', parts);
+        return claimList(existential && word === 'or' ? 'or' : 'and', parts);
     }
     function readCoordination(s) {
         // "Both A and B, and C": the "both" holds only its group, and the
@@ -13053,6 +13465,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         ['all', 'all'], ['every', 'all'], ['each', 'all'], ['any', 'any'], ['no', 'no'], ['some', 'some'], ['certain', 'some'], ['only', 'only']
     ].map(([words, quant]) => ({ words: words.split(' '), quant }));
     const CLAIM_SINGULAR_DETERMINERS = new Set(['every', 'each', 'every single', 'each and every', 'not a single', 'not one', 'at least one']);
+    // Those whose verb is singular, whatever their noun: "each of the ravens flies".
+    const CLAIM_SINGULAR_QUANTIFIED = new Set(['every', 'each', 'every single', 'each and every', 'not a single', 'not one', 'at least one',
+        'each of the', 'each of', 'every one of the', 'every one of', 'each one of the', 'each and every one of the', 'every single one of the',
+        'not one of the', 'at least one of the']);
     const CLAIM_QUANTIFIER_PRONOUNS = {
         everything: ['all', CLAIM_ANY], anything: ['any', CLAIM_ANY], nothing: ['no', CLAIM_ANY], something: ['some', CLAIM_ANY],
         whatever: ['all', CLAIM_ANY],
@@ -13096,20 +13512,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const tokens = claimTokens(s);
         const lower = tokens.map(claimWord);
         if (lower[0] === 'there' && /^(?:is|are|exists?|exist|isn't|aren't)$/.test(lower[1])) return readThereIsClaim(tokens.slice(2), lower[1]);
-        let quant = null, subject = null, rest = null, pronoun = false, determiner = null;
-        if (lower[0] === 'no' && lower[1] === 'one') { quant = 'no'; subject = CLAIM_PERSON; rest = tokens.slice(2); pronoun = true; }
+        let quant = null, subject = null, rest = null, pronoun = false, determiner = null, head = null;
+        if (lower[0] === 'no' && lower[1] === 'one') { quant = 'no'; subject = CLAIM_PERSON; rest = tokens.slice(2); pronoun = true; head = ['nobody']; }
         else if (CLAIM_QUANTIFIER_PRONOUNS[lower[0]]) {
             [quant, subject] = CLAIM_QUANTIFIER_PRONOUNS[lower[0]];
-            rest = tokens.slice(1); pronoun = true;
+            rest = tokens.slice(1); pronoun = true; head = [lower[0]];
             if (lower[0] === 'whatever' || lower[0] === 'whoever') rest = ['that'].concat(rest);   // "whatever flies is a bird"
         }
-        else if (lower[0] === 'those' && lower[1] === 'who') { quant = 'all'; subject = CLAIM_PERSON; rest = tokens.slice(1); pronoun = true; }
+        else if (lower[0] === 'those' && lower[1] === 'who') { quant = 'all'; subject = CLAIM_PERSON; rest = tokens.slice(1); pronoun = true; head = ['those']; }
         else {
             const d = CLAIM_DETERMINERS.find(d => tokens.length > d.words.length && d.words.every((x, i) => lower[i] === x));
             if (!d) return null;
-            quant = d.quant; determiner = d.words.join(' '); rest = tokens.slice(d.words.length);
+            quant = d.quant; determiner = d.words.join(' '); rest = tokens.slice(d.words.length); head = d.words.slice();
             // "All who are wise": persons ("who"); "all that glitters": things.
             if (/^(?:who|that|which)$/.test(claimWord(rest[0]))) { pronoun = true; subject = claimWord(rest[0]) === 'who' ? CLAIM_PERSON : CLAIM_ANY; }
+        }
+        // "Everyone Mary knows": a relative clause without its "that" (stage three).
+        if (pronoun && rest.length > 1 && !/^(?:that|who|which)$/.test(claimWord(rest[0]))) {
+            const k = claimSynSubjectEnd(head.concat(rest)) - head.length;
+            if (k > 0 && claimSynWithThat(head.concat(rest.slice(0, k))).length > head.length + k) rest = ['that'].concat(rest);
         }
         if (quant === 'any') quant = claimReadState.anyIsSome ? 'some' : 'all';
         let np = null, vp, restrictorVp = null;
@@ -13118,35 +13539,51 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // any value", "nobody loves anyone").
         const downward = fn => quant === 'all' || quant === 'no' ? claimWithAnyAsSome(fn) : fn();
         if (pronoun && /^(?:that|who|which)$/.test(claimWord(rest[0]))) {
-            // "everything that is a raven is black", "whatever flies is a bird"
-            let k = claimMainVerbIndex(['thing'].concat(rest)) - 1;
+            // "everything that is a raven is black", "whatever flies is a bird";
+            // where the clause ends, by the phrases (stage three): "everyone
+            // who loves Mary | sings", "those who sing | dance".
+            const byPhrases = claimSynSubjectEnd(head.concat(rest)) - head.length;
+            let k = byPhrases > 1 ? byPhrases : claimMainVerbIndex(['thing'].concat(rest)) - 1;
             if (k < 1) k = rest.findIndex((t, i) => i > 1 && claimEndsInS(t));
             if (k < 1) return null;
-            const rel = downward(() => verbPhraseProp(rest.slice(1, k)));
+            const clause = rest.slice(1, k);
+            // "Everything that Mary said": what Mary said, not what says "Mary".
+            const rel = downward(() => claimObjectRelativeProp(clause) || verbPhraseProp(clause));
             // "Everyone who sings", "whoever sings": a person who sings, not whatever sings.
-            subject = subject === CLAIM_PERSON && rel ? '=person that ' + rest.slice(1, k).join(' ') : rel;
-            restrictorVp = rest.slice(1, k).join(' ');
+            subject = subject === CLAIM_PERSON && rel ? '=person that ' + clause.join(' ') : rel;
+            restrictorVp = clause.join(' ');
             vp = rest.slice(k);
         } else if (pronoun) {
             vp = rest;
         } else {
-            const k = claimClauseVerbIndex(rest);
-            if (k >= 1) { np = rest.slice(0, k); vp = rest.slice(k); }
-            else {
-                // No auxiliary: "every raven flies" (the verb takes -s), "all ravens fly" (the noun does),
-                // "every raven flew" (in the past, neither).
+            // Where the noun phrase ends and its verb group begins, by the
+            // phrases (stage three): "every raven that Mary saw | flies", "all
+            // dogs in the park | bark", "every cat Mary fed | left" -- in the
+            // number the quantifier takes ("every dog bite | hurts"). Where
+            // they are not sure of it, as before, unless that leaves the verb
+            // phrase opening with a relative or a preposition.
+            const tree = claimSynQuantifiedEnd(rest, CLAIM_SINGULAR_QUANTIFIED.has(determiner) ? 'sg' : null);
+            // No auxiliary: "every raven flies" (the verb takes -s), "all ravens fly" (the noun does),
+            // "every raven flew" (in the past, neither).
+            const guess = () => {
                 const i = rest.findIndex(claimPluralWord);
                 const past = rest.findIndex((t, j) => j >= 1 && claimPastStem(claimWord(t)) !== null &&
                     !rest.slice(0, j).some(u => CLAIM_RELATIVES.has(claimWord(u))));
-                if (i < 0 && past < 1) return null;
+                if (i < 0 && past < 1) return -1;
                 // The noun past any adjectives says the number: "some black ravens fly".
                 const lead = claimAdjectivesBefore(rest, 0), noun = rest[lead > 0 && lead < rest.length - 1 ? lead : 0];
                 const singular = CLAIM_SINGULAR_DETERMINERS.has(determiner) ||
                     (!/^(?:all|all of|all of the|all the|certain|only)$/.test(determiner) && !claimEndsInS(noun));
-                if (past >= 1 && (i < 0 || past < (singular ? i : i + 1))) { np = rest.slice(0, past); vp = rest.slice(past); }
-                else if (singular) { if (i < 1) return null; np = rest.slice(0, i); vp = rest.slice(i); }
-                else { if (i + 1 >= rest.length) return null; np = rest.slice(0, i + 1); vp = rest.slice(i + 1); }
-            }
+                if (past >= 1 && (i < 0 || past < (singular ? i : i + 1))) return past;
+                if (singular) return i < 1 ? -1 : i;
+                return i + 1 >= rest.length ? -1 : i + 1;
+            };
+            let k = tree && (tree.verb === 'strong' || tree.only) ? tree.end : claimClauseVerbIndex(rest);
+            if (k < 1) k = guess();
+            if (tree && (k < 1 || CLAIM_RELATIVES.has(claimWord(rest[k])) || CLAIM_PREPOSITIONS.has(claimWord(rest[k])))) k = tree.end;
+            if (k < 1) return null;
+            // "Every cat Mary fed": every cat that Mary fed.
+            np = claimSynWithThat(rest.slice(0, k)); vp = rest.slice(k);
             if (quant === 'only') {
                 // "Only ravens are black": every black thing is a raven.
                 const restrict = verbPhraseProp(vp), kind = restrictorProp(np);
@@ -13201,6 +13638,499 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return denied ? negateClaim(form) : form;
     }
+    // ---- The syntax tree, stage one (the user, 2026-09-29: "an internal syntax
+    // tree so the checker can disambiguate a little more easily, especially by
+    // telling different syntactical elements apart"): each word's parts of
+    // speech, and the phrases they make -- noun phrases and verb groups -- so
+    // that where a subject ends and its verb begins is decided in one place.
+    //
+    // A word's parts of speech are the ones it can have, from the lists above
+    // and its endings: a closed word (a determiner, a preposition, "and") is
+    // only what it is; an open word may be a noun, a verb, an adjective. Which
+    // it is here, the phrase it would end or begin decides.
+    const CLAIM_SYN_DETERMINERS = new Set('the a an this that these those my your his her its our their whose'.split(' '));
+    const CLAIM_SYN_QUANTIFIERS = new Set(('all every each some any no many few several most both either neither much more less enough ' +
+        'certain various numerous countless such').split(' '));
+    const CLAIM_SYN_NUMBERS = /^(?:\d+(?:[.,]\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen)$/;
+    const CLAIM_SYN_ORDINALS = new Set('first second third fourth fifth sixth seventh eighth ninth tenth last next other same only former latter previous following'.split(' '));
+    // Pronouns and how many each is: "they" takes "are", as "ravens" does.
+    const CLAIM_SYN_PRONOUNS = Object.assign(Object.create(null), {
+        i: 'you', you: 'you', we: 'you', they: 'you', he: 'sg', she: 'sg', it: 'sg', one: 'sg',
+        me: 'obj', him: 'obj', us: 'obj', them: 'obj',
+        myself: 'obj', yourself: 'obj', himself: 'obj', herself: 'obj', itself: 'obj', ourselves: 'obj', themselves: 'obj',
+        everyone: 'sg', everybody: 'sg', everything: 'sg', someone: 'sg', somebody: 'sg', something: 'sg', anyone: 'sg',
+        anybody: 'sg', anything: 'sg', nobody: 'sg', nothing: 'sg', none: '?', there: '?', this: 'sg', that: 'sg', these: 'pl', those: 'pl',
+        whoever: 'sg', whatever: 'sg' });
+    const CLAIM_SYN_PREPOSITIONS = new Set(('about above across after against along amid among amongst around as at before behind below beneath ' +
+        'beside besides between beyond by despite down during except for from in inside into like near of off on onto out outside over past ' +
+        'per regarding concerning since than through throughout till to toward towards under underneath unlike until up upon via with within without').split(' '));
+    const CLAIM_SYN_CONJUNCTIONS = new Set(['and', 'or', 'nor', 'but', 'and-then']);
+    const CLAIM_SYN_OPENERS = new Set('if unless because although though whereas whether while whilst when whenever once so'.split(' '));
+    const CLAIM_SYN_ADVERBS = new Set(('not never also too very quite rather just even only still already always often sometimes usually ' +
+        'seldom rarely again soon later now then here perhaps maybe probably certainly surely necessarily possibly clearly obviously ' +
+        'indeed thus hence therefore however moreover furthermore nevertheless together apart alone home away back almost nearly ' +
+        'merely simply really actually ever yet instead anyway otherwise somewhat enough first ' +
+        'downhill uphill downstream upstream downward downwards upward upwards inward inwards outward outwards forward forwards ' +
+        'backward backwards abroad overseas indoors outdoors upstairs downstairs everywhere somewhere nowhere anywhere elsewhere ' +
+        'afterwards sideways aloud ahead aside').split(' '));
+    // Words in -ly that are not adverbs.
+    const CLAIM_SYN_LY_WORDS = new Set(('family ally belly bully jelly lily rally tally folly holly jolly melancholy anomaly monopoly ' +
+        'assembly supply reply apply comply imply multiply rely fly only early daily weekly monthly yearly likely unlikely lonely lovely ' +
+        'friendly unfriendly ugly holy silly deadly costly elderly orderly worldly heavenly cowardly scholarly timely lively curly hilly ' +
+        'oily smelly chilly').split(' '));
+    // The closed words: nothing else is read into them.
+    const claimSynClosed = w => CLAIM_SYN_DETERMINERS.has(w) || CLAIM_SYN_QUANTIFIERS.has(w) || w in CLAIM_SYN_PRONOUNS ||
+        CLAIM_SYN_PREPOSITIONS.has(w) || CLAIM_SYN_CONJUNCTIONS.has(w) || CLAIM_SYN_OPENERS.has(w) || CLAIM_RELATIVES.has(w) ||
+        CLAIM_VERB_MARKERS.has(w) || CLAIM_SYN_NUMBERS.test(w) || (CLAIM_SYN_ADVERBS.has(w) && !CLAIM_SYN_ORDINALS.has(w));
+    // Verbs the lists know, by their plain form.
+    const claimSynKnownVerb = w => CLAIM_ATTITUDE_VERBS.has(w) || CLAIM_TOGETHER_VERBS.has(w) || CLAIM_USE_UP_VERBS.has(w) ||
+        CLAIM_PAST_UNCHANGED.has(w) || /^(?:exist|matter|follow|entail|imply|require|need|make|give|take|cause|produce|create|allow|prevent|depend|involve|include|contain|mean|show|prove|suggest|support|explain|justify|determine|affect|influence|lead|bring|keep|let|seem|appear|become|remain|want|love|hate|fear|see|hear|feel|find|get|go|come|run|move|grow|die|live|work|happen|occur|arise|result|obtain|hold|apply|fail|succeed|begin|end|change|increase|decrease|reduce|destroy|win|lose|rule|help|harm|fly|swim|sing|dance|sleep|eat|drink|walk|talk|speak|write|read|cry|laugh|smile|leave|arrive|stay|wait|sit|stand|fall|rise|think|know|say|tell|ask|answer|carry|bark|bite|chase|catch|kill|love|like|own|use|build|break|open|close|pay|buy|sell|send|teach|learn|play|work|rain|snow|shine|burn|freeze|melt|survive|perish|reign|prevail|persist|suffer|enjoy|praise|blame|hurt|hit|meet|marry|visit|admire|respect|trust|doubt|deny|affirm|assert|claim|argue|conclude|infer|reason|occupy|soothe|reflect|absorb|attract|repel|expand|evaporate|dissolve|consist|belong|differ|resemble|weigh)$/.test(w);
+    // A word's parts of speech, as { noun, plural, adj, past, s, base, ... }.
+    function claimSynWord(token) {
+        const t = String(token || ''), w = claimWord(t);
+        const out = { t, w };
+        if (!w) return out;
+        if (/^\uE000/.test(t)) { if (/'s$|s'$/.test(w)) out.poss = true; else out.name = true; return out; }
+        if (/^[a-z][a-z-]*'s$|^[a-z][a-z-]*s'$/.test(w)) { out.poss = true; return out; }
+        if (CLAIM_VERB_MARKERS.has(w)) out.aux = true;
+        if (CLAIM_SYN_DETERMINERS.has(w)) out.det = true;
+        if (CLAIM_SYN_QUANTIFIERS.has(w)) out.quant = true;
+        if (w in CLAIM_SYN_PRONOUNS) out.pro = CLAIM_SYN_PRONOUNS[w];
+        if (CLAIM_SYN_PREPOSITIONS.has(w)) out.prep = true;
+        if (CLAIM_SYN_CONJUNCTIONS.has(w)) out.conj = true;
+        if (CLAIM_SYN_OPENERS.has(w)) out.opener = true;
+        if (CLAIM_RELATIVES.has(w)) out.rel = true;
+        if (CLAIM_SYN_NUMBERS.test(w)) out.num = true;
+        if (CLAIM_SYN_ORDINALS.has(w)) out.adj = true;
+        if (CLAIM_SYN_ADVERBS.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w))) out.adv = true;
+        if (claimSynClosed(w)) { out.closed = true; return out; }
+        // An open word: a noun, a verb, an adjective -- what the lists and its
+        // ending allow.
+        const past = claimPastStem(w) !== null, participle = CLAIM_PARTICIPLE_SET.has(w) || /[a-z]{2}ed$/.test(w);
+        const adj = claimKnownAdjective(t) || /(?:ous|ful|less|ive|able|ible|ical|ish|ary|ent|ant)$/.test(w) && w.length > 5;
+        const pluralNoun = CLAIM_IRREGULAR_PLURALS.has(w) || claimKnownPlural(w);
+        const sEnding = claimEndsInS(t) && !CLAIM_S_NOUNS.has(w) && !CLAIM_SINGULAR_IN_S.has(w);
+        const knownNoun = CLAIM_HE_OR_SHE_NOUNS.has(w) || CLAIM_HE_OR_SHE_ANIMALS.has(w) || CLAIM_THING_NOUNS.has(w) || CLAIM_CONTENT_NOUNS.has(w) ||
+            CLAIM_LISTED_SINGULARS.has(w) || CLAIM_INVARIANT_NOUNS.has(w) || CLAIM_S_NOUNS.has(w) || CLAIM_SINGULAR_IN_S.has(w) ||
+            /(?:tion|sion|ment|ness|ity|ism|ist|ship|hood|dom|ance|ence|ure|ogy|phy)$/.test(w);
+        const sVerb = sEnding && (CLAIM_COMMON_S_VERBS.has(w) || claimSynKnownVerb(w.replace(/ies$/, 'y').replace(/(?:ch|sh|ss|x|o)es$/, m => m.slice(0, -2)).replace(/s$/, '')));
+        if (past) out.past = true;
+        if (participle) out.participle = true;
+        if (/[a-z]{2}ing$/.test(w)) out.ing = true;
+        if (adj || participle) out.adj = true;
+        if (sEnding) { out.s = true; out.plural = !sVerb || pluralNoun || !CLAIM_COMMON_S_VERBS.has(w); }
+        if (pluralNoun) out.plural = true;
+        // A noun: known, or any open word that is not only an adjective or a past.
+        out.noun = knownNoun || pluralNoun || CLAIM_NOUNLIKE_ADJECTIVES.has(w) || (!adj && !past && !out.adv) || (sEnding && !sVerb);
+        // A verb: in the past, in -s, or plain -- known, or not known as anything else.
+        out.verb = past || sEnding || claimSynKnownVerb(w) || (!knownNoun && !adj && !out.adv && !pluralNoun);
+        out.knownVerb = past && !adj || sVerb || claimSynKnownVerb(w);
+        return out;
+    }
+    const claimSynCache = new Map();
+    function claimSynWords(tokens) {
+        const key = tokens.join(' ');
+        if (claimSynCache.has(key)) return claimSynCache.get(key);
+        const out = tokens.map(claimSynWord);
+        if (claimSynCache.size > 20000) claimSynCache.clear();
+        claimSynCache.set(key, out);
+        return out;
+    }
+    // The noun phrases that begin at i: each { end, number } -- 'sg', 'pl',
+    // 'you' (what "I", "you", "we", "they" take), '?' where the words do not
+    // say. A name; a pronoun; a determiner or quantifier, adjectives and
+    // nouns ("the black raven", "the Senate", "the rich"); "Mary's dog"; with
+    // "of the house" or another phrase after it; two joined ("Alice and Bob",
+    // "both the raven and the crow"); with a relative clause ("the dog that
+    // barked", "the match, which was scheduled for noon,").
+    function claimSynNounPhrases(ws, i, depth, bare) {
+        depth = depth || 0;
+        const out = [], add = (end, number, reduced) => {
+            const had = out.find(o => o.end === end);
+            if (!had) out.push(reduced === undefined ? { end, number } : { end, number, reduced });
+            else if (reduced !== undefined && had.reduced === undefined) had.reduced = reduced;
+        };
+        if (i >= ws.length || depth > 3) return out;
+        const x = ws[i];
+        // "Both ... and", "either ... or", "neither ... nor": two joined.
+        const pairs = { both: 'and', either: 'or', neither: 'nor' };
+        if (pairs[x.w] && depth < 3) {
+            claimSynNounPhrases(ws, i + 1, depth + 1).forEach(a => {
+                if (ws[a.end] && ws[a.end].w === pairs[x.w]) claimSynNounPhrases(ws, a.end + 1, depth + 1).forEach(b => add(b.end, x.w === 'both' ? 'pl' : b.number));
+            });
+            if (x.w !== 'both') return out;
+        }
+        const bodies = [];
+        if (x.pro && x.pro !== 'obj' && !(x.det && ws[i + 1] && (ws[i + 1].noun || ws[i + 1].adj) && !ws[i + 1].closed)) add(i + 1, x.pro);
+        const named = i === 0 && !x.name && !x.closed ? claimNamePhraseEnd(ws.map(y => y.t)) : 0;
+        if (named > 1) {
+            if (ws[named] && ws[named].poss) bodies.push([named + 1, false]);
+            else add(named, 'sg');
+        } else if (x.name) {
+            let j = i + 1;
+            while (j < ws.length && ws[j].name) j++;
+            if (ws[j] && ws[j].poss) bodies.push([j + 1, false]);
+            else add(j, 'sg');
+        } else if (x.poss) bodies.push([i + 1, false]);
+        else if (x.det || x.quant || x.num) {
+            let j = i + 1;
+            while (j < ws.length && (ws[j].det || ws[j].num || ws[j].poss || (ws[j].quant && !pairs[ws[j].w]))) j++;
+            bodies.push([j, true]);
+            // "Some are", "all left", "these fly": a quantifier or demonstrative alone.
+            if ((x.quant || x.num || /^(?:this|that|these|those)$/.test(x.w)) && j === i + 1) add(i + 1, /^(?:this|that|each|every|one|much|either|neither)$/.test(x.w) ? 'sg' : 'pl');
+        } else if (!x.closed && !x.pro) bodies.push([i, false]);
+        // Adjectives and nouns, to a head: every noun on the way may be it, and
+        // an adjective may be ("the rich", "American is tall"); after a
+        // determiner, a name is a noun ("the Senate", "the Turing test").
+        const numberOf = y => y.plural ? 'pl' : y.s || CLAIM_INVARIANT_NOUNS.has(y.w) ? '?' : /^(?:qualia|data|media|criteria|phenomena)$/.test(y.w) ? 'pl' : y.noun && !y.adj && !y.past ? '?' : 'sg';
+        bodies.forEach(([b, determined]) => {
+            let j = b;
+            while (j < ws.length && ws[j].adv && /ly$/.test(ws[j].w) && ws[j + 1] && ws[j + 1].adj) j++;     // "truly good"
+            for (; j < ws.length; j++) {
+                const y = ws[j], proper = y.name && determined && ws.slice(b, j).every(z => z.name || z.adj && !z.noun || z.num || CLAIM_SYN_ORDINALS.has(z.w));
+                // Adjectives joined before their noun ("mutually acceptable, or
+                // independently motivated, premises"), and an adverb before an
+                // adjective ("independently motivated").
+                if (y.conj && /^(?:and|or)$/.test(y.w) && j > b && ws[j - 1].adj && !ws[j - 1].noun && claimSynModifiedNounAhead(ws, j + 1)) continue;
+                if (y.adv && !y.noun && claimSynAdjectiveAhead(ws, j + 1) && j + 1 < ws.length) continue;
+                if ((y.closed && !CLAIM_SYN_ORDINALS.has(y.w)) || (y.name && !determined) || (y.poss && j > b)) break;
+                if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y));
+                if (!(y.noun || y.adj || y.num || y.participle || y.ing || proper || CLAIM_SYN_ORDINALS.has(y.w))) break;
+            }
+        });
+        // After a phrase: "of ...", "in ...", a relative clause, "and ...".
+        const more = bare ? [] : out.slice();
+        more.forEach(o => {
+            const y = ws[o.end];
+            if (!y) return;
+            if (y.prep && !/^(?:to|than|as|like|since|before|after|until|till)$/.test(y.w) && depth < 3)
+                claimSynNounPhrases(ws, o.end + 1, depth + 1).forEach(p => add(p.end, o.number));
+            if (y.conj && /^(?:and|or|nor)$/.test(y.w) && depth < 3)
+                claimSynNounPhrases(ws, o.end + 1, depth + 1).forEach(p => add(p.end, y.w === 'and' ? 'pl' : p.number));
+            // A list with commas, closed by "and" or "or": "Poe, Fido(,) and Rex".
+            if (!y.conj && /,$/.test(ws[o.end - 1].t) && depth < 3)
+                claimSynNounPhrases(ws, o.end, depth + 1).forEach(p => { if (ws.slice(o.end, p.end).some(z => z.conj && /^(?:and|or)$/.test(z.w))) add(p.end, 'pl'); });
+            // A relative clause without its "that": "the raven Mary saw",
+            // "everyone Mary knows" -- a noun phrase and its verb group, with no
+            // object after it, and a sure verb group after them.
+            if (depth < 3 && claimSynContactHead(ws[o.end - 1]) && claimSynContactSubject(y))
+                claimSynNounPhrases(ws, o.end, depth + 1, true).forEach(p => {
+                    if (claimSynVerbStart(ws, p.end, p.number) !== 'strong') return;
+                    const g = claimSynGroupEnd(ws, p.end);
+                    if (g < ws.length && !/,$/.test(ws[g - 1].t) && claimSynVerbStart(ws, g, o.number) === 'strong') add(g, o.number);
+                });
+            // A participle after its noun, a clause cut short: "swans seen so
+            // far", "theories proposed by philosophers" -- no object after it,
+            // and a sure verb group after its phrase. Kept as one, so that the
+            // participle is not taken for the verb (claimSynChoose).
+            if (depth < 3 && y.participle && !y.closed && ws[o.end - 1].noun && !ws[o.end - 1].name && !ws[o.end - 1].pro && !/,$/.test(ws[o.end - 1].t)) {
+                const scan = (q, d) => {
+                    while (q < ws.length && ((ws[q].adv && !ws[q].noun) || /^(?:so|far|yesterday|today|tomorrow|earlier)$/.test(ws[q].w))) q++;
+                    if (q >= ws.length || /,$/.test(ws[q - 1].t)) return;
+                    if (claimSynVerbStart(ws, q, o.number) === 'strong') { add(q, o.number, o.end); return; }
+                    if (ws[q].prep && d < 2) claimSynNounPhrases(ws, q + 1, depth + 1, true).forEach(p => scan(p.end, d + 1));
+                };
+                scan(o.end + 1, 0);
+            }
+            // A relative clause ("that barked", ", which was scheduled for
+            // noon,") runs on past its own verb group: the phrase may end
+            // wherever another verb could begin after it -- after the comma
+            // that closes it, if it opened with one.
+            if (y.rel && y.w !== 'where') {
+                const commaOpened = /,$/.test(ws[o.end - 1].t);
+                let own = -1, past = -1, object = -1;
+                const found = [];
+                for (let q = o.end + 1; q < ws.length; q++) {
+                    if (own < 0) { if (claimSynVerbStart(ws, q, '?')) { own = q; past = object = claimSynGroupEnd(ws, q); } continue; }
+                    if (q < past) continue;
+                    // "Who sings and dances": a verb just after its "and" is the relative clause's too.
+                    if (ws[q - 1].conj && claimSynVerbStart(ws, q, '?') === 'strong') { past = object = claimSynGroupEnd(ws, q); continue; }
+                    // A clause inside it, with its own verb: "who reads books that
+                    // Mary wrote", "who thinks that Poe is black".
+                    if (ws[q].rel && claimSynOpensClause(ws, q)) {
+                        let r = q + 1;
+                        while (r < ws.length && claimSynVerbStart(ws, r, '?') !== 'strong') r++;
+                        if (r < ws.length) { past = claimSynGroupEnd(ws, r); q = past - 1; continue; }
+                    }
+                    if (commaOpened && !/,$/.test(ws[q - 1].t)) continue;
+                    const v = claimSynVerbStart(ws, q, o.number);
+                    if (v) found.push({ q, v });
+                }
+                // Just past the clause's verb, a word that may be its object
+                // gives way to a verb as sure after it: "people who eat meat |
+                // smoke", "the woman who fears change | left" -- not "who sings |
+                // dances".
+                found.forEach((f, k) => {
+                    if (f.q === object && ws[f.q].noun && found.slice(k + 1).some(g => g.v === 'strong' || f.v === 'weak')) return;
+                    add(f.q, o.number);
+                });
+                if (own >= 0) add(ws.length, o.number);
+            }
+        });
+        out.sort((a, b) => a.end - b.end);
+        return out;
+    }
+    // Does a clause begin with these words, by their phrases? true: a noun
+    // phrase and a sure verb group after it ("crows sing", "Bob and Ann
+    // cried", "the cat purred"); false: a verb group ("bought milk"), or a
+    // noun phrase with no verb of its own ("the cat", "tea and coffee"); null
+    // where the phrases do not say.
+    function claimSynClauseStart(tokens) {
+        const ws = claimSynWords(tokens);
+        if (!ws.length) return null;
+        // A sentence letter: "P and Q".
+        if (/^[a-z]$/.test(ws[0].w) && (ws.length === 1 || ws[1].conj || /^[,;]$/.test(ws[1].t) || /,$/.test(ws[0].t))) return true;
+        if (claimSynVerbStart(ws, 0, '?') === 'strong' && !ws[0].noun && !ws[0].name && !ws[0].pro && !ws[0].det && !ws[0].quant) return false;
+        const phrases = claimSynNounPhrases(ws, 0);
+        if (!phrases.length) return null;
+        if (phrases.some(o => o.end < ws.length && claimSynVerbStart(ws, o.end, o.number) === 'strong')) return true;
+        if (phrases.some(o => o.end === ws.length)) return false;
+        return null;
+    }
+    // An adjective at i, past adverbs: "independently motivated".
+    function claimSynAdjectiveAhead(ws, i) {
+        while (ws[i] && ws[i].adv && !ws[i].noun) i++;
+        return !!ws[i] && !ws[i].closed && !ws[i].name && (ws[i].adj || ws[i].participle) && !ws[i].noun;
+    }
+    // Adjectives at i, past adverbs, and then the noun they are said of:
+    // "independently motivated, premises".
+    function claimSynModifiedNounAhead(ws, i) {
+        if (!claimSynAdjectiveAhead(ws, i)) return false;
+        while (ws[i] && !ws[i].closed && (ws[i].adv && !ws[i].noun || (ws[i].adj || ws[i].participle) && !ws[i].noun)) i++;
+        return !!ws[i] && ws[i].noun && !ws[i].closed;
+    }
+    // The last word of a noun phrase a relative clause without its "that" may
+    // follow: a common noun ("the raven Mary saw"), or "everyone", "something".
+    function claimSynContactHead(x) {
+        return !!x && ((x.noun && !x.name && !x.closed && !x.pro) ||
+            /^(?:everyone|everybody|everything|someone|somebody|something|anyone|anybody|anything|nothing|nobody)$/.test(x.w));
+    }
+    // What may open that clause: its subject -- a name, "Mary's", a pronoun
+    // that can be one, a determiner ("the raven the dog chased").
+    function claimSynContactSubject(y) {
+        return !!y && !y.rel && !y.conj && (!!y.name || !!y.poss || (!!y.pro && y.pro !== 'obj' && !/^(?:there|none|that|this|these|those)$/.test(y.w)) ||
+            (!!y.det && y.w !== 'that') || (!!y.quant && !/^(?:all|both|each|either|neither)$/.test(y.w)));
+    }
+    // Does the relative word at q open a clause of its own -- "who", "which",
+    // or a "that" before its subject or verb ("that Mary wrote", "that the
+    // vase broke", "that sold well") -- not "that" of "that dog"?
+    function claimSynOpensClause(ws, q) {
+        const y = ws[q], z = ws[q + 1];
+        if (!y || !y.rel || !z) return false;
+        if (y.w !== 'that') return true;
+        return !!(z.name || z.poss || (z.pro && z.pro !== 'obj') || (z.det && z.w !== 'that') || z.quant || z.num ||
+            (claimSynVerbStart(ws, q + 1, '?') === 'strong' && !z.noun));
+    }
+    // A relative clause without its "that", given it: "raven Mary saw" is
+    // "raven that Mary saw". The tokens as they are where there is none.
+    function claimSynWithThat(tokens) {
+        const ws = claimSynWords(tokens), n = ws.length;
+        for (let c = 1; c < n - 1; c++) {
+            if (!claimSynContactHead(ws[c - 1]) || !claimSynContactSubject(ws[c])) continue;
+            if (claimSynNounPhrases(ws, c, 1, true).some(p => claimSynVerbStart(ws, p.end, p.number) === 'strong' && claimSynGroupEnd(ws, p.end) === n))
+                return tokens.slice(0, c).concat(['that'], tokens.slice(c));
+        }
+        return tokens;
+    }
+    // Where the noun phrase after a quantifier ends, and its verb group
+    // begins (stage three), in the number the quantifier takes, where it
+    // takes one ("every dog bite | hurts", "each of the ravens | flies"):
+    // { end, verb: 'strong' | 'weak' }, or null.
+    function claimSynQuantifiedEnd(tokens, number) {
+        // After its quantifier, as after "the": "raven Mary saw" is no name
+        // "Raven Mary", as a sentence's first words could be.
+        const first = claimSynWord(tokens[0]), pad = first.det || first.poss ? 0 : 1;
+        const ws = claimSynWords(pad ? ['the'].concat(tokens) : tokens);
+        const phrases = claimSynNounPhrases(ws, 0).map(o => number ? Object.assign({}, o, { number }) : o);
+        const end = claimSynChoose(ws, phrases);
+        if (end - pad < 1) return null;
+        // `only`: no other end has a verb after it ("all water | flows downhill").
+        const verbed = phrases.filter(o => o.end < ws.length && claimSynVerbStart(ws, o.end, o.number));
+        return { end: end - pad, verb: claimSynVerbStart(ws, end, (phrases.find(o => o.end === end) || {}).number || '?'), only: verbed.length === 1 };
+    }
+    // The "and"s and "or"s inside the object of a verb that runs to the end:
+    // between adjectives before their noun ("mutually acceptable, or
+    // independently motivated, premises"), and inside the clause after its
+    // noun ("premises that a mere series of lights and circuitry can't produce
+    // consciousness"). They join no clauses and no verbs. Word positions, for
+    // the verb group that begins at `from`.
+    function claimSynInnerJoins(ws, from) {
+        const out = new Set(), g = claimSynGroupEnd(ws, from), v = ws[g - 1];
+        if (!v || g >= ws.length || /^(?:is|are|am|was|were|be|been|being|isn't|aren't|wasn't|weren't)$/.test(v.w)) return out;
+        if (!claimSynNounPhrases(ws, g).some(o => o.end === ws.length)) return out;
+        let rel = -1;
+        for (let j = g; j < ws.length; j++) {
+            const y = ws[j];
+            if (rel < 0 && y.rel && j > g && ws[j - 1].noun) rel = j;
+            if (!y.conj || !/^(?:and|or)$/.test(y.w)) continue;
+            if (rel >= 0 && j > rel) out.add(j);
+            else if (ws[j - 1] && ws[j - 1].adj && !ws[j - 1].noun && claimSynModifiedNounAhead(ws, j + 1)) out.add(j);
+        }
+        return out;
+    }
+    // The joins a verb phrase's "and"s and "or"s make between its parts, as
+    // indices of `raw` from `from` (stage three): before a verb group, verbs
+    // joined ("likes tea and hates milk"); after "is", what is said of the
+    // subject ("is black and small"). Not one inside an object ("likes tea
+    // and coffee"), a clause after its noun, or a that-clause, which runs to
+    // the end.
+    function claimSynVerbJoins(raw, from, copula) {
+        const ws = claimSynWords(raw), inner = claimSynInnerJoins(ws, 0), out = [];
+        let that = false;
+        for (let c = from; c < ws.length; c++) {
+            const y = ws[c];
+            if (y.w === 'that' && c > from && ws[c - 1] && (ws[c - 1].verb || ws[c - 1].adj || ws[c - 1].aux || /,$/.test(ws[c - 1].t))) that = true;
+            if (that || !y.conj || !/^(?:and|or)$/.test(y.w) || inner.has(c)) continue;
+            let v = c + 1;
+            while (ws[v] && ws[v].adv && !ws[v].noun) v++;
+            const z = ws[v + 1], objectAfter = !!z && (z.det || z.quant || z.num || z.name || z.poss || z.pro);
+            const start = claimSynVerbStart(ws, c + 1, '?');
+            if (copula || start === 'strong' || (start === 'weak' && ws[v] && (ws[v].s || ws[v].past) && objectAfter)) out.push(c);
+        }
+        return out;
+    }
+    // The noun phrases a joined subject joins, by the phrases (stage three):
+    // split where a whole noun phrase ends and the next begins -- not at an
+    // "and" inside a relative clause with a verb after it ("the man who sings
+    // and dances and his wife"). { word, spans: [[from, to], ...] } or null.
+    function claimSynConjuncts(tokens) {
+        const ws = claimSynWords(tokens), n = ws.length;
+        const lead = /^(?:both|either|neither)$/.test((ws[0] || {}).w || '') ? 1 : 0;
+        const whole = (a, b) => b > a && claimSynNounPhrases(ws.slice(a, b), 0).some(o => o.end === b - a);
+        const spans = [];
+        let from = lead, word = null;
+        for (let c = from + 1; c < n - 1; c++) {
+            const y = ws[c];
+            if (!y.conj || !/^(?:and|or|nor)$/.test(y.w)) continue;
+            // An "and" of a relative clause, a verb after it: that clause's.
+            if (ws.slice(from, c).some(z => z.rel) && claimSynVerbStart(ws, c + 1, '?') === 'strong') continue;
+            if (!whole(from, c) || !whole(c + 1, n)) continue;
+            if (word && word !== y.w) return null;
+            word = y.w;
+            spans.push([from, c]);
+            from = c + 1;
+        }
+        if (!spans.length) return null;
+        spans.push([from, n]);
+        return { word, lead, spans };
+    }
+    // Past a verb group that begins at i: its helping verbs, "not" and adverbs,
+    // and its verb ("was scheduled", "does not glue", "left").
+    function claimSynGroupEnd(ws, i) {
+        let j = i;
+        while (j < ws.length && (ws[j].aux || ws[j].adv)) {
+            // After "do", its verb is the next: "do not have reasons".
+            if (/^(?:do|does|did|don't|doesn't|didn't)$/.test(ws[j].w)) {
+                j++;
+                while (j < ws.length && ws[j].adv && !ws[j].noun) j++;
+                return j < ws.length && (ws[j].aux || !ws[j].closed) ? j + 1 : j;
+            }
+            j++;
+        }
+        if (j < ws.length && !ws[j].closed && (ws[j].verb || ws[j].participle || ws[j].past || ws[j].ing)) j++;
+        return j;
+    }
+    // Does a verb group begin at i, for a subject of this number? 'strong' (a
+    // helping verb, a past, a verb the lists know), 'weak' (a word that may be
+    // a verb), or null. An adverb, or "all", "both", "each" after the subject
+    // ("we all think"), may come first.
+    function claimSynVerbStart(ws, i, number, depth) {
+        const y = ws[i];
+        if (!y || (depth || 0) > 2) return null;
+        if (y.aux) return 'strong';
+        if ((y.adv && !y.noun) || /^(?:all|both|each|neither|either)$/.test(y.w)) return claimSynVerbStart(ws, i + 1, number, (depth || 0) + 1);
+        if (y.closed || y.name || y.poss) return null;
+        // A past that is also an adjective ("surprised", "closed") is a verb
+        // with an object after it.
+        if (y.past) { const z = ws[i + 1]; return !claimKnownAdjective(y.t) || (z && (z.det || z.name || z.poss || z.quant || z.num || z.pro === 'obj')) ? 'strong' : 'weak'; }
+        if (y.s && number !== 'pl' && number !== 'you') return y.knownVerb ? 'strong' : 'weak';
+        if (!y.s && y.verb && (number === 'pl' || number === 'you' || number === '?')) return y.knownVerb ? 'strong' : 'weak';
+        return null;
+    }
+    // Where the subject ends and its verb group begins, read by phrases: the
+    // index of the verb group, or -1. Of the noun phrases that begin the
+    // clause, the first a sure verb follows (a helping verb, a past, a verb the
+    // lists know), else the first any verb follows -- unless its verb is an -s
+    // word that may be a noun ending a longer phrase, with a helping verb or a
+    // past after it ("the price increases were large").
+    function claimSynSubjectEnd(tokens) {
+        const ws = claimSynWords(tokens);
+        return claimSynChoose(ws, claimSynNounPhrases(ws, 0));
+    }
+    // A clause by its phrases: a noun phrase that opens it, and a sure verb
+    // group after it (a helping verb, a past, a verb the lists know).
+    function claimSynClause(tokens) {
+        const ws = claimSynWords(tokens);
+        return claimSynNounPhrases(ws, 0).some(o => o.end < ws.length && claimSynVerbStart(ws, o.end, o.number) === 'strong');
+    }
+    // Of a phrase's ends, the one its verb group follows, as above; -1 if none.
+    function claimSynChoose(ws, phrases) {
+        const ends = phrases.map(o => Object.assign({}, o, { verb: claimSynVerbStart(ws, o.end, o.number) })).filter(o => o.verb && o.end < ws.length);
+        if (!ends.length) return -1;
+        let best = ends.find(o => o.verb === 'strong') || ends[0];
+        // "Every theory proposed so far | has failed": a participle after the
+        // noun, with a sure verb group after its phrase, is not the verb.
+        const cut = ends.find(o => o.reduced === best.end && o.verb === 'strong');
+        if (cut) best = cut;
+        // "The price increases were large", "the dog bites hurt": an -s word
+        // that may be a plural noun ends a longer phrase, where a helping
+        // verb, a past, or a verb that stands without an object follows it,
+        // and what follows that is a verb's.
+        const next = ends.find(o => o.end === best.end + 1);
+        let v = next ? next.end : -1;
+        while (v >= 0 && ws[v] && ws[v].adv && !ws[v].noun) v++;          // "the dog bites often hurt"
+        const y = next && ws[v];
+        if (next && y && ws[best.end].s && ws[best.end].noun && (y.aux || (y.past && !CLAIM_PAST_UNCHANGED.has(y.w)) || CLAIM_SYN_BARE_VERBS.has(y.w)) &&
+            claimSynVerbTail(ws, next.end)) best = next;
+        return best.end;
+    }
+    // "The dog bites hurt" (the user, 2026-09-29): an -s word that may be a
+    // plural noun or a verb, and after it, ending the clause, a word that may
+    // be a verb, an adjective or a noun. The bites hurt; the dog bites when it
+    // is hurt; or what it bites is hurt, the noun, as "we fight poverty" (not
+    // those who are hurt: the user). The question and its three wordings, or
+    // null.
+    function claimSynBitesHurt(tokens) {
+        const ws = claimSynWords(tokens), n = ws.length;
+        if (n < 3 || !ws[0].det) return null;
+        const x = ws[n - 1], v = ws[n - 2];
+        if (!v.s || !v.noun || !v.verb || !CLAIM_SYN_BARE_VERBS.has(x.w) || !(x.adj || x.participle)) return null;
+        if (!claimSynNounPhrases(ws, 0, 0, true).some(o => o.end === n - 2)) return null;
+        const head = tokens.slice(0, n - 2), said = head.map(claimWord).join(' '), bites = tokens[n - 2], hurt = tokens[n - 1];
+        return { message: '"' + claimWord(hurt) + '" may say what the ' + claimWord(bites) + ' do, how ' + said + ' is when it ' + claimWord(bites) +
+                ', or what it ' + claimWord(bites),
+            labels: [head.slice(0, -1).concat([head[head.length - 1] + "'s", bites, hurt]).join(' '),
+                [head[0], hurt].concat(head.slice(1), [bites]).join(' '),
+                [hurt, 'is what'].concat(head, [bites]).join(' ')] };
+    }
+    // Verbs that stand without an object, and are seldom a bare noun: "the
+    // bites hurt", "the plans fail". Not "play", "change", "work".
+    const CLAIM_SYN_BARE_VERBS = new Set(('hurt ache sting itch heal bleed swell throb fade matter fail succeed happen occur exist die arise ' +
+        'vanish disappear differ vary suffice expire recur persist prevail abound').split(' '));
+    // What follows a verb group at i is a verb's: nothing, an object, an
+    // adverb, a preposition, a clause -- not an adjective after a verb that
+    // takes none ("support unchanged").
+    function claimSynVerbTail(ws, i) {
+        if (ws[i].aux) return true;
+        const y = ws[claimSynGroupEnd(ws, i)];
+        if (!y || !y.w) return true;
+        if (y.adj && !y.noun && !y.name) return false;
+        return !!(y.closed || y.name || y.poss || y.noun || y.pro);
+    }
+    // Where the noun phrase that opens at i ends (its determiner and what
+    // follows it, with nothing after it): before its verb group, where one
+    // follows; else at its longest; -1 where the phrases do not say.
+    function claimSynPhraseEnd(ws, i) {
+        const phrases = claimSynNounPhrases(ws, i, 0, true);
+        if (!phrases.length) return -1;
+        const verbed = claimSynChoose(ws, phrases);
+        return verbed > i ? verbed : phrases[phrases.length - 1].end;
+    }
+    // The phrases of a clause, for reading and for tests: "[the black raven] <left> ...".
+    function claimSynBrackets(text) {
+        const tokens = claimTokens(text), k = claimSynSubjectEnd(tokens);
+        return k < 0 ? null : '[' + tokens.slice(0, k).join(' ') + '] ' + tokens.slice(k).join(' ');
+    }
     // "Poe is a raven", "consciousness must depend on x", "the sky is not blue",
     // "Poe flies and sings". A generic ("ravens are black") and an indefinite
     // ("a raven is black") are noted as ambiguous.
@@ -13219,6 +14149,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function readPredicationClaim(s) {
         const tokens = claimTokens(s);
+        // "The dog bites hurt": asked (the user, 2026-09-29).
+        const bitesHurt = claimSynBitesHurt(tokens);
+        if (bitesHurt) return claimAmbiguous(bitesHurt.message, bitesHurt.labels.map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
         let k = claimClauseVerbIndex(tokens);
         // A name is never the verb: "Samuel Clemens wrote a novel" does not
         // turn on "Clemens" as though it were "clemen-s".
@@ -13230,7 +14163,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (j > 0 && !tokens.slice(0, j).some(t => /^(?:and|or)$/.test(claimWord(t)))) k = j;
         }
         let subjectTokens, vp;
-        if (k > 0) { subjectTokens = tokens.slice(0, k); vp = tokens.slice(k); }
+        // Where the subject ends, by its phrases (stage one of the syntax
+        // tree): the first verb group after the noun phrase that opens the
+        // clause -- "Mary told Alice she was late" is about Mary, not "Mary
+        // told Alice she"; "the black raven left" has its subject. Where the
+        // phrases do not tell, as before.
+        const byPhrases = claimSynSubjectEnd(tokens);
+        if (byPhrases > 0) { subjectTokens = tokens.slice(0, byPhrases); vp = tokens.slice(byPhrases); }
+        else if (k > 0) { subjectTokens = tokens.slice(0, k); vp = tokens.slice(k); }
         else {
             // "The dog", "Mary's dog", "my dog", "that dog": what opens a subject.
             const art = /^(?:a|an|the)$/.test(claimWord(tokens[0])) ||
@@ -13267,6 +14207,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (fault) { claimUnread(fault); return claimAtom(s); }
         const joined = readJoinedSubjects(subjectTokens, vp, s);
         if (joined !== undefined) return joined;
+        // A quantifier's noun phrase names no one: "some women", "no student
+        // who failed" -- read as a quantifier's, above, or not at all.
+        if (/^(?:all|every|each|any|no|none|some|certain|most|many|few|several|everything|everyone|everybody|anything|anyone|anybody|nothing|nobody|something|someone|somebody|whatever|whoever)$/.test(first)) return null;
         if ((first === 'a' || first === 'an') && subjectTokens.length > 1) {
             // Read as said of "a raven" -- consistently, so that its denial is
             // still its denial -- and noted: it may mean every raven, or some.
@@ -13390,7 +14333,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Verbs alone, joined or not: "left", "left early", "left and then cried".
         const pieces = [[]];
         w.slice(i).forEach(x => /^(?:and|or|and-then)$/.test(x) ? pieces.push([]) : pieces[pieces.length - 1].push(x));
-        const verb = x => !CLAIM_VERB_MARKERS.has(x) && !/^(?:be|been|being)$/.test(x) && (claimPlainVerb(x) || claimPastStem(x) !== null ||
+        const verb = x => !CLAIM_VERB_MARKERS.has(x) && !/^(?:be|been|being)$/.test(x) && (claimPlainVerb(x) || claimPastStem(x) !== null || claimSynWord(x).knownVerb ||
             (helped && /^[a-z-]+$/.test(x) && !CLAIM_FUNCTION_WORDS.has(x) && !claimKnownAdjective(x)));
         const alone = p => {
             const q = p[0] === 'then' ? p.slice(1) : p;
@@ -13428,7 +14371,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const words = subjectTokens.map(claimWord);
         const after = (w, from) => words.indexOf(w, from || 0);
         let kind = null, split = -1, marked = false;
-        if (words[0] === 'neither' && after('nor') > 1) { kind = 'neither'; split = after('nor'); }
+        // Where its noun phrases part, by the phrases (stage three).
+        const tree = claimSynConjuncts(subjectTokens);
+        if (tree && (!tree.lead || { neither: 'nor', either: 'or', both: 'and' }[words[0]] === tree.word)) {
+            kind = words[0] === 'neither' ? 'neither' : tree.word === 'nor' ? 'neither' : tree.word;
+            split = tree.spans[0][1];
+            marked = words[0] === 'both';
+        }
+        else if (words[0] === 'neither' && after('nor') > 1) { kind = 'neither'; split = after('nor'); }
         else if (words[0] === 'either' && after('or') > 1) { kind = 'or'; split = after('or'); }
         else if (words[0] === 'both' && after('and') > 1) { kind = 'and'; split = after('and'); marked = true; }
         else if (after('or') > 0) { kind = 'or'; split = after('or'); }
@@ -13436,6 +14386,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!kind) return undefined;
         // "A series of lights and circuitry": the nouns of a relation, one subject.
         if (words.slice(0, split).some(w => CLAIM_RELATION_WORDS.has(w))) return undefined;
+        // "Black and white ravens", "a black and white raven": adjectives joined
+        // before one noun -- no two subjects.
+        {
+            const before = subjectTokens.slice(0, split).filter((t, i) => !(i === 0 && /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(claimWord(t))));
+            const after = claimSynWords(subjectTokens.slice(split + 1));
+            if (before.length && before.every(t => claimSynWord(t).adj) && after.length > 1 && after[0].adj && after[after.length - 1].noun) return undefined;
+        }
+        // "The man who sings and dances": the "and" of a relative clause, a
+        // verb after it -- one subject.
+        if (words.slice(0, split).some(w => CLAIM_RELATIVES.has(w)) && claimSynVerbStart(claimSynWords(subjectTokens), split + 1, '?') === 'strong') return undefined;
         // "Alice and Bob left and Carol cried" (the user, 2026-09-29: "three
         // claims"): a clause with a subject of its own ends the verb phrase, and
         // the two clauses are joined -- not inside a that-clause, which runs to
@@ -13456,8 +14416,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         const lead = /^(?:neither|either|both)$/.test(words[0]) ? 1 : 0;
         // "Poe, Fido, and Rex": the commas part the names before the last.
-        const names = claimTokens(subjectTokens.slice(lead, split).join(' ').replace(/,\s*$/, '')).join(' ').split(/\s*,\s*/)
-            .map(claimTokens).concat([subjectTokens.slice(split + 1)]);
+        const names = tree && tree.spans.length > 2
+            ? tree.spans.map(([a, b]) => subjectTokens.slice(a, b).map(t => t.replace(/,+$/, '')))
+            : claimTokens(subjectTokens.slice(lead, split).join(' ').replace(/,\s*$/, '')).join(' ').split(/\s*,\s*/)
+                .map(claimTokens).concat([subjectTokens.slice(split + 1)]);
         // Said of the two at once, as one claim: "Alice and Bob together ate
         // the whole pizza" -- "together" after the subject or at the end.
         const subjectSaid = subjectTokens.map(claimWord).join(' ').replace(/\s+/g, ' ').trim();
@@ -13471,16 +14433,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimUnread('"each other", "one another" and "together" say something of the two at once, which is not read');
             return togetherSaid();
         }
-        if (names.some(n => !n.length || n.length > 4 || n.some(t => CLAIM_QUANTIFIER_START.test(claimWord(t)) || /^(?:and|or|nor|either|neither|both|not)$/.test(claimWord(t)) ||
+        // Longer than four words only where the phrases read it as a noun
+        // phrase: "the raven that Mary saw".
+        const phraseWhole = n => claimSynNounPhrases(claimSynWords(n), 0).some(o => o.end === n.length);
+        if (names.some(n => !n.length || ((n.length > 4 || n.some(t => /^(?:and|or|nor|either|neither|both)$/.test(claimWord(t)))) && !phraseWhole(n)) ||
+                n.some(t => CLAIM_QUANTIFIER_START.test(claimWord(t)) || claimWord(t) === 'not' ||
                 claimQualifierKind(claimWord(t)) || CLAIM_FRAME_WORDS.has(claimWord(t)) || CLAIM_FRAME_STARTS.has(claimWord(t))))) {
             claimUnread('a subject joined by "and" or "or" is not read here');
             return claimAtom(s);
         }
+        // A plural with no determiner is no individual: "ravens", "black ravens".
+        const barePlural = n => n.length > 0 && claimPluralWord(n[n.length - 1]) && !/^\uE000/.test(n[n.length - 1]) &&
+            !/^(?:the|this|that|these|those|my|your|his|her|its|our|their)$/.test(claimWord(n[0])) && !/'s$/.test(claimWord(n[0])) &&
+            (n.length === 1 || claimAdjectivesBefore(n, 0) === n.length - 1);
         const each = () => {
             if (kind === 'neither' && names.length > 2) return null;
             const forms = names.map(n => {
                 const f = claimWithSubject(readVerbPhraseOf(claimSubjectTerm(n), vp, s), n, vp);
-                return f && n.length === 1 && claimPluralWord(n[0]) ? claimNoIndividual(f) : f;
+                return f && (n.length === 1 && claimPluralWord(n[0]) || barePlural(n)) ? claimNoIndividual(f) : f;
             });
             if (!forms.every(Boolean)) return null;
             return kind === 'neither' ? claimList('and', forms.map(negateClaim)) : claimList(kind, forms);
@@ -13494,6 +14464,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const eachOnly = claimEachOnly(vp);
         if (eachOnly) {
             claimUnread('"' + vp.map(claimWord).join(' ') + '" is said of each of them: ' + eachOnly);
+            // "Ravens and crows fly": a generic, asked about as "ravens fly" is.
+            if (names.every(barePlural) && !claimKindPredicate(vp)) {
+                const spread = q => names.map(n => q + ' ' + n.join(' ') + ' ' + vp.join(' ')).join(' and ');
+                const chosen = claimAmbiguous('"' + subjectSaid + '" without "all" is a generic: it may mean all of them, some, or most, or that it holds in general, with exceptions', [
+                    'all ' + s, spread('some'), spread('most'), 'generally, ' + s
+                ].map(label => ({ label, build: () => readClaim(label) })), false, { generic: true, subject: subjectTokens.join(' ') });
+                if (chosen) return chosen;
+            }
             return each() || claimAtom(s);
         }
         return claimAmbiguous('"' + subjectSaid + '" can be said of each, or of them together', [
@@ -13556,10 +14534,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         else if ((m = text.match(/^either\s+(.+?)\s+or\s+(.+)$/))) { kind = 'or'; parts = [m[1], m[2]]; marked = true; }
         else if ((m = text.match(/^both\s+(.+?)\s+and\s+(.+)$/))) { kind = 'and'; parts = [m[1], m[2]]; marked = true; }
         else {
-            const ands = listText.split(/\s*,?\s+and\s+/), ors = listText.split(/\s*,?\s+or\s+/);
-            if (ands.length > 1 && ors.length > 1) return claimAmbiguous('"and" and "or" can group this two ways', [], true) || claimAtom(s);
-            if (ands.length > 1) { kind = 'and'; parts = ands; } else if (ors.length > 1) { kind = 'or'; parts = ors; }
-            if (parts && parts.length === 2 && parts[0].indexOf(', ') >= 0) parts = parts[0].split(/\s*,\s+/).concat(parts.slice(1));   // "black, small, and loud"
+            // Where its "and"s and "or"s join, by the phrases (stage three of
+            // the syntax tree): before a verb group, verbs ("likes tea and
+            // hates milk"); after "is", what is said of the subject ("is black
+            // and small"); not inside an object ("likes tea and coffee"), a
+            // clause after its noun, or a that-clause.
+            const from = words.length - body.length;
+            const cuts = claimSynVerbJoins(raw, from, head.length > 0 && /^(?:is|are|am|was|were|be|been)$/.test(claimWord(CLAIM_NEGATED[lead] || lead)));
+            if (cuts.length) {
+                const joins = cuts.map(c => claimWord(raw[c]));
+                if (joins.includes('and') && joins.includes('or')) return claimAmbiguous('"and" and "or" can group this two ways', [], true) || claimAtom(s);
+                kind = joins[0];
+                parts = [];
+                let at = from;
+                cuts.forEach(c => { parts.push(raw.slice(at, c).join(' ').replace(/,+$/, '').trim()); at = c + 1; });
+                parts.push(raw.slice(at).join(' ').replace(/,+$/, '').trim());
+                if (parts.length === 2 && parts[0].indexOf(', ') >= 0) parts = parts[0].split(/\s*,\s+/).concat(parts.slice(1));   // "black, small, and loud"
+            }
         }
         // "A black and white raven", "black and noisy birds": adjectives joined
         // before one noun -- a black raven and a white raven.
@@ -17630,8 +18621,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const kind = child.__argument ? argumentKindFor(child.type,kinds.get(node.id)?.side||'main').kind : (kinds.get(child.id) || { kind: child.type }).kind;
                     const attack = kind !== 'support', weak = isWeakType(kind);
                     const target = boxOf(node, child);
-                    const conclusionText = node.texts[target];
-                    const premiseTexts = child.texts.slice();
+                    // A premise link reads as its box's words (claimWithBoxLinks).
+                    const conclusionText = claimWithBoxLinks(node.texts[target], new Set([node.id + '#' + target]));
+                    const premiseTexts = child.texts.map((t, j) => {
+                        const m = child.__members ? child.__members[j] : null;
+                        return claimWithBoxLinks(t, new Set([m ? m.targetId + '#' + m.targetIdx : child.id + '#' + j]));
+                    });
                     // Read and proved once per wording: the live check runs on
                     // every layout.
                     const key = claimRulesSignature() + '\u0003' + (weak ? 'W' : attack ? 'A' : 'S') + '\u0001' + premiseTexts.join('\u0002') + '\u0001' + (conclusionText || '');
@@ -17894,7 +18889,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             v.weak = against.filter(st => isWeakType(st.kind) && states.get(st) === 'active');
             v.fended = against.filter(st => states.get(st) === 'defeated');
             v.pending = against.filter(st => states.get(st) === 'pending');
-            const node = nodes.get(nodeId), form = node ? formOf(node.texts[idx]) : null;
+            const node = nodes.get(nodeId), said = node ? claimWithBoxLinks(node.texts[idx], new Set([nodeId + '#' + idx])) : null, form = node ? formOf(said) : null;
             if (form && form.from && !form.whether && (form.kind === 'unestablished' || form.kind === 'unsound')) {
                 v.relative = form;
                 v.grounds = undercuts(form);
@@ -17933,7 +18928,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if(stepState(step)==='active')v.supports.push({...step,parentId:nodeId,boxIdx:idx,
                     conclusionText:node.texts[idx],kind:'support',attack:false,rule,indirectKind:step.kind});
             });
-            v.theorem = node && node.type !== 'note' ? logicalTheorem(node.texts[idx]) : null;
+            v.theorem = node && node.type !== 'note' ? logicalTheorem(said) : null;
             const holds = v.supports.length > 0 || v.grounds.length > 0 || !!v.theorem;
             v.status = v.attacks.length ? (holds || v.pendingSupports.length ? 'unresolved' : 'refuted')
                 : v.weak.length || v.pending.length ? 'unresolved'
@@ -18506,7 +19501,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 dot.className = 'status-dot';
                 // A set status names itself; the dot a box gets merely from
                 // having comments carries no title tooltip.
-                if (boxStatus) dot.title = evalLabel(boxStatus);
+                if (boxStatus) dot.title = 'Evaluation: ' + evalLabel(boxStatus) + ' — tap or click for its comments';
 
                 // Hover tooltip: preview of the thread
                 let hoverTip = null;
@@ -18624,7 +19619,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // preventDefault() then suppressed the tap entirely. An absent
                 // pointerType (jsdom) stays on the desktop path, as before.
                 const coarsePointer = e.pointerType === 'touch' || e.pointerType === 'pen';
-                if (coarsePointer && !e.target.closest('.drag-handle')) return;
+                const onTouchGrip = coarsePointer && !!e.target.closest('.touch-grip');
+                if (coarsePointer && !onTouchGrip && !e.target.closest('.drag-handle')) return;
                 // The bottom-right corner is the RESIZE GRIP. Yielding it to
                 // the browser's native resizer did not work; this takes
                 // the drag over entirely (preventDefault kills the native
@@ -18635,11 +19631,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // rigid by construction. Zone scales with zoomLevel because
                 // the grip paints inside the transformed #surface. Zero-size
                 // rects (jsdom) skip the zone: no layout, no grip.
-                if (!coarsePointer) {
+                if (!coarsePointer || onTouchGrip) {
                     const nr = nodeDiv.getBoundingClientRect();
                     const grip = 18 * (typeof zoomLevel === 'number' ? zoomLevel : 1);
-                    if ((nr.width || nr.height) &&
-                        e.clientX >= nr.right - grip && e.clientY >= nr.bottom - grip) {
+                    if (onTouchGrip || ((nr.width || nr.height) &&
+                        e.clientX >= nr.right - grip && e.clientY >= nr.bottom - grip)) {
                         const zA = (typeof zoomLevel === 'number' && zoomLevel) ? zoomLevel : 1;
                         const srA = document.getElementById('surface').getBoundingClientRect();
                         const grpA = nodeDiv.closest('.node-group');
@@ -18649,7 +19645,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             startLeft: grpA ? (parseFloat(grpA.style.left) || 0) : 0,
                             startEdgeS: (nr.right - srA.left) / zA,
                             grabOffS: (nr.right - e.clientX) / zA,
-                            lastEdgeS: null, lastW: null, moved: false
+                            lastEdgeS: null, lastW: null, moved: false, touch: coarsePointer
                         };
                         window._resizeActive = true;
                         e.preventDefault();
@@ -18692,12 +19688,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }, true);
 
             nodeDiv.onclick = (e) => {
+                if (boxLinkPicking) { e.stopPropagation(); e.preventDefault(); completeBoxLinkPicking(node.id, index); return; }
                 if (crossRefPicking) { e.stopPropagation(); completeCrossRefPicking(node.id, index); return; }
                 if (suppressNextClick) { suppressNextClick = false; e.stopPropagation(); return; }
                 if (e.target.closest('.node-link')) return; // let link navigate
                 e.stopPropagation();
                 const selKey = `${node.id}-${index}`;
-                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                if (e.shiftKey || e.ctrlKey || e.metaKey || selectMoreMode) {
                     // If the whole group is selected via bare ID, expand to
                     // individual box selections so we can toggle one off.
                     if (selectedIds.includes(node.id)) {
@@ -18712,11 +19709,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     }
                 } else { selectedIds = [selKey]; }
                 updateSelectionVisuals();
+                // Editing: One click -- the click opens the box's text.
+                if (clickToEdit && !selectMoreMode && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.target.closest('.drag-handle, .touch-grip')) enterEditMode(nodeDiv);
             };
 
             const dragHandle = document.createElement('div');
             dragHandle.className = 'drag-handle'; dragHandle.innerHTML = '⠿';
+            dragHandle.title = 'Drag to move this box with its branch. Hold it still until it turns into \u2725, then drag, to move the box alone (or hold Alt as you drop)';
             nodeDiv.appendChild(dragHandle);
+            // The resize grip for a finger (shown on touch screens only).
+            const touchGrip = document.createElement('div');
+            touchGrip.className = 'touch-grip';
+            touchGrip.title = 'Drag to make this box wider or narrower; double-tap to reset its width';
+            nodeDiv.appendChild(touchGrip);
 
             // Per-box collapse: every box that owns children gets its own button,
             // controlling only the children attached to *this* box.
@@ -18759,8 +19764,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
             let originalText = text;
             let preEditSnapshot = null;
-            ta.addEventListener('focus', () => { originalText = ta.value; preEditSnapshot = historySnapshot(); });
+            // Another window or tab taking the focus (Alt+Tab) blurs the box
+            // but leaves it the page's focused element, and the browser focuses
+            // it again on the way back: that is still the same edit, so the
+            // editor stays open, and its undo step still starts where it began.
+            let editOpen = false;
+            ta.addEventListener('focus', () => {
+                if (editOpen && !ta.readOnly) return;
+                editOpen = true;
+                originalText = ta.value; preEditSnapshot = historySnapshot();
+            });
             ta.addEventListener('blur', () => {
+                if (!ta.readOnly && document.activeElement === ta && !document.hasFocus()) return;
+                editOpen = false;
+                boxCaret.set(node.id + '-' + index, { start: ta.selectionStart, end: ta.selectionEnd, text: ta.value });
                 const changed = ta.value !== originalText;
                 if (changed) {
                     // The ONE place the toggle acts: record how this commit is
@@ -18831,16 +19848,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // markdown link at those exact character offsets.
             ta.addEventListener('contextmenu', (e) => {
                 if (ta.readOnly) return;   // only in edit mode
+                if (e.shiftKey) return;    // Shift: the browser's own menu (spelling, paste)
                 const a = ta.selectionStart, b = ta.selectionEnd;
-                if (a === b) return;       // no selection -> native menu
                 e.preventDefault(); e.stopPropagation();
                 document.querySelectorAll('#link-menu').forEach(m => m.remove());
                 const menu = document.createElement('div');
                 menu.id = 'link-menu';
+                // A link to another box, at the caret (or for the selection):
+                // shown by that box's label, and following it wherever it goes.
+                const boxBtn = document.createElement('button');
+                boxBtn.textContent = 'Link a premise\u2026';
+                boxBtn.title = 'Click the box to link: its label goes in at the caret, as a link that follows the box wherever it goes';
+                boxBtn.onmousedown = (ev) => ev.preventDefault();
+                boxBtn.onclick = (ev) => { ev.stopPropagation(); menu.remove(); startBoxLinkPicking(node.id, index, a, b); };
+                menu.appendChild(boxBtn);
                 const btn = document.createElement('button');
                 btn.textContent = 'Link selection\u2026';
+                btn.title = 'Link the selected words to a web address';
+                if (a === b) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'default'; btn.title = 'Select words first to link them to a web address'; }
                 btn.onmousedown = (ev) => ev.preventDefault();   // keep textarea selection
                 btn.onclick = (ev) => {
+                    if (a === b) return;
                     ev.stopPropagation();
                     menu.remove();
                     let url = null;
@@ -18854,8 +19882,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     render();
                 };
                 menu.appendChild(btn);
+                const note = document.createElement('div');
+                note.className = 'link-menu-note';
+                note.textContent = 'Shift+right-click: the browser\u2019s menu';
+                menu.appendChild(note);
                 menu.style.left = Math.min(e.clientX, window.innerWidth - 190) + 'px';
-                menu.style.top = Math.min(e.clientY, window.innerHeight - 80) + 'px';
+                menu.style.top = Math.min(e.clientY, window.innerHeight - 110) + 'px';
                 document.body.appendChild(menu);
                 const kill = (ev) => { if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('mousedown', kill, true); } };
                 setTimeout(() => document.addEventListener('mousedown', kill, true), 0);
@@ -18897,6 +19929,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
     function render() {
+        boxLinkLabelCache = null;
         document.querySelectorAll('.crossref-popover').forEach(p=>p.remove());
         highlightReferenceArgument(null);
         scheduleAutosave();
@@ -20878,14 +21911,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         const overlayEls = [];
         const seenEls = new Set();
-        const addOverlayEl = el => {
+        // What a drag alone leaves behind: every moving box not selected.
+        const kept = new Set();
+        forest.units.forEach(unit => (unit.requiredIds instanceof Set ? unit.requiredIds : new Set([unit.sourceId])).forEach(id => kept.add(id)));
+        const addOverlayEl = (el, branch) => {
             if (!el || seenEls.has(el)) return;
             seenEls.add(el);
-            overlayEls.push({ el, rect: el.getBoundingClientRect() });
+            overlayEls.push({ el, rect: el.getBoundingClientRect(), branch: !!branch });
         };
         forest.units.forEach(unit => {
             if (unit.kind === 'whole') {
-                unit.movingIds.forEach(id => addOverlayEl(document.getElementById(`group-${id}`)));
+                unit.movingIds.forEach(id => addOverlayEl(document.getElementById(`group-${id}`), !kept.has(id)));
             } else {
                 const groupEl = document.getElementById(`group-${unit.sourceId}`);
                 unit.idxs.forEach(i => {
@@ -20893,7 +21929,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     addOverlayEl(boxEl);
                     addOverlayEl(implicitTagOf(boxEl));
                 });
-                unit.movingIds.forEach(id => addOverlayEl(document.getElementById(`group-${id}`)));
+                unit.movingIds.forEach(id => addOverlayEl(document.getElementById(`group-${id}`), !kept.has(id)));
             }
         });
         if (!overlayEls.length) addOverlayEl(ghostEl);
@@ -20912,9 +21948,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         const container = document.createElement('div');
         container.style.cssText = `position:relative;width:${(vMaxX - vMinX) / zoomLevel}px;height:${(vMaxY - vMinY) / zoomLevel}px;overflow:hidden;transform:scale(${zoomLevel});transform-origin:0 0;`;
-        overlayEls.forEach(({ el, rect: r }) => {
+        overlayEls.forEach(({ el, rect: r, branch }) => {
             const clone = el.cloneNode(true);
             clone.removeAttribute('id');
+            if (branch) clone.classList.add('drag-branch');
             clone.style.position = 'absolute';
             clone.style.left = ((r.left - vMinX) / zoomLevel) + 'px';
             clone.style.top = ((r.top - vMinY) / zoomLevel) + 'px';
@@ -20943,7 +21980,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const internalEdge = pp && pc && movingIds.has(pc) &&
                 (movingIds.has(pp) || partialBoxes.has(pp));
             if (internalEdge || (pf && movingIds.has(pf))) {
-                overlaySvg.appendChild(path.cloneNode(true));
+                const line = path.cloneNode(true);
+                if ((pc && !kept.has(pc)) || (pf && !kept.has(pf))) line.classList.add('drag-branch');
+                overlaySvg.appendChild(line);
                 hasClonedPaths = true;
             }
         });
@@ -21025,11 +22064,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
 
         // Gather every DOM element that should appear in the drag overlay.
-        const overlayEls = [];   // [{el, rect}]
+        // `branch`: below the dragged box(es) -- left out of a drag alone.
+        const overlayEls = [];   // [{el, rect, branch}]
         if (mode === 'group') {
             subtreeIds.forEach(id => {
                 const gEl = document.getElementById(`group-${id}`);
-                if (gEl) overlayEls.push({ el: gEl, rect: gEl.getBoundingClientRect() });
+                if (gEl) overlayEls.push({ el: gEl, rect: gEl.getBoundingClientRect(), branch: id !== node.id });
             });
         } else {
             // For partial sibling drags (mode=texts), include ALL selected
@@ -21049,7 +22089,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
             subtreeIds.forEach(id => {
                 const gEl = document.getElementById(`group-${id}`);
-                if (gEl) overlayEls.push({ el: gEl, rect: gEl.getBoundingClientRect() });
+                if (gEl) overlayEls.push({ el: gEl, rect: gEl.getBoundingClientRect(), branch: true });
             });
         }
 
@@ -21077,9 +22117,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         container.style.cssText = `position:relative;width:${(vMaxX - vMinX) / zoomLevel}px;height:${(vMaxY - vMinY) / zoomLevel}px;overflow:hidden;transform:scale(${zoomLevel});transform-origin:0 0;`;
 
         // Clone each element positioned relative to the visual bounding box
-        overlayEls.forEach(({ el, rect: r }) => {
+        overlayEls.forEach(({ el, rect: r, branch }) => {
             const clone = el.cloneNode(true);
             clone.removeAttribute('id');
+            if (branch) clone.classList.add('drag-branch');
             clone.style.position = 'absolute';
             clone.style.left   = ((r.left - vMinX) / zoomLevel) + 'px';
             clone.style.top    = ((r.top  - vMinY) / zoomLevel) + 'px';
@@ -21118,7 +22159,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if ((pp && subtreeIds.has(pp) && pc && subtreeIds.has(pc))
                 || (pp === node.id && pc && subtreeIds.has(pc))
                 || (pf && subtreeIds.has(pf))) {
-                overlaySvg.appendChild(p.cloneNode(true));
+                const line = p.cloneNode(true);
+                // A line to a box below the dragged ones is the branch's.
+                if ((pc && subtreeIds.has(pc) && pc !== node.id) || (pf && pf !== node.id)) line.classList.add('drag-branch');
+                overlaySvg.appendChild(line);
                 hasClonedPaths = true;
             }
         });
@@ -21297,7 +22341,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
     function previewDrop(e) {
-        const isShift = e.shiftKey || freeDropMode;
+        const isShift = e.shiftKey;
         const cls = classifyDrop(probeRectFor(e), dragCtx.targets,
             { shift: isShift, mode: dragCtx.mode, draggedParentId: dragCtx.draggedParentId,
               canReorderRow: dragCtx.canReorderRow, carriesNote: dragCtx.carriesNote, multiBox: dragCtx.multiBox });
@@ -21598,7 +22642,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     function finishSelectedForestDrop() {
         endDrag();
-        deactivateFreeDrop();
         render();
     }
 
@@ -21610,7 +22653,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const G = ghostRectFor(e);
         const P = probeRectFor(e);
         const gcx = P.left + P.w / 2;
-        const isShift = e.shiftKey || freeDropMode;
+        const isShift = e.shiftKey;
         let cls = classifyDrop(P, dragCtx.targets, {
             shift: isShift, mode: dragCtx.mode,
             draggedParentId: dragCtx.draggedParentId,
@@ -21765,7 +22808,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const G = ghostRectFor(e);
         const P = probeRectFor(e);
         const gcx = P.left + P.w / 2;
-        const isShift = e.shiftKey || freeDropMode;
+        const isShift = e.shiftKey;
         const cls = classifyDrop(P, dragCtx.targets,
             { shift: isShift, mode: dragCtx.mode, draggedParentId: dragCtx.draggedParentId,
               carriesNote: dragCtx.carriesNote, multiBox: dragCtx.multiBox });
@@ -21959,7 +23002,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (droppedId && !findNodeContext(state.trees, droppedId)) recordDeletion(droppedId);
 
         endDrag();
-        deactivateFreeDrop();
         render();
     }
 
@@ -22006,16 +23048,50 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     let _resizingBox = null;  // {node, index, el, startX, startW, lastW, moved} during a grip drag
     const POINTER_DRAG_THRESHOLD = 6;  // px of movement before drag activates
 
+    // Held still this long, the ⠿ handle moves its box alone (the user,
+    // 2026-09-29): it turns into ✥, and the drag leaves the box's children
+    // where they are, as an Alt-drop does. A quick drag takes the branch.
+    const DRAG_ALONE_HOLD_MS = 500;
+    let lastGripTap = null;   // { key, at }: a first tap on a box's touch grip
+    function resetBoxWidth(node, index) {
+        if (!(node.boxW && node.boxW[index] != null)) return;
+        pushHistory();
+        delete node.boxW[index];
+        if (!Object.keys(node.boxW).length) delete node.boxW;
+        render();
+    }
     function initPointerDrag(e, node, index, ghostEl, mode, idxs) {
         if (presentMode || collabReadOnly()) return;
-        pendingDrag = {
+        const handle = e.target && e.target.closest ? e.target.closest('.drag-handle') : null;
+        const pd = pendingDrag = {
             node, index, ghostEl, mode, idxs,
             startX: e.clientX, startY: e.clientY,
             startScreenX: e.screenX, startScreenY: e.screenY,
             pointerId: e.pointerId,
-            activated: false
+            activated: false,
+            alone: false, handle, holdTimer: null,
+            touch: e.pointerType === 'touch' || e.pointerType === 'pen'
         };
+        if (handle && !e.button) {
+            pd.holdTimer = setTimeout(() => {
+                pd.holdTimer = null;
+                if (pendingDrag !== pd || pd.activated) return;
+                pd.alone = true;
+                handle.textContent = '\u2725';
+                handle.classList.add('drag-handle-alone');
+                try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {}
+            }, DRAG_ALONE_HOLD_MS);
+        }
         e.preventDefault(); // prevent text selection and default touch scrolling
+    }
+    // A hold that ended without a drag: ⠿ again.
+    function endDragHold(pd) {
+        if (!pd) return;
+        if (pd.holdTimer) { clearTimeout(pd.holdTimer); pd.holdTimer = null; }
+        if (pd.handle && pd.handle.classList.contains('drag-handle-alone')) {
+            pd.handle.textContent = '\u283f';
+            pd.handle.classList.remove('drag-handle-alone');
+        }
     }
 
     document.addEventListener('pointermove', (e) => {
@@ -22024,10 +23100,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const dy = e.clientY - pendingDrag.startY;
 
         if (!pendingDrag.activated) {
-            // Haven't crossed the movement threshold yet
-            if (Math.hypot(dx, dy) < POINTER_DRAG_THRESHOLD) return;
+            // Haven't crossed the movement threshold yet. A finger held on ⠿
+            // for a drag alone may wander a little before it has turned.
+            const threshold = pendingDrag.holdTimer && pendingDrag.touch ? 12 : POINTER_DRAG_THRESHOLD;
+            if (Math.hypot(dx, dy) < threshold) return;
             // Cross threshold → activate the drag
             pendingDrag.activated = true;
+            if (pendingDrag.holdTimer) { clearTimeout(pendingDrag.holdTimer); pendingDrag.holdTimer = null; }
             // Build a synthetic event-like object for startDrag
             const fakeE = {
                 clientX: pendingDrag.startX, clientY: pendingDrag.startY,
@@ -22047,10 +23126,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 startDrag(fakeE, pendingDrag.node, pendingDrag.index,
                     pendingDrag.ghostEl, pendingDrag.mode, pendingDrag.idxs);
             }
+            if (dragCtx) dragCtx.alone = !!pendingDrag.alone;
+            // A finger that drags a whole branch from ⠿: once, how to leave it.
+            if (dragCtx && pendingDrag.touch && !pendingDrag.alone && pendingDrag.handle && (pendingDrag.node.children || []).length)
+                showOneTimeHint('touch-drag-alone', 'Tip: hold \u283f still until it turns into \u2725, then drag, to move a box without its children');
         }
 
         // Active drag — move overlay, preview drop, auto-scroll
         if (dragCtx) {
+            showDragAlone(!!e.altKey);
             if (dragCtx.overlay) {
                 dragCtx.overlay.style.left = (e.clientX - dragCtx.grabVisualX) + 'px';
                 dragCtx.overlay.style.top  = (e.clientY - dragCtx.grabVisualY) + 'px';
@@ -22134,11 +23218,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!rb.node.boxW) rb.node.boxW = {};
                 rb.node.boxW[rb.index] = w;
                 render();   // -> scheduleAutosave -> diffAndStamp stamps _moveVersions
+            } else if (rb.touch) {
+                // A double tap on the grip resets the width, as a double-click does.
+                const now = Date.now(), key = rb.node.id + '-' + rb.index;
+                if (lastGripTap && lastGripTap.key === key && now - lastGripTap.at < 400) { lastGripTap = null; resetBoxWidth(rb.node, rb.index); }
+                else lastGripTap = { key, at: now };
             }
         }
         if (!pendingDrag) return;
         const wasPending = pendingDrag;
         pendingDrag = null;
+        if (!wasPending.activated) endDragHold(wasPending);
+        else if (wasPending.holdTimer) clearTimeout(wasPending.holdTimer);
 
         if (!wasPending.activated || !dragCtx) {
             // Never crossed the threshold → normal click flow handles selection
@@ -22146,10 +23237,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return;
         }
         suppressNextClick = true; // suppress the click event that follows mouseup
-        executeDrop(e);
+        // From a held ⠿, dropped as with Alt held: the box goes alone.
+        executeDrop(wasPending.alone ? { clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY,
+            shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: true, pointerType: e.pointerType, target: e.target } : e);
     });
+    // What a drag shows: the box alone (⠿ held, or Alt held) or with its
+    // branch. Alt can be pressed or let go mid-drag.
+    function showDragAlone(altHeld) {
+        if (dragCtx && dragCtx.overlay) dragCtx.overlay.classList.toggle('drag-alone-now', !!(dragCtx.alone || altHeld));
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Alt' && dragCtx) showDragAlone(true); });
+    document.addEventListener('keyup', e => { if (e.key === 'Alt' && dragCtx) showDragAlone(false); });
 
     document.addEventListener('pointercancel', () => {
+        endDragHold(pendingDrag);
         pendingDrag = null;
         endDrag();
     });
@@ -22509,7 +23610,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const btn = document.getElementById('focus-btn');
         if (btn) btn.classList.toggle('active', focusMode);
         const ind = document.getElementById('focus-indicator');
-        if (ind) ind.title = focusMode ? 'Focus mode on (F)' : 'Focus mode off (F)';
+        if (ind) ind.title = focusMode ? 'Focus is on: the selected branch is lit, the rest dimmed. Tap to turn it off (F)' : 'Focus: light up the selected branch and dim the rest (F)';
         // Leaving focus mode while in presentation mode: clear stranded selection
         if (!focusMode && presentMode) {
             selectedIds = [];
@@ -23057,7 +24158,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             + boxesOut.join('')
             + `</svg>`;
     }
+    // On an iPhone or iPad no page may write back to a file, and a download
+    // lands in Downloads under a new name each time. The share sheet's "Save
+    // to Files" lets the user pick the folder, and replace the old copy
+    // (the user, 2026-09-29: "we can either implement a workaround or just
+    // note it somewhere"). Elsewhere, and where sharing a file is refused, a
+    // download, as before.
+    const IOS_DEVICE = /iPad|iPhone|iPod/.test(navigator.userAgent || '') ||
+        (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
     function downloadBlob(blob, name) {
+        if (IOS_DEVICE && navigator.canShare && navigator.share && typeof File === 'function') {
+            try {
+                const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
+                if (navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file], title: name }).catch(err => {
+                        if (!err || err.name !== 'AbortError') plainDownload(blob, name);
+                    });
+                    return;
+                }
+            } catch (_) {}
+        }
+        plainDownload(blob, name);
+    }
+    function plainDownload(blob, name) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = name; a.click();
@@ -23818,7 +24941,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     let label = raw;
                     if (n.givens && n.givens[i]) label = `[${label}]`;
                     if (n.implicits && n.implicits[i]) label = `(${label})`;
-                    const escapedText = text.replace(/\n/g, '\\n');
+                    // A premise link names its box by the label below, "#box:@M1S1b".
+                    const linked = !hasBoxLinks(text) ? text : text.replace(BOX_LINK_RE, (m, lb, ref, i) => {
+                        const hit = resolveBoxLink(ref, i), to = hit && cLabels.get(hit.node.id + '-' + hit.idx);
+                        return '[' + (hit ? boxLinkLabel(hit.node.id, hit.idx) : lb) + '](#box:' + (to ? '@' + to : '-') + ')';
+                    });
+                    const escapedText = linked.replace(/\n/g, '\\n');
                     lines.push(`${'  '.repeat(indent)}${label}: ${escapedText}`);
                 });
                 if (n.children) walk(n.children, indent + 1);
@@ -24181,6 +25309,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if(!target.node.crossRefs)target.node.crossRefs=target.node.texts.map(()=>[]);
             target.node.crossRefs[target.idx].push(arg);
         });
+        // Premise links written by label ("#box:@M1S1b"): to the box it names.
+        (function relink(ns) {
+            ns.forEach(n => {
+                n.texts = n.texts.map(t => String(t).replace(/\[([^\]\n]*)\]\(#box:@([A-Za-z0-9]+)\)/g, (m, lb, name) => {
+                    const hit = resolveRefEndpoint(name);
+                    return '[' + lb + '](#box:' + (hit ? hit.node.id + (hit.idx ? '.' + hit.idx : '') : '-') + ')';
+                }));
+                relink(n.children || []);
+            });
+        })(newTrees);
         return { trees: newTrees };
     }
 
@@ -24263,26 +25401,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function deriveParentFor(id) {
         const ctx = findNodeContext(state.trees, id);
         if (!ctx) return null;
-        const texts = ctx.node.texts.map(t => String(t || '').trim());
+        // Premise links read as their boxes' words (claimWithBoxLinks).
+        const said = ctx.node.texts.map((t, j) => claimWithBoxLinks(t, new Set([id + '#' + j])));
+        const texts = said.map(t => String(t || '').trim());
         if (texts.some(t => !t)) {
             showHintToast(texts.length > 1 ? 'A box in this group is empty: write its premise before deriving from the group.' : 'This box is empty: write a premise before deriving from it.', true);
             return null;
         }
-        const spaces = claimExtraSpaces(ctx.node.texts);
-        const flagged = ctx.node.texts.map(claimInferenceFlag).find(Boolean);
+        const spaces = claimExtraSpaces(said);
+        const flagged = said.map(claimInferenceFlag).find(Boolean);
         if (flagged) { showHintToast(flagged.message, true); return null; }
-        let found = deriveConclusion(ctx.node.texts);
+        let found = deriveConclusion(said);
         if (found && spaces.length) {
             showHintToast('Without the extra space, these premises would give “' + found.text + '” by ' + found.rule.name + ', but ' + claimNearMissNotes([], spaces) + '.', true);
             return null;
         }
-        const typo = ctx.node.texts.map(t => ({ t, slip: claimTextSlips(t) })).find(x => x.slip);
+        const typo = said.map(t => ({ t, slip: claimTextSlips(t) })).find(x => x.slip);
         if (found && typo) {
             showHintToast('Without the typo, these premises would give “' + found.text + '” by ' + found.rule.name + ', but ‘' + typo.t + '’ has one: ' + typo.slip.message + '.', true);
             return null;
         }
         if (!found) {
-            const near = deriveNearMiss(ctx.node.texts);
+            const near = deriveNearMiss(said);
             showHintToast(near
                 ? 'Spelled the same way each time, these premises would give “' + near.text + '” by ' + near.rule.name + ', but ' + claimNearMissNotes(near.pairs, spaces) + '.'
                 : texts.length > 1
@@ -24336,7 +25476,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const node = findNodeContext(state.trees, box.dataset.nodeId)?.node
                 || findNodeContext(state.trees, Number(box.dataset.nodeId))?.node;
             if (!node || node.type === 'note') return;
-            const theorem = logicalTheorem(node.texts[Number(box.dataset.nodeIdx)]);
+            const theorem = logicalTheorem(claimWithBoxLinks(node.texts[Number(box.dataset.nodeIdx)], new Set([node.id + '#' + Number(box.dataset.nodeIdx)])));
             if (!theorem) return;
             const tag = document.createElement('div');
             tag.className = 'logical-theorem-tag';
@@ -24588,8 +25728,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             apply.disabled = true;
             entry.readings.forEach((label, r) => {
                 let words = entry.typo ? label : claimReadingWords(label, entry.text);
-                let fits = !!where && (entry.typo || claimReadingRoundTrips(entry, r, words));
-                if (!fits && where) {
+                const linked = !!where && (() => { const c = findNodeContext(state.trees, where.id); return !!c && hasBoxLinks(c.node.texts[where.idx]); })();
+                let fits = !!where && !linked && (entry.typo || claimReadingRoundTrips(entry, r, words));
+                if (!fits && where && !linked) {
                     const inPlace = claimGenericWords(entry, label);
                     if (inPlace && claimReadingRoundTrips(entry, r, inPlace)) { words = inPlace; fits = true; }
                 }
@@ -24614,7 +25755,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!fits) {
                     const own = document.createElement('span');
                     own.className = 'rc-own';
-                    own.textContent = where ? 'Not read back this way as written: put it in your own words.' : 'This sentence is not one of the step\u2019s boxes.';
+                    own.textContent = linked ? 'The box links other boxes: rewrite it yourself, so the links stay.'
+                        : where ? 'Not read back this way as written: put it in your own words.' : 'This sentence is not one of the step\u2019s boxes.';
                     text.appendChild(own);
                 }
                 row.appendChild(radio);
@@ -25030,7 +26172,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         presentMode = !presentMode;
         document.body.classList.toggle('present-mode', presentMode);
         const ind = document.getElementById('present-indicator');
-        ind.title = presentMode ? 'Presentation mode activated (P / Esc to exit)' : 'Presentation mode deactivated (P to activate)';
+        ind.title = presentMode ? 'Presenting: a read-only view. Tap to stop (P or Esc)' : 'Present: a read-only view for showing the map; branches still open and close (P)';
         if (presentMode && !focusMode) {
             selectedIds = [];
             updateSelectionVisuals();
@@ -25081,21 +26223,81 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         try { document.body.classList.add('no-fullscreen'); } catch (_) {}
     }
 
-    // --- Free Drop Mode (mobile Shift+drop substitute) ---
-    let freeDropMode = false;
-    function toggleFreeDrop() {
-        freeDropMode = !freeDropMode;
-        document.body.classList.toggle('freedrop-mode', freeDropMode);
-        const ind = document.getElementById('freedrop-indicator');
-        if (ind) ind.title = freeDropMode ? 'Free drop ON — drop anywhere without snapping (tap to turn off)' : 'Free drop — drop anywhere without snapping';
+    // --- Touch screens: press and hold ------------------------------------
+    // What a control does (the user, 2026-09-29: "You can't hover over them
+    // and reveal what they do like you can on desktop"): pressed and held on
+    // a touch screen, a control with a tooltip shows it, and the tap that
+    // ends the hold does nothing. Not ⠿ (held, it moves its box alone), a
+    // box's references badge (held, its manager), a link (held, its menu,
+    // below), a box itself (held, its menu) or a text field.
+    const TOUCH_HOLD_MS = 500;
+    let touchHoldEatUntil = 0, touchHoldFired = false, touchPointerType = 'mouse';
+    document.addEventListener('pointerdown', e => { touchPointerType = e.pointerType || 'mouse'; }, true);
+    document.addEventListener('pointerup', () => { if (touchHoldFired) { touchHoldFired = false; touchHoldEatUntil = Date.now() + 700; } }, true);
+    document.addEventListener('click', e => {
+        if (Date.now() >= touchHoldEatUntil) return;
+        touchHoldEatUntil = 0;
+        e.preventDefault(); e.stopPropagation();
+    }, true);
+    // The words of a tooltip, as a touch screen needs them: no keyboard keys.
+    function touchTipWords(title) {
+        return platformShortcutLabel(String(title || '')).replace(/\s*\((?:[^()]{1,14})\)\s*$/, (m) => /[A-Z0-9\/\[\]=+\-⌘⌥]/.test(m) && !/\s\w+\s\w+/.test(m) ? '' : m)
+            .replace(/\s+[—-]\s+[A-Z]$/, '').trim();
     }
-    function deactivateFreeDrop() {
-        if (!freeDropMode) return;
-        freeDropMode = false;
-        document.body.classList.remove('freedrop-mode');
-        const ind = document.getElementById('freedrop-indicator');
-        if (ind) ind.title = 'Free drop — drop anywhere without snapping';
-    }
+    (function initTouchTips() {
+        let timer = null, tip = null, x0 = 0, y0 = 0;
+        const eligible = el => !!el && !el.closest('.drag-handle, .crossref-badge, .node-link, textarea, input, select, #string-editor') &&
+            !(el.classList && el.classList.contains('node'));
+        function hide() { if (tip) { tip.remove(); tip = null; } }
+        function show(el) {
+            hide();
+            const words = touchTipWords(el.getAttribute('title'));
+            if (!words) return;
+            tip = document.createElement('div');
+            tip.className = 'eval-tooltip touch-tip';
+            tip.textContent = words;
+            document.body.appendChild(tip);
+            const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+            tip.style.left = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 8)) + 'px';
+            tip.style.top = (r.top - h - 8 >= 8 ? r.top - h - 8 : Math.min(r.bottom + 8, window.innerHeight - h - 8)) + 'px';
+            touchHoldFired = true;
+        }
+        document.addEventListener('pointerdown', e => {
+            if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+            hide();
+            const el = e.target && e.target.closest && e.target.closest('[title]');
+            if (!eligible(el)) return;
+            x0 = e.clientX; y0 = e.clientY;
+            clearTimeout(timer);
+            timer = setTimeout(() => { timer = null; show(el); }, TOUCH_HOLD_MS);
+        }, true);
+        document.addEventListener('pointermove', e => {
+            if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) { clearTimeout(timer); timer = null; }
+        }, true);
+        document.addEventListener('pointerup', () => { clearTimeout(timer); timer = null; if (tip) { const t = tip; setTimeout(() => { if (tip === t) hide(); }, 1600); } }, true);
+        document.addEventListener('pointercancel', () => { clearTimeout(timer); timer = null; hide(); }, true);
+        window.addEventListener('scroll', hide, true);
+    })();
+    // A link, pressed and held on a touch screen: its menu, as a right-click
+    // gives it (initLinkMenu) -- Go to, Convert to plain text, Edit URL, Copy
+    // URL -- and the tap that ends the hold does not follow it.
+    (function initTouchLinkHold() {
+        let timer = null, x0 = 0, y0 = 0;
+        document.addEventListener('pointerdown', e => {
+            if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+            const a = e.target && e.target.closest && e.target.closest('a.node-link');
+            if (!a) return;
+            x0 = e.clientX; y0 = e.clientY;
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                timer = null;
+                touchHoldFired = true;
+                a.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: x0, clientY: y0 }));
+            }, TOUCH_HOLD_MS);
+        }, true);
+        document.addEventListener('pointermove', e => { if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) { clearTimeout(timer); timer = null; } }, true);
+        ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { clearTimeout(timer); timer = null; }, true));
+    })();
 
     // --- Context Menu (right-click / long-press) ---
     const ctxMenu = document.getElementById('context-menu');
@@ -25247,6 +26449,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             html += '</div>';
             if (node.type !== 'note') html += `<button class="ctx-item" onclick="ctxAction(()=>openReferenceArguments('${nodeId}', ${boxIdx || 0}))">Reference arguments…</button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference…</button>`;
+            // Links in the box's words, put in where it was last edited.
+            html += `<button class="ctx-item" title="Put a link to another premise in this box's words, where it was last edited" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise…</button>`;
+            html += `<button class="ctx-item" title="Link the words last selected in this box, or put a web address where it was last edited" onclick="ctxAction(()=>linkWebAddressInto('${nodeId}', ${boxIdx || 0}))">Link to Web Address…</button>`;
+            // Touch screens: several boxes, tap by tap (a mouse has Ctrl-click).
+            if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+                html += `<button class="ctx-item" onclick="ctxAction(()=>startSelectMore())">Select More…</button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>openEvalNotesForBox('${nodeId}', ${boxIdx || 0}))">Evaluation Notes…</button>`;
             // The deductive check for this box's step, and the list of every step.
             if (hasDeductiveStep(nodeId)) {
@@ -25267,6 +26475,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             html += '<div class="ctx-divider"></div>';
 
             // --- Edit actions ---
+            // Take Out of Branch: the box on its own, its children left in place.
+            const connected = !!(ctx && (ctx.parent || ctx.node.texts.length > 1 || (ctx.node.children || []).length));
+            html += `<button class="ctx-item" title="Lift this box out on its own, where it is: its children stay in place, as trees of their own" onclick="ctxAction(()=>takeOutOfBranch())" ${connected ? '' : 'disabled'}>Take Out of Branch</button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>cutNode())">Cut<span class="ctx-key">Ctrl+X</span></button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>copyNode())">Copy<span class="ctx-key">Ctrl+C</span></button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>deleteSelected())">Delete<span class="ctx-key">Del</span></button>`;
@@ -25374,6 +26585,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         e.preventDefault();
         cancelSurfaceLongPress();
         if (longPressFired) return;
+        // Android's own long-press menu, on a ⠿ being held for a drag alone,
+        // or on a control held for its tip.
+        if (pendingDrag && pendingDrag.handle && !pendingDrag.activated && (pendingDrag.holdTimer || pendingDrag.alone)) return;
+        if (touchPointerType !== 'mouse' && e.target.closest && (e.target.closest('.collapse-btn, .status-dot[title], .touch-grip') ||
+            (e.target.closest('[title]') && !e.target.closest('.node')))) return;
         const nd = e.target.closest('.node');
         if (nd) {
             showContextMenu(e.clientX, e.clientY,
@@ -25492,7 +26708,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     document.getElementById('surface').addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse') return; // mouse uses the contextmenu event
-        if (e.target.closest('.crossref-badge, .node-link')) return;
+        if (e.target.closest('.crossref-badge, .node-link, .drag-handle')) return;   // ⠿ held: a drag alone
+        if (e.target.closest('[title]') && !e.target.closest('.node')) return;          // held for its tip (initTouchTips)
+        if (e.target.closest('.collapse-btn, .status-dot[title], .touch-grip')) return;
         longPressFired = false;
         const nd = e.target.closest('.node');
         const cx = e.clientX, cy = e.clientY;
@@ -25532,7 +26750,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DBL_TAP_SLOP = 28;   // px; generous, because a finger is not a mouse
     let lastTapKey = null, lastTapAt = 0, lastTapX = 0, lastTapY = 0;
     function handleTouchDoubleTap(e) {
-        if (presentMode || reviewMode || collabReadOnly()) return false;
+        if (presentMode || reviewMode || collabReadOnly() || selectMoreMode) return false;
         // Controls that own their own tap semantics keep them.
         if (e.target.closest('.node-link, .collapse-btn, .status-dot, .crossref-badge, .drag-handle, .node-action-btn')) return false;
         const nd = e.target.closest('.node');
@@ -25784,6 +27002,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // Shift+F: Placement Snap/Free. Shift already means "free" in Shift+A
             // and Shift-drop; F is for Free. Plain F stays Focus.
             if ((code === 'KeyF' || key === 'f') && e.shiftKey) { if (!presentMode) toggleFreePlacement(); return; }
+            // Shift+E: Editing, Double-click or One click. Plain E stays Evaluate.
+            if ((code === 'KeyE' || key === 'e') && e.shiftKey) { toggleClickToEdit(); return; }
             if (code === 'KeyF' || key === 'f') { toggleFocusMode(); return; }
             if (key === '-' || code === 'Minus' || code === 'NumpadSubtract') { e.preventDefault(); updateZoom(-0.1); return; }
             if (key === '=' || key === '+' || code === 'Equal' || code === 'NumpadAdd') { e.preventDefault(); updateZoom(0.1); return; }
@@ -25871,6 +27091,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (presentMode) { togglePresentMode(); return; }
             disarmNodePlacement();
             cancelCrossRefPicking();
+            cancelBoxLinkPicking(true);
+            endSelectMore();
         }
     });
 
@@ -25956,8 +27178,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // never moved (no pan), treat it as a click on empty canvas.
         if (canvasClickPending) {
             canvasClickPending = false;
-            selectedIds = [];
-            updateSelectionVisuals();
+            if (!selectMoreMode) {   // selecting more: an empty tap keeps the selection
+                selectedIds = [];
+                updateSelectionVisuals();
+            }
         }
         if (marqueeScrollRAF) { cancelAnimationFrame(marqueeScrollRAF); marqueeScrollRAF = null; }
         if (!marqueeAnchor) return;
@@ -26041,10 +27265,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // on the canvas menu, and a Shift-drop. Remembered per browser.
     let freePlacement = false;
     // A drop that connects to nothing: pinned, or laid out? The setting,
-    // flipped by Shift. The touch Free-drop toggle, which stands in for Shift's
-    // "drop without connecting", always pins, as its name says.
+    // flipped by Shift. (A touch screen sets it with the Placement button: the
+    // touch-only Free drop button went in r27.62.)
     function dropPins(e) {
-        return freeDropMode || (!!(e && e.shiftKey) !== freePlacement);
+        return !!(e && e.shiftKey) !== freePlacement;
     }
     function applyFreePlacement(on) {
         freePlacement = !!on;
@@ -26066,6 +27290,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         applyFreePlacement(!freePlacement);
         try { localStorage.setItem('argmap-free-placement', freePlacement ? '1' : '0'); } catch (e) {}
     }
+    // Editing: Double-click (the default) or One click -- whether a click on a
+    // box, not only a double-click, opens its text. A click with Shift or
+    // Ctrl still only selects, as does a click on the drag handle.
+    let clickToEdit = false;
+    function applyClickToEdit(on) {
+        clickToEdit = !!on;
+        document.body.classList.toggle('click-to-edit', clickToEdit);
+        const b = document.getElementById('click-edit-btn');
+        if (b) {
+            b.innerHTML = 'Editing: ' + (clickToEdit ? 'One click' : 'Double-click') + ' <span class="hotkey">Shift+E</span>';
+            b.classList.toggle('active', clickToEdit);
+            b.title = clickToEdit
+                ? 'Editing: One click. A click (or tap) on a box opens its text straight away; Shift- or Ctrl-click, or its drag handle, only selects it. Click for Double-click (Shift+E)'
+                : 'Editing: Double-click. A click selects a box; a double-click opens its text. Click for One click: a click (or tap) on a box opens its text straight away (Shift+E)';
+        }
+    }
+    function toggleClickToEdit() {
+        applyClickToEdit(!clickToEdit);
+        try { localStorage.setItem('argmap-click-edit', clickToEdit ? '1' : '0'); } catch (e) {}
+    }
+    // With nothing chosen yet, a touch screen starts at One tap (the user,
+    // 2026-09-29: "One tap on touch screens"), a mouse at Double-click.
+    (function applyStoredClickToEdit() {
+        let stored = null;
+        try { stored = localStorage.getItem('argmap-click-edit'); } catch (e) {}
+        let touch = false;
+        try { touch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) {}
+        applyClickToEdit(stored === null ? touch : stored === '1');
+    })();
     (function applyStoredPlacement() {
         let on = false;
         try { on = localStorage.getItem('argmap-free-placement') === '1'; } catch (e) {}
@@ -26276,9 +27529,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function armCrossRefPicking(sourceId, sourceIdx, argumentId) {
         if (reviewMode || collabReadOnly()) return; // review mode / shared view-only: structure frozen
+        cancelBoxLinkPicking(false);
+        endSelectMore();
         crossRefPicking = { sourceId, sourceIdx, argumentId };
         canvas.classList.add('picking-crossref');
-        document.getElementById('crossref-hint').classList.add('visible');
+        const hint = document.getElementById('crossref-hint');
+        hint.innerHTML = 'Click a node to link to it \u2014 <kbd>Esc</kbd> to cancel';
+        hint.classList.add('visible');
     }
     function cancelCrossRefPicking() {
         if (!crossRefPicking) return;
@@ -26370,6 +27627,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         (function walk(n) {
             if(!n)return;
+            // Premise links in its words follow their boxes too.
+            if(Array.isArray(n.texts)&&n.texts.some(hasBoxLinks))n.texts=n.texts.map(t=>remapBoxLinksInText(t,nodeId,map));
             if(n.crossRefs)n.crossRefs=n.crossRefs.map(refs=>{
                 const out=(refs||[]).map(r=>remap(r,false)).filter(Boolean);
                 return out.filter((r,i)=>isReferenceArgument(r)||out.findIndex(o=>!isReferenceArgument(o)&&o.targetId===r.targetId&&o.targetIdx===r.targetIdx)===i);
@@ -26389,6 +27648,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     });
     canvas.addEventListener('click', (e) => {
         if (suppressCanvasClick) { suppressCanvasClick = false; return; }
+        if (boxLinkPicking) { cancelBoxLinkPicking(true); return; }
         if (crossRefPicking) { cancelCrossRefPicking(); return; }
         if (presentMode || !placingNode) return;
         if (e.target.closest('#toolbar-wrapper')) return;

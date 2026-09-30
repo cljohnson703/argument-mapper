@@ -274,13 +274,9 @@ const J = JSON.stringify;
             }
             out.altSnapShift = alt(false, true);
             out.altFreeShift = alt(true, true);
-            // The touch Free-drop toggle always pins. It lasts one drop, so
-            // each drop turns it on again.
-            freeDropMode = true; out.toggleFree = one(true, { type: 'detach' }, false);
-            freeDropMode = true; out.toggleSnap = one(false, { type: 'detach' }, false);
-            freeDropMode = true; out.toggleFreeShift = one(true, { type: 'detach' }, true);
-            out.toggleOff = freeDropMode;
-            freeDropMode = false;
+            // The touch Free-drop button went in r27.62 (the user: "we don't
+            // need this now that we have the placement button").
+            out.noFreeDrop = !document.getElementById('freedrop-indicator') && typeof toggleFreeDrop === 'undefined';
             applyFreePlacement(false);
             return out;`);
         ok(d.snapEmpty && d.snapEmpty.parent === null && d.snapEmpty.free === false, 'Snap: a node dropped in empty space detaches and is laid out', J(d.snapEmpty));
@@ -297,8 +293,7 @@ const J = JSON.stringify;
         ok(d.altSnapShift && d.altSnapShift.A === true && d.altSnapShift.K === true && d.altSnapShift.kParent === null &&
            d.altFreeShift && d.altFreeShift.A === false && d.altFreeShift.K === false && d.altFreeShift.kParent === null,
             'children left behind with Alt are placed the same way as the node dropped', J([d.altSnapShift, d.altFreeShift]));
-        ok(d.toggleFree && d.toggleFree.free === true && d.toggleSnap && d.toggleSnap.free === true && d.toggleFreeShift && d.toggleFreeShift.free === true && d.toggleOff === false,
-            'the touch Free-drop toggle always pins, whatever the setting, and still lasts one drop', J([d.toggleFree, d.toggleSnap, d.toggleFreeShift, d.toggleOff]));
+        ok(d.noFreeDrop, 'the touch Free-drop button is gone: the Placement button sets how a drop lands', J(d.noFreeDrop));
     }
 
     /* ---------------- 6. Help ---------------- */

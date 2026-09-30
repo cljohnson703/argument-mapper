@@ -4,6 +4,166 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### September 29, late night: forms from the tree, premise links, one-click editing, moving a box alone, touch screens (r27.62)
+
+* **"The dog bites hurt", the third reading** (the user: "maybe not 'those who are hurt' but 'hurt' as a concept? Or as a common feeling? Kind of like, 'We're fighting poverty' ... I don't think 'The dog bites hurt' means that the dog bites those who are hurt"). The question now reads '"hurt" may say what the bites do, how the dog is when it bites, or what it bites', and its three wordings are "The dog's bites hurt.", "The hurt dog bites." and "Hurt is what the dog bites." Each reads back as its reading.
+* **The syntax tree, stage three: forms built from the phrases** (the user: "you can move to stage three: building the logical forms from the tree").
+  * **Verb phrases.** An "and" or "or" under one subject splits the verb phrase only where a verb group follows it. "Mary likes tea and coffee and hates milk" is two claims, liking tea and coffee and hating milk; "Mary likes cats and dogs" stays one. A that-clause, and a clause after a noun, run to the end and are not split.
+  * **Joined subjects.** Where one whole noun phrase ends and the next begins:
+    * "Poe, Fido and Rex fly" (with or without the second comma) is three claims. Since before r27.58 it had been read as "Poe fidos" and "Rex flies".
+    * "The man who sings and dances and his wife left" is two who left, the man who sings and dances and his wife. The first "and" belongs to the relative clause.
+    * An "and" inside a subject joins no clauses. A clause before an "and" still ends there: "R and it is not the case that Q", "The Senate closed, and then it reopened". A subject with both "and" and "or" is still asked about.
+  * **Quantifiers.** The noun phrase after "every", "all", "some", "no" ends where the phrases end it. Before, it ended at the first plural or past word, which misread most relative clauses and every phrase after the noun. Each reading below is the kind, then what is said of it:
+
+    | Sentence | Before | Now |
+    |---|---|---|
+    | Every man who loves Mary sings. | every *man who*: *loves Mary sings* | every *man who loves Mary*: *sings* |
+    | All dogs in the park bark. | all *dogs*: *in the park bark* | all *dogs in the park*: *bark* |
+    | Some students who took the test passed. | some *students*: *who took the test passed* | some *students who took the test*: *passed* |
+    | Every cat Mary fed left. | every *cat Mary*: *fed left* | every *cat that Mary fed*: *left* |
+    | All the books John wrote sold. | all *books*: *John wrote sold* | all *books that John wrote*: *sold* |
+    | Some people who eat meat smoke. | *some people who eat*, as one individual: *meat smoke* | some *people who eat meat*: *smoke* |
+    | Everyone Mary knows left. | every *person*: *Mary knows left* | every *person that Mary knows*: *left* |
+    | Everything that Mary said is true. | every *thing that does "Mary said"*: *is true* | every *thing Mary said*: *is true* |
+
+    Where the phrases leave two ends open, the quantifier's number decides: "every dog bite | hurts", not "every dog | bite hurts"; "each of the ravens | flies". Where they are not sure of the verb, the old test stands ("all city buses | stop here").
+
+    What made that possible, in the phrases:
+    * a relative clause without its "that": "the raven Mary saw", "everyone Mary knows";
+    * a participle after its noun: "swans seen so far", "theories proposed by philosophers";
+    * inside a relative clause, a clause of its own: "who reads books that Mary wrote", "who thinks that Poe is black";
+    * the object of a relative clause's verb, before the main verb: "people who eat meat | smoke", "the woman who fears change | left".
+  * **A quantifier's noun phrase names no one.** Since r27.59 (never released), a sentence the quantifier reader could not read, such as "Some women fear change" or "No student who failed passed", went to the predication reader, which read "some women" as one individual's name. Now such a phrase is never a name: the sentence is read as a quantifier's (as those two now are), or not at all.
+* **Premise links** (the user: "Allow the user to link other premises as node content. Shorthand can point to premises, e.g., S7, and that link follows where the premise goes ... 'If S7 and S8, then S4' ... like a hyperlink that never turns purple ... Maybe a context menu option from a node that's currently text-editing, kind of like how cross-references work").
+  * **Making one.** Right-click while editing a box and choose **Link a premise…**, then click the premise, as when adding a reference. Its label goes in at the caret (or in place of the selected words), and the box opens again to go on writing. Esc gives the box back as it was. Clicking a note links nothing: a note is no premise. Shift+right-click while editing gives the browser's own menu (spelling, paste).
+  * **What it shows.** The label the premise has now: the simple label when labels are off, else the label the map shows. Links are blue and underlined, followed or not, and the premise's words show on hover. Clicking one goes to its premise and selects it. Right-clicking one offers **Go to** and **Convert to plain text**.
+  * **Following the premise.** A link names its box by its id, not its label: it follows the box when the map is renumbered, moved or rearranged, when co-premises are added, removed or split off, when the box is copied along with the link's box (the copy links the copy), and through the text format and String Mode, where it is written by the box's complex label. A box that is gone shows its last label, struck through; undo brings it back.
+  * **How it is written.** In the box's text, a link is `[S7](#box:1b9d6bcd)`, with the first eight or more characters of the box's id, and ".1", ".2" after the id for a later co-premise. While editing, the box shows this markup, with each label brought up to date.
+  * **How the deductive check reads it.** As the premise's own words, in brackets: "If S7 and S8, then S4" is read as "If (P) and (Q), then (R)". A link back to its own box, or round a loop, is read as its label. Derive Parent reads links the same way. A reading chosen from a **?** tag is not written into a box with links, since the links would be lost: the chooser says to rewrite it by hand.
+* **Editing: One click** (the user: "a button that switches between touching the boxes and going straight to text-editing vs the default where only a double-click text-edits"). A button under **View** switches between **Editing: Double-click** and **Editing: One click**, in which a click or tap on a box selects it and opens its text. **Shift+E** switches it too (E for Editing; plain E stays Evaluate, as Shift+F is Placement beside F for Focus). A Shift- or Ctrl-click, or a click on a drag handle, still only selects. A touch screen starts at One click, a mouse at Double-click (the user chose "One tap on touch screens"); a choice once made is kept in the browser.
+* **Alt+Tab keeps the editor open** (the user: "make it so that Alt-tabbing (at least on chrome) doesn't exit you from text-editing on a node"). When another window or tab takes the focus, the browser blurs the box but keeps it the page's focused element, and focuses it again on return. That blur no longer ends the edit, and that return starts no new one: one undo still takes back the whole edit.
+* **Moving a box alone** (the user: "what's the command for removing a node from a branch while not taking its children with it? ... There should probably be a way to do that on mobile devices as well").
+  * The command was, and is, holding **Alt** (⌥ on a Mac) as the box is dropped: it moves alone, and its children stay where they are, as trees of their own. Help had not said so; it does now.
+  * **Hold ⠿, then drag.** Held still on the ⠿ handle for half a second, the handle turns into ✥, and the drag that follows moves the box as an Alt-drop does. A quick drag still takes the branch along. It works by finger, pen or mouse; a finger held on ⠿ opens no menu, and may wander a little while it holds. Touch users get a one-time tip the first time they drag a branch from ⠿.
+  * **Take Out of Branch**, in a box's menu (right-click, or press and hold on a touch screen): the box lifts out on its own, where it is drawn, and stays selected to be dragged where it goes; its children stay in place as trees of their own. It is what turning a box into a note does, without the note.
+  * **How that was chosen.** A ✥ handle of its own was tried first -- the user picked the move arrows from three mockups, at the bottom left -- but it collided with the evaluation dot, and no placement pleased. The user chose these two ways instead, which need no new icon. The children stay put as their own trees (the user's choice over closing up the branch, which would make them support the parent's claim).
+  * **The drag shows only what moves** (the user: "when you Alt-drag, it looks like the whole branch is being dragged with you rather than just the node until you drop it"). With ⠿ held, or Alt held, the drag shows the box alone -- or, with several boxes selected, the selected ones -- and its branch again when Alt is let go.
+* **Touch screens** (the user: "As for the features that desktop has that touch screens don't (especially iOS), let's try figuring out how we could implement them. If it's impossible to implement them (like saving back to the same file on iOS), we can either implement a workaround or just note it somewhere").
+  * **What a control does.** Pressed and held, a button or icon shows its tooltip, with its keyboard key left out, and the tap that ends the hold does nothing. Not ⠿ (held, it moves the box alone), a references badge (held, its manager), a link (held, its menu) or a box (held, its menu). The tooltips of Present, Focus, the evaluation dot and the Evaluations tab now say what each does, not only whether it is on.
+  * **Resizing a box.** Touch screens draw no resize grip of their own, so a box has one for a finger at its bottom right: drag it to widen or narrow the box; double-tap it to reset the width, as a double-click does.
+  * **Several boxes.** A box's menu on a touch screen has **Select More…**: each tap then adds a box to the selection or takes it out, as a Ctrl-click does, until **Done** (or Esc). A selection is dragged by any of its boxes' ⠿.
+  * **Links.** iOS gives a text field no menu of the page's own, so the editor's right-click menu never opens there. A box's menu now has **Link a Premise…** and **Link to Web Address…**, which put the link where the box's text was last edited (the words last selected become a web link). Pressed and held, a link opens its menu (Go to or Open, Convert to plain text, Edit URL, Copy URL), and Safari's own link preview is turned off for it.
+  * **Comments.** A comment's Reply, Edit and Delete appeared only on hover; where nothing hovers they stay shown.
+  * **Saving on an iPhone or iPad.** No web page can write back to a file there. **Save to File** now opens the share sheet: **Save to Files** lets one pick the folder and replace the old copy, where a download had landed in Downloads under a new name each time. Other browsers are as before.
+  * **What cannot be done, and is said in Help** (a new section, On a touch screen): saving back to a file on iOS (the share sheet instead); Full Screen on an iPhone, which no web page has there (hide the toolbar, or turn the phone sideways); keyboard shortcuts, which need a keyboard (an iPad with one has them).
+  * **The Free drop button is gone** (the user: "I guess we don't need this now that we have the placement button"). It was a touch-only stand-in for Shift-drop; the **Placement** button sets how a drop lands.
+* **Why Alt, and not Ctrl or Shift, moves a box alone** (the user asked): Shift-drop is already "drop without connecting", with the other placement. Ctrl-click is right-click on a Mac, so a Ctrl-drag cannot start there; Ctrl/⌘-click adds a box to the selection; and Ctrl-drag conventionally copies (in the references manager it reuses a premise). Alt (⌥) is the one key free on both.
+* **Found in r27.62 and fixed** (the user: "Do all the other fixes that you noted"):
+  * A plural before a phrase, a participle or a clause is made singular, as the last word already was: "all dogs in the park" and "every dog in the park" are one kind, as are "all swans seen so far" and "every swan seen so far", "all ravens observed", "all friends of Mary".
+  * A relative clause inside the object of a relative clause is read with that object: "every student who reads books that Mary wrote" is a student who reads books-that-Mary-wrote. It had been one unanalyzed kind.
+  * "All water flows downhill": where the phrases leave only one place for the verb, it is there, if only a possible verb ("all music soothes the soul"). Where they leave two, the old test still decides ("all city buses stop here"). Adverbs of place and direction (downhill, upstream, abroad, indoors, …) and some verbs (occupy, soothe, dissolve, …) were added to the lists.
+  * **Cut and paste keeps a box's place.** The first paste after a cut takes over what named the cut boxes: premise links in other boxes, references to them, and argument premises. Later pastes are copies.
+* **Tests.**
+  * The syntax suite checks the new "hurt" wording and stage three: verb phrases, joined subjects, 13 quantified sentences, that a quantifier's noun phrase is never a name, and the three reader fixes above.
+  * A new suite, premise-links-r27-test.js (27 checks), covers:
+    * how links are shown, and relabeled;
+    * following one, and making one from the editor's menu; Esc; notes;
+    * links following their boxes: co-premises added, copies, the text format, cut and paste;
+    * the check reading a link as its box's words (modus ponens), and loops;
+    * one-click editing;
+    * Alt+Tab.
+  * A new suite, touch-r27-test.js (20 checks), covers press-and-hold tips (and the eaten tap; no box menu), a held link's menu (and the link not followed), comment buttons without hover, resizing by the touch grip and resetting by a double tap, Select More, links from a box's menu at the last caret, saving on an iPhone through the share sheet, the Free drop button gone, and Help.
+  * A new suite, move-alone-r27-test.js (23 checks), covers holding ⠿ (by mouse and by touch: it turns, the drag shows and moves the box alone, one undo; a quick drag takes the branch; a hold let go changes nothing and opens no menu), Alt (held, let go, pressed mid-drag), Take Out of Branch, the Editing button under View with Shift+E, and One click as a touch screen's default.
+  * All 72 suites pass. Fuzzers (run after the last change to the reader): English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad; the adversarial corpus 145 of 145; the pronoun generator 0 wrong of 261; "and then" 0 unsound (1,677 steps). Of the readings offered for sentences quoted in the tests, 166 of 593 do not read back (165 of 588 at r27.61). The new ones are new test sentences: compound nouns ("dog bite", "city bus") carrying the "read whole" note, and test names.
+
+### September 29, night: four readings the user raised (r27.61)
+
+* **"The dog bites hurt" is asked** (the user: "ambiguous between 'Things that hurt are the dog bites' ... and 'The dog hurts as it bites' ... a third reading, where 'hurt' is taken as a noun ... flag it and give the reader options to disambiguate"). It is always asked, with the three readings as one question. The user suggested asking first whether "hurt" is an adjective or a noun; one question with three answers asks the same thing in one step. "The dog bites hurt Mary" and "The government plans fail" are not asked. (r27.62 changed the third wording.)
+* **The zombie map's premise is read, and my r27.60 note on it was wrong.** The user: "I think it's syntactically unambiguous." It is. Its "or" joins the two adjectives before one noun ("widely accepted, or independently motivated, reasons"), and the "and" of the that-clause after that noun is inside the clause. There is no question of scope for "cannot" to take. It is now read as one denied claim. With it, the step of the form "if we do not have ... reasons that ..., then we cannot conclude ..." certifies by modus ponens. What it took:
+  * adjectives joined before their noun, and an adverb before an adjective, are one noun phrase;
+  * an "and" or "or" inside a verb's object that runs to the end joins nothing: after a relative "that", "which" or "who" following a noun, or between adjectives before a noun;
+  * after "do", "does" or "did", the next word is the verb, even "have": "do not have reasons";
+  * an indefinite inside a that-clause in a condition is not asked about as a generic.
+* **"The raven that Mary saw and the crow flew"** (the user could not parse it, taking its first part for a dependent clause). It is one sentence. Its subject is the noun phrase "the raven that Mary saw and the crow": "the raven" with the relative clause "that Mary saw", joined by "and" to "the crow". Both flew, and that is how it is read now. It had been flagged and left unread.
+* **"Some ravens and crows are black"** (the user: "'Some ravens and crows' as the subject noun phrase, and 'are black' is the predicate, such that it follows that some ravens are black and some crows are black"). It now says both. "Some ravens or crows are black" says one or the other.
+* **Tests.** The syntax suite checks all four. All suites pass; fuzzers as above; 165 of 588 readings do not read back.
+
+### September 29, night: "the dog bites hurt", and the syntax tree, stage two -- coordination (r27.60)
+
+* **"The dog bites hurt"** (the user: "Can you fix this?"). It now reads as the bites hurting.
+  * Syntax alone cannot tell: "The dog bites hurt" and "The dog loves play" have one shape.
+  * The words tell them apart. "Hurt", "ache", "fail", "heal" and "happen" stand without an object and are seldom a bare object noun. "Play", "change" and "work" are nouns as often as verbs.
+  * So an -s word that may be a plural noun ends a longer subject when what follows it is a helping verb, a past, or one of those object-less verbs, and what comes after that is a verb's.
+  * Read the new way: "The dog bites hurt", "The dog bites hurt Mary", "The dog bites often hurt", "The government plans fail".
+  * Unchanged: "The dog loves play", "The woman fears change", "The dog bites the man", "W leaves support unchanged".
+* **Coordination on the phrases** (stage two; the user: "go ahead to stage two: coordination"). The phrases decide whether an "and" or "or" joins two clauses or two phrases inside one:
+  * A clause begins where a noun phrase and a sure verb group begin, looking at all that follows the "and", not only up to the next "and" as before.
+  * A verb group, or a noun phrase with no verb of its own, continues the clause before.
+  * Where the phrases cannot tell, the old tests decide.
+
+  What that fixes:
+  * "Mary left and Bob and Ann cried": Mary left; Bob and Ann cried. It had been "Mary left and Bob" and "Ann cried".
+  * "Ravens fly and crows sing": two generics, each asked about. It had been ravens that "fly and crows sing".
+  * "The man who sings and dances left": one subject; the "and" of a relative clause stays in it. It had been two subjects, "the man who sings" and "dances".
+  * "Mary left and it surprised Bob": two clauses. It had been one predicate.
+  * "Mary neither sang nor danced": neither. It had not been read.
+
+  What stays together: "Mary sings and dances" (two verbs of one subject, read as before), "Mary fed the dog and the cat", "Mary likes tea and coffee".
+* **Joined subjects.**
+  * A verb alone is said of each, as r27.58 decided. That now includes a known verb in its plain form: "Mary and Bob sing", "Black ravens and white crows fly".
+  * Joined plurals with no determiner name no individual, and the generic is asked about, as it is for "Ravens fly". "Ravens and crows fly" offers "All ravens and crows fly", "Some ravens fly and some crows fly", "Most ravens fly and most crows fly" and "Generally, ravens and crows fly", each read back as its reading. In r27.58 it had been read as ravens that "and crows fly".
+* **Phrase fixes found on the way:**
+  * A name is a word of a noun phrase only before its noun: "the Senate", but not "the vase Mary".
+  * A past that is also an adjective is a verb before an object: "surprised Mary".
+  * A sentence letter begins a clause: "P and Q".
+* **Where a comma stands before the "and" or "or"**, the phrases decide only where they say a clause begins ("Mary left, and Bob and Ann cried"). Where they say the phrase goes on, the break the comma makes is kept, as before.
+* **Found, not fixed** (all three fixed in r27.61):
+  * **An "and" inside a that-clause after a verb can still split the sentence.** In the zombie map, one premise has the form "… cannot …, or …, that … and … cannot …", and it is misread now as before: the word after "or" is taken as a subject, and the that-clause is split at its "and". *Correction (r27.61): I also wrote here that a correct reading would ask whether "cannot" takes in both sides of the "or". That was wrong, as the user said: the "or" joins two adjectives before one noun, and the sentence has one reading.*
+  * "The raven that Mary saw and the crow flew" is flagged and not read: a joined subject with a relative clause of more than four words.
+  * "Some ravens and crows are black" is read as some one kind, "ravens and crow"; this is for the quantifier reader.
+* **Tests.** The syntax suite now also checks "the dog bites hurt" against "the dog loves play", clauses joined and kept together, the relative clause's "and", "neither ... nor", and joined subjects with their generics. All 69 suites pass. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 145 of 145; the pronoun generator 0 wrong of 261; "and then" 0 unsound of 282 certified (1,677 steps). Of the readings offered for sentences quoted in the tests, 165 do not read back (157 at r27.59). The only new sentence is "Ravens fly and crows sing", new to the tests: its two generic questions each offer wordings for one clause, which the corpus tool cannot write back into the whole box (the app writes them in place).
+
+### September 29, later: the syntax tree, stage one -- parts of speech and phrases (r27.59)
+
+* **What it is** (the user: "Maybe we need an internal syntax tree so the checker can disambiguate a little more easily, especially by telling different syntactical elements apart"; "Let's proceed to stage one of the syntax tree").
+  * **Words.** Each word gets the parts of speech it can have, from the app's own lists and its ending. A closed word (a determiner, a preposition, "and", a helping verb) is only what it is. An open word may be a noun, a verb or an adjective.
+  * **Noun phrases:**
+    * a name, or a pronoun;
+    * a determiner or quantifier with adjectives and nouns ("the black raven", "the Senate", "the rich");
+    * a possessive ("Mary's dog");
+    * with "of the house" or another phrase after it;
+    * two joined ("Alice and Bob", "both the raven and the crow");
+    * with a relative clause ("the dog that barked"; "the match, which was scheduled for noon,").
+  * **Verb groups:** helping verbs, adverbs, and a verb.
+  * **Noun or verb.** Where a word could be either, the phrase decides:
+    * agreement: "the dog bites", "ravens fly";
+    * a sure verb over a possible one: a helping verb, a past, a verb the lists know;
+    * an -s word before "were" is a noun: "the price increases were large".
+* **Measured before it was used.** It was run beside the old reader over the sentences in the logic and language tests, and on 1,150 subject boundaries they agreed. In each of the 16 real differences, the old reader had it wrong. For example:
+  * "Mary told Alice she was late" had been about "Mary told Alice she";
+  * "We all think that Mary is tired" about "we all think that Mary";
+  * "The fact that the vase is broken surprised Mary" about "the fact that the vase".
+
+  The rest were test names, not sentences.
+* **Where it is used now:**
+  * **The subject of a predication.** Where the phrases find one, it is theirs; else the old reading stands.
+  * **Whether words make a clause.** A noun phrase with a sure verb group after it is a clause, where the old tests found none: "The black raven left and then the dog cried" and "The first raven left and the dog cried" are two claims each (r27.58's found, not fixed). A verb that is only possible does not count: "a mere series of flashing lights" is no clause.
+  * **The pronoun analysis: where a noun phrase after a determiner ends.**
+    * "The price increases were large, and they surprised Mary": "they" is the price increases (before, it had no referent).
+    * "The Beatles broke up, and then they reunited": the Beatles, with no second candidate "Beatles".
+    * "The Senate closed, and then it reopened": asked, the Senate or what the clause says. Before, it was read as "the fact that the Senate closed".
+* **Not yet (stages two and three):**
+  * Which "and" joins what, and the forms themselves, are still the old reader's.
+  * An unknown word may be a noun or a verb; where both fit, the first sure verb wins.
+* **Found, not fixed:** "The dog bites hurt" is read as what the dog does ("bites hurt"). The other reading, the bites hurt, would need a helping verb or a past to show it.
+* **Tests.** A new suite, syntax-r27-test.js, checks:
+  * parts of speech;
+  * 23 subjects: names, pronouns, determiners and adjectives, possessives, "of", joined, relative clauses, and "increases were";
+  * the reader's uses;
+  * the pronoun cases.
+
+  All 69 suites pass. Fuzzers: English 0 unsound and 0 misread (20,280 instances, 91,376 steps); three-premise 0 unsound of 3,000; crash 0 errors in 4,000; Derive Parent 0 bad of 190; the adversarial corpus 145 of 145; the pronoun generator 0 wrong of 261; "and then" 0 unsound of 282 certified (1,677 steps). Of the readings offered for sentences quoted in the tests, 157 do not read back (143 at r27.58): the new ones are test names in which the phrases now find a subject, such as "Notes stand alone: …", whose generic question the corpus tool cannot write back into a longer box (the app writes it in place).
+
 ### September 29: "and then" in words, verbs in order, three claims, and "each" without asking (r27.58)
 
 * **The logical form of "A and then B"** (the user: "It's not A -> B but A & B? Or something else? If we use temporal logic ..., it's A & <F>B?").
