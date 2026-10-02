@@ -103,8 +103,8 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             const h = __m.grip('a');
             return { alone: document.querySelectorAll('.drag-alone').length, glyph: h && h.textContent, title: h && h.title };`);
         ok(where.alone === 0 && where.glyph === GRIP, 'no box has a handle of its own for moving it alone: ' + GRIP + ' is the one handle', JSON.stringify(where));
-        ok((where.title || '').includes('Hold it still until it turns into ' + ARROWS) && /Alt/.test(where.title || ''),
-            GRIP + ' says how: hold it still until it turns into ' + ARROWS + ', or hold Alt as you drop', where.title);
+        ok((where.title || '').includes('hold still first to move the box alone'),
+            GRIP + ' says how: hold it still first to move the box alone (r27.68: the tip in plain words)', where.title);
     }
 
     console.log('\n-- (2) hold ' + GRIP + ', then drag: the box goes alone --');
@@ -129,6 +129,18 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             pointerType + ': dropped, the box has moved without its child, which stays behind as a tree of its own', JSON.stringify(moved));
         ok(moved.undone, pointerType + ': one undo puts the box and its child back', JSON.stringify(moved));
     }
+    // The user (2026-09-29): held until it turned, dragged away and dropped
+    // back where it was -- nothing moves, and the handle must turn back.
+    W.win.eval(`__m.load(); window.__h = __m.grip('a'); __h.dispatchEvent(__m.ev('pointerdown', 20));`);
+    await sleep(600);
+    const back = T(W, `const turned = __h.textContent;
+        document.dispatchEvent(__m.ev('pointermove', 90));
+        document.dispatchEvent(__m.ev('pointermove', 22));
+        document.dispatchEvent(__m.ev('pointerup', 22));
+        const h = __m.grip('a');
+        return { turned, same: h === __h, glyph: h.textContent, cls: h.classList.contains('drag-handle-alone'), kParent: __m.parentOf('k'), aParent: __m.parentOf('a') };`);
+    ok(back.turned === ARROWS && back.glyph === GRIP && !back.cls && back.kParent === 'a' && back.aParent === 'r',
+        'dragged away and dropped back where it began, nothing moves and ' + ARROWS + ' turns back into ' + GRIP, JSON.stringify(back));
     const quick = T(W, `__m.load();
         __m.grip('a').dispatchEvent(__m.ev('pointerdown', 20));
         document.dispatchEvent(__m.ev('pointermove', 60));
@@ -210,7 +222,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'E', code: 'KeyE', shiftKey: true, bubbles: true }));
             return { inView, before, after, label, back: clickToEdit, stored: localStorage.getItem('argmap-click-edit') };`);
         ok(btn.inView, 'the Editing button is in the View group');
-        ok(btn.before === false && btn.after === true && /One click/.test(btn.label) && /Shift\+E/.test(btn.label) && btn.back === false && btn.stored === '0',
+        ok(btn.before === false && btn.after === true && /^Edit: Single/.test(btn.label) && /Shift\+E/.test(btn.label) && btn.back === false && btn.stored === '0',
             'Shift+E switches it and back, the button says so, and the choice is kept', JSON.stringify(btn));
     }
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

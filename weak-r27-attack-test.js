@@ -411,7 +411,7 @@ const J = JSON.stringify;
         ok(breadth.afterW === 'compact', 'W does not toggle the layout', J(breadth));
         ok(breadth.label0 === 'Breadth: Narrow B' && breadth.afterB === 'spread' && breadth.label1 === 'Breadth: Wide B' && breadth.active1 === true &&
            breadth.back === 'compact' && breadth.label2 === 'Breadth: Narrow B', 'B toggles Breadth between Narrow and Wide, and the button says so', J(breadth));
-        ok(/Breadth: Narrow/.test(breadth.tip || '') && /— B$/.test(breadth.tip || ''), 'the Breadth tooltip names both settings and B', J(breadth.tip));
+        ok(/Narrow/.test(breadth.tip || '') && /Wide/.test(breadth.tip || '') && /\(B\)$/.test(breadth.tip || ''), 'the Breadth tooltip names both settings and B', J(breadth.tip));
 
         const present = T(W, `__c.load(${J(TREES)}, ['S1-0']); presentMode = true;
             __c.key('KeyW', 'w'); var t = __c.type('S1');
@@ -460,8 +460,8 @@ const J = JSON.stringify;
             document.getElementById('btn-type-weak').click(); out.afterWeakClick = __c.type('FW');
             __c.load(${J(ROOTS)}, ['S-0']); out.S = read();
             return out;`);
-        ok(tb.FO && tb.FO.obj === 'Rebuttal O' && tb.FO.weak === 'Weak Objection W' && /separate tree/.test(tb.FO.objTip),
-            'the toolbar offers the switch on a separate objection: "Rebuttal O", and says why', J(tb.FO));
+        ok(tb.FO && tb.FO.obj === 'Rebuttal O' && tb.FO.weak === 'Weak Objection W' && /Make the selected box a rebuttal \(O\)/.test(tb.FO.objTip),
+            'the toolbar offers the switch on a separate objection: "Rebuttal O", and its tip says what it does', J(tb.FO));
         ok(tb.afterClick === 'rebuttal' && tb.FOafter && tb.FOafter.obj === 'Objection O', 'clicking it switches the tree, and the button then offers the way back', J([tb.afterClick, tb.FOafter]));
         ok(tb.FW && tb.FW.weak === 'Weak Rebuttal W' && tb.afterWeakClick === WR, 'on a separate weak objection the weak button offers, and makes, "Weak Rebuttal"', J([tb.FW, tb.afterWeakClick]));
         ok(tb.S && tb.S.obj === 'Objection O' && !/separate tree/.test(tb.S.objTip), 'an attached box keeps the picked-for-you wording', J(tb.S));
@@ -579,7 +579,7 @@ const J = JSON.stringify;
         const s = (k) => sup[k] || {};
         ok(s('S1').add === white && s('S1').type === white && s('none').add === white && s('S1').addEdge === 'solid',
             'Add Support is a plain white-bordered box for the main argument (and with nothing selected)', J([s('S1'), s('none')]));
-        ok(s('O1').add === red && s('O1').type === white && /joins an objection, so it is red/.test(s('O1').tip),
+        ok(s('O1').add === red && s('O1').type === white && /Add a support under the selected box/.test(s('O1').tip),
             'with an objection selected, Add Support is bordered red; retyping it (its parent is white) stays white', J(s('O1')));
         ok(s('R1').add === orange && s('R1').type === red, 'with a rebuttal selected: orange to add, red to retype (its parent is an objection)', J(s('R1')));
         ok(s('BS').add === red && s('BS').addEdge === 'dashed' && s('BS').type === red && s('BS').typeEdge === 'dashed',
@@ -616,10 +616,10 @@ const J = JSON.stringify;
         ok(key.rows.length === 4 && ['Main argument','Objection','Rebuttal','Weak objection or rebuttal'].every((label,i) => key.rows[i].text.startsWith(label)),
             'compact legend labels all four roles');
         ok(key.rows[3].dash === '6 4' && key.rows[3].text.includes('dashed'), 'weak role has a dashed sample');
-        ok(key.help.includes('without establishing its opposite'), 'compact Help explains what a weak challenge does');
-        ok(key.help.includes('Implicit marks an unstated assumption') && key.help.includes('Given marks a premise taken as given'),
+        ok(key.help.includes("without saying it's false"), 'compact Help explains what a weak challenge does');
+        ok(key.help.includes('Implicit marks an unstated assumption') && key.help.includes('Given a premise accepted without argument'),
             'compact Help explains premise modifiers');
-        ok(key.help.includes('Add weak objection / rebuttal') && key.help.includes('Ctrl+Enter'), 'Help retains the weak-attack creation shortcut');
+        ok(key.help.includes('weak objection') && key.help.includes('Ctrl+Enter'), 'Help retains the weak-attack creation shortcut');
     }
 
     /* ---------------- 9. export ---------------- */

@@ -10,7 +10,7 @@
 //       where the browser's own "Save page as" used to open. It works while
 //       typing and in presentation mode; it ignores AltGr, key auto-repeat
 //       and a second press while a save is still open. Shift+S is back to
-//       plain S (retype to Support), and "Save now" keeps its button.
+//       plain S (retype to Support); "Save now" went in r27.65.
 //   (2) Presentation mode switched pointer events off for everything inside a
 //       node group, collapse/expand buttons included (and present + focus
 //       mode disabled those buttons explicitly). They are re-enabled; the
@@ -169,7 +169,9 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
 
         ok(/>Save to File <span class="hotkey">Ctrl\+S<\/span>/.test(HTML), 'the Save to File button shows Ctrl+S');
         ok(/>Save As… <span class="hotkey">Ctrl\+Shift\+S<\/span>/.test(HTML), 'the Save As button shows Ctrl+Shift+S');
-        ok(/>Save now<\/button>/.test(HTML), 'Save now (browser storage) keeps its button, without a shortcut label');
+        // r27.65 (the user, 2026-09-30): "Save now" is gone; Save to File
+        // refreshes the browser's copy itself.
+        ok(!/>Save now<\/button>/.test(HTML) && !/save-now-btn/.test(HTML), 'there is no "Save now" button: saving to a file refreshes the browser\'s copy too');
         ok([...W.win.document.querySelectorAll('#help-panel tr')].some(row => row.textContent.includes('Save / save as') && [...row.querySelectorAll('kbd')].map(k => k.textContent).join('|') === 'Ctrl+S|Ctrl+Shift+S'), 'Help lists Ctrl+S save and Ctrl+Shift+S save as');
         ok(!/<kbd>Shift\+S<\/kbd>/.test(HTML), 'and Shift+S appears nowhere in Help');
     }
@@ -203,7 +205,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(!typing.open, 'typing "/" inside a box does not open Help', JSON.stringify(typing));
 
         ok(/<button id="help-btn"[^>]*title="Help \(\/\)"[^>]*>Help <span class="hotkey">\/<\/span>/.test(HTML) &&
-           /id="help-icon-topleft"[^>]*title="Help \(\/\)"/.test(HTML) && [...W.win.document.querySelectorAll('#help-panel tr')].some(row => row.textContent.includes('open Help') && [...row.querySelectorAll('kbd')].some(k => k.textContent === '/')) && !/<kbd>H<\/kbd> help/.test(HTML),
+           /id="help-icon-topleft"[^>]*title="Help \(\/\)"/.test(HTML) && [...W.win.document.querySelectorAll('#help-panel tr')].some(row => row.textContent.includes('Help / stop editing') && [...row.querySelectorAll('kbd')].some(k => k.textContent === '/')) && !/<kbd>H<\/kbd> help/.test(HTML),
             'the Help button, the ? icon and the Help text all say "/"');
     }
 

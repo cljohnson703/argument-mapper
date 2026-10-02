@@ -558,8 +558,8 @@ const TR = J(TREES);
     console.log('\n-- Help --');
     {
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
-        ok(/<strong>Notes<\/strong> are annotations, not premises/.test(h || '') &&
-           /Add parent \/ note<\/td><td><kbd>Alt\+↑<\/kbd> \/ <kbd>Alt\+Enter<\/kbd>/.test(h || ''),
+        ok(/<strong>Notes<\/strong> are comments, not premises/.test(h || '') &&
+           /Add a parent \/ note<\/td><td><kbd>Alt\+↑<\/kbd> \/ <kbd>Alt\+Enter<\/kbd>/.test(h || ''),
             'compact Help explains notes and their creation shortcut');
     }
 

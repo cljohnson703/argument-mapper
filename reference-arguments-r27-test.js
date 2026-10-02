@@ -77,6 +77,31 @@ try{
     collectDeductiveSteps=originalCollect;claimMapVerdict=originalVerdict;
     toggleDeductiveLive();check(!!document.querySelector('.reference-argument-result'),'open menu gains tag when Deductive enabled');
     toggleDeductiveLive();check(!document.querySelector('.reference-argument-result'),'open menu loses tag when Deductive disabled');
+    // r27.65 (the user, 2026-09-30): a red ✕ at each row's right edge removes it,
+    // a link or an argument's premise; undo brings it back; none where locked.
+    {
+      document.querySelectorAll('.crossref-popover').forEach(el=>el.remove());
+      const t=n('T','contention','Zombies are possible.'),k=n('K','contention','We can conceive of zombies.'),o=n('O','contention','Zombies are conceivable.'),c2=n('C2','contention','If zombies are conceivable, then zombies are possible.');
+      t.crossRefs=[[ref('K'),arg('G','support',[],[ref('O'),ref('C2')])]];
+      state.trees=[t,k,o,c2];render();openReferenceArguments('T',0);
+      const xs=[...document.querySelectorAll('.crossref-popover-row .crossref-popover-remove')];
+      check(xs.length===3&&xs.every(x=>x.textContent==='✕'&&x===x.parentElement.lastElementChild),'each reference row ends in a red ✕');
+      const loose=[...document.querySelectorAll('.crossref-popover-row')].find(r=>r.dataset.targetId==='K').querySelector('.crossref-popover-remove');
+      check(loose.title==='Remove this reference','the ✕ of a link says what it does');
+      loose.click();
+      check(!state.trees[0].crossRefs[0].some(r=>!isReferenceArgument(r)&&r.targetId==='K')&&!!document.querySelector('.reference-arguments-popover'),'its ✕ removes the link, and the list stays open');
+      const inArg=[...document.querySelectorAll('.crossref-popover-row')].find(r=>r.dataset.targetId==='O').querySelector('.crossref-popover-remove');
+      check(inArg.title==='Remove from this argument','the ✕ of a premise in an argument says it leaves the argument');
+      inArg.click();
+      const g=state.trees[0].crossRefs[0].find(r=>isReferenceArgument(r));
+      check(g&&!(g.premises||[]).some(p=>p.targetId==='O'&&!p.missing)&&(g.premises||[]).some(p=>p.targetId==='C2'),'its ✕ takes that premise out of the argument, and keeps the rest');
+      undo();undo();
+      check(state.trees[0].crossRefs[0].some(r=>!isReferenceArgument(r)&&r.targetId==='K'),'undo brings them back');
+      document.querySelectorAll('.crossref-popover').forEach(el=>el.remove());
+      toggleReviewMode();openReferenceArguments('T',0);
+      check(!document.querySelector('.crossref-popover-remove'),'no ✕ while the map is locked for review');
+      toggleReviewMode();document.querySelectorAll('.crossref-popover').forEach(el=>el.remove());
+    }
     return {count};
  })()`);
  assert.deepEqual(errors,[]);console.log('PASS: '+result.count+' reference argument checks (roles, grouping, warrant, cycles, lifecycle, persistence, UI and export).');

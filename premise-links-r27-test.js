@@ -239,6 +239,33 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             'its own co-premise\'s link follows it too; a second paste is a copy, which takes nothing over', JSON.stringify(cut));
     }
 
+    console.log('\n-- (3b) search, replace, the Evaluations list, the export --');
+    {
+        const found = T(W, `__p.load();
+            const label = boxLinkLabel('22222222-2222-4222-8222-222222222222', 0);
+            document.getElementById('search-input').value = 'box'; executeSearch();
+            const markup = searchMatches.length;
+            document.getElementById('search-input').value = label; executeSearch();
+            const byLabel = searchMatches.map(m => m.id + '-' + m.idx);
+            document.getElementById('search-input').value = '22222222';
+            document.getElementById('replace-input').value = 'X'; replaceAllMatches();
+            const after = __p.node('22222222-2222-4222-8222-222222222222').texts[1];
+            document.getElementById('search-input').value = 'Poe'; document.getElementById('replace-input').value = 'Edgar'; replaceAllMatches();
+            const renamed = __p.node('22222222-2222-4222-8222-222222222222').texts[1];
+            closeSearch();
+            __p.load();
+            const n = __p.node('22222222-2222-4222-8222-222222222222'); n.statuses = [null, 'contested']; render();
+            const row = collectEvaluations().find(e => e.id === n.id && e.idx === 1);
+            const svg = buildExportSVG() || '';
+            return { markup, label, byLabel, after, renamed, row: row && row.nodeText, svgMarkup: svg.indexOf('#box:') >= 0 };`);
+        ok(found.markup === 0 && found.byLabel.includes('22222222-2222-4222-8222-222222222222-1'),
+            'search finds a link by the label it shows, and not by its markup ("box")', JSON.stringify(found));
+        ok(found.after === 'If [S1](#box:22222222), then Poe is black.' && found.renamed === 'If [S1](#box:22222222), then Edgar is black.',
+            'replace leaves a link\'s markup whole, and replaces the words around it', JSON.stringify(found));
+        ok(found.row === 'If ' + found.label + ', then Poe is black.' && !found.svgMarkup,
+            'the Evaluations list and the exported image show the link as its label', JSON.stringify(found));
+    }
+
     console.log('\n-- (4) the deductive check reads the box\'s words --');
     {
         const step = T(W, `__p.load();
@@ -266,10 +293,10 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             toggleClickToEdit();
             r.back = document.getElementById('click-edit-btn').textContent;
             return r;`);
-        ok(/^Editing: One click/.test(one.label) && one.stored === '1', 'the button says "Editing: One click" and the choice is kept', JSON.stringify(one));
+        ok(/^Edit: Single/.test(one.label) && one.stored === '1', 'the button says "Edit: Single" and the choice is kept', JSON.stringify(one));
         ok(one.editing === '33333333-3333-4333-8333-333333333333-0' && JSON.stringify(one.sel) === JSON.stringify(['33333333-3333-4333-8333-333333333333-0']),
             'with it on, a click on a box selects it and opens its text', JSON.stringify(one));
-        ok(one.shift === null && /^Editing: Double-click/.test(one.back), 'a Shift-click still only selects; clicking again goes back to Double-click', JSON.stringify(one));
+        ok(one.shift === null && /^Edit: Double/.test(one.back), 'a Shift-click still only selects; clicking again goes back to Double', JSON.stringify(one));
     }
 
     console.log('\n-- (6) Alt+Tab keeps the editor open --');

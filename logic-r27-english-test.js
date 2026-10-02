@@ -735,7 +735,7 @@ function reportCorpus(name, res) {
         ok(A && /“All ravens are not white” is ambiguous/.test(A.title) && /Read as “no ravens are white”, the step follows by universal modus ponens/.test(A.title),
             'its tooltip gives the readings, and the one the step would follow on, by its rule', A && A.title);
         ok(B && B.text === '? not recognized' && !/ambiguous/.test(B.title), 'an unrecognized step is not silently declared invalid', J(B));
-        ok(C && C.text === '? not recognized' && /“Most ravens are not white”: .*first-order/.test(C.title),
+        ok(C && C.text === '? not recognized' && /“Most ravens are not white”: the checker reads "every", "some" and "no", not "most"/.test(C.title),
             'an unread sentence ("most") is named in the tooltip of a step that does not derive', C && C.title);
         const rowA = (d.rows || []).find(r => r.step === 'A');
         ok(rowA && /\bambiguous\b/.test(rowA.cls) && rowA.mark === '?' && /ambiguous/.test(rowA.rule) && /Read as “no ravens are white”/.test(rowA.why || ''),
@@ -1091,7 +1091,7 @@ function reportCorpus(name, res) {
             var none = document.getElementById('btn-add-parent').disabled;
             return { look: look, after: after, onNote: onNote, none: none };`);
         ok(toolbar.look && /^Add Parent\s*Alt\+↑$/.test(toolbar.look.label) && toolbar.look.edge === 'var(--line-objection)' && toolbar.look.off === false &&
-           /takes the group's place/.test(toolbar.look.tip),
+           /Add a box above the selected group/.test(toolbar.look.tip),
             'the toolbar has Add Parent (Alt+↑), drawn as the box it makes: red above an objection', J(toolbar.look));
         ok(toolbar.after && toolbar.after[0].children[0].id === 'new' && toolbar.after[0].children[0].type === 'objection' &&
            toolbar.after[0].children[0].children[0].id === 'O' && toolbar.onNote === true && toolbar.none === true,
@@ -1226,7 +1226,7 @@ function reportCorpus(name, res) {
         ok(v.stepOnly && v.stepOnly.length === 0, 'checking single steps (Shift+K) gives no verdict: it needs every step', J(v.stepOnly));
         const e = one(v.established);
         ok(e.parent === 'group-M' && e.box === 'M-0' && /\bverdict-established\b/.test(e.cls || '') && e.text === '✓ Warranted' &&
-           /^Warranted relative to the map/.test(e.title || '') && /Click for every step\.$/.test(e.title || '') && /^-/.test(e.top || ''),
+           /^Warranted, given the map’s premises/.test(e.title || '') && /Click for every step\.$/.test(e.title || '') && /^-/.test(e.top || ''),
             'with K, the main contention gets a pill above its box: ✓ Warranted when a valid support stands, and its hover says why', J(v.established));
         ok(/\bverdict-unresolved\b/.test(one(v.unresolved).cls || '') && one(v.unresolved).text === '✗ Unwarranted' &&
            /\bverdict-refuted\b/.test(one(v.refuted).cls || '') && one(v.refuted).text === '✗ Unwarranted' && /its denial follows/.test(one(v.refuted).title || ''),
@@ -1247,17 +1247,18 @@ function reportCorpus(name, res) {
     {
         const h = W.dom.window.document.getElementById('help-panel');
         const text = h.textContent;
-        ok(text.includes('check one inference at a time') && text.includes('does not certify their truth'),
+        // r27.68: Help in plain words (the user: "concise, use plain language,
+        // and only explain what's essential").
+        ok(text.includes('to check each step') && text.includes("It doesn't say the premises are true"),
             'compact Help distinguishes inference validity from premise truth');
-        ok(text.includes('Not recognized') && text.includes('cannot certify the step'),
+        ok(text.includes('? not recognized') && text.includes("the checker can't confirm the step"),
             'Help explains an unrecognized step without declaring it invalid');
-        ok(text.includes('without establishing its opposite') && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
+        ok(text.includes("without saying it's false") && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
             'Help explains weak challenges and both warrant assessments');
         const rows = [...h.querySelectorAll('tr')].map(row => row.textContent);
-        ok(rows.some(r => r.includes('check selected step') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Derive a parent') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Add parent') && r.includes('Alt+↑')),
-            'Help keeps check, derive and parent shortcuts in its compact table');
+        ok(rows.some(r => r.includes('check one step') && r.includes('Shift+K')) &&
+           rows.some(r => r.includes('Add a parent') && r.includes('Alt+↑')),
+            'Help keeps the check and parent shortcuts in its compact table');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

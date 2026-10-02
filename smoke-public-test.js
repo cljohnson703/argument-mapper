@@ -70,7 +70,7 @@ function makeWin(label) {
     // These are the exact global names the static HTML and generated markup
     // call via onclick=""; if the mangle renamed them, they'd be undefined.
     const handlerNames = ['addChild', 'addCoPremise', 'changeSelectedTypes', 'cycleEvaluation',
-        'toggleImplicit', 'cutNode', 'copyNode', 'pasteNode', 'saveMap', 'manualLocalSave',
+        'toggleImplicit', 'cutNode', 'copyNode', 'pasteNode', 'saveMap', 'saveMapAs', 'toggleClickToEdit',
         'newMap', 'openStringMode', 'applyStringMode', 'toggleHelp', 'toggleCollabPanel',
         'closeCollabPanel', 'toggleEvalOverview', 'recenter', 'loadMap', 'openMapFile', 'addNote', 'importTextFile',
         'toggleReviewMode', 'togglePresentMode', 'deleteSelected', 'toggleFreePlacement'];

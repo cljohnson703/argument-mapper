@@ -356,7 +356,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
        ================================================================ */
     console.log('\n-- documentation --');
     {
-        ok(/Add co-premise right \/ left<\/td><td><kbd>Tab<\/kbd> \/ <kbd>Shift\+Tab<\/kbd>/.test(HTML),
+        ok(/Add a co-premise on the right \/ left<\/td><td><kbd>Tab<\/kbd> \/ <kbd>Shift\+Tab<\/kbd>/.test(HTML),
             'Help lists Shift+Tab as co-premise on the left');
     }
 

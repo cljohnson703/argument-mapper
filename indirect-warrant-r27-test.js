@@ -18,7 +18,7 @@ try{const count=dom.window.eval(`(()=>{
    'a rebuttal of a bare denial has nothing to rebut, and proves nothing for the contention');}
  let f=fixture(),r=read(f);check(r.main.status==='established','successful rebuttal establishes main contention');
  check(r.main.supports.some(s=>s.indirectKind==='rebuttal'),'warrant records indirect proof');
- check(claimVerdictWhy(r.v,r.main).includes('successful rebuttal that establishes this contention'),'explanation identifies the actual supporting inference');
+ check(claimVerdictWhy(r.v,r.main).includes('through a successful rebuttal'),'explanation identifies the actual supporting inference');
  check(r.steps.find(s=>s.childId==='R').rule.id==='modus-ponens','original one-step inference retained');
  f=fixture();f.ob.texts=['If Q, then not P','Q'];f.ob.children=[f.reb];f.reb.texts=['If T, then not Q','T'];f.reb.targetIndex=1;
  check(read(f).main.status!=='established','premise-only rebuttal supplies no proof of main contention');

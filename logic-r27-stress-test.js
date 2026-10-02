@@ -1154,22 +1154,22 @@ const V_UNSOUND = "The argument from 'If the universe is caused, then God exists
 const VERDICT_CASES = [
     ['a valid support', [V_tree('M', [VC.C], [V_S()])], 'established', 'give it by modus ponens'],
     ['a valid support and an open, valid objection', [V_tree('M', [VC.C], [V_S(), V_O()])], 'unresolved', 'give its denial by modus ponens'],
-    ['an open, valid objection alone', [V_tree('M', [VC.C], [V_O()])], 'refuted', 'No valid support stands'],
-    ['the objection rebutted, with a support', [V_tree('M', [VC.C], [V_S(), Object.assign(V_O(), { children: [V_at(V_R('R', 'Evil does not exist'), 1)] })])], 'established', 'Nothing open and valid stands against it'],
-    ['the objection weakly rebutted, with no support', [V_tree('M', [VC.C], [Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'has an open, valid weak rebuttal'],
-    ['the objection weakly rebutted, with a support', [V_tree('M', [VC.C], [V_S(), Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'challenge remains unsettled'],
-    ['a support and an open, valid weak objection', [V_tree('M', [VC.C], [V_S(), V_W('W', 'It has not been shown that God exists')])], 'unresolved', 'says it has not been established'],
+    ['an open, valid objection alone', [V_tree('M', [VC.C], [V_O()])], 'refuted', 'no support stands'],
+    ['the objection rebutted, with a support', [V_tree('M', [VC.C], [V_S(), Object.assign(V_O(), { children: [V_at(V_R('R', 'Evil does not exist'), 1)] })])], 'established', 'Nothing that stands is against it'],
+    ['the objection weakly rebutted, with no support', [V_tree('M', [VC.C], [Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'faces a weak rebuttal that stands'],
+    ['the objection weakly rebutted, with a support', [V_tree('M', [VC.C], [V_S(), Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'challenge is unsettled'],
+    ['a support and an open, valid weak objection', [V_tree('M', [VC.C], [V_S(), V_W('W', 'It has not been shown that God exists')])], 'unresolved', 'says it hasn’t been shown'],
     ['a support whose premise is weakly objected to', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })])], 'unestablished', 'we can’t conclude that ‘God exists’ from'],
-    ['a support whose premise is refuted', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_R('R', 'The universe is not caused'), 1)] })])], 'unestablished', 'is refuted by an open, valid objection'],
-    ['a support whose step is not certified', [V_tree('M', [VC.C], [{ id: 'S', type: 'support', texts: ['The universe is caused'], collapsed: [], children: [] }])], 'unestablished', 'is not certified'],
+    ['a support whose premise is refuted', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_R('R', 'The universe is not caused'), 1)] })])], 'unestablished', 'is refuted by an objection that stands'],
+    ['a support whose step is not certified', [V_tree('M', [VC.C], [{ id: 'S', type: 'support', texts: ['The universe is caused'], collapsed: [], children: [] }])], 'unestablished', 'isn’t confirmed'],
     ['an objection and a weak objection', [V_tree('M', [VC.C], [V_O(), V_W('W', 'It has not been shown that God exists')])], 'refuted', 'its denial follows'],
     ['a premise objected to, and that objection rebutted', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at({ id: 'PO', type: 'objection', texts: ['If the universe is eternal, then the universe is not caused', 'The universe is eternal'], collapsed: [], children: [V_at(V_R('PR', 'The universe is not eternal'), 1)] }, 1)] })])], 'established', 'give it by modus ponens'],
-    ['a claim about one argument, which the map undercuts', [V_tree('M', [V_REL], []), V_tree('T', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })], 'support')], 'established', 'is undercut'],
-    ['a claim about one argument, which the map does not undercut', [V_tree('M', [V_REL], []), V_tree('T', [VC.C], [V_S()], 'support')], 'unestablished', 'that anything open and valid undercuts'],
+    ['a claim about one argument, which the map undercuts', [V_tree('M', [V_REL], []), V_tree('T', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })], 'support')], 'established', 'fails on the map'],
+    ['a claim about one argument, which the map does not undercut', [V_tree('M', [V_REL], []), V_tree('T', [VC.C], [V_S()], 'support')], 'unestablished', 'on the map fails'],
     ['a claim about one argument, argued for below it', [V_tree('M', [V_REL], [{ id: 'A', type: 'support', texts: ['It has not been shown that the universe is caused'], collapsed: [], children: [] }])], 'established', 'by a premise not established'],
     ['an unsound argument, a premise refuted on the map', [V_tree('M', [V_UNSOUND], []), V_tree('T', [VC.C], [Object.assign(V_S(), { children: [V_at(V_R('R', 'The universe is not caused'), 1)] })], 'support')], 'established', 'is refuted'],
     ['an unsound argument, a premise only weakly objected to', [V_tree('M', [V_UNSOUND], []), V_tree('T', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })], 'support')], 'unestablished', ''],
-    ['a claim about an objection, weakly rebutted on the map', [V_tree('M', ["We can't conclude that God does not exist from 'If evil exists, then God does not exist' and 'Evil exists'"], []), V_tree('T', [VC.C], [Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })], 'support')], 'established', 'has an open, valid weak rebuttal'],
+    ['a claim about an objection, weakly rebutted on the map', [V_tree('M', ["We can't conclude that God does not exist from 'If evil exists, then God does not exist' and 'Evil exists'"], []), V_tree('T', [VC.C], [Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })], 'support')], 'established', 'faces a weak rebuttal that stands'],
     ['no arguments at all', [V_tree('M', [VC.C], [])], 'asserted', '']
 ];
 
@@ -1422,17 +1422,18 @@ window.__stress = (function () {
     {
         const h = W.dom.window.document.getElementById('help-panel');
         const text = h.textContent;
-        ok(text.includes('check one inference at a time') && text.includes('does not certify their truth'),
+        // r27.68: Help in plain words (the user: "concise, use plain language,
+        // and only explain what's essential").
+        ok(text.includes('to check each step') && text.includes("It doesn't say the premises are true"),
             'compact Help distinguishes inference validity from premise truth');
-        ok(text.includes('Not recognized') && text.includes('cannot certify the step'),
+        ok(text.includes('? not recognized') && text.includes("the checker can't confirm the step"),
             'Help explains an unrecognized step without declaring it invalid');
-        ok(text.includes('without establishing its opposite') && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
+        ok(text.includes("without saying it's false") && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
             'Help explains weak challenges and both warrant assessments');
         const rows = [...h.querySelectorAll('tr')].map(row => row.textContent);
-        ok(rows.some(r => r.includes('check selected step') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Derive a parent') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Add parent') && r.includes('Alt+↑')),
-            'Help keeps check, derive and parent shortcuts in its compact table');
+        ok(rows.some(r => r.includes('check one step') && r.includes('Shift+K')) &&
+           rows.some(r => r.includes('Add a parent') && r.includes('Alt+↑')),
+            'Help keeps the check and parent shortcuts in its compact table');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

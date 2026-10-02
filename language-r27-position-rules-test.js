@@ -104,7 +104,7 @@ try {
         const verdict = claimMapVerdict([root],steps), v = verdict('M',0);
         return {rule:steps[0].rule?.id,label:VERDICT_LABEL[v.status],why:claimVerdictWhy(verdict,v)};
     }`);
-    check(explosionMap.rule === 'explosion' && explosionMap.label === '✗ Unwarranted' && explosionMap.why.includes('contradictory'), 'valid explosion is not warranted: '+JSON.stringify(explosionMap));
+    check(explosionMap.rule === 'explosion' && explosionMap.label === '✗ Unwarranted' && explosionMap.why.includes('contradict one another'), 'valid explosion is not warranted: '+JSON.stringify(explosionMap));
     // Exhaustive truth-table oracle over all pairs of two-literal clauses.
     // It evaluates the original strings independently of the parser.
     const literals = ['P','not P','Q','not Q','R','not R'];

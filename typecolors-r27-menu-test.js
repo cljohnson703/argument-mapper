@@ -188,16 +188,16 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         const red = 'var(--line-objection)', orange = 'var(--line-rebuttal)', white = 'var(--color-line)';
         const g = (k) => t[k] || {};
         const box = (k, edge, style) => g(k).bg === 'var(--node-bg)' && g(k).text === 'var(--text-color)' && g(k).edge === edge && g(k).style === style;
-        ok(box('S1', white, 'solid') && /It joins the main argument/.test(g('S1').tip) && box('none', white, 'solid'),
+        ok(box('S1', white, 'solid') && /Add a co-premise beside the selected box \(Tab; Shift\+Tab for the left\)/.test(g('S1').tip) && box('none', white, 'solid'),
             'drawn as a plain box for the main argument, and with nothing selected', J([g('S1'), g('none')]));
-        ok(box('O1', red, 'solid') && /It joins an objection, so it is red/.test(g('O1').tip),
-            'red-bordered with an objection selected, and the tooltip says why', J(g('O1')));
+        ok(box('O1', red, 'solid') && /Add a co-premise beside the selected box \(Tab; Shift\+Tab for the left\)/.test(g('O1').tip),
+            'red-bordered with an objection selected (r27.68: the tip says what it does; the color shows the rest)', J(g('O1')));
         ok(box('R1', orange, 'solid') && box('RS', orange, 'solid'), 'orange for a rebuttal and a support inside it', J([g('R1'), g('RS')]));
-        ok(box('B1', red, 'dashed') && box('BS', red, 'dashed') && /weak objection/.test(g('BS').tip),
+        ok(box('B1', red, 'dashed') && box('BS', red, 'dashed') && /Add a co-premise beside the selected box \(Tab; Shift\+Tab for the left\)/.test(g('BS').tip),
             'red and dashed inside a weak objection', J([g('B1'), g('BS')]));
-        ok(g('NT').bg === 'var(--note-bg)' && g('NT').text === 'var(--note-text)' && g('NT').edge === 'var(--line-note)' && /a note, like the box/.test(g('NT').tip),
+        ok(g('NT').bg === 'var(--note-bg)' && g('NT').text === 'var(--note-text)' && g('NT').edge === 'var(--line-note)' && /Add a co-premise beside the selected box \(Tab; Shift\+Tab for the left\)/.test(g('NT').tip),
             "a note's own colors for a note", J(g('NT')));
-        ok(box('FS', white, 'solid') && /Tab adds it on the right, Shift\+Tab on the left/.test(g('FS').tip),
+        ok(box('FS', white, 'solid') && /Add a co-premise beside the selected box \(Tab; Shift\+Tab for the left\)/.test(g('FS').tip),
             'a plain box for a separate support', J(g('FS')));
     }
 
@@ -211,6 +211,17 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
             placement: document.getElementById('placement-btn').classList.contains('node-look') };`);
         ok(Array.isArray(cls.look) && cls.look.every(Boolean) && cls.placement === false,
             'every Add Nodes and Change Type button that makes or marks a box is drawn as one; Placement is not', J(cls));
+        // r27.66 (the user, 2026-09-30): "place the Implicit button where the
+        // Note button is and have Main, Given, and Note be on the last row of
+        // Change Type together in that order from left to right".
+        const order = T(W, `var g = document.getElementById('group-change-type'), row = g.querySelector('.type-last-row');
+            return { ids: Array.prototype.slice.call(g.querySelectorAll('button')).map(function (b) { return b.id; }),
+                     row: row ? Array.prototype.slice.call(row.children).map(function (b) { return b.id; }) : null };`);
+        ok(J(order.ids) === J(['btn-type-sup', 'btn-type-obj', 'btn-type-weak', 'btn-implicit', 'btn-main', 'btn-given', 'btn-type-note']) &&
+            J(order.row) === J(['btn-main', 'btn-given', 'btn-type-note']) &&
+            /\.type-last-row\s*\{\s*display:\s*contents;?\s*\}/.test(CSS) && /body\.toolbar-left \.type-last-row\s*\{\s*display:\s*flex;\s*flex:\s*0 0 100%/.test(CSS) &&
+            /#btn-main\s*\{\s*margin:\s*0 3px;?\s*\}/.test(CSS),
+            'Change Type: Support, Objection, Weak Objection, Implicit, then Main, Given and Note, a row of their own in the side toolbar; Main\'s ring clear of its neighbors (r27.66)', J(order));
         ok(/body\.bg-light #toolbar \.toolbar-group button\.node-look:hover\s*\{\s*background:\s*var\(--look-bg, var\(--node-bg\)\);\s*color:\s*var\(--look-text, var\(--text-color\)\);\s*border:\s*2\.5px var\(--look-style, solid\) var\(--look-edge, var\(--color-line\)\)/.test(CSS),
             'the look: the box background, the node text color and a 2.5px canvas-colored border, in both themes and on hover');
         ok(/#toolbar \.toolbar-group button\.node-look\s*\{\s*padding:\s*4\.5px 10\.5px/.test(CSS), 'the thicker border is paid for with 1.5px less padding, so buttons keep their size');

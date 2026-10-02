@@ -397,7 +397,7 @@ const MAP = [
             'an unsound argument', 'a rule under a quantifier'];
         // The optional ones, kept apart: double-negation replacement and its
         // "anywhere" partner, the zero-premise shortcuts, and the catch-alls.
-        const OPTIONAL = ['double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+        const OPTIONAL = ['meaning of \u2018-able\u2019', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
             'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
             'instances up to the replacements'];
         const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);
@@ -658,17 +658,18 @@ const MAP = [
     {
         const h = W.dom.window.document.getElementById('help-panel');
         const text = h.textContent;
-        ok(text.includes('check one inference at a time') && text.includes('does not certify their truth'),
+        // r27.68: Help in plain words (the user: "concise, use plain language,
+        // and only explain what's essential").
+        ok(text.includes('to check each step') && text.includes("It doesn't say the premises are true"),
             'compact Help distinguishes inference validity from premise truth');
-        ok(text.includes('Not recognized') && text.includes('cannot certify the step'),
+        ok(text.includes('? not recognized') && text.includes("the checker can't confirm the step"),
             'Help explains an unrecognized step without declaring it invalid');
-        ok(text.includes('without establishing its opposite') && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
+        ok(text.includes("without saying it's false") && text.includes('✓ Warranted') && text.includes('✗ Unwarranted'),
             'Help explains weak challenges and both warrant assessments');
         const rows = [...h.querySelectorAll('tr')].map(row => row.textContent);
-        ok(rows.some(r => r.includes('check selected step') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Derive a parent') && r.includes('Shift+K')) &&
-           rows.some(r => r.includes('Add parent') && r.includes('Alt+↑')),
-            'Help keeps check, derive and parent shortcuts in its compact table');
+        ok(rows.some(r => r.includes('check one step') && r.includes('Shift+K')) &&
+           rows.some(r => r.includes('Add a parent') && r.includes('Alt+↑')),
+            'Help keeps the check and parent shortcuts in its compact table');
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

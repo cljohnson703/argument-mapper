@@ -74,8 +74,8 @@ try {
     console.log('\n-- the basis and its extensions --');
     {
         const groups = ev('return DEDUCTIVE_EXTENSIONS.map(function (g) { return g.id + ":" + g.on; });');
-        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'negations:false', 'instances:false', 'catchall:false']),
-            'nine groups of extensions; the core steps and the familiar ones on by default, negations anywhere, extra rule instances and the catch-alls off', J(groups));
+        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'negations:false', 'instances:false', 'catchall:false']),
+            'ten groups of extensions; the core steps, the familiar ones and the "-able" word meaning (r27.65) on by default, negations anywhere, extra rule instances and the catch-alls off', J(groups));
         const basisSet = ev('return [DEDUCTIVE_BASIS.has("modus-ponens"), DEDUCTIVE_AXIOMS.length, ["and-elim", "hypothetical-syllogism", "exportation", "quantifier-distribution", "null-quantification", "reductio", "universal-elimination", "existential-introduction", "existential-elimination"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && DEDUCTIVE_CORE.indexOf(id) >= 0; })];');
         const shared = ev('return DEDUCTIVE_EXTENSIONS.some(function (g) { return g.rules.some(function (id) { return DEDUCTIVE_BASIS.has(id); }); });');
         ok(basisSet[0] && basisSet[1] === 13 && basisSet[2] && !shared,
@@ -360,7 +360,8 @@ try {
         ok(normed('Bob praised her') === 'bob praised her' && normed('Poe wrote a poem about her') === 'poe wrote a poem about her' &&
             normed('Mary left because the dog bit her') === 'mary left because the dog bit mary',
             'an object pronoun in the name\'s own clause is somebody else -- English would say "herself" -- but across a clause it is the name');
-        ok(normed('Mary is tired. Her work is done') === "mary is tired. mary's work is done" && normed('Mary hurt herself') === 'mary hurt herself',
+        // r27.67: two sentences are joined as a semicolon joins them (", and").
+        ok(normed('Mary is tired. Her work is done') === "mary is tired, and mary's work is done" && normed('Mary hurt herself') === 'mary hurt herself',
             'a capitalized pronoun is no second name, and "herself" is not "her"');
         ok(normed("Mary's car stalled and she ran") === "mary's car stalled and mary ran" &&
             normed('The storm hit Mary and then it hit her again') === 'the storm hit mary and then it hit mary again' &&
@@ -429,7 +430,7 @@ try {
         const hugeBox = Array.from({ length: 150 }, (_, k) => 'if P' + k + ' then Q' + k).join(' and ');
         const cnf40 = Array.from({ length: 40 }, (_, k) => '(P' + k + ' \u2228 \u00acQ' + k + ' \u2228 R' + k + ')').join(' \u2227 ');
         const chain = n => Array.from({ length: n }, (_, k) => 'if P' + k + ' then Q' + k).join(' and ');
-        ok(ev('var f = parseClaim(' + J(hugeBox) + '); return f.kind === "atom" && claimNotes(' + J(hugeBox) + ').some(function (n) { return /too long for the check to take apart/.test(n.message); });') &&
+        ok(ev('var f = parseClaim(' + J(hugeBox) + '); return f.kind === "atom" && claimNotes(' + J(hugeBox) + ').some(function (n) { return /too long to take apart/.test(n.message); });') &&
             ev('var f = parseClaim(' + J(cnf40) + '); return f.kind !== "atom" && claimFormSize(f, 1000) < CLAIM_PARTS_LIMIT;'),
             'a box with hundreds of parts is read as one claim, and says so; a forty-clause formula is still taken apart');
         ok(ev('var f = parseClaim(' + J(chain(12)) + '); return f.kind === "and" && f.parts.length === 12 && f.parts.every(function (p) { return p.kind === "if"; });') &&
@@ -536,7 +537,7 @@ try {
             fol('Bob sings iff (i) Mary dances, (ii) Ann runs, or (iii) Tom walks') === fol('Bob sings iff Mary dances or Ann runs or Tom walks') &&
             fol('(a) Bob sings and (b) Mary dances') === fol('Bob sings and Mary dances'),
             'a numbered list is one list where its numbering begins: after "iff", after "then", as the whole box, or as a condition ending at "then"; (i) and (a) number too');
-        ok(ev('var t = "(1) and (2) entail (3)"; return parseClaim(t).kind === "atom" && claimNotes(t).some(function (n) { return /refer to other claims/.test(n.message); });') &&
+        ok(ev('var t = "(1) and (2) entail (3)"; return parseClaim(t).kind === "atom" && claimNotes(t).some(function (n) { return /point to other claims/.test(n.message); });') &&
             ev('return parseClaim("Premise (1) is false").kind === "atom";'),
             'numbers in brackets that make no list refer to other claims: one claim, noted (it had given "(2) entail (3)")');
         ok(ev('var t = "If Bob sings, then Mary dances, Ann runs, and Tom walks", n = parseClaimFull(t).notes.filter(function (x) { return x.kind === "ambiguous"; })[0];' +
@@ -789,8 +790,8 @@ try {
             return { groups: b.querySelectorAll('.logic-group-row').length, symbols: [].map.call(b.querySelectorAll('.logic-sym'), function (x) { return x.textContent; }).join(''),
                 options: [].map.call(document.querySelectorAll('#eval-logic-base option'), function (o) { return o.textContent + (o.disabled ? '-' : '+'); }),
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
-        ok(built.groups === 9 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-', 'Modal (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (others later), the eight axiom schemas, nine groups of steps', J(built));
+        ok(built.groups === 10 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-', 'Modal (later)-']),
+            'at the bottom of the Evaluation Overview: Standard (others later), the eight axiom schemas, ten groups of steps', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         ok(built.rules === want && built.lists === 7, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want);
         // A map with a modus tollens step.
@@ -850,7 +851,7 @@ try {
         // nouns of both numbers are no slips.
         const slip = tagOf(['Conscious mental occurrences causes physical effects E', 'If conscious mental occurrences cause physical effects E, then dualism is true'], 'Dualism is true');
         const slips = t => ev('return claimAgreementSlips(' + J(t) + ').map(function (x) { return x.fixes; });');
-        ok(slip[0] === '? grammar' && /slip of agreement/.test(slip[1]) && /Conscious mental occurrences cause physical effects E/.test(slip[1]) &&
+        ok(slip[0] === '? grammar' && /grammar slip/.test(slip[1]) && /Conscious mental occurrences cause physical effects E/.test(slip[1]) &&
             /A conscious mental occurrence causes physical effects E/.test(slip[1]),
             'a slip of agreement ("occurrences causes") is not passed over: the step asks, offering the verb or the noun made to agree', J(slip));
         ok(['Socrates is mortal.', 'Descartes was not a materialist.', 'Alice sings and Bob dances.', 'Everything that flies is a bird.',
@@ -1280,7 +1281,7 @@ try {
         // that shows no number, is a name; a plural of a known noun is still a generic.
         ok(said('James left.').notes.length === 0 && key('James left.').replace(/\uE000/g, '') === 'P:james|~did left' &&
             said('Socrates will die.').notes.length === 0 && said('Descartes doubted.').notes.length === 0 &&
-            said('Ravens left.').notes.some(n => /"ravens" without "all" is a generic/.test(n)),
+            said('Ravens left.').notes.some(n => /"ravens" may mean all of them, some, most, or what holds in general/.test(n)),
             '"James left", "Socrates will die", "Descartes doubted" ask nothing; "Ravens left" is asked about as a generic');
         // r27.57: "A and then B" (the user: "Should it? I don't get the concern") gives
         // A, B and "A and B"; it says the order besides, so neither "A and B" nor A
@@ -1357,7 +1358,9 @@ try {
             plain('Mary left, cried, and then laughed.') === 'T[C[P:mary|~did left;P:mary|~did cried];P:mary|~did laughed]' &&
             plain('Mary left, cried, and laughed.') === 'C[P:mary|~did left;P:mary|~did cried;P:mary|~did laughed]' &&
             plain('Mary left and cried, and laughed.') === 'C[P:mary|~did left;P:mary|~did cried;P:mary|~did laughed]' &&
-            plain('Mary washed and dried the dishes.') === 'P:mary|~did washed and dried the dishes' &&
+            // r27.64: asked -- the dishes washed too, or "washed" alone (the user,
+            // 2026-09-30: "It's still technically ambiguous").
+            plain('Mary washed and dried the dishes.') === 'A:mary washed and dried the dishes' &&
             tagOf(['Mary left and then cried and laughed.'], 'Mary cried and laughed.') === '✓ conjunction elimination' &&
             tagOf(['Mary left and then cried and laughed.'], 'Mary left.') === '✓ conjunction elimination',
             '"Mary left and then cried and laughed": the crying and laughing after the leaving; verb lists with commas are three verbs, not "left cried" or a subject "and"');

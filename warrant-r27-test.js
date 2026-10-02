@@ -213,7 +213,7 @@ try {
     check(results.restored.status === 'refuted', 'rebutting the weak rebuttal restores the argument');
     for (const name of ['accepted', 'challenged', 'restored', 'reordered']) check(results[name].rule === 'modus ponens', name + ': inference stays valid');
     for (const name of ['extra', 'missing', 'changed', 'wrongDirection']) check(!results[name].target && !results[name].rule, name + ': no misleading warrant certificate');
-    check(/leaves the conclusion open/.test(results.tag), 'tag separates inference and warrant: ' + results.tag);
+    check(/another argument still might/.test(results.tag), 'tag separates inference and warrant: ' + results.tag);
     check(!/∴ not:/.test(results.row) && /∴consciousness is non-physical/.test(results.row), 'list shows the actual derived conclusion');
     const negative = [
         `The premises ${q} do not entail that ${C}.`,

@@ -237,7 +237,7 @@ const run = async (W, body) => JSON.parse(await W.win.eval(`(async function () {
             window.showOpenFilePicker = picker;
             return { canceled: canceled, bad: bad, blocked: blocked, none: none };`);
         ok(c.canceled && c.canceled.same && c.canceled.alerts === 0, 'canceling the picker changes nothing and says nothing', J(c.canceled));
-        ok(c.bad && c.bad.same && J(c.bad.alerts) === J(['Failed to parse JSON file.']), 'a file that is not a map is refused with a message, and the link is kept', J(c.bad));
+        ok(c.bad && c.bad.same && J(c.bad.alerts) === J(["That file isn't a map this app can open."]), 'a file that is not a map is refused with a message, and the link is kept', J(c.bad));
         ok(c.blocked && c.blocked.clicks === 1 && c.blocked.same, 'a picker the page may not use falls back to the file input', J(c.blocked));
         ok(c.none && c.none.clicks === 2, 'and with no picker at all (Firefox, Safari) Open File is the file input', J(c.none));
     }

@@ -82,12 +82,12 @@ try {
     assert.equal(result.unchallenged.status, 'refuted');
     assert.equal(result.bare.status, 'asserted');
     assert.equal(result.supportedWeakDefense.label, '✗ Unwarranted');
-    assert.match(result.supportedWeakDefense.why, /challenge remains unsettled/);
+    assert.match(result.supportedWeakDefense.why, /challenge is unsettled/);
     assert.equal(result.supportedStrongDefense.label, '✓ Warranted');
     assert.equal(result.qualifiedWeakDefense.label, '✓ Warranted');
     assert.equal(result.qualifiedWeakDefense.rules.find(([id]) => id === 'O')[1], 'modus ponens');
-    assert.match(result.conflict.why, /conflicting arguments/);
-    assert.match(result.weaklyRebutted.why, /no surviving support for the contention/);
+    assert.match(result.conflict.why, /arguments conflict/);
+    assert.match(result.weaklyRebutted.why, /Nothing on the map supports it/);
     assert.equal(result.mixed, '↗ Note · Premise');
     assert.equal(result.rows[0], 'Note · A note');
     assert.match(result.rows[1], /^↗ Zombies/);

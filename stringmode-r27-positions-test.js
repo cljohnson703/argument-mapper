@@ -214,7 +214,7 @@ function fixture(mx, my, plain) {
     console.log('\n-- Help --');
     {
         const h = W.win.eval(`document.getElementById('help-panel').innerHTML`);
-        ok(/<strong>String Mode<\/strong> to edit the map as structured text/.test(h),
+        ok(/<strong>String Mode<\/strong> edits the map as text/.test(h),
             'compact Help explains String Mode');
     }
 

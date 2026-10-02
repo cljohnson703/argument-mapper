@@ -104,10 +104,10 @@ try {
     assert.equal(result.unsettledSupport.status,'unresolved','Unsettled positive support is not silently discarded to infer a decisive refutation');
     assert.equal(result.invalid.status,'established');
     assert.ok(result.invalid.steps.find(st=>st.id==='BAD').counterexample);
-    assert.match(result.unknown.why,/needs clarification/);
+    assert.match(result.unknown.why,/isn’t settled/);
     assert.equal(result.qualifiedGrounded.status,'established');
     assert.equal(result.qualifiedInvalid.status,'established');
-    assert.match(result.qualifiedInvalid.why,/counterexample establishing invalidity/);
+    assert.match(result.qualifiedInvalid.why,/shown invalid by a counterexample/);
     assert.equal(result.multiStep.steps[0].rule,undefined);
     assert.equal(result.multiStep.steps[0].counterexample,null);
     assert.equal(result.multiStep.status,'unestablished');
@@ -115,7 +115,7 @@ try {
     assert.equal(result.counterexamples.affirming.q,true);
     for(const name of ['modusPonens','quantified','tooLarge']) assert.equal(result.counterexamples[name],null,name);
     assert.equal(result.invalidUI.text,'✗ invalid');
-    assert.match(result.invalidUI.title,/Every premise is true/);
+    assert.match(result.invalidUI.title,/every premise is true and the conclusion false/);
     assert.equal(result.invalidUI.svg,true);
     for(const c of result.chains) assert.equal(c.actual,c.expected,JSON.stringify(c));
     assert.deepEqual(errors,[]);

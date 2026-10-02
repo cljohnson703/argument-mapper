@@ -132,7 +132,7 @@ try {
         ok(key('Poe is a black and white raven.') === 'C[P:poe|=black;P:poe|=raven;P:poe|=white]' && key('Ravens are black and noisy birds.') === 'C[P:ravens|=black;P:ravens|=bird;P:ravens|=noisy bird]' &&
            key('Poe is a philosopher and poet.') === 'C[P:poe|=philosopher;P:poe|=poet]', 'adjectives joined before one noun say it once; nouns joined stay two', key('Ravens are black and noisy birds.'));
         const generic = step(['All black ravens fly.'], 'Black ravens fly.'), g2 = step(['Black ravens fly.', 'Poe is a black raven.'], 'Poe flies.');
-        ok(!g2.rule && g2.ambiguous && /without "all" is a generic/.test(g2.why), 'a plural with adjectives is a generic, flagged as "ravens fly" is', g2.why);
+        ok(!g2.rule && g2.ambiguous && /may mean all of them, some, most, or what holds in general/.test(g2.why), 'a plural with adjectives is a generic, flagged as "ravens fly" is', g2.why);
     }
 
     console.log('\n-- soundness --');

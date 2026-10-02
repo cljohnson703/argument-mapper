@@ -116,6 +116,8 @@ const MAP = [{
                 win.showSaveFilePicker = function (opts) {
                     win.__picked.push(opts);
                     return Promise.resolve({
+                        name: 'My Great Map.json',
+                        queryPermission: () => Promise.resolve('granted'),
                         createWritable: () => Promise.resolve({
                             write: (b) => { win.__wrote = b; return Promise.resolve(); },
                             close: () => Promise.resolve()
@@ -129,8 +131,7 @@ const MAP = [{
             (function () {
                 __argmap.state.trees = ${JSON.stringify(MAP)};
                 __argmap.state.name = 'My Great Map!';
-                return saveBlobAs(new Blob(['x'], { type: 'application/json' }),
-                    exportBaseName() + '.json', 'Argument map (JSON)', 'application/json', '.json')
+                return saveMapAs(true)
                     .then(function (res) {
                         return JSON.stringify({
                             res: res,
@@ -164,12 +165,12 @@ const MAP = [{
         const out = await C.win.eval(`
             (function () {
                 var before = lastSaveTime;
-                return saveBlobAs(new Blob(['x']), 'X.json', 'j', 'application/json', '.json')
+                return saveMapAs(true)
                     .then(function (res) { return JSON.stringify({ res: res, sameTime: before === lastSaveTime }); });
             })();
         `);
         const o = JSON.parse(out);
-        ok(o.res.saved === false, 'save as: canceling reports saved:false', JSON.stringify(o.res));
+        ok(o.res.saved === false && o.sameTime, 'save as: canceling reports saved:false, and "Last Saved" stays', JSON.stringify(o));
 
         // And through saveMap(), "Last Saved" must not move on a cancel.
         const t = await C.win.eval(`
@@ -196,7 +197,7 @@ const MAP = [{
                     if (String(tag).toLowerCase() === 'a') { el.click = function () { clicked++; }; }
                     return el;
                 };
-                return saveBlobAs(new Blob(['x']), 'Y.json', 'j', 'application/json', '.json')
+                return saveMapAs(true)
                     .then(function (res) {
                         document.createElement = origCreate;
                         return JSON.stringify({ res: res, clicked: clicked });

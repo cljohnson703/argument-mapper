@@ -137,21 +137,26 @@ const J = JSON.stringify;
             var file = nb && nb.closest('.toolbar-group');
             var next = nb && nb.nextElementSibling;
             var exportGroup = Array.prototype.slice.call(document.querySelectorAll('#extra-toolbar .toolbar-group')).find(function (g) {
-                return /Export \\/ Import/.test((g.querySelector('.toolbar-group-label') || {}).textContent || ''); });
-            return { kids: kids, inAddNodes: inAddNodes, fileLabel: file && (file.querySelector('.toolbar-group-label') || {}).textContent,
+                return /Import \\/ Options/.test((g.querySelector('.toolbar-group-label') || {}).textContent || ''); });
+            var pb = document.getElementById('placement-btn'), pair = pb && pb.parentElement;
+            return { kids: kids, inAddNodes: inAddNodes, inView: !!(pb && pb.closest('#group-view')),
+                     pair: pair && pair.className, pairKids: pair ? Array.prototype.slice.call(pair.children).map(function (el) { return el.id; }) : null,
+                     exportGroup: !!exportGroup, fileLabel: file && (file.querySelector('.toolbar-group-label') || {}).textContent,
                      newText: nb && nb.textContent.trim(), nextIsOpen: !!(next && /Open…/.test(next.textContent)),
                      onclick: nb && nb.getAttribute('onclick'),
                      exportHasNew: !!(exportGroup && Array.prototype.slice.call(exportGroup.querySelectorAll('button')).some(function (b) { return b.textContent.trim() === 'New'; })),
                      newButtons: Array.prototype.slice.call(document.querySelectorAll('button[onclick="newMap()"]')).length };`);
         const kids = tb.kids || [];
-        ok(kids.indexOf('btn-main') >= 0 && kids[kids.indexOf('btn-main') + 1] === 'placement-btn' && tb.inAddNodes === false,
-            'the Placement button sits right after Main in Change Type, and is gone from Add Nodes', J(tb));
+        // r27.65 (the user, 2026-09-30): beside Edit in View, the two side by side.
+        ok(kids.indexOf('placement-btn') < 0 && tb.inAddNodes === false && tb.inView && tb.pair === 'edit-place-pair' && J(tb.pairKids) === J(['click-edit-btn', 'placement-btn']),
+            'the Place button sits beside Edit in View, the two a pair; it is gone from Change Type and Add Nodes', J(tb));
         const css = HTML.slice(0, HTML.indexOf('</style>'));
-        ok(/body\.toolbar-left #placement-btn \.hotkey\s*\{\s*display:\s*none/.test(css) && !/#placement-btn \.hotkey\s*\{\s*display:\s*none/.test(css.replace(/body\.toolbar-left #placement-btn \.hotkey/g, '')),
-            'only the side toolbar drops its Shift+F badge, so it fits beside Main; the top toolbar keeps it');
+        ok(/body\.toolbar-left \.edit-place-pair \.hotkey\s*\{\s*display:\s*none/.test(css) && /body\.toolbar-left \.edit-place-pair button\s*\{\s*flex:\s*1 1 0/.test(css) &&
+            !/(?:^|[^-\w])\.edit-place-pair \.hotkey\s*\{\s*display:\s*none/.test(css.replace(/body\.toolbar-left \.edit-place-pair \.hotkey/g, '')),
+            'only the side toolbar drops their badges, each half the row; the top toolbar keeps them');
         ok(tb.fileLabel === 'File' && tb.newText === 'New' && tb.nextIsOpen && tb.onclick === 'newMap()',
             'New is in the File section, immediately before Open File', J(tb));
-        ok(tb.exportHasNew === false && tb.newButtons === 1, 'and is gone from Export / Import (one New button in all)', J(tb));
+        ok(tb.exportGroup && tb.exportHasNew === false && tb.newButtons === 1, 'and is not in Import / Options (one New button in all)', J(tb));
     }
 
     /* ---------------- 2. toggling ---------------- */
@@ -170,12 +175,12 @@ const J = JSON.stringify;
             if (document.body.classList.contains('focus-mode') !== focusBefore) toggleFocusMode();
             presentMode = true; __p.key('KeyF', 'F', { shiftKey: true }); out.presentFlag = freePlacement; presentMode = false;
             return out;`);
-        ok(t.start && t.start.text === 'Placement: Snap Shift+F' && t.start.active === false && t.startFlag === false && t.startStored === null,
-            'it starts as "Placement: Snap", not lit', J(t.start));
-        ok(t.clicked && t.clicked.text === 'Placement: Free Shift+F' && t.clicked.active === true && t.clickedFlag === true && t.stored === '1' && t.bodyClass,
+        ok(t.start && t.start.text === 'Place: Snap Shift+F' && t.start.active === false && t.startFlag === false && t.startStored === null,
+            'it starts as "Place: Snap", not lit', J(t.start));
+        ok(t.clicked && t.clicked.text === 'Place: Free Shift+F' && t.clicked.active === true && t.clickedFlag === true && t.stored === '1' && t.bodyClass,
             'clicking it switches to Free, lights it, and remembers the choice', J(t));
-        ok(/A pins a free node at the cursor; Shift\+A uses normal placement/.test(t.newNodeTip || ''), 'the New Node tooltip swaps its A / Shift+A wording', J(t.newNodeTip));
-        ok(t.shiftF && t.shiftF.text === 'Placement: Snap Shift+F' && t.shiftFFlag === false && t.stored2 === '0', 'Shift+F switches it back to Snap', J(t.shiftF));
+        ok(/Add a box: click here, then click where it should go \(A\)/.test(t.newNodeTip || ''), 'the New Node tooltip says how to add a box, and A (r27.68: in plain words)', J(t.newNodeTip));
+        ok(t.shiftF && t.shiftF.text === 'Place: Snap Shift+F' && t.shiftFFlag === false && t.stored2 === '0', 'Shift+F switches it back to Snap', J(t.shiftF));
         ok(t.focusToggled === true && t.plainFFlag === false, 'plain F is still Focus and leaves Placement alone', J(t));
         ok(t.presentFlag === false, 'present mode ignores Shift+F', J(t));
     }
@@ -229,7 +234,7 @@ const J = JSON.stringify;
         await sleep(250);
         const s = T(W2, `var b = document.getElementById('placement-btn');
             return { flag: freePlacement, text: b.textContent.replace(/\\s+/g, ' ').trim(), active: b.classList.contains('active') };`);
-        ok(s.flag === true && s.text === 'Placement: Free Shift+F' && s.active === true, 'a stored Free setting is restored when the app opens', J(s));
+        ok(s.flag === true && s.text === 'Place: Free Shift+F' && s.active === true, 'a stored Free setting is restored when the app opens', J(s));
         ok(W2.errors.length === 0, 'and that window boots without script errors', W2.errors.join(' | '));
         W2.dom.window.close();
     }
@@ -301,16 +306,16 @@ const J = JSON.stringify;
     {
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
         const html = typeof h === 'string' ? h : '';
-        ok(/<strong>Placement: Free<\/strong> keeps boxes where you put them/.test(html),
+        ok(/<strong>Place: Free<\/strong> keeps boxes where you drop them/.test(html),
             'compact Help explains free placement');
-        ok(/<strong>Shift-drop<\/strong> avoids connecting/.test(html),
+        ok(/Hold <strong>Shift<\/strong> as you drop to leave it unconnected/.test(html),
             'compact Help explains Shift-drop');
         const tips = T(W, `applyFreePlacement(true); var free = document.getElementById('placement-btn').title;
             applyFreePlacement(false); var snap = document.getElementById('placement-btn').title;
             return { free: free, snap: snap, node: document.getElementById('new-node-btn').title };`);
-        ok(/hold Shift while placing one to snap it instead/.test(tips.free || '') && /hold Shift while placing one to leave it free instead/.test(tips.snap || '') &&
-           /Shift-click places it the other way/.test(tips.node || ''),
-            'the Placement and New Node tooltips mention Shift', J(tips));
+        ok(/^Place: Free\./.test(tips.free || '') && /Shift\+F/.test(tips.free || '') && /^Place: Snap\./.test(tips.snap || '') && /Shift\+F/.test(tips.snap || '') &&
+           /\(A\)$/.test(tips.node || ''),
+            'the Placement and New Node tooltips name their setting and shortcut (r27.68: in plain words)', J(tips));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

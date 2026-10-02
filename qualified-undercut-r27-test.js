@@ -16,7 +16,7 @@ try{const result=dom.window.eval(`(()=>{
  const premise=n('B','objection',['If Q, then functionalism is ruled out.','Q'],[Object.assign(n('W','weak-rebuttal',['If E, then it has not been shown that Q','E']),{targetIndex:1})]);
  const main=n('M','contention','Functionalism is not ruled out.',[premise]);r=read([main]);
  check(r.steps.every(s=>s.rule)&&r.v('M',0).status==='established','grounded undercut warrants not-ruled-out claim');
- check(r.v('M',0).mapRelative&&claimVerdictWhy(r.v,r.v('M',0)).includes('undercut'),'explanation identifies map-relative grounds');
+ check(r.v('M',0).mapRelative&&claimVerdictWhy(r.v,r.v('M',0)).includes('fails on the map'),'explanation identifies map-relative grounds');
  main.children.push(n('OTHER','objection',['If Z, then functionalism is ruled out.','Z']));r=read([main]);check(r.v('M',0).status!=='established','independent surviving exclusion blocks warrant');main.children.pop();
  main.children.push(n('UNKNOWN','objection','Some obscure observation.'));r=read([main]);check(r.v('M',0).status!=='established','unknown additional exclusion blocks warrant');main.children.pop();
  premise.children[0].texts=['An unclear criticism.'];r=read([main]);check(r.v('M',0).status!=='established','unknown rebuttal is not a grounded undercut');

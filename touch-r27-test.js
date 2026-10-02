@@ -124,6 +124,18 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         return r;`);
     ok(col.tip && /children/.test(col.tip) && !col.menu, 'held, a box\'s collapse button shows what it does, and opens no box menu', JSON.stringify(col));
 
+    // A reference row, held, opens its own menu -- and no tip over it.
+    W.win.eval(`__t.load(); __t.node('b').crossRefs = [[{ targetId: 'k', targetIdx: 0 }]]; render();
+        openReferenceArguments('b', 0);
+        window.__row = document.querySelector('.crossref-popover-row .reference-premise');
+        __row.dispatchEvent(__t.ev('pointerdown', 20));`);
+    await sleep(650);
+    const row = T(W, `const r = { tip: !!document.querySelector('.touch-tip'), menu: !!document.querySelector('.reference-context-menu') };
+        __row.dispatchEvent(__t.ev('pointerup', 20));
+        document.querySelectorAll('.crossref-popover').forEach(p => p.remove());
+        return r;`);
+    ok(row.menu && !row.tip, 'a reference row held opens its own menu, with no tip over it', JSON.stringify(row));
+
     console.log('\n-- (2) press and hold a link: its menu --');
     W.win.eval(`__t.load(); window.__a = __t.box('a').querySelector('a.node-link');
         window.__opened = 0; window.open = function () { window.__opened++; };
@@ -222,8 +234,8 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
     {
         const h = T(W, `return { freeDrop: !!document.getElementById('freedrop-indicator'), help: document.getElementById('help-panel').textContent };`);
         ok(!h.freeDrop, 'the touch-only Free drop button is gone');
-        ok(/On a touch screen/.test(h.help) && /Select More/.test(h.help) && /Save to Files/.test(h.help) && /no Full Screen/.test(h.help),
-            'Help says what a touch screen does, and what it cannot (saving back to a file, Full Screen on an iPhone)');
+        ok(/On a touch screen/.test(h.help) && /Press and hold a box or the canvas for its menu/.test(h.help) && /Save to Files/.test(h.help),
+            'Help says what a touch screen does: press and hold for menus and tips, and how an iPhone or iPad saves (r27.68: in plain words)');
     }
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
@@ -240,6 +252,21 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
     const D = makeWin('desk', {});
     await sleep(250);
     ok(D.win.eval('IOS_DEVICE') === false, 'elsewhere it downloads, as before');
+    // Save to File (Ctrl+S) hands the map to the share sheet at once; Save As
+    // first asks which format (r27.65).
+    I.win.eval(`navigator.share = function () { return Promise.reject(Object.assign(new Error('closed'), { name: 'AbortError' })); };
+        window.__before = lastSaveTime; saveMap().then(r => { window.__closed = r; });`);
+    await sleep(100);
+    const closed = JSON.parse(I.win.eval(`JSON.stringify({ r: window.__closed, same: lastSaveTime === window.__before })`));
+    ok(closed.r && closed.r.saved === false && closed.same, 'a share sheet closed without saving is no save', JSON.stringify(closed));
+    const menu = JSON.parse(I.win.eval(`window.__asked = null; saveMapAs().then(r => { window.__asked = r; });
+        var m = document.getElementById('context-menu'), items = [].slice.call(m.querySelectorAll('[data-save-format]')).map(b => b.dataset.saveFormat);
+        var open = m.classList.contains('open'); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        JSON.stringify({ open: open, items: items, closed: !m.classList.contains('open') })`));
+    await sleep(50);
+    const asked = JSON.parse(I.win.eval(`JSON.stringify(window.__asked)`));
+    ok(menu.open && menu.items.join(' ') === 'json png jpeg svg pdf txt' && menu.closed && asked && asked.saved === false,
+        'on an iPhone, Save As asks which format first, in a menu; Escape saves nothing', JSON.stringify([menu, asked]));
     ok(I.errors.length === 0 && D.errors.length === 0, 'no JSDOM script errors (iPhone, desktop)', I.errors.concat(D.errors).join(' | '));
     I.dom.window.close(); D.dom.window.close();
 

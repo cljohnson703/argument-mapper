@@ -314,11 +314,11 @@ const rule = (sel) => {
         const b = T(W, `var b = document.getElementById('btn-implicit'); return { text: b.textContent.replace(/\\s+/g, ' ').trim(), title: b.title };`);
         ok(b.text === 'Implicit I' && !/#btn-implicit\s*\{[^}]*text-transform/.test(CSS),
             'the Implicit button reads "Implicit", not in capitals', J(b));
-        ok(/see-through box with a faded border, fainter text and an IMPLICIT tag/.test(b.title || ''), 'its tooltip describes the look', J(b.title));
+        ok(/implicit: an unstated assumption \(I\)/.test(b.title || ''), 'its tooltip says what it marks, and I (r27.68: in plain words)', J(b.title));
         const h = T(W, `return document.getElementById('help-panel').innerHTML;`);
         const html = typeof h === 'string' ? h : '';
         ok(/<strong>Implicit<\/strong> marks an unstated assumption/.test(html) &&
-           /<strong>Given<\/strong> marks a premise taken as given/.test(html),
+           /<strong>Given<\/strong> a premise accepted without argument/.test(html),
             'compact Help distinguishes implicit and given premises');
     }
 
