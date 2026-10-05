@@ -22,6 +22,9 @@
 //       copied along with them, and through the text format;
 //   (4) the deductive check reads a link as its box's words: "If S1a, then
 //       Poe is black" with "Poe is a raven" is modus ponens;
+//  (4b) a link it reads as its label (a box that is gone, a loop) is one
+//       name: "-O1" is not "not O1", a negation goes outside the link, and
+//       Derive Parent writes the link back;
 //   (5) Editing: One click opens a box's text on a click; Double-click (the
 //       default) only selects; Shift-click never opens it;
 //   (6) a blur while the page itself lost the focus (Alt+Tab) keeps the
@@ -276,6 +279,72 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         const loop = T(W, `__p.load(); __p.node('33333333-3333-4333-8333-333333333333').texts[0] = 'It is not the case that [S3](#box:33333333).';
             return claimWithBoxLinks(__p.node('33333333-3333-4333-8333-333333333333').texts[0], new Set(['33333333-3333-4333-8333-333333333333#0']));`);
         ok(loop === 'It is not the case that S3.', 'a link back to its own box is read as its label, not without end', loop);
+    }
+
+    console.log('\n-- (4b) a link read as its label is one name --');
+    {
+        // The user (2026-10-05): "if it's a linked premise like -O1 and someone
+        // wants to negate it, the negation would be outside of the syntax for
+        // the linked -O1." Its label is read for a box that is gone, or a link
+        // back round a loop; "-O1" there is a weak objection's name.
+        const steps = T(W, `
+            const N = (id, type, texts, children) => ({ id, type, texts: [].concat(texts), collapsed: [], children: children || [] });
+            const tag = (main, premises) => {
+                state.trees = [N('mmmmmmmm', 'contention', main, [N('pppppppp', 'support', premises)])];
+                ensureCollabFields(state); render();
+                const st = collectDeductiveSteps(state.trees).find(s => s.childId === 'pppppppp');
+                return st ? deductiveStepTagText(st) : null;
+            };
+            return {
+                gone: tag('It is not the case that S4.', ['If S4, then O1.', '[-O1](#box:gonegone)']),
+                outside: tag('It is not the case that S4.', ['If S4, then [-O1](#box:gonegone).', 'It is not the case that [-O1](#box:gonegone).']),
+                typed: tag('It is not the case that S4.', ['If S4, then O1.', '-O1']),
+                formula: tag('S4', ['[-O1](#box:gonegone) -> S4', '[-O1](#box:gonegone)']),
+                complex: tag('S4', ['[M1S1a-O1](#box:gonegone) -> S4', '[M1S1a-O1](#box:gonegone)']),
+                symbols: tag('~[-O1](#box:gonegone)', ['[-O1](#box:gonegone) -> S4', '~S4'])
+            };`);
+        ok(steps.gone === '? not recognized', 'a gone weak objection\'s link is not "not O1": with "If S4, then O1" it gives nothing (was \u2713 modus tollens)', JSON.stringify(steps));
+        ok(steps.outside === '\u2713 modus tollens', 'a negation written outside the link denies the name: modus tollens', JSON.stringify(steps));
+        ok(steps.typed === '\u2713 modus tollens', 'typed without a link, "-O1" is still "not O1"', JSON.stringify(steps));
+        ok(steps.formula === '\u2713 modus ponens' && steps.complex === '\u2713 modus ponens',
+            'in a formula a link\'s name is one letter, -O1 or M1S1a-O1: modus ponens', JSON.stringify(steps));
+        ok(steps.symbols === '\u2713 modus tollens', 'and "~" outside it denies it, in symbols too', JSON.stringify(steps));
+
+        const joined = T(W, `return typeof claimLinkName !== 'function' ? null : ['-O1', 'M1S1-O1', 'A->B', 'S3'].map(l => claimLinkName(l).split('\\u2060').join('+'));`);
+        ok(JSON.stringify(joined) === JSON.stringify(['+-O1', 'M1S1+-O1', 'A->B', 'S3']),
+            'a hyphen inside a name is joined (-O1, M1S1-O1); an arrow\'s is not, and a label without one is as it was', JSON.stringify(joined));
+
+        const loop = T(W, `
+            state.trees = [{ id: 'mmmmmmmm', type: 'contention', texts: ['Poe is black.'], collapsed: [], children: [
+                { id: 'wwwwwwww', type: 'weak-objection', texts: ['[-O1](#box:wwwwwwww)'], collapsed: [], children: [] } ] }];
+            ensureCollabFields(state); render();
+            const read = claimWithBoxLinks(state.trees[0].children[0].texts[0], new Set(['wwwwwwww#0']));
+            const f = parseClaim(read);
+            return { shown: read.replace(/\\u2060/g, ''), joined: read !== read.replace(/\\u2060/g, ''), kind: f && f.kind };`);
+        ok(loop.shown === '-O1' && loop.joined && loop.kind === 'atom',
+            'a box that is only a link back to itself, -O1, reads as that name, not as a denial', JSON.stringify(loop));
+
+        const listed = T(W, `
+            state.trees = [{ id: 'mmmmmmmm', type: 'contention', texts: ['S4'], collapsed: [], children: [
+                { id: 'pppppppp', type: 'support', texts: ['If [-O1](#box:gonegone), then S4.', '[-O1](#box:gonegone)'], collapsed: [], children: [] } ] }];
+            ensureCollabFields(state); render();
+            openDeductiveCheck();
+            const lines = [...document.querySelectorAll('#logic-modal-body .logic-step[data-step="pppppppp"] .logic-premise')].map(e => e.textContent);
+            closeDeductiveCheck();
+            return { lines, visible: lines.map(t => t.replace(/\\u2060/g, '')) };`);
+        ok(JSON.stringify(listed.visible) === JSON.stringify(['If -O1, then S4.', '-O1']),
+            'the list of steps shows the label as it is: the joining character is invisible', JSON.stringify(listed));
+
+        const derived = T(W, `
+            state.trees = [{ id: 'qqqqqqqq', type: 'support', texts: ['If it rains, then [-O1](#box:gonegone).', 'It rains.'], collapsed: [], children: [] }];
+            ensureCollabFields(state); reviewMode = false; render();
+            const found = deriveParentFor('qqqqqqqq');
+            const st = collectDeductiveSteps(state.trees).find(s => s.childId === 'qqqqqqqq');
+            return { rule: found && found.rule.name, box: state.trees[0].texts[0], hidden: JSON.stringify(state.trees).includes('\\u2060'),
+                tag: st ? deductiveStepTagText(st) : null };`);
+        ok(derived.rule === 'modus ponens' && derived.box === '[-O1](#box:gonegone).' && !derived.hidden,
+            'Derive Parent writes the name back as its link (not "-O1.", which says "not O1"), and nothing hidden goes into the map', JSON.stringify(derived));
+        ok(derived.tag === '\u2713 modus ponens', 'and the new step reads it as the same name: modus ponens', JSON.stringify(derived));
     }
 
     console.log('\n-- (5) Editing: One click --');

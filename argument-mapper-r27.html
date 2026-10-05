@@ -2814,7 +2814,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.71';
+    const APP_BUILD = '2026-10-05 r27.72';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -4190,17 +4190,39 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // words, in brackets -- "If S7 and S8, then S4" as "If (P) and (Q), then
     // (R)". A link back to a box on the way (`seen`, "id#idx") is read as its
     // label, as is a box that is gone.
-    function claimWithBoxLinks(text, seen) {
+    // A label so read is one name, whatever it is spelled with: "-O1" is a
+    // weak objection's, not "not O1" (the user, 2026-10-05: a negation goes
+    // outside the link). A WORD JOINER before each hyphen inside it ("-O1",
+    // "M1S1-O1"; not an arrow's, "->") keeps it one word to the English and
+    // the symbolic reader alike. It is never written into a box: `names`
+    // collects each name with the link it was read from, for Derive Parent
+    // to write the link back (claimLinksBack).
+    const CLAIM_LINK_JOIN = '\u2060';
+    const claimLinkName = label => String(label).replace(/-(?=[A-Za-z0-9])/g, CLAIM_LINK_JOIN + '-');
+    function claimWithBoxLinks(text, seen, names) {
         if (!hasBoxLinks(text)) return text;
         seen = seen || new Set();
         return text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+            const name = () => {
+                const n = claimLinkName(label);
+                if (names && n !== label && !names.has(n)) names.set(n, m);
+                return n;
+            };
             const hit = resolveBoxLink(ref, idx);
-            if (!hit) return label;
+            if (!hit) return name();
             const key = hit.node.id + '#' + hit.idx;
-            if (seen.has(key) || seen.size > 8) return label;
-            const inner = String(claimWithBoxLinks(hit.node.texts[hit.idx], new Set([...seen, key]))).trim().replace(/[.!?]+$/, '').trim();
-            return inner ? '(' + inner + ')' : label;
+            if (seen.has(key) || seen.size > 8) return name();
+            const inner = String(claimWithBoxLinks(hit.node.texts[hit.idx], new Set([...seen, key]), names)).trim().replace(/[.!?]+$/, '').trim();
+            return inner ? '(' + inner + ')' : name();
         });
+    }
+    // Words the check derived, each link name in them written back as the
+    // link it was read from: a derived box says "[-O1](#box:...)", read as the
+    // same name again, not "-O1", which would say "not O1".
+    function claimLinksBack(text, names) {
+        let out = String(text == null ? '' : text);
+        [...names.keys()].sort((a, b) => b.length - a.length).forEach(n => { out = out.split(n).join(names.get(n)); });
+        return out;
     }
     // The links of a text that name a node whose boxes were renumbered, moved
     // to the box each now is (see remapCrossRefsInTree); a box that went is
@@ -15310,7 +15332,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const prev = out[out.length - 1];
             const bound = prev && (prev.t === 'all' || prev.t === 'some') && src.slice(i).match(/^[a-z][0-9']*(?=[A-Z])/);
             if (bound) { out.push({ t: 'id', v: bound[0] }); i += bound[0].length; continue; }
-            const m = src.slice(i).match(/^[A-Za-z][A-Za-z0-9_']*/);
+            // A link's name keeps its joined hyphens: "-O1", "M1S1-O1"
+            // (claimLinkName), not "not O1".
+            const m = src.slice(i).match(/^(?:\u2060-)*[A-Za-z][A-Za-z0-9_']*(?:\u2060-[A-Za-z0-9_']+)*/);
             if (!m) return null;
             out.push({ t: 'id', v: m[0] });
             i += m[0].length;
@@ -15410,6 +15434,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (/^[A-Z][a-z]+$/.test(tk.v)) return { op: 'pred', name: tk.v[0], args: argsOf(tk.v) };      // Fa, Rab
             if (/^[A-Z][A-Z0-9]*$/.test(tk.v)) return { op: 'letter', name: tk.v };                         // P, Q
+            if (tk.v.includes(CLAIM_LINK_JOIN)) return { op: 'letter', name: tk.v };                         // a link's name, -O1
             return null;
         }
         const tree = formula();
@@ -15427,7 +15452,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         switch (node.op) {
             case 'bottom': return {kind:'bottom'};
             case 'identity': return {kind:'identity', left:node.left, right:node.right};
-            case 'letter': return { kind: 'atom', text: node.name.toLowerCase() };
+            // A link's name is spelled as the English reader spells it, so
+            // "-O1 -> S4" and "-O1" name the same claim (claimLinkName).
+            case 'letter': return { kind: 'atom', text: node.name.includes(CLAIM_LINK_JOIN) ? markClaimSpelling(node.name) : node.name.toLowerCase() };
             case 'pred': return node.args.length === 1
                 ? { kind: 'pred', term: node.args[0].toLowerCase(), prop: '§' + node.name.toLowerCase() }
                 : { kind: 'atom', text: symbolicText(node, {}), relation:{name:node.name.toLowerCase(),args:node.args.map(a => a.toLowerCase())} };
@@ -26256,8 +26283,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function deriveParentFor(id) {
         const ctx = findNodeContext(state.trees, id);
         if (!ctx) return null;
-        // Premise links read as their boxes' words (claimWithBoxLinks).
-        const said = ctx.node.texts.map((t, j) => claimWithBoxLinks(t, new Set([id + '#' + j])));
+        // Premise links read as their boxes' words (claimWithBoxLinks); one
+        // read as its name goes back into the new box as its link.
+        const names = new Map();
+        const said = ctx.node.texts.map((t, j) => claimWithBoxLinks(t, new Set([id + '#' + j]), names));
         const texts = said.map(t => String(t || '').trim());
         if (texts.some(t => !t)) {
             showHintToast(texts.length > 1 ? 'A box in this group is empty: write its premise before deriving from the group.' : 'This box is empty: write a premise before deriving from it.', true);
@@ -26298,7 +26327,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return found;
         }
         pushHistory();
-        const parent = insertParentAbove(id, found.text);
+        const parent = insertParentAbove(id, claimLinksBack(found.text, names));
         deductiveChecked.add(id);
         selectedIds = [`${parent.id}-0`];
         render();

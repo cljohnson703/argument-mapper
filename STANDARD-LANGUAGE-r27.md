@@ -4,6 +4,17 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5, later: a link read as its label is one name (r27.72)
+
+The user, on r27.71's "-O1" read as "not O1": "We need to fix that. Any suggestions on how? For what it's worth, if it's a linked premise like -O1 and someone wants to negate it, the negation would be outside of the syntax for the linked -O1."
+
+* **One name.** The deductive check reads a premise link as its box's words, and a link to a box that is gone, or back round a loop, as the box's label. That label is now one name however it is spelled: a link to weak objection -O1 is -O1, not "not O1". A negation goes outside the link -- "It is not the case that [-O1]", or "~[-O1]" in symbols. Typed without a link, "-O1" is still "not O1".
+* **How.** A WORD JOINER (U+2060), the character that says "these are one word", goes before each hyphen of the label as the check reads it. The English reader already kept "-O1" one word in a sentence; the symbolic reader read a hyphen at the start of a word as "not", and one inside a word ("M1S1-O1") as "not" between two letters. It now reads a joined name as one sentence letter, spelled as the English reader spells it, so "[-O1] -> S4" and "[-O1]" give modus ponens. The joiner is invisible where the check shows the words, and never goes into a box.
+* **Derive Parent** writes such a name back as its link. From "If it rains, then [-O1]" and "It rains", the new box says [-O1] (struck through while its box is gone), where it said "-O1", which reads as "not O1": the opposite of what was derived.
+* **What changes.** With a deleted weak objection's link, "If S4, then O1" and "[-O1]" were certified by modus tollens; now the step is not recognized. A complex name in a formula ("[M1S1a-O1] -> S4" with "[M1S1a-O1]") was not recognized; now it is modus ponens. Labels without a hyphen read exactly as before.
+
+Tests. premise-links-r27-test.js 40 (10 new: the deleted box's link beside "If S4, then O1"; a negation outside the link, in words and in symbols; "-O1" typed; a simple and a complex name in a formula; which hyphens are joined; a box that is only a link to itself; the list of steps; Derive Parent's box and its step). Five of them fail on r27.71: the four behaviors that changed, and the joining itself. With any one of the six changes taken out (joining, only inside a name, the symbolic reader's three, Derive Parent), at least one fails.
+
 ### October 5: weak objections and rebuttals lettered -O and -R (r27.71)
 
 The user: "I need to switch the String Mode abbreviation for weak objections and weak rebuttals from Q and P to -O and -R."
@@ -11,7 +22,7 @@ The user: "I need to switch the String Mode abbreviation for weak objections and
 * **The letters.** A weak objection is -O and a weak rebuttal -R: an objection and a rebuttal, weakened. The letter names the box wherever a label does -- String Mode and the text file, the map's labels (Simple and Complex), and a premise link -- so M1S1Q1P1 is now M1S1-O1-R1, and a separate weak rebuttal is -R1 ("-R1 @ +400,-200" under Positions). They were Q and P from r27.20. Neither name is shared now: Q1 and Q2 are also the Hilbert basis's quantifier axioms, and P1 is the checker's usual name for a premise ("P from P1 and P2").
 * **Reading them back.** The reader takes the hyphen as part of the letter. It used to stop at a hyphen, which would have dropped any line, Positions entry, cross-reference or premise link naming a weak box; and its splitter stepped over one, which would have read M1S1-O1 as M1S1O1, an objection. Text written with Q and P still imports, and is written back with -O and -R.
 * **On one line.** A label on a box no longer breaks after its hyphen.
-* **Left as it was.** The deductive check reads a premise link as its box's words, and only a link back to its own box (or round a loop), or to a box that is gone, as its label. A weak box's simple label is then read as a denial: "-O1" as "not O1", since a leading hyphen is the checker's "not" ("-P"). A complex label is one word: "M1S1-O1".
+* **Left as it was.** *(Fixed in r27.72: such a label is one name. The English reader did keep "M1S1-O1" one word, but the symbolic reader read it as "M1S1", "not" and "O1".)* The deductive check reads a premise link as its box's words, and only a link back to its own box (or round a loop), or to a box that is gone, as its label. A weak box's simple label is then read as a denial: "-O1" as "not O1", since a leading hyphen is the checker's "not" ("-P"). A complex label is one word: "M1S1-O1".
 
 Tests. stringmode-r26-label-test.js 32 (3 new: -O beside O, byte for byte; Q and P text read and written back with -O and -R); weak-r27-attack-test.js 114 (1 new: a label on one line); stringmode-r27-positions-test.js 44 (7 new: a separate weak tree's name, Positions entry, cross-reference and premise link, written and read, byte for byte). With any one fix taken out, at least one of them fails. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository; it fails without this change too.
 
