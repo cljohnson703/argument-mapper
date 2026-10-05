@@ -4,6 +4,16 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5 follow-up: the name stays held while either device uses it (r27.78)
+
+Found after r27.77: with one Google account signed in on two devices, the lease went with whichever device signed in last. The user: "Do this task here: 'Renew name lease from either device of one account'".
+
+* **What happened.** A lease names one holder, and only the holder's edits renewed it. Once the phone had signed in, the laptop's edits no longer did: ten minutes after the phone's last use the name was free, with Vera still at work on the laptop, and anyone could sign in under it -- and, since a note's rights go by its author's name, edit or delete her notes. Signing out on the phone freed the name the same way, the laptop still signed in.
+* **The fix.** A lease taken through Google is the account's. Each device remembers which account vouched for its name, and one signed in with that account renews the lease as it edits, whichever of the account's devices took it last; it takes the lease back after another of them signed out, since a release now keeps the account's uid. Signing out still frees the name at once; until the other device's next edit it is free, as no device can know which of the others are still signed in.
+* **Left alone.** A lease someone else took -- another account, or a typed name, once the account's devices had been quiet past ten minutes -- stays theirs. A typed name's lease is refreshed and released in its old shapes, with no uid.
+
+Tests. collab-r27-name-lease-test.js 28 (13 new: the laptop renewing the lease the phone took, on the device and in the room's copy; eleven minutes on, a different account and the name typed both still turned away; the phone renewing it in turn; a sign-out on the phone, its release naming the account, and the laptop taking the lease back, so the name is not free; a lease taken fairly left alone; a typed name's release). Every device reads one clock, moved forward to age the leases. Seven fail on r27.77. With any one of the three changes taken out (the account remembered at sign-in, the renewal by the account, the uid on a release), at least two fail; a renewal that takes any lease fails the fair one. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository.
+
 ### October 5, last: one Google account on two devices (r27.77)
 
 The user: "the display-name lease refresh in `diffAndStamp` drops the verified Google uid from the signed-in user's claim, which defeats the 'same verified person on two devices' exemption in `applySignIn`."
