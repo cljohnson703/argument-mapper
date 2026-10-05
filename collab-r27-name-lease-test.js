@@ -15,6 +15,10 @@
 //       second device's last use while the account was busy on the first,
 //       and anyone could then sign in under it. Signing out on the holder
 //       freed the name the same way, the other device still signed in.
+//   (3) r27.79: applySignIn released the name being left BEFORE checking
+//       the one asked for. A refused switch -- the name in use, or the
+//       "used here before" question declined -- left its user signed in
+//       under a name anyone could now take.
 //
 // Two peers, a real sync engine over the memory transport: the lease reaches
 // the second device through the wire, as it does in a shared room. Every
@@ -28,7 +32,8 @@
 //     unchanged, and a verified account cannot take that name over while it
 //     is in use;
 //   - a lease someone else took fairly, after the account's devices had been
-//     quiet past the lease, is not taken back by the account's next edit.
+//     quiet past the lease, is not taken back by the account's next edit;
+//   - a switch that goes through, and a sign-out, still release at once.
 //
 // Run:  node collab-r27-name-lease-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -123,6 +128,27 @@ async function laptopThenPhone(store, tag) {
     await phone.win.__argmap.engine.pushNow();
     await laptop.win.__argmap.engine.pullNow();
     return { laptop, phone };
+}
+
+// The same lease, whatever order its keys arrived in (the wire sorts them).
+const canonClaim = c => JSON.stringify(Object.keys(c).sort().map(k => [k, c[k]]));
+const sameClaim = (a, b) => !!a && !!b && canonClaim(a) === canonClaim(b);
+
+// Ann signs in (typed, or with Google) and edits. On another browser,
+// someone signed in as "Cat", left a note and switched to "Bob". So "Bob" is
+// in use, and "Cat" is free but was used here before from another browser:
+// the app asks before taking it.
+async function annAmongOthers(tag, uid) {
+    const store = { content: null, version: 0, subs: new Set() };
+    const ann = await device(tag + '-ann', store);
+    await holderSignsInAndEdits(ann, 'Ann', uid);
+    const other = await device(tag + '-other', store);
+    other.win.applySignIn('Cat');
+    other.win.eval(`addComment({ kind: 'box', id: state.trees[0].id, idx: 0 }, 'a note signed Cat');`);
+    other.win.applySignIn('Bob');
+    await edit(other, 'Bob at work');
+    await ann.win.__argmap.engine.pullNow();
+    return { store, ann };
 }
 
 (async () => {
@@ -264,6 +290,42 @@ async function laptopThenPhone(store, tag) {
         const kept = claimOf(laptop, 'Vera');
         ok(kept && kept.by === clientIdOf(other) && !('uid' in kept),
             "the laptop's next edit leaves that lease alone: only the account's own leases follow it", JSON.stringify(kept));
+    }
+
+    for (const [kind, uid, tag] of [['a typed name', null, 't'], ['a Google sign-in', 'uid-ann', 'g']]) {
+        console.log(`\n-- A refused name switch keeps the name: ${kind} --`);
+        {
+            const { store, ann } = await annAmongOthers('busy-' + tag, uid);
+            const before = claimOf(ann, 'Ann');
+            ok(before && before.by === clientIdOf(ann) && !before.released && !!wireClaimOf(store, 'Bob'),
+                'setup: Ann holds her name, and "Bob" is in use on another browser', JSON.stringify({ before, bob: wireClaimOf(store, 'Bob') }));
+            ann.win.applySignIn('Bob');
+            ok(userOf(ann) === 'Ann' && ann.alerts.length === 1 && ann.alerts[0].includes(BLOCK),
+                'switching to a name in use is refused', seen(ann));
+            ok(sameClaim(claimOf(ann, 'Ann'), before),
+                'and the name she keeps is still hers: its lease untouched', JSON.stringify(claimOf(ann, 'Ann')));
+            await ann.win.__argmap.engine.pushNow();
+            const thief = await device('busy-thief-' + tag, store);
+            thief.win.applySignIn('Ann');
+            ok(turnedAway(thief), 'so no one else can sign in as Ann meanwhile', seen(thief));
+            ann.win.applySignIn('Dee');
+            const left = claimOf(ann, 'Ann');
+            ok(userOf(ann) === 'Dee' && left && left.released === true && left.by === clientIdOf(ann)
+                && (uid ? left.uid === uid : !('uid' in left)),
+                'a switch that goes through still releases the old name at once', JSON.stringify(left));
+        }
+        {
+            const { ann } = await annAmongOthers('asked-' + tag, uid);
+            const before = claimOf(ann, 'Ann');
+            const asked = [];
+            ann.win.confirm = msg => { asked.push(String(msg)); return false; };
+            ann.win.applySignIn('Cat');
+            ok(userOf(ann) === 'Ann' && asked.length === 1 && asked[0].includes('used here before'),
+                'switching to a name used before from another browser asks first; declined, she stays Ann',
+                JSON.stringify({ user: userOf(ann), asked }));
+            ok(sameClaim(claimOf(ann, 'Ann'), before),
+                'and her name is still hers: its lease untouched', JSON.stringify(claimOf(ann, 'Ann')));
+        }
     }
 
     const errors = wins.flatMap(W => W.errors);

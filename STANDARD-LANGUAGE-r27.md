@@ -4,6 +4,15 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5, second follow-up: a refused name switch keeps your name (r27.79)
+
+Found while checking r27.78's release. The user: "Do this task here: 'Keep your name when a name switch is refused'".
+
+* **What happened.** Signing in under a new name released the old one first, and only then asked whether the new one could be taken. Refused -- the name in use, or "used here before, from another browser" declined -- you stayed signed in under the old name with its lease released, so anyone could sign in under it, and edit or delete its notes. A typed name stayed free until you signed in again; a Google one until your next edit (r27.78).
+* **The fix.** The old name is released only once the switch is certain, after both refusals. A switch that goes through, and signing out, release at once as before; a Google lease's release keeps its uid.
+
+Tests. collab-r27-name-lease-test.js 42 (14 new, for a typed name and a Google sign-in alike: a switch to a name in use refused, the old lease untouched, and no one else able to take the name; a switch to a name used before declined, the lease untouched; a switch that goes through releasing at once). Six fail on r27.78. Released between the two refusals, the declined pair fails; not released at all, the switches and sign-outs that must still release fail. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository.
+
 ### October 5 follow-up: the name stays held while either device uses it (r27.78)
 
 Found after r27.77: with one Google account signed in on two devices, the lease went with whichever device signed in last. The user: "Do this task here: 'Renew name lease from either device of one account'".

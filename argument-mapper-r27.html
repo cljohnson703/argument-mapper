@@ -2896,7 +2896,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.78';
+    const APP_BUILD = '2026-10-05 r27.79';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5840,18 +5840,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // takes it back after another of the account's devices signed out.
         // Between that sign-out and the next edit the name is free -- no
         // device can know which of the others are still signed in.
-        // Release the lease on the name we are leaving, if we hold it, so
-        // sign-out (and name switches) free the name immediately.
-        if (takeLease && currentUser && currentUser !== name) {
-            const prev = (state._nameClaims || {})[currentUser];
-            if (prev && prev.by === _clientId && !prev.released) {
-                // A verified release keeps its uid, so the account's other
-                // devices, if still signed in, can take the name back.
-                state._nameClaims[currentUser] = prev.uid
-                    ? { by: _clientId, ts: Date.now(), released: true, uid: prev.uid }
-                    : { by: _clientId, ts: Date.now(), released: true };
-            }
-        }
         if (takeLease && name && name !== currentUser) {
             const NOW = Date.now();
             const claim = (state._nameClaims || {})[name];
@@ -5889,6 +5877,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             state._nameClaims[name] = authUid
                 ? { by: _clientId, ts: NOW, uid: authUid }
                 : { by: _clientId, ts: NOW };
+        }
+        // Release the lease on the name we are leaving, if we hold it, so
+        // sign-out (and name switches) free the name immediately -- but only
+        // here, once the switch is certain: a refused one (the name in use,
+        // or the question declined) has returned above, its user still
+        // signed in under the old name and still holding it.
+        if (takeLease && currentUser && currentUser !== name) {
+            const prev = (state._nameClaims || {})[currentUser];
+            if (prev && prev.by === _clientId && !prev.released) {
+                // A verified release keeps its uid, so the account's other
+                // devices, if still signed in, can take the name back.
+                state._nameClaims[currentUser] = prev.uid
+                    ? { by: _clientId, ts: Date.now(), released: true, uid: prev.uid }
+                    : { by: _clientId, ts: Date.now(), released: true };
+            }
         }
         currentUser = name;
         currentUserUid = name && authUid ? authUid : '';
