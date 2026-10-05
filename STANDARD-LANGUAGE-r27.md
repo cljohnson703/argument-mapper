@@ -4,6 +4,17 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5: weak objections and rebuttals lettered -O and -R (r27.71)
+
+The user: "I need to switch the String Mode abbreviation for weak objections and weak rebuttals from Q and P to -O and -R."
+
+* **The letters.** A weak objection is -O and a weak rebuttal -R: an objection and a rebuttal, weakened. The letter names the box wherever a label does -- String Mode and the text file, the map's labels (Simple and Complex), and a premise link -- so M1S1Q1P1 is now M1S1-O1-R1, and a separate weak rebuttal is -R1 ("-R1 @ +400,-200" under Positions). They were Q and P from r27.20. Neither name is shared now: Q1 and Q2 are also the Hilbert basis's quantifier axioms, and P1 is the checker's usual name for a premise ("P from P1 and P2").
+* **Reading them back.** The reader takes the hyphen as part of the letter. It used to stop at a hyphen, which would have dropped any line, Positions entry, cross-reference or premise link naming a weak box; and its splitter stepped over one, which would have read M1S1-O1 as M1S1O1, an objection. Text written with Q and P still imports, and is written back with -O and -R.
+* **On one line.** A label on a box no longer breaks after its hyphen.
+* **Left as it was.** The deductive check reads a premise link as its box's words, and only a link back to its own box (or round a loop), or to a box that is gone, as its label. A weak box's simple label is then read as a denial: "-O1" as "not O1", since a leading hyphen is the checker's "not" ("-P"). A complex label is one word: "M1S1-O1".
+
+Tests. stringmode-r26-label-test.js 32 (3 new: -O beside O, byte for byte; Q and P text read and written back with -O and -R); weak-r27-attack-test.js 114 (1 new: a label on one line); stringmode-r27-positions-test.js 44 (7 new: a separate weak tree's name, Positions entry, cross-reference and premise link, written and read, byte for byte). With any one fix taken out, at least one of them fails. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository; it fails without this change too.
+
 ### October 1, morning: hover tips in the theme's colors; the smaller words darker; the grip on dark boxes (r27.70)
 
 The user: "The hover tips in light mode should be consistent with the light mode theme. And yes, let's make all of the things you mentioned in the 3 bullets points darker" -- the three: "the 'Saved in browser…' line, note timestamps, and 'Basis: the axioms' in the Logic panel"; "the green 'the step follows by…' text in the reading chooser"; "in dark mode, the ⠿ grip, which is very faint".

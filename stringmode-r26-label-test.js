@@ -3,8 +3,9 @@
 //
 // Covers the two r26 shorthand changes:
 //   * support premises label as S (matching the S keyboard shortcut). The old
-//     P-for-support reading has since been retired: P now names a weak
-//     rebuttal, beside Q for a weak objection (section 4);
+//     P-for-support reading has since been retired. A weak objection is -O
+//     and a weak rebuttal -R; Q and P, their letters from r27.20 to r27.70,
+//     still import (section 4);
 //   * a PARENTHESIZED label marks that box implicit — "(M1S1a): ..." — in
 //     both directions (export writes them, import reads them), per box, with
 //     contentions and notes exempt (the app's own invariant).
@@ -135,24 +136,37 @@ function findByText(trees, needle) {
     ok(again === text, 'round-trip: export -> import -> export is byte-identical',
         again === text ? '' : ('\n--- first ---\n' + text + '\n--- second ---\n' + again));
 
-    // --- 4. Q and P: weak objection and weak rebuttal ---------------------
-    // P was once read as a legacy support letter. No map still uses it, so it
-    // now names a weak rebuttal (it Preserves the argument), beside Q for a
-    // weak objection (it Questions the argument).
+    // --- 4. -O and -R: weak objection and weak rebuttal -------------------
+    // An objection or rebuttal, weakened. From r27.20 to r27.70 they were Q
+    // and P (and P, before that, a legacy support letter); text written then
+    // still imports, and is written back with -O and -R.
     {
-        const weak = ['M1: Main', '  M1S1: Support', '    M1S1Q1: Weak objection',
-            '      M1S1Q1P1: Weak rebuttal', '      M1S1Q1S1: Backs the weak objection'].join('\n');
+        const weak = ['M1: Main', '  M1S1: Support', '    M1S1-O1: Weak objection',
+            '      M1S1-O1-R1: Weak rebuttal', '      M1S1-O1S1: Backs the weak objection',
+            '    M1S1O1: Strong objection'].join('\n');
         const wp = parseOf(W, weak);
         const q = findByText(wp.trees, 'Weak objection');
-        ok(!!q && q.type === 'weak-objection', 'weak: Q imports as a weak objection', q && q.type);
+        ok(!!q && q.type === 'weak-objection', 'weak: -O imports as a weak objection', q && q.type);
         const p = findByText(wp.trees, 'Weak rebuttal');
-        ok(!!p && p.type === 'weak-rebuttal', 'weak: P imports as a weak rebuttal, no longer as a support', p && p.type);
+        ok(!!p && p.type === 'weak-rebuttal' && !!q && q.children.some(c => c.texts[0] === 'Weak rebuttal'),
+            'weak: -R imports as a weak rebuttal, under the weak objection', p && p.type);
         const s = findByText(wp.trees, 'Backs the weak objection');
         ok(!!s && s.type === 'support', 'weak: a support under a weak objection keeps S', s && s.type);
+        // The hyphen is part of the letter, not a separator to skip: M1S1-O1
+        // and M1S1O1 are two boxes, one weak and one not.
+        const o = findByText(wp.trees, 'Strong objection'), sup = findByText(wp.trees, 'Support');
+        ok(!!o && o.type === 'objection' && !!sup && sup.children.length === 2 && o.children.length === 0,
+            'weak: M1S1-O1 and M1S1O1 are different boxes, a weak objection and an objection', JSON.stringify(sup && sup.children.map(c => c.type)));
         const again = reexportOf(W, wp);
-        ok(again.indexOf('M1S1Q1: Weak objection') >= 0 && again.indexOf('M1S1Q1P1: Weak rebuttal') >= 0 &&
-           again.indexOf('M1S1Q1S1: Backs the weak objection') >= 0,
-            'weak: re-exporting writes Q and P back', again.replace(/\n/g, ' | '));
+        ok(again === weak, 'weak: re-exporting writes -O and -R back, byte for byte', again.replace(/\n/g, ' | '));
+
+        const old = parseOf(W, ['M1: Main', '  M1S1: Support', '    M1S1Q1: Weak objection',
+            '      M1S1Q1P1: Weak rebuttal', '      M1S1Q1S1: Backs the weak objection',
+            '    M1S1O1: Strong objection'].join('\n'));
+        const oq = findByText(old.trees, 'Weak objection'), op = findByText(old.trees, 'Weak rebuttal');
+        ok(!!oq && oq.type === 'weak-objection' && !!op && op.type === 'weak-rebuttal',
+            'weak: text from r27.20 to r27.70 still imports, Q as a weak objection and P as a weak rebuttal', JSON.stringify([oq && oq.type, op && op.type]));
+        ok(reexportOf(W, old) === weak, 'weak: and is written back with -O and -R', reexportOf(W, old).replace(/\n/g, ' | '));
     }
 
     // --- 5. Parentheses are ignored where implicit cannot apply ----------

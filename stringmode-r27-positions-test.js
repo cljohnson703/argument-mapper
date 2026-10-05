@@ -27,7 +27,9 @@
 //   (5) hand-written text: no Positions entry, unsigned offsets, stray names,
 //       and no main contention at all;
 //   (6) old @x,y text, X text, untyped boxes, simple labels, cross-references;
-//   (7) Help.
+//   (7) a weak tree, whose name begins with a hyphen (-R1): its Positions
+//       entry, a cross-reference and a premise link written by name;
+//   (8) Help.
 //
 // Run:  node stringmode-r27-positions-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -210,7 +212,40 @@ function fixture(mx, my, plain) {
         ok(simple[0] === 'S3' && simple[1] === 'S4' && simple[2] === 'N1', 'and simple labels count it among the supports', J(simple));
     }
 
-    /* ---------------- 7. Help ---------------- */
+    /* ---------------- 7. weak trees ---------------- */
+    console.log('\n-- weak trees --');
+    {
+        // A weak objection is -O and a weak rebuttal -R, so a separate weak
+        // tree's name begins with a hyphen: in its Positions entry, in a
+        // cross-reference, and in a premise link written by name.
+        const weak = [
+            N('wm', 'contention', 'Main', [
+                N('ws', 'support', 'A support', [ N('wo', 'weak-objection', 'Not shown') ],
+                    { crossRefs: [[{ targetId: 'wr', targetIdx: 0 }]] }),
+                N('wl', 'support', 'If [x](#box:wo), then the support fails.')
+            ], { x: 30000, y: 30000 }),
+            N('wr', 'weak-rebuttal', 'A separate weak rebuttal', [], { x: 30400, y: 29800, freePosition: true })
+        ];
+        const wt = exportOf(W, weak);
+        ok(/^-R1: A separate weak rebuttal$/m.test(wt) && /^-R1 @ \+400,-200$/m.test(wt),
+            'a separate weak rebuttal is named -R1, and placed by "-R1 @ +400,-200"', wt);
+        ok(/^M1S1 > -R1$/m.test(wt), 'a cross-reference names it the same way', wt);
+        ok(/^ {2}M1S2: If \[-O1\]\(#box:@M1S1-O1\), then the support fails\.$/m.test(wt), 'a premise link names the weak objection M1S1-O1', wt);
+
+        const wp = parseOf(W, wt);
+        const wm = find(wp.trees, 'Main'), wr = find(wp.trees, 'A separate weak rebuttal'), ws = find(wp.trees, 'A support'),
+              wo = find(wp.trees, 'Not shown'), wl = find(wp.trees, 'If [-O1](#box:' + (wo && wo.id) + '), then the support fails.');
+        ok(!!wr && wr.type === 'weak-rebuttal' && wr.x === wm.x + 400 && wr.y === wm.y - 200 && wr.freePosition === true,
+            'it comes back a weak rebuttal, at its offset from M1, pinned', J(wr && [wr.type, wr.x - wm.x, wr.y - wm.y, wr.freePosition]));
+        ok(!!ws && !!ws.crossRefs && !!wr && ws.crossRefs[0][0].targetId === wr.id, 'the cross-reference finds it', J(ws && ws.crossRefs));
+        ok(!!wo && wo.type === 'weak-objection' && !!wl, 'and the premise link finds the weak objection', J(wp.trees[0].children.map(c => c.texts)));
+        // As in the app, the imported map is drawn before it is written out
+        // (render clears the labels a link is shown by, kept for the old map).
+        const again = W.win.eval(`(function () { state.trees = ${J(wp.trees)}; ensureCollabFields(state); render(); return generateTextRepresentation(); })()`);
+        ok(again === wt, 'export, import, export is byte-identical', again === wt ? '' : '\n' + again);
+    }
+
+    /* ---------------- 8. Help ---------------- */
     console.log('\n-- Help --');
     {
         const h = W.win.eval(`document.getElementById('help-panel').innerHTML`);

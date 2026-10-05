@@ -678,10 +678,11 @@
         padding: 0; box-sizing: border-box;
     }
 
-    /* Node labels (P1, O2, R3, etc.) */
+    /* Node labels (S1, O2, -R3, etc.), on one line: a weak box's hyphen
+       (M1S1-O1) is not a place to break. */
     .node-label {
         position: absolute; top: 3px; font-size: 10px; font-weight: 600;
-        color: #ccc; user-select: none; letter-spacing: 0.3px;
+        color: #ccc; user-select: none; letter-spacing: 0.3px; white-space: nowrap;
     }
     .type-note .node-label { color: #ccc; }
     .type-contention .node-label { color: #ccc; }
@@ -2813,7 +2814,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-01 r27.70';
+    const APP_BUILD = '2026-10-05 r27.71';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -4370,10 +4371,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function toLetter(idx) { return String.fromCharCode(97 + idx); }
 
     // The letter that names each kind of box in labels and in the map string.
-    // 'S' for Support, matching the S shortcut. A weak objection is Q (it
-    // Questions the argument), a weak rebuttal P (it Preserves it).
+    // 'S' for Support, matching the S shortcut. A weak objection is -O and a
+    // weak rebuttal -R: an objection or rebuttal, weakened (M1S1-O1-R1). They
+    // were Q and P, which the importer still reads (parseTextToState).
     const LABEL_LETTERS = { contention: 'M', support: 'S', objection: 'O', rebuttal: 'R',
-                            'weak-objection': 'Q', 'weak-rebuttal': 'P', note: 'N' };
+                            'weak-objection': '-O', 'weak-rebuttal': '-R', note: 'N' };
 
     function computeSimpleLabels(kinds) {
         kinds = kinds || computeArgumentKinds(state.trees);
@@ -25912,8 +25914,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         lines.forEach(line => {
             // Positions line: "NAME @ ±dx,±dy", a tree's offset from the first
             // main contention (see generateTextRepresentation). Without a colon
-            // or ">" it can be neither a node line nor a cross-reference.
-            const posMatch = line.match(/^\s*([A-Z]\d+)[a-z]?\s*@\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$/);
+            // or ">" it can be neither a node line nor a cross-reference. A
+            // weak tree's name has a hyphen: "-O1 @ +800,-120".
+            const posMatch = line.match(/^\s*((?:-[OR]|[A-Z])\d+)[a-z]?\s*@\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$/);
             if (posMatch) {
                 positionLines.push({ name: posMatch[1], dx: parseFloat(posMatch[2]), dy: parseFloat(posMatch[3]) });
                 return;
@@ -25930,14 +25933,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // resolves.
             const argumentMatch=line.match(/^Argument (\S+) (support|objection|weak-objection|rebuttal|weak-rebuttal) \| children ([^|]*) \| refs (.*)$/);
             if(argumentMatch){argumentLines.push(argumentMatch);return;}
-            const refMatch = line.match(/^\s*\(?\[?([@\w,]+)\]?\)?\s*>\s*\(?\[?([@\w,]+)\]?\)?\s*$/);
+            const refMatch = line.match(/^\s*\(?\[?([@\w,-]+)\]?\)?\s*>\s*\(?\[?([@\w,-]+)\]?\)?\s*$/);
             if (refMatch) { crossRefLines.push({ src: refMatch[1], tgt: refMatch[2] }); return; }
 
             // "(LABEL): text" marks an implicit premise and "[LABEL]: text" a
             // given one; the two nest as "([LABEL])". A lone unmatched bracket
             // or parenthesis is simply not a mark (the label still parses),
             // which is why each mark needs BOTH of its delimiters to count.
-            const match = line.match(/^(\s*)(\(?)(\[?)([@\w,]+)(\]?)(\)?):\s*(.*)/);
+            const match = line.match(/^(\s*)(\(?)(\[?)([@\w,-]+)(\]?)(\)?):\s*(.*)/);
             if (!match) return;
             const [, , openParen, openBracket, label, closeBracket, closeParen, rawText] = match;
             const implicitMark = !!(openParen && closeParen);
@@ -25967,7 +25970,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 }
 
                 // Child of a free node: parse the suffix for type segments.
-                const segRegex = /([MORNSQPX])(\d+)([a-z]?)/g;
+                const segRegex = /(-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
                 const segments = [];
                 let m;
                 while ((m = segRegex.exec(suffix)) !== null) {
@@ -25976,7 +25979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!segments.length) return;
 
                 const lastSeg = segments[segments.length - 1];
-                const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q questions the argument, P preserves it; X (briefly, untyped) reads as S
+                const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q and P, the old letters for -O and -R, still read; X (briefly, untyped) reads as S
                 const nodeType = typeMap[lastSeg.type] || 'support';
                 const baseLabel = groupLabel(segments, freeBase);
 
@@ -26024,8 +26027,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return;
             }
 
-            // Parse label into segments: M1, S1a, O2, R1, Q1, P1, N1, etc.
-            const segRegex = /([MORNSQPX])(\d+)([a-z]?)/g;
+            // Parse label into segments: M1, S1a, O2, R1, -O1, -R1, N1, etc.
+            // "-O" and "-R" come first, so "M1-O1" is never read as M1 and O1.
+            const segRegex = /(-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
             const segments = [];
             let m;
             while ((m = segRegex.exec(label)) !== null) {
@@ -26050,7 +26054,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
             // Non-root node
             const lastSeg = segments[segments.length - 1];
-            const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q questions the argument, P preserves it; X (briefly, untyped) reads as S
+            const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q and P, the old letters for -O and -R, still read; X (briefly, untyped) reads as S
             const nodeType = typeMap[lastSeg.type] || 'support';
 
             // Check if this is a co-premise of an existing node (notes stand
@@ -26126,8 +26130,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Second pass: attach cross-references now that every label is
         // known. A label's trailing lowercase letter (its co-premise
         // suffix) selects the box; a bare label means box 0 — safe
-        // because the label alphabet is TYPE-letter (uppercase) + digits +
-        // co-letter, so a trailing [a-z] is always a co-premise marker. Unresolvable
+        // because the label alphabet is TYPE-letter (uppercase, "-O" and "-R"
+        // with their hyphen) + digits + co-letter, so a trailing [a-z] is
+        // always a co-premise marker. Unresolvable
         // and self-referencing lines are dropped silently, matching the
         // parser's tolerance of malformed node lines; duplicates are
         // skipped, mirroring completeCrossRefPicking.
@@ -26158,10 +26163,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if(!target.node.crossRefs)target.node.crossRefs=target.node.texts.map(()=>[]);
             target.node.crossRefs[target.idx].push(arg);
         });
-        // Premise links written by label ("#box:@M1S1b"): to the box it names.
+        // Premise links written by label ("#box:@M1S1b", "#box:@M1-O1"): to
+        // the box it names.
         (function relink(ns) {
             ns.forEach(n => {
-                n.texts = n.texts.map(t => String(t).replace(/\[([^\]\n]*)\]\(#box:@([A-Za-z0-9]+)\)/g, (m, lb, name) => {
+                n.texts = n.texts.map(t => String(t).replace(/\[([^\]\n]*)\]\(#box:@([A-Za-z0-9-]+)\)/g, (m, lb, name) => {
                     const hit = resolveRefEndpoint(name);
                     return '[' + lb + '](#box:' + (hit ? hit.node.id + (hit.idx ? '.' + hit.idx : '') : '-') + ')';
                 }));
