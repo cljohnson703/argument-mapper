@@ -55,7 +55,7 @@ const svg=buildExportSVG();const tagCount=document.querySelectorAll('.derivation
 const active=document.getElementById('logic-btn').classList.contains('active');
 const reference=!!badge&&badge.parentElement.classList.contains('has-crossrefs')&&parseFloat(getComputedStyle(badge).bottom)>=0;
 const badgeStyle=getComputedStyle(badge),nodeStyle=getComputedStyle(badge.parentElement);
-if(getComputedStyle(badge.parentElement.querySelector('.rendered-text')).marginBottom!=='0px'||getComputedStyle(badge.parentElement.querySelector('textarea')).marginBottom!=='0px')throw new Error('Text must not add a second gap above the cross-reference badge');
+if(getComputedStyle(badge.parentElement.querySelector('.rendered-text')).marginBottom!=='0px'||getComputedStyle(badge.parentElement.querySelector('.box-editor')).marginBottom!=='0px')throw new Error('Text must not add a second gap above the cross-reference badge');
 if(badgeStyle.left!=='50%'||badgeStyle.transform!=='translateX(-50%)'||parseFloat(nodeStyle.paddingBottom)<parseFloat(badgeStyle.lineHeight)+parseFloat(badgeStyle.bottom))throw new Error('Cross-reference must be centered and stay clear of the text');
 document.body.classList.add('toolbar-left');
 if(getComputedStyle(document.getElementById('toolbar')).gap!=='8px'||getComputedStyle(document.getElementById('group-view')).gap!=='8px')throw new Error('Original sidebar spacing must be preserved');

@@ -125,8 +125,9 @@
         --btn-bg: #ddd; --btn-border: #aaa;
         --btn-active-bg: #2176c1; --btn-active-border: #1565c0;
         /* Section headers (Add Nodes, View, Notes, Sort ...), the zoom
-           percentage, and the smaller words beside them (times, counts,
-           notes, "Saved in browser only ..."): about 6.5:1 on the panels. */
+           percentage, and the smaller words beside them (counts, notes,
+           Recent Maps' times, "Saved in browser only ..." -- not a note's
+           time, which stays #777): about 6.5:1 on the panels. */
         --label-text: #555;
     }
 
@@ -198,7 +199,7 @@
     }
 
     /* Prevent textareas from stealing drops during drag */
-    body.is-dragging textarea, body.is-dragging .rendered-text, body.is-dragging .collapse-btn { pointer-events: none !important; }
+    body.is-dragging .box-editor, body.is-dragging .rendered-text, body.is-dragging .collapse-btn { pointer-events: none !important; }
     /* Prevent browser scroll/zoom when initiating a drag from touch targets */
     .drag-handle, .group-fork-hitbox { touch-action: none; }
     #minimap { touch-action: none; }
@@ -217,7 +218,7 @@
     body.present-mode.focus-mode .group-fork-hitbox { pointer-events: auto; }
     body.present-mode.focus-mode .node { cursor: pointer; }
     body.present-mode.focus-mode .group-fork-hitbox { cursor: pointer; }
-    body.present-mode.focus-mode .node textarea { pointer-events: none; }
+    body.present-mode.focus-mode .node .box-editor { pointer-events: none; }
     body.present-mode.focus-mode .drag-handle { pointer-events: none; }
     body.present-mode #btn-present { background: var(--color-selected) !important; color: #fff !important; border-color: var(--color-selected) !important; }
     #present-indicator {
@@ -365,6 +366,51 @@
     body.toolbar-left #group-view .edit-place-pair { order: 3; flex-basis: 100%; }
     body.toolbar-left .edit-place-pair button { flex: 1 1 0; min-width: 0; white-space: nowrap; }
     body.toolbar-left .edit-place-pair .hotkey { display: none; }
+    /* Evaluations, Deductive and the inference colors' swatch (r27.75). In
+       the side panel they are a row of their own, without their key letters
+       (still in their tips), so the panel keeps its height. */
+    .logic-row { display: contents; }
+    body.toolbar-left #group-view .logic-row { display: flex; flex: 0 0 100%; gap: 8px; }
+    body.toolbar-left .logic-row button { padding-left: 9px; padding-right: 9px; white-space: nowrap; }
+    body.toolbar-left .logic-row .hotkey { display: none; }
+    #colors-btn { display: inline-flex; align-items: center; gap: 2px; padding-left: 7px; padding-right: 7px; }
+    #colors-btn i { display: inline-block; width: 6px; height: 12px; border-radius: 2px; }
+    #colors-btn i:nth-child(1) { background: #5fd3e8; }
+    #colors-btn i:nth-child(2) { background: #f59bc4; }
+    #colors-btn i:nth-child(3) { background: #c3b1ff; }
+    body.bg-light #colors-btn:not(.active) i:nth-child(1) { background: #0a8aa3; }
+    body.bg-light #colors-btn:not(.active) i:nth-child(2) { background: #c2367a; }
+    body.bg-light #colors-btn:not(.active) i:nth-child(3) { background: #6a4fd0; }
+    #colors-btn.active, body.bg-light #colors-btn.active { background: var(--btn-active-bg) !important; border-color: var(--btn-active-border) !important; }
+    /* B, I and U head Formatting: a row of their own in the side panel. */
+    .format-trio { display: contents; }
+    body.toolbar-left .format-trio { display: flex; flex: 0 0 100%; gap: 8px; }
+    body.toolbar-left .format-trio button { flex: 1 1 0; min-width: 0; }
+    .format-trio button { font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 17px; min-width: 32px; }
+    .format-trio .fmt-strong { font-weight: 700; }
+    .format-trio .fmt-em { font-style: italic; }
+    .format-trio .fmt-u { text-decoration: underline; }
+    /* Inference colors (r27.75): where premises meet, a color each (in the
+       light theme a pale tint of it behind the words); what goes on to the
+       conclusion, normal text -- a thin red dashed underline when the
+       conclusion denies it; words that deny, red and bold; the rest dimmed. */
+    .rendered-text .ic-rest, .rendered-text .ic-u { opacity: .45; }
+    .rendered-text .ic.ic-neg { opacity: 1; color: #ff7b72; font-weight: 600; }
+    .rendered-text .ic-cn { text-decoration-line: underline; text-decoration-style: dashed; text-decoration-color: #ff7b72; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .rendered-text .ic-k0 { color: #5fd3e8; }
+    .rendered-text .ic-k1 { color: #f59bc4; }
+    .rendered-text .ic-k2 { color: #c3b1ff; }
+    .rendered-text .ic-k3 { color: #ffd479; }
+    .rendered-text .ic-k4 { color: #ffb38a; }
+    .rendered-text .ic-k5 { color: #8fd0ff; }
+    body.nodes-light .rendered-text .ic-k0 { color: #006b80; background: rgba(0,170,205,.17); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic-k1 { color: #a8235f; background: rgba(225,60,140,.14); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic-k2 { color: #5536b8; background: rgba(110,80,230,.14); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic-k3 { color: #7a5200; background: rgba(230,170,0,.20); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic-k4 { color: #a6430f; background: rgba(240,120,60,.16); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic-k5 { color: #1f5fa0; background: rgba(40,130,230,.15); padding: 1px 0; }
+    body.nodes-light .rendered-text .ic.ic-neg { color: #c62828; }
+    body.nodes-light .rendered-text .ic-cn { text-decoration-color: #c62828; }
     /* Keep whole words inside their buttons when Advanced adds a scrollbar. */
     body.toolbar-left #group-file { display: grid; grid-template-columns: repeat(3,minmax(min-content,1fr)); }
     body.toolbar-left #group-file .toolbar-group-label { grid-column: 1 / -1; }
@@ -664,19 +710,34 @@
     .type-note { background: var(--note-bg); border-color: var(--line-note); box-shadow: 3px 4px 6px rgba(0,0,0,0.3); border-radius: 2px; }
     
     /* Stronger CSS specificity for Note text */
-    .node.type-note textarea { color: var(--note-text); font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; }
+    .node.type-note .box-editor { color: var(--note-text); font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; }
     .type-note .collapse-btn { color: #888; }
     /* ⠿ on a note: 3.6:1 on the dark theme's (#888 was 2.9:1); the light
        theme's as before. */
     .type-note .drag-handle { color: #999; }
     :where(body.nodes-light) .type-note .drag-handle { color: #888; }
 
-    .node textarea {
-        background: transparent; border: none; color: var(--text-color); width: 100%; resize: none;
-        text-align: left; font-family: inherit; font-size: 14px; outline: none; overflow: hidden;
-        line-height: 1.4; margin-top: 5px; margin-bottom: 5px; flex-grow: 1; cursor: pointer;
-        padding: 0; box-sizing: border-box;
+    /* The box editor (boxEditor) shows a box's words as .rendered-text does,
+       so a box keeps its size when it opens. */
+    .node .box-editor {
+        color: var(--text-color); width: 100%; text-align: left; font-family: inherit; font-size: 14px;
+        outline: none; line-height: 1.4; margin-top: 5px; margin-bottom: 5px; flex-grow: 1; cursor: text;
+        padding: 0; box-sizing: border-box; min-height: 1.4em;
+        white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word;
     }
+    .box-editor .katex { font-size: 1em; }
+    .box-editor .katex-display { margin: 0.3em 0; }
+    .box-editor code, .box-editor .ed-code, .box-editor .ed-src {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.9em;
+        background: rgba(128,128,128,0.18); padding: 1px 4px; border-radius: 3px;
+    }
+    .box-editor .ed-code { display: inline-block; padding: 6px 8px; margin: 3px 0; white-space: pre-wrap; }
+    body.bg-light .box-editor code, body.bg-light .box-editor .ed-code, body.bg-light .box-editor .ed-src { background: rgba(0,0,0,0.08); }
+    /* A premise link or a formula is one piece: selected whole, deleted whole. */
+    .box-editor .ed-link, .box-editor .ed-box { color: var(--color-selected); text-decoration: underline; }
+    .box-editor .ed-box.ed-missing { color: #e57373; text-decoration: line-through; }
+    .box-editor .ed-chip { cursor: default; border-radius: 3px; white-space: nowrap; }
+    .box-editor .ed-chip.is-selected { outline: 2px solid var(--color-selected); outline-offset: 1px; background: rgba(33,118,193,0.18); }
 
     /* Node labels (S1, O2, -R3, etc.), on one line: a weak box's hyphen
        (M1S1-O1) is not a place to break. */
@@ -876,8 +937,10 @@
     .eval-comment-text { font-size: 12px; color: #ffffff; white-space: pre-wrap; overflow-wrap: break-word; }
     body.bg-light .eval-comment-text { color: #333; }
     .eval-comment-text.deleted { color: #777; font-style: italic; }
-    .eval-comment-time { font-size: 10px; color: #777; margin-top: 1px; }
-    body.bg-light .eval-comment-time { color: var(--label-text); }
+    /* A note's time: a little lighter in the dark theme (3.8:1 on the panel,
+       where #777 was 3.0:1); in the light theme as before r27.70. */
+    .eval-comment-time { font-size: 10px; color: #888; margin-top: 1px; }
+    body.bg-light .eval-comment-time { color: #777; }
     .eval-comment-actions { position: absolute; right: 0; top: 0; display: none; gap: 4px; }
     .eval-comment:hover .eval-comment-actions { display: flex; }
     /* Where nothing hovers (a touch screen), Reply, Edit and Delete stay shown. */
@@ -1031,7 +1094,7 @@
        sibling lets the dimming rules below reach it. */
     .node.implicit { background: transparent; box-shadow: none; }
     .node.implicit.given { background: var(--color-given-see-through); }
-    .node.implicit .rendered-text, .node.implicit textarea { color: var(--implicit-text); }
+    .node.implicit .rendered-text, .node.implicit .box-editor { color: var(--implicit-text); }
     .node.implicit[data-color="support"] { border-color: var(--line-faded); }
     .node.implicit[data-color="objection"] { border-color: var(--line-objection-faded); }
     .node.implicit[data-color="rebuttal"] { border-color: var(--line-rebuttal-faded); }
@@ -1193,6 +1256,10 @@
         font-size: 12px; min-height: 32px; text-align: center;
     }
     #context-menu .ctx-row button:hover { background: rgba(255,255,255,0.08); }
+    #context-menu .ctx-row.ctx-format button { font: 14px Georgia, 'Times New Roman', serif; min-height: 28px; }
+    #context-menu .ctx-row.ctx-format .fmt-strong { font-weight: 700; }
+    #context-menu .ctx-row.ctx-format .fmt-em { font-style: italic; }
+    #context-menu .ctx-row.ctx-format .fmt-u { text-decoration: underline; }
     #context-menu .ctx-row button:disabled { opacity: 0.35; cursor: not-allowed; background: none; }
     #context-menu .ctx-row button:active { background: rgba(255,255,255,0.14); }
     #context-menu .ctx-row button.ctx-active { background: rgba(100,160,255,0.2); border-color: var(--color-selected); }
@@ -1338,7 +1405,7 @@
     .reference-highlight { outline: 3px solid #00bcd4 !important; outline-offset: 3px; }
     .node.has-crossrefs { padding-bottom: 34px; }
     .node.has-crossrefs .rendered-text,
-    .node.has-crossrefs textarea { margin-bottom: 0; }
+    .node.has-crossrefs .box-editor { margin-bottom: 0; }
     body.bg-light .crossref-badge { background: #ccc; color: #333; }
     body.bg-light .crossref-badge:hover { background: #bbb; }
 
@@ -2166,6 +2233,12 @@
 #link-menu button { all: unset; cursor: pointer; padding: 6px 10px; border-radius: 5px;
     font: 12px system-ui, sans-serif; }
 #link-menu button:hover { background: rgba(128,128,128,.18); }
+#link-menu .link-menu-format { display: flex; gap: 2px; padding: 0 0 4px; margin-bottom: 4px; border-bottom: 1px solid var(--panel-border, #d0d0d0); }
+#link-menu .link-menu-format button { flex: 1; text-align: center; padding: 4px 0; font: 14px Georgia, 'Times New Roman', serif; }
+#link-menu .link-menu-format .fmt-strong { font-weight: 700; }
+#link-menu .link-menu-format .fmt-em { font-style: italic; }
+#link-menu .link-menu-format .fmt-u { text-decoration: underline; }
+#link-menu .link-menu-format button[aria-pressed="true"] { background: rgba(33,118,193,.25); }
 </style>
 </head>
 <body>
@@ -2209,8 +2282,11 @@
             <button onclick="toggleTheme()" title="Switch between light and dark (T)">Theme <span class="hotkey">T</span></button>
             <button onclick="cycleEvaluation()" title="Mark the selected box for review: Note, Minor or Major (E)">Evaluate <span class="hotkey">E</span></button>
             <button id="minimap-btn" onclick="toggleMinimap()" title="Show or hide the minimap (M)">Minimap <span class="hotkey">M</span></button>
-            <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every evaluation and comment (V)">Evaluations <span class="hotkey">V</span></button>
-            <button id="logic-btn" onclick="toggleDeductiveLive()" title="Check the logic of every step (K); Shift+K checks only the selected one">Deductive <span class="hotkey">K</span></button>
+            <div class="logic-row">
+                <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every evaluation and comment (V)">Evaluations <span class="hotkey">V</span></button>
+                <button id="logic-btn" onclick="toggleDeductiveLive()" title="Check the logic of every step (K); Shift+K checks only the selected one">Deductive <span class="hotkey">K</span></button>
+                <button id="colors-btn" onclick="toggleInferenceColors()" aria-pressed="false" aria-label="Inference colors" title="Color each premise's words by the part they play in its step (turns on Deductive)"><i></i><i></i><i></i>&#8203;</button>
+            </div>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Narrow packs the map tightly; Wide gives each branch its own room (B)">Breadth: Narrow <span class="hotkey">B</span></button>
             <div class="edit-place-pair">
                 <button id="click-edit-btn" onclick="toggleClickToEdit()" title="Edit: Double. Double-click a box to edit it; click for Single, one click (Shift+E)">Edit: Double <span class="hotkey">Shift+E</span></button>
@@ -2266,6 +2342,11 @@
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">Formatting</span>
+            <div class="format-trio">
+                <button class="fmt-strong" onmousedown="event.preventDefault()" onclick="formatButton('strong')" title="Bold the selected boxes, or the selected words while editing (Ctrl+B)" aria-label="Bold">B</button>
+                <button class="fmt-em" onmousedown="event.preventDefault()" onclick="formatButton('em')" title="Italicize the selected boxes, or the selected words while editing (Ctrl+I)" aria-label="Italic">I</button>
+                <button class="fmt-u" onmousedown="event.preventDefault()" onclick="formatButton('u')" title="Underline the selected boxes, or the selected words while editing (Ctrl+U)" aria-label="Underline">U</button>
+            </div>
             <button onclick="setSelectedAlign('left')" title="Align text left (Ctrl+Shift+L)">Align ◁</button>
             <button onclick="setSelectedAlign('center')" title="Align text center (Ctrl+Shift+E)">Align ▽</button>
             <button onclick="setSelectedAlign('right')" title="Align text right (Ctrl+Shift+R)">Align ▷</button>
@@ -2413,6 +2494,7 @@
             <li><strong>?</strong> with a reason, such as <strong>? ambiguous</strong>: a box can be read more than one way. Click the tag to choose what you mean, and your choice is written into the box.</li>
             <li><strong>✗</strong> with a reason: something to fix first, such as <em>because</em> inside a box (a box holds one claim; put the reason in a box below it). Click the tag to see what.</li>
         </ul>
+        <p>The colors button after Deductive colors each premise by its part in the step: where premises meet, a color; what goes on to the conclusion, plain (underlined in red dashes when the conclusion denies it); words that deny, red; the rest, dimmed.</p>
         <p>Commas can settle what you mean: <em>Mary sang, and danced, in the hall</em> (both in the hall); <em>Mary sang, and she danced in the hall</em> (only the dancing). So can <em>both … and</em>, <em>either … or</em> and brackets. Symbols work too: <code>~ &amp; ∨ → ↔ ∀ ∃</code>.</p>
         <p><strong>✓ Warranted</strong> means the main contention is established by the argument as it stands; <strong>✗ Unwarranted</strong> means it isn't yet, not that it's false. The <strong>Logic</strong> panel lists the rules the checker uses.</p>
         <h3>Reuse premises</h3>
@@ -2443,7 +2525,7 @@
                     <tr><td>Help / stop editing</td><td><kbd>/</kbd> / <kbd>Esc</kbd></td></tr>
                 </tbody>
             </table>
-            <p><strong>Formatting</strong> (turn on <strong>Rich text</strong> first): <kbd>**bold**</kbd>, <kbd>*italic*</kbd>, <kbd>[text](url)</kbd>, and <kbd>$…$</kbd> for math.</p>
+            <p><strong>Formatting</strong> (turn on <strong>Rich text</strong> first): type <kbd>**bold**</kbd>, <kbd>*italic*</kbd>, <kbd>[text](url)</kbd> or <kbd>$…$</kbd> for math and it converts as you type, or select words and press <kbd>Ctrl+B</kbd>, <kbd>Ctrl+I</kbd> or <kbd>Ctrl+U</kbd>. With boxes selected instead, these (or <strong>B</strong>, <strong>I</strong>, <strong>U</strong> in a box's menu or under Formatting) format whole boxes. Backspace selects a premise link or a formula, then deletes it; double-click a formula to edit it.</p>
         </details>
         <details class="help-more">
             <summary>About and licenses</summary>
@@ -3850,7 +3932,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // $...$ = inline math, $$...$$ = display math (KaTeX)
     // **...** = bold, *...* = italic (Markdown-lite)
-    function renderRichText(text) {
+    // With { annotate: true } (the box editor) the HTML also says what
+    // each piece was written as: data-md on formatting, data-src on math
+    // and on what an escape kept as typed, data-md="link"/"url" on links.
+    function renderRichText(text, opts) {
+        const annotate = !!(opts && opts.annotate);
         // HTML-escape first
         let html = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         // GENERAL `!`-literal channel (the autoformat-undo substrate): `!`
@@ -3868,7 +3954,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // invisible to every later pass. \\alpha therefore renders a
         // literal backslash + 'alpha', suppressing bare-LaTeX.
         html = html.replace(/\\([\\*_~=`$\[!])/g, (_, ch) => {
-            litBlocks.push(ch);
+            litBlocks.push(annotate ? { text: ch, src: '\\' + ch } : ch);
             return `\x03LIT${litBlocks.length - 1}\x03`;
         });
         {
@@ -3910,7 +3996,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     if (re === null) { len = texAt(html, bang + 1); if (len) break; continue; }
                     const m = re.exec(rest); if (m) { len = m[0].length; break; }
                 }
-                if (len) { litBlocks.push(html.slice(bang + 1, bang + 1 + len)); out += `\x03LIT${litBlocks.length - 1}\x03`; i = bang + 1 + len; }
+                if (len) { const lt = html.slice(bang + 1, bang + 1 + len); litBlocks.push(annotate ? { text: lt, src: '!' + lt } : lt); out += `\x03LIT${litBlocks.length - 1}\x03`; i = bang + 1 + len; }
                 else { out += '!'; i = bang + 1; }
             }
             html = out;
@@ -3919,12 +4005,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const mathBlocks = [];
         // Display math $$...$$
         html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, m) => {
-            mathBlocks.push({ display: true, tex: m });
+            mathBlocks.push({ display: true, tex: m, src: '$$' + m + '$$' });
             return `\x00MATH${mathBlocks.length - 1}\x00`;
         });
         // Inline math $...$  (not preceded/followed by space+$)
         html = html.replace(/\$([^\$\n]+?)\$/g, (_, m) => {
-            mathBlocks.push({ display: false, tex: m });
+            mathBlocks.push({ display: false, tex: m, src: '$' + m + '$' });
             return `\x00MATH${mathBlocks.length - 1}\x00`;
         });
         // Bare LaTeX commands render as inline math WITHOUT $...$, using REAL
@@ -3956,7 +4042,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 }
                 const tex = html.slice(m.index, end);
                 out += html.slice(last, m.index);
-                mathBlocks.push({ display: false, tex: tex, raw: tex });
+                mathBlocks.push({ display: false, tex: tex, raw: tex, src: tex });
                 out += `\x00MATH${mathBlocks.length - 1}\x00`;
                 last = end;
                 cmdRe.lastIndex = end;
@@ -4010,19 +4096,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // are protected from further formatting via placeholders.
             const codeChunks = [];
             str = str.replace(/```([\s\S]+?)```/g, (_, c) => {   // triple-backtick fence
-                codeChunks.push('<code class="code-block">' + c + '</code>');
+                codeChunks.push('<code class="code-block"' + (annotate ? ' data-md="```"' : '') + '>' + c + '</code>');
                 return `\x01C${codeChunks.length - 1}\x01`;
             });
             str = str.replace(/`([^`\n]+?)`/g, (_, c) => {         // single-backtick inline
-                codeChunks.push('<code>' + c + '</code>');
+                codeChunks.push('<code' + (annotate ? ' data-md="`"' : '') + '>' + c + '</code>');
                 return `\x01C${codeChunks.length - 1}\x01`;
             });
-            str = str.replace(/(?<!~)~~(?!~)(\S(?:.*?\S)?)~~(?!~)/g, '<del>$1</del>');
-            str = str.replace(/__(.+?)__/g, '<u>$1</u>');
-            str = str.replace(/==(.+?)==/g, '<mark>$1</mark>');
-            str = str.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            str = str.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-            str = str.replace(/(?<![\w_])_(?!_)(.+?)(?<!_)_(?![\w_])/g, '<em>$1</em>');
+            str = str.replace(/(?<!~)~~(?!~)(\S(?:.*?\S)?)~~(?!~)/g, (annotate ? '<del data-md="~~">$1</del>' : '<del>$1</del>'));
+            str = str.replace(/__(.+?)__/g, (annotate ? '<u data-md="__">$1</u>' : '<u>$1</u>'));
+            str = str.replace(/==(.+?)==/g, (annotate ? '<mark data-md="==">$1</mark>' : '<mark>$1</mark>'));
+            str = str.replace(/\*\*(.+?)\*\*/g, (annotate ? '<strong data-md="**">$1</strong>' : '<strong>$1</strong>'));
+            str = str.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, (annotate ? '<em data-md="*">$1</em>' : '<em>$1</em>'));
+            str = str.replace(/(?<![\w_])_(?!_)(.+?)(?<!_)_(?![\w_])/g, (annotate ? '<em data-md="_">$1</em>' : '<em>$1</em>'));
             str = str.replace(/\x01C(\d+)\x01/g, (_, i) => codeChunks[parseInt(i)]);
             return str;
         }
@@ -4036,17 +4122,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const b = linkBlocks[parseInt(idx)];
             if (b.box) return boxLinkHTML(b.src, b.label, b.ref, b.idx);
             const inner = b.formatInner ? applyInline(b.text) : b.text;
-            return `<a href="${attrEsc(b.href)}" data-src="${attrEsc(b.src)}" target="_blank" rel="noopener noreferrer" class="node-link">${inner}</a>`;
+            return `<a href="${attrEsc(b.href)}" data-src="${attrEsc(b.src)}" target="_blank" rel="noopener noreferrer" class="node-link"${annotate ? (b.formatInner ? ' data-md="link"' : ' data-md="url"') : ''}>${inner}</a>`;
         });
         // Restore `!`-escaped literals as plain text.
-        html = html.replace(/\x03LIT(\d+)\x03/g, (_, idx) => litBlocks[parseInt(idx)]);
+        html = html.replace(/\x03LIT(\d+)\x03/g, (_, idx) => { const b = litBlocks[parseInt(idx)]; return typeof b === 'string' ? b : '<span class="md-lit" data-src="' + attrEsc(b.src) + '">' + b.text + '</span>'; });
         // @mention highlighting layered over the rendered HTML:
         // mark @names, but only in text OUTSIDE tags, so mentions inside
         // <strong>/<em>/<a> etc. still highlight. Applied before
         // math restore so KaTeX HTML is never touched.
         html = highlightMentionsInHTML(html);
         // Restore math blocks with KaTeX
-        html = html.replace(/\x00MATH(\d+)\x00/g, (_, idx) => {
+        const mathOut = (idx) => {
             const block = mathBlocks[parseInt(idx)];
             if (typeof katex !== 'undefined') {
                 try {
@@ -4074,9 +4160,1001 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             _noteKatexMissing();   // math present, library absent: say so once
             return block.raw != null ? block.raw : (block.display ? `$$${block.tex}$$` : `$${block.tex}$`);
-        });
+        };
+        html = html.replace(/\x00MATH(\d+)\x00/g, (_, idx) => annotate ? '<span class="md-math" data-src="' + attrEsc(mathBlocks[parseInt(idx)].src) + '">' + mathOut(idx) + '</span>' : mathOut(idx));
         return html;
     }
+
+
+    // --- The box editor (r27.74) ---------------------------------------------
+    // The user, 2026-10-05: "I'd like a way to have rich text and premise links
+    // to convert from their syntax once completed stay converted when editing,
+    // but once you start to delete them, you merely start deleting elements of
+    // the syntax. That is, I'd like their behavior to be more like it is in
+    // Word." Chosen with the user, and tried first as a prototype: a link or a
+    // formula is selected by the first Backspace (or Delete) and deleted by the
+    // second; a formula opens for editing on a double-click; Ctrl+B, Ctrl+I and
+    // Ctrl+U format.
+    //
+    // A box is edited as it shows: formatting applied, a premise link or a
+    // formula one piece. Its words stay text with marks (node.texts), and the
+    // renderer decides how any text looks -- renderRichText's `annotate` says
+    // what each piece was written as, so it can be written back. What is typed
+    // converts once it is finished: when the next character is typed, a line
+    // is started, or the box is closed (so ** is not read as * on the way).
+    // Ctrl+Z right after puts the marks back as typed, and keeps them so (a `!`
+    // before them in the text). A box closes only as text the renderer shows
+    // exactly as the editor did (finish). With Rich text off, only premise
+    // links convert, as only they show in such a box.
+    //
+    // It is opened, read and closed as the text field it replaced was: `value`
+    // (the text), `readOnly` (closed), and `selectionStart`, `selectionEnd`
+    // and `setSelectionRange` (offsets into the text).
+    const boxEditor = (function () {
+        const TAG_MD = { STRONG: '**', EM: '*', U: '__', DEL: '~~', MARK: '==', CODE: '`' };
+        const ORDER = ['link', 'strong', 'em', 'u', 'del', 'mark', 'code'];
+        const SPECIALS = /[\\*_~=`$\[!]/g;
+        const OPENERS = '*_~=`$\\[';
+        const escapeMarkup = s => s.replace(SPECIALS, c => '\\' + c);
+        const escHTML = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+        const isElem = n => !!n && n.nodeType === 1;
+        const holder = nodes => { const d = el('div'); d.appendChild(nodes); return d; };
+        const st = ed => ed._boxEditor;
+        const inLiteral = n => { const p = n.nodeType === 1 ? n : n.parentElement; return !!(p && p.closest('code[data-md], .ed-lit, .ed-chip, .ed-src')); };
+
+        function renderFor(markup, rich) {
+            return rich ? renderRichText(markup, { annotate: true })
+                : escapeRawText(markup).replace(BOX_LINK_RE, (m, label, ref, idx) => boxLinkHTML(m, label, ref, idx));
+        }
+        function makeChip(kind, src, html, title, missing) {
+            const s = el('span', 'ed-chip ed-' + kind + (missing ? ' ed-missing' : ''));
+            s.setAttribute('contenteditable', 'false');
+            s.dataset.src = src;
+            s.innerHTML = html;
+            if (title) s.title = title;
+            return s;
+        }
+        // The renderer's HTML (annotated) as the editor's nodes.
+        function nodesFor(html) {
+            const tpl = document.createElement('template');
+            tpl.innerHTML = html;
+            const frag = document.createDocumentFragment();
+            const walk = (src, dst) => {
+                for (const n of Array.from(src.childNodes)) {
+                    if (n.nodeType === 3) { dst.appendChild(document.createTextNode(n.data)); continue; }
+                    if (n.nodeType !== 1) continue;
+                    const tag = n.tagName, cl = n.classList;
+                    if (tag === 'BR') { dst.appendChild(el('br', 'ed-br')); continue; }
+                    if (cl.contains('md-lit')) {
+                        const s = el('span', 'ed-lit'); s.dataset.src = n.dataset.src; s.dataset.text = n.textContent; s.textContent = n.textContent;
+                        dst.appendChild(s); continue;
+                    }
+                    if (cl.contains('md-math')) { dst.appendChild(makeChip('math', n.dataset.src, n.innerHTML, 'Formula: double-click to edit')); continue; }
+                    if (cl.contains('box-link')) {
+                        const c = makeChip('box', n.dataset.src, escHTML(n.textContent), n.getAttribute('title') || '', cl.contains('box-link-missing'));
+                        if (n.dataset.boxId) { c.dataset.boxId = n.dataset.boxId; c.dataset.boxIdx = n.dataset.boxIdx || '0'; }
+                        dst.appendChild(c); continue;
+                    }
+                    if (tag === 'CODE' && cl.contains('code-block')) { dst.appendChild(makeChip('code', '```' + n.textContent + '```', escHTML(n.textContent), 'Code: double-click to edit')); continue; }
+                    if (tag === 'A' && n.dataset.md === 'url') { dst.appendChild(document.createTextNode(n.textContent)); continue; }
+                    if (tag === 'A' && n.dataset.md === 'link') {
+                        const a = el('a', 'ed-link');
+                        const m = /\]\(([^)]*)\)$/.exec(n.dataset.src || '');
+                        a.dataset.url = m ? m[1] : (n.getAttribute('href') || '');
+                        a.title = a.dataset.url;
+                        walk(n, a); dst.appendChild(a); continue;
+                    }
+                    if (TAG_MD[tag] && n.dataset.md) {
+                        const w = document.createElement(tag.toLowerCase()); w.dataset.md = n.dataset.md;
+                        walk(n, w); dst.appendChild(w); continue;
+                    }
+                    walk(n, dst);
+                }
+            };
+            walk(tpl.content, frag);
+            return frag;
+        }
+        // The text a box keeps, from the editor's nodes. `escape` (a Set of
+        // text nodes, or true) writes those plain stretches so no mark in them
+        // takes effect; `emSwap` writes italic with the other mark (* or _).
+        function serialize(root, escape, emSwap) {
+            let out = '';
+            const walk = (node, literal) => {
+                for (const n of Array.from(node.childNodes)) {
+                    if (n.nodeType === 3) {
+                        let t = n.data.replace(/ /g, ' ').replace(/​/g, '');
+                        if (!literal && escape && (escape === true || escape.has(n))) t = escapeMarkup(t);
+                        out += t; continue;
+                    }
+                    if (n.nodeType !== 1 || n.classList.contains('ed-tail')) continue;
+                    if (n.tagName === 'BR') { out += '\n'; continue; }
+                    if (n.classList.contains('ed-chip')) { out += n.dataset.src; continue; }
+                    if (n.classList.contains('ed-lit')) { const t = n.textContent; out += t === n.dataset.text ? n.dataset.src : escapeMarkup(t); continue; }
+                    if (n.classList.contains('ed-link')) { const inner = sub(n, literal); if (inner) out += '[' + inner + '](' + n.dataset.url + ')'; continue; }
+                    let md = n.dataset && n.dataset.md;
+                    if (md) {
+                        if (emSwap && n.tagName === 'EM') md = md === '*' ? '_' : '*';
+                        const inner = sub(n, literal || md === '`');
+                        if (inner) out += md + inner + md;
+                        continue;
+                    }
+                    walk(n, literal);
+                }
+            };
+            const sub = (n, literal) => { const keep = out; out = ''; walk(n, literal); const r = out; out = keep; return r; };
+            walk(root, false);
+            return out;
+        }
+        // What a stretch of nodes shows: each character with its formatting,
+        // each link or formula as itself. Equal lists show the same.
+        function atomsOf(root) {
+            const out = [];
+            const add = (fmts, x) => (fmts ? fmts.split(',') : []).concat(x).sort().join(',');
+            const walk = (node, fmts) => {
+                for (const n of Array.from(node.childNodes)) {
+                    if (n.nodeType === 3) { for (const ch of n.data.replace(/ /g, ' ').replace(/​/g, '')) out.push(ch + '|' + fmts); continue; }
+                    if (n.nodeType !== 1 || n.classList.contains('ed-tail')) continue;
+                    if (n.tagName === 'BR') { out.push('\n|' + fmts); continue; }
+                    if (n.classList.contains('ed-chip')) { out.push('chip:' + n.dataset.src + '|' + fmts); continue; }
+                    let f = fmts;
+                    if (n.classList.contains('ed-link')) f = add(fmts, 'link=' + n.dataset.url);
+                    else if (n.dataset && n.dataset.md) f = add(fmts, n.tagName.toLowerCase());
+                    walk(n, f);
+                }
+            };
+            walk(root, '');
+            return out;
+        }
+        const sameAtoms = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+        function textNodes(root) {
+            const out = [];
+            const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                acceptNode: n => n.parentElement && n.parentElement.closest('.ed-chip') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+            });
+            while (w.nextNode()) out.push(w.currentNode);
+            return out;
+        }
+
+        // ----- Positions, counted in what is seen: a character is one, a link
+        // or a formula is one, a line break is one.
+        function countUnits(node) {
+            let n = 0;
+            const walk = x => {
+                for (const c of Array.from(x.childNodes)) {
+                    if (c.nodeType === 3) n += c.data.length;
+                    else if (c.nodeType === 1) {
+                        if (c.classList.contains('ed-tail')) continue;
+                        if (c.classList.contains('ed-chip') || c.tagName === 'BR') n += 1;
+                        else walk(c);
+                    }
+                }
+            };
+            walk(node);
+            return n;
+        }
+        function unitsBefore(ed, container, offset) {
+            const r = document.createRange();
+            r.setStart(ed, 0);
+            try { r.setEnd(container, offset); } catch (e) { return 0; }
+            return countUnits(r.cloneContents());
+        }
+        function getOffsets(ed) {
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount) return null;
+            const r = sel.getRangeAt(0);
+            if (!ed.contains(r.startContainer) || !ed.contains(r.endContainer)) return null;
+            return { start: unitsBefore(ed, r.startContainer, r.startOffset), end: unitsBefore(ed, r.endContainer, r.endOffset) };
+        }
+        function pointAt(ed, u) {
+            let left = u, res = null;
+            const walk = x => {
+                for (let i = 0; i < x.childNodes.length && !res; i++) {
+                    const c = x.childNodes[i];
+                    if (c.nodeType === 3) {
+                        if (left <= c.data.length) { res = { node: c, offset: left }; return; }
+                        left -= c.data.length;
+                    } else if (c.nodeType === 1) {
+                        if (c.classList.contains('ed-tail')) continue;
+                        if (c.classList.contains('ed-chip') || c.tagName === 'BR') {
+                            if (left === 0) { res = { node: x, offset: i }; return; }
+                            left -= 1;
+                            if (left === 0 && !(c.nextSibling && c.nextSibling.nodeType === 3)) { res = { node: x, offset: i + 1 }; return; }
+                        } else walk(c);
+                    }
+                }
+            };
+            walk(ed);
+            if (res) return res;
+            const tail = ed.querySelector('.ed-tail');
+            return { node: ed, offset: tail ? Array.prototype.indexOf.call(ed.childNodes, tail) : ed.childNodes.length };
+        }
+        function setOffsets(ed, start, end) {
+            const a = pointAt(ed, start), b = end === start ? a : pointAt(ed, end);
+            const r = document.createRange();
+            r.setStart(a.node, a.offset); r.setEnd(b.node, b.offset);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        }
+        // The link or formula at a position, if that is what stands there.
+        function chipAt(ed, idx) {
+            let left = idx, res = null, done = false;
+            const walk = x => {
+                for (const c of Array.from(x.childNodes)) {
+                    if (done) return;
+                    if (c.nodeType === 3) { if (left < c.data.length) { done = true; return; } left -= c.data.length; }
+                    else if (c.nodeType === 1) {
+                        if (c.classList.contains('ed-tail')) continue;
+                        if (c.classList.contains('ed-chip')) { if (left === 0) { res = c; done = true; return; } left -= 1; }
+                        else if (c.tagName === 'BR') { if (left === 0) { done = true; return; } left -= 1; }
+                        else walk(c);
+                    }
+                }
+            };
+            walk(ed);
+            return res;
+        }
+        function selectedChip(ed) {
+            const o = getOffsets(ed);
+            return o && o.end - o.start === 1 ? chipAt(ed, o.start) : null;
+        }
+        function selectChip(ed, c) {
+            const r = document.createRange(); r.selectNode(c);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            markSelectedChip(ed);
+        }
+        function markSelectedChip(ed) {
+            const c = st(ed).open ? selectedChip(ed) : null;
+            ed.querySelectorAll('.ed-chip.is-selected').forEach(x => { if (x !== c) x.classList.remove('is-selected'); });
+            if (c) c.classList.add('is-selected');
+        }
+        // The text's offset at a position (units), and the position at an
+        // offset into the text: for the editor's selection read as a field's.
+        function markupOffsetAt(ed, u) {
+            let left = u, out = 0, done = false;
+            const walk = node => {
+                for (const n of Array.from(node.childNodes)) {
+                    if (done) return;
+                    if (n.nodeType === 3) {
+                        const L = n.data.length;
+                        if (left <= L) { out += left; done = true; return; }
+                        out += L; left -= L; continue;
+                    }
+                    if (n.nodeType !== 1 || n.classList.contains('ed-tail')) continue;
+                    if (n.tagName === 'BR' || n.classList.contains('ed-chip')) {
+                        if (left === 0) { done = true; return; }
+                        out += n.tagName === 'BR' ? 1 : n.dataset.src.length; left -= 1; continue;
+                    }
+                    if (n.classList.contains('ed-lit')) {
+                        const t = n.textContent, src = t === n.dataset.text ? n.dataset.src : escapeMarkup(t);
+                        if (left < t.length) { out += Math.min(src.length, src.length - t.length + left); done = true; return; }
+                        out += src.length; left -= t.length; continue;
+                    }
+                    const link = n.classList.contains('ed-link');
+                    const md = (n.dataset && n.dataset.md) || '';
+                    out += link ? 1 : md.length;
+                    walk(n);
+                    if (done) return;
+                    out += link ? n.dataset.url.length + 3 : md.length;
+                }
+            };
+            walk(ed);
+            return out;
+        }
+        function unitAtMarkup(ed, m) {
+            let left = Math.max(0, m), u = 0, done = false;
+            const walk = node => {
+                for (const n of Array.from(node.childNodes)) {
+                    if (done) return;
+                    if (n.nodeType === 3) {
+                        const L = n.data.length;
+                        if (left <= L) { u += left; done = true; return; }
+                        u += L; left -= L; continue;
+                    }
+                    if (n.nodeType !== 1 || n.classList.contains('ed-tail')) continue;
+                    if (n.tagName === 'BR' || n.classList.contains('ed-chip')) {
+                        const L = n.tagName === 'BR' ? 1 : n.dataset.src.length;
+                        if (left === 0) { done = true; return; }
+                        if (left < L) { u += left * 2 >= L ? 1 : 0; done = true; return; }
+                        u += 1; left -= L; continue;
+                    }
+                    if (n.classList.contains('ed-lit')) {
+                        const t = n.textContent, src = t === n.dataset.text ? n.dataset.src : escapeMarkup(t);
+                        if (left <= src.length) { u += Math.max(0, Math.min(t.length, left - (src.length - t.length))); done = true; return; }
+                        u += t.length; left -= src.length; continue;
+                    }
+                    const link = n.classList.contains('ed-link');
+                    const md = (n.dataset && n.dataset.md) || '';
+                    const open = link ? 1 : md.length, close = link ? n.dataset.url.length + 3 : md.length;
+                    if (left <= open) { done = true; return; }
+                    left -= open;
+                    walk(n);
+                    if (done) return;
+                    if (left <= close) { done = true; return; }
+                    left -= close;
+                }
+            };
+            walk(ed);
+            return u;
+        }
+
+        // ----- Keeping the editor's nodes its own ------------------------------
+        function ensureTail(ed) {
+            const tails = ed.querySelectorAll('.ed-tail');
+            if (tails.length === 1 && ed.lastChild === tails[0]) return;
+            tails.forEach(t => t.remove());
+            ed.appendChild(el('br', 'ed-tail'));
+        }
+        // A line break ends bold, italic and the like (the marks cannot run
+        // across lines): one inside formatting is lifted out of it.
+        function liftBreak(ed, b) {
+            const keep = w => !!(w.textContent || w.querySelector('.ed-chip'));
+            let w = b.parentElement;
+            while (w && w !== ed && ((w.dataset && w.dataset.md) || w.classList.contains('ed-link') || w.classList.contains('ed-lit') || w.classList.contains('ed-src'))) {
+                const after = w.cloneNode(false);
+                while (b.nextSibling) after.appendChild(b.nextSibling);
+                w.after(b);
+                b.after(after);
+                if (!keep(after)) after.remove();
+                if (!keep(w)) w.remove();
+                w = b.parentElement;
+            }
+        }
+        // What the browser adds on its own (a <b> when it carries bold on, a
+        // <div> for a line, a <br> holding an empty line open) becomes the
+        // editor's own, or plain text.
+        function sanitize(ed) {
+            const odd = Array.from(ed.querySelectorAll('*')).filter(n => {
+                if (n.closest('.ed-chip') && !n.classList.contains('ed-chip')) return false;
+                if (['ed-chip', 'ed-tail', 'ed-br', 'ed-lit', 'ed-link', 'ed-src'].some(c => n.classList.contains(c))) return false;
+                return !(TAG_MD[n.tagName] && n.dataset.md);
+            });
+            const empty = Array.from(ed.querySelectorAll('strong[data-md],em[data-md],u[data-md],del[data-md],mark[data-md],code[data-md],a.ed-link,span.ed-lit,span.ed-src'))
+                .filter(w => !w.textContent && !w.querySelector('.ed-chip'));
+            const tailOk = ed.lastChild && ed.lastChild.nodeType === 1 && ed.lastChild.classList.contains('ed-tail') && ed.querySelectorAll('.ed-tail').length === 1;
+            const nested = Array.from(ed.querySelectorAll('br.ed-br')).some(b => b.parentElement !== ed);
+            if (!odd.length && !empty.length && tailOk && !nested) return;
+            const o = getOffsets(ed);
+            odd.forEach(n => {
+                if (!ed.contains(n)) return;
+                const map = { B: ['strong', '**'], STRONG: ['strong', '**'], I: ['em', '*'], EM: ['em', '*'], U: ['u', '__'], S: ['del', '~~'], STRIKE: ['del', '~~'], DEL: ['del', '~~'], MARK: ['mark', '=='] }[n.tagName];
+                if (map) { const w = document.createElement(map[0]); w.dataset.md = map[1]; while (n.firstChild) w.appendChild(n.firstChild); n.replaceWith(w); return; }
+                if (n.tagName === 'BR') { n.remove(); return; }
+                if (n.tagName === 'DIV' || n.tagName === 'P') { if (n.previousSibling) n.before(el('br', 'ed-br')); while (n.firstChild) n.before(n.firstChild); n.remove(); return; }
+                while (n.firstChild) n.before(n.firstChild); n.remove();
+            });
+            empty.forEach(w => { if (ed.contains(w)) w.remove(); });
+            ed.querySelectorAll('br.ed-br').forEach(b => { if (b.parentElement !== ed && !b.parentElement.closest('.ed-chip')) liftBreak(ed, b); });
+            ensureTail(ed);
+            ed.normalize();
+            if (o) setOffsets(ed, o.start, o.end);
+        }
+
+        // ----- Converting what is typed -----------------------------------------
+        // The shortest ending of `text` the renderer reads as exactly one piece
+        // (bold words, a link, a formula ...), or null.
+        function lastElement(text, rich) {
+            const stop = Math.max(0, text.length - 400);
+            for (let j = text.length - 1; j >= stop; j--) {
+                if (OPENERS.indexOf(text[j]) < 0) continue;
+                const frag = nodesFor(renderFor(text.slice(j), rich));
+                const only = frag.childNodes.length === 1 ? frag.firstChild : null;
+                if (isElem(only) && !only.classList.contains('ed-lit')) return { start: j, node: only };
+            }
+            return null;
+        }
+        // ... and only if it reads the same with all of `text` before it.
+        function readsSameInPlace(text, cand, rich) {
+            const last = holder(nodesFor(renderFor(text, rich))).lastChild;
+            if (!isElem(last)) return false;
+            return sameAtoms(atomsOf(holder(last.cloneNode(true))), atomsOf(holder(cand.node.cloneNode(true))));
+        }
+        const nodePath = (ed, n) => { const p = []; while (n && n !== ed) { p.unshift(Array.prototype.indexOf.call(n.parentNode.childNodes, n)); n = n.parentNode; } return p; };
+        const nodeByPath = (root, p) => { let n = root; for (const i of p) n = n && n.childNodes[i]; return n; };
+        // The box as it stood, with the marks just converted kept as typed (a
+        // `!` before them says so in the text): what Ctrl+Z goes back to.
+        function literalVersion(ed, node, a, b) {
+            const clone = ed.cloneNode(true);
+            const t = nodeByPath(clone, nodePath(ed, node));
+            const mid = t.splitText(a);
+            mid.splitText(b - a);
+            const lit = el('span', 'ed-lit');
+            lit.textContent = mid.data; lit.dataset.text = mid.data; lit.dataset.src = '!' + mid.data;
+            mid.replaceWith(lit);
+            return { html: clone.innerHTML, sel: getOffsets(ed) || { start: 0, end: 0 } };
+        }
+        // The piece ending at `end` in a text node converts if it is finished:
+        // `next` is the character after it (typed, or a line break about to
+        // be), and the cursor goes `caret` characters into what follows it.
+        function convertBefore(ed, node, end, next, caret, keepUndo) {
+            const s = st(ed);
+            const before = node.data.slice(0, end);
+            const cand = lastElement(before, s.rich);
+            if (!cand || !readsSameInPlace(before, cand, s.rich)) return null;
+            // Still being typed? A second * of **, a { after \frac{a}, a letter
+            // after \alph: the piece is not finished, so it waits.
+            if (lastElement(before + next, s.rich)) return null;
+            if (next === before[before.length - 1] && '*_~=$`'.indexOf(next) >= 0) return null;
+            if (cand.node.classList.contains('ed-math') && before[cand.start] === '\\' && /[{\[A-Za-z]/.test(next)) return null;
+            const pre = keepUndo ? literalVersion(ed, node, cand.start, end) : null;
+            const tail = document.createTextNode(node.data.slice(end));
+            const head = node.data.slice(0, cand.start);
+            node.after(cand.node);
+            cand.node.after(tail);
+            if (head) node.data = head; else node.remove();
+            const r = document.createRange(); r.setStart(tail, caret); r.collapse(true);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            if (pre) {
+                // The typing that led here becomes its literal version; the
+                // conversion is a step of its own.
+                s.hist[s.hi] = pre;
+                s.hist.length = s.hi + 1; s.hist.push(snap(ed)); s.hi++;
+                s.lastKind = 'convert'; s.lastTime = Date.now();
+            }
+            return cand.node;
+        }
+        function caretText(ed) {
+            const sel = window.getSelection();
+            if (st(ed).composing || !sel || !sel.rangeCount || !sel.isCollapsed) return null;
+            const node = sel.anchorNode, k = sel.anchorOffset;
+            if (!node || node.nodeType !== 3 || !ed.contains(node) || inLiteral(node)) return null;
+            return { node, k };
+        }
+        function autoformat(ed) {
+            const c = caretText(ed);
+            if (!c || c.k < 2) return false;
+            return !!convertBefore(ed, c.node, c.k - 1, c.node.data[c.k - 1], 1, true);
+        }
+        // Several characters at once (dictation, a phone keyboard's word):
+        // what is finished in them converts, as it would have typed singly.
+        function flushAtCaret(ed) {
+            const c = caretText(ed);
+            if (!c) return false;
+            const frag = nodesFor(renderFor(c.node.data, st(ed).rich));
+            if (!Array.from(frag.childNodes).some(isElem)) return false;
+            const o = getOffsets(ed);
+            const after = countUnits(ed) - o.end;
+            c.node.replaceWith(frag);
+            ed.normalize();
+            const at = countUnits(ed) - after;
+            setOffsets(ed, at, at);
+            pushState(ed, 'convert');
+            return true;
+        }
+        // Everything typed and finished converts: on paste, and when the box closes.
+        function flush(ed) {
+            let changed = false;
+            for (const t of textNodes(ed)) {
+                if (inLiteral(t) || !/[*_~=`$\\\[]/.test(t.data)) continue;
+                const frag = nodesFor(renderFor(t.data, st(ed).rich));
+                if (Array.from(frag.childNodes).some(isElem)) { t.replaceWith(frag); changed = true; }
+            }
+            return changed;
+        }
+        // The text a box keeps: everything finished converted, then written so
+        // that the renderer shows exactly what the editor shows (italic marks
+        // or plain stretches written another way, if need be).
+        function finish(ed) {
+            const s = st(ed);
+            if (!s.open) return s.markup;
+            if (!s.dirty) return s.markup;
+            closeSource(ed);
+            flush(ed);
+            ed.normalize();
+            return bestMarkup(ed).markup;
+        }
+        // The text for what the editor shows. The renderer reads marks with
+        // patterns, and not every mix of bold and italic inside a word comes
+        // out of the first writing (*b****la* is not read as written): plain
+        // stretches written with escapes, each italic written with the other
+        // mark (_b_ for *b*), italic nested outside bold, until one reads back
+        // as shown; else the nearest (`exact` false).
+        function bestMarkup(ed) {
+            const rich = st(ed).rich;
+            const want = atomsOf(ed);
+            const misses = m => {
+                const got = atomsOf(holder(nodesFor(renderFor(m, rich))));
+                let n = Math.abs(got.length - want.length);
+                for (let i = 0; i < Math.min(got.length, want.length); i++) if (got[i] !== want[i]) n++;
+                return n;
+            };
+            let best = serialize(ed), bestN = misses(best);
+            if (!bestN) return { markup: best, exact: true };
+            const tryOn = (root, esc) => {
+                const consider = m => { const n = misses(m); if (n < bestN) { best = m; bestN = n; } return !n; };
+                if (consider(serialize(root, esc))) return true;
+                for (const em of Array.from(root.querySelectorAll('em[data-md]'))) {
+                    const was = em.dataset.md;
+                    em.dataset.md = was === '*' ? '_' : '*';
+                    const m = serialize(root, esc), n = misses(m);
+                    if (n < bestN) { best = m; bestN = n; if (!n) return true; }
+                    else em.dataset.md = was;
+                }
+                return false;
+            };
+            const esc = new Set();
+            for (const t of textNodes(ed)) {
+                if (inLiteral(t) || !/[\\*_~=`$\[!]/.test(t.data)) continue;
+                esc.add(t);
+                if (tryOn(ed, esc)) return { markup: best, exact: true };
+            }
+            if (tryOn(ed, esc)) return { markup: best, exact: true };
+            // Italic outside bold: *a **b** c* rather than **...*b*...**.
+            const other = el('div');
+            buildInto(other, toAtoms(ed), ['link', 'em', 'strong', 'u', 'del', 'mark', 'code']);
+            if (tryOn(other, null)) return { markup: best, exact: true };
+            return { markup: best, exact: false };
+        }
+
+        // ----- Undo within the box ------------------------------------------------
+        function snap(ed) { return { html: ed.innerHTML, sel: getOffsets(ed) || { start: 0, end: 0 } }; }
+        function pushState(ed, kind) {
+            const s = st(ed), now = Date.now();
+            s.dirty = true;
+            const merge = (kind === 'type' || kind === 'delete') && kind === s.lastKind && now - s.lastTime < 1200 && !/\s/.test(s.lastTyped);
+            if (merge && s.hi >= 0) s.hist[s.hi] = snap(ed);
+            else { s.hist.length = s.hi + 1; s.hist.push(snap(ed)); s.hi = s.hist.length - 1; }
+            s.lastKind = kind; s.lastTime = now;
+        }
+        // Tell the box: its words changed by something other than typing.
+        function changed(ed) {
+            const ev = new Event('input', { bubbles: true });
+            ev.boxEditorInternal = true;
+            ed.dispatchEvent(ev);
+        }
+        function restore(ed, snapState) {
+            const s = st(ed);
+            s.openSrc = null;
+            ed.innerHTML = snapState.html;
+            ensureTail(ed);
+            setOffsets(ed, snapState.sel.start, snapState.sel.end);
+            markSelectedChip(ed);
+            s.dirty = true;
+            changed(ed);
+        }
+        function undo(ed) { const s = st(ed); if (s.hi > 0) { s.hi--; restore(ed, s.hist[s.hi]); s.lastKind = 'undo'; } }
+        function redo(ed) { const s = st(ed); if (s.hi < s.hist.length - 1) { s.hi++; restore(ed, s.hist[s.hi]); s.lastKind = 'undo'; } }
+
+        // ----- Editing --------------------------------------------------------------
+        function insertNodes(ed, frag) {
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount) return;
+            const o = getOffsets(ed) || { start: countUnits(ed), end: countUnits(ed) };
+            const n = frag.nodeType === 11 ? countUnits(frag) : countUnits(holder(frag.cloneNode(true)));
+            const r = sel.getRangeAt(0);
+            r.deleteContents();
+            r.insertNode(frag);
+            sanitize(ed);
+            ed.normalize();
+            setOffsets(ed, o.start + n, o.start + n);
+        }
+        // Text with marks, put in at the cursor (a paste, a premise link).
+        function insertMarkup(ed, text) {
+            if (!st(ed).open) return;
+            insertNodes(ed, nodesFor(renderFor(text, st(ed).rich)));
+            pushState(ed, 'insert'); markSelectedChip(ed); changed(ed);
+        }
+        function newLine(ed) {
+            const c = caretText(ed);
+            const made = c && c.k >= 1 ? convertBefore(ed, c.node, c.k, '\n', 0, false) : null;
+            const b = el('br', 'ed-br');
+            if (made) {
+                made.after(b);
+                const next = b.nextSibling;
+                if (next && next.nodeType === 3 && next.data === '') next.remove();
+            } else {
+                const sel = window.getSelection();
+                if (!sel || !sel.rangeCount) return;
+                const r = sel.getRangeAt(0);
+                r.deleteContents();
+                r.insertNode(b);
+            }
+            liftBreak(ed, b);
+            sanitize(ed);
+            const r2 = document.createRange(); r2.setStartAfter(b); r2.collapse(true);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r2);
+            st(ed).lastTyped = '\n';
+            pushState(ed, 'type');
+            changed(ed);
+        }
+        function removeChip(ed, c) {
+            const at = unitsBefore(ed, c.parentNode, Array.prototype.indexOf.call(c.parentNode.childNodes, c));
+            c.remove();
+            sanitize(ed); ed.normalize();
+            setOffsets(ed, at, at);
+            pushState(ed, 'delete-link'); markSelectedChip(ed); changed(ed);
+        }
+        // A formula's (or code's) source, to edit; it shows as a formula again
+        // once the cursor leaves it.
+        function openSource(ed, c) {
+            const s = el('span', 'ed-src');
+            s.textContent = c.dataset.src;
+            c.replaceWith(s);
+            st(ed).openSrc = s;
+            const r = document.createRange(); r.selectNodeContents(s); r.collapse(false);
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            pushState(ed, 'source'); changed(ed);
+        }
+        function closeSource(ed) {
+            const s = st(ed), src = s.openSrc;
+            if (!src) return;
+            s.openSrc = null;
+            if (!ed.contains(src)) return;
+            const o = getOffsets(ed);
+            src.replaceWith(nodesFor(renderFor(src.textContent, s.rich)));
+            ed.normalize();
+            if (o) { const n = countUnits(ed); setOffsets(ed, Math.min(o.start, n), Math.min(o.end, n)); }
+            pushState(ed, 'source'); changed(ed);
+        }
+        // Ctrl+B, Ctrl+I, Ctrl+U: on the selection, or the word the cursor is in.
+        function toAtoms(ed) {
+            const atoms = [];
+            const walk = (node, ctx) => {
+                for (const n of Array.from(node.childNodes)) {
+                    if (n.nodeType === 3) {
+                        for (const ch of n.data) atoms.push({ ch, fmts: new Set(ctx.fmts), em: ctx.em, link: ctx.link, lit: ctx.lit, litSrc: ctx.litSrc, litText: ctx.litText });
+                        continue;
+                    }
+                    if (n.nodeType !== 1 || n.classList.contains('ed-tail')) continue;
+                    if (n.tagName === 'BR') { atoms.push({ ch: '\n', fmts: new Set(), em: ctx.em, link: null, lit: false }); continue; }
+                    if (n.classList.contains('ed-chip')) { atoms.push({ chip: n, fmts: new Set(ctx.fmts), em: ctx.em, link: ctx.link }); continue; }
+                    const c = { fmts: new Set(ctx.fmts), em: ctx.em, link: ctx.link, lit: ctx.lit, litSrc: ctx.litSrc, litText: ctx.litText };
+                    if (n.classList.contains('ed-link')) c.link = n.dataset.url;
+                    else if (n.classList.contains('ed-lit')) { c.lit = true; c.litSrc = n.dataset.src; c.litText = n.dataset.text; }
+                    else if (n.dataset && n.dataset.md) { const t = n.tagName.toLowerCase(); c.fmts.add(t); if (t === 'em') c.em = n.dataset.md; }
+                    walk(n, c);
+                }
+            };
+            walk(ed, { fmts: new Set(), em: '*', link: null, lit: false });
+            return atoms;
+        }
+        // Characters with their formatting, as nested formatting: `order`
+        // goes from the outermost (a link) in.
+        function buildInto(container, atoms, order) {
+            const key = (a, f) => a.ch === '\n' ? '' : f === 'link' ? (a.link ? 'link=' + a.link : '') : (a.fmts.has(f) ? f : '');
+            const build = (parent, list, order) => {
+                if (!order.length) {
+                    let k = 0;
+                    while (k < list.length) {
+                        const a = list[k];
+                        if (a.chip) { parent.appendChild(a.chip.cloneNode(true)); k++; continue; }
+                        if (a.ch === '\n') { parent.appendChild(el('br', 'ed-br')); k++; continue; }
+                        let m = k; while (m < list.length && !list[m].chip && list[m].ch !== '\n' && !!list[m].lit === !!a.lit) m++;
+                        const text = list.slice(k, m).map(x => x.ch).join('');
+                        if (a.lit) {
+                            const s = el('span', 'ed-lit'); s.textContent = text; s.dataset.text = text;
+                            s.dataset.src = text === a.litText ? a.litSrc : escapeMarkup(text);
+                            parent.appendChild(s);
+                        } else parent.appendChild(document.createTextNode(text));
+                        k = m;
+                    }
+                    return;
+                }
+                const f = order[0], rest = order.slice(1);
+                let k = 0;
+                while (k < list.length) {
+                    const kk = key(list[k], f);
+                    let m = k + 1; while (m < list.length && key(list[m], f) === kk) m++;
+                    const seg = list.slice(k, m);
+                    if (kk) {
+                        let w;
+                        if (f === 'link') { w = el('a', 'ed-link'); w.dataset.url = list[k].link; w.title = list[k].link; }
+                        else { w = document.createElement(f); w.dataset.md = f === 'em' ? (list[k].em || '*') : { strong: '**', u: '__', del: '~~', mark: '==', code: '`' }[f]; }
+                        build(w, seg, rest); parent.appendChild(w);
+                    } else build(parent, seg, rest);
+                    k = m;
+                }
+            };
+            build(container, atoms, order);
+        }
+        function rebuild(ed, atoms) {
+            const frag = document.createDocumentFragment();
+            buildInto(frag, atoms, ORDER);
+            ed.textContent = '';
+            ed.appendChild(frag);
+            ensureTail(ed);
+        }
+        function wordAround(ed, u) {
+            const atoms = toAtoms(ed);
+            const isW = a => a && !a.chip && /[\p{L}\p{N}'’\-]/u.test(a.ch);
+            let s = u, e = u;
+            while (s > 0 && isW(atoms[s - 1])) s--;
+            while (e < atoms.length && isW(atoms[e])) e++;
+            return s < e ? { start: s, end: e } : null;
+        }
+        function toggleFormat(ed, tag) {
+            if (!st(ed).rich) { showHintToast('Rich text is off: formatting is not kept.', true); return; }
+            closeSource(ed);
+            let o = getOffsets(ed);
+            if (!o) return;
+            if (o.start === o.end) { const w = wordAround(ed, o.start); if (!w) return; o = w; }
+            const atoms = toAtoms(ed);
+            const span = atoms.slice(o.start, o.end).filter(a => !a.chip && a.ch !== '\n');
+            if (!span.length) return;
+            const on = span.every(a => a.fmts.has(tag));
+            for (let i = o.start; i < o.end; i++) { const a = atoms[i]; if (on) a.fmts.delete(tag); else { a.fmts.add(tag); if (tag === 'em') a.em = a.em || '*'; } }
+            rebuild(ed, atoms);
+            // A mix no text can show comes out as the nearest one that can:
+            // the editor never shows what the box will not.
+            const b = bestMarkup(ed);
+            if (!b.exact) load(ed, b.markup);
+            const n = countUnits(ed);
+            setOffsets(ed, Math.min(o.start, n), Math.min(o.end, n));
+            pushState(ed, 'format'); changed(ed);
+        }
+        // Which of bold, italic and underline the selection (or the word at
+        // the cursor) has throughout: the menu shows them pressed.
+        function formatState(ed) {
+            const out = { strong: false, em: false, u: false };
+            let o = st(ed).open ? getOffsets(ed) : null;
+            if (!o) return out;
+            if (o.start === o.end) { const w = wordAround(ed, o.start); if (!w) return out; o = w; }
+            const atoms = toAtoms(ed).slice(o.start, o.end).filter(a => !a.chip && a.ch !== '\n');
+            if (atoms.length) ['strong', 'em', 'u'].forEach(t => { out[t] = atoms.every(a => a.fmts.has(t)); });
+            return out;
+        }
+        // Bold, italic or underline over the whole of a box's text, closed
+        // (its menu, the Formatting buttons): which of them every word has,
+        // and the text with one of them on every word or on none. `raw`: a
+        // box kept as typed, whose marks show as written.
+        function scratch(markup, raw) {
+            const d = el('div');
+            d._boxEditor = { rich: !raw, markup: String(markup) };
+            load(d, String(markup));
+            d._boxEditor.rich = true;
+            return d;
+        }
+        const wordAtom = a => !a.chip && a.ch !== '\n' && /\S/.test(a.ch);
+        function wholeState(markup, raw) {
+            const atoms = toAtoms(scratch(markup, raw)).filter(wordAtom);
+            const out = {};
+            ['strong', 'em', 'u'].forEach(t => { out[t] = atoms.length > 0 && atoms.every(a => a.fmts.has(t)); });
+            return out;
+        }
+        function formatWhole(markup, tag, on, raw) {
+            const d = scratch(markup, raw);
+            const atoms = toAtoms(d);
+            if (!atoms.some(wordAtom)) return String(markup);
+            atoms.forEach(a => {
+                if (a.ch === '\n') return;
+                if (on) { a.fmts.add(tag); if (tag === 'em') a.em = a.em || '*'; } else a.fmts.delete(tag);
+            });
+            // Put on, it is the outermost mark: *If **Poe** sings* rather
+            // than *If* ***Poe*** *sings*.
+            if (on) {
+                d.textContent = '';
+                buildInto(d, atoms, [tag].concat(ORDER.filter(t => t !== tag)));
+                ensureTail(d);
+            } else rebuild(d, atoms);
+            return bestMarkup(d).markup;
+        }
+        function visibleText(root) {
+            let out = '';
+            const walk = x => {
+                for (const c of Array.from(x.childNodes)) {
+                    if (c.nodeType === 3) out += c.data;
+                    else if (c.nodeType === 1) {
+                        if (c.classList.contains('ed-tail')) continue;
+                        if (c.classList.contains('ed-box')) out += c.textContent;
+                        else if (c.classList.contains('ed-chip')) out += c.dataset.src;
+                        else if (c.tagName === 'BR') out += '\n';
+                        else walk(c);
+                    }
+                }
+            };
+            walk(root);
+            return out;
+        }
+        // Copied: plain words for other programs, the text with its marks for a box.
+        function copySelection(ed, e) {
+            const sel = window.getSelection();
+            if (!sel || !sel.rangeCount || sel.isCollapsed || !e.clipboardData) return false;
+            const d = holder(sel.getRangeAt(0).cloneContents());
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', visibleText(d));
+            e.clipboardData.setData('application/x-argmap-markup', serialize(d));
+            return true;
+        }
+
+        // ----- Opening and closing -------------------------------------------------
+        function load(ed, markup) {
+            ed.textContent = '';
+            ed.appendChild(nodesFor(renderFor(markup, st(ed).rich)));
+            ensureTail(ed);
+        }
+        function open(ed) {
+            const s = st(ed);
+            if (s.open) return;
+            s.open = true; s.dirty = false; s.openSrc = null; s.composing = false;
+            s.rich = richTextEnabled;
+            ed.setAttribute('contenteditable', 'true');
+            ed.setAttribute('role', 'textbox');
+            ed.setAttribute('aria-multiline', 'true');
+            load(ed, s.markup);
+            s.hist = [{ html: ed.innerHTML, sel: { start: countUnits(ed), end: countUnits(ed) } }]; s.hi = 0;
+            s.lastKind = 'open'; s.lastTyped = ''; s.lastTime = 0;
+            if (s.pendingSel) { const p = s.pendingSel; s.pendingSel = null; setMarkupSelection(ed, p.start, p.end); }
+        }
+        function close(ed) {
+            const s = st(ed);
+            if (!s.open) return;
+            const sel = getOffsets(ed);
+            if (sel) s.lastSel = { start: markupOffsetAt(ed, sel.start), end: markupOffsetAt(ed, sel.end) };
+            s.markup = finish(ed);
+            s.open = false; s.openSrc = null;
+            ed.removeAttribute('contenteditable');
+            ed.removeAttribute('role');
+            ed.removeAttribute('aria-multiline');
+            ed.textContent = '';
+        }
+        function markupSelection(ed) {
+            const s = st(ed);
+            if (s.open) {
+                const o = getOffsets(ed);
+                if (o) return { start: markupOffsetAt(ed, o.start), end: markupOffsetAt(ed, o.end) };
+            }
+            const len = (s.open ? serialize(ed) : s.markup).length;
+            const l = s.lastSel || { start: len, end: len };
+            return { start: Math.min(l.start, len), end: Math.min(l.end, len) };
+        }
+        function setMarkupSelection(ed, a, b) {
+            const s = st(ed);
+            if (!s.open) { s.pendingSel = { start: a, end: b }; s.lastSel = { start: a, end: b }; return; }
+            setOffsets(ed, unitAtMarkup(ed, a), unitAtMarkup(ed, b));
+            s.lastSel = { start: a, end: b };
+            markSelectedChip(ed);
+        }
+
+        // ----- One box's editor -------------------------------------------------------
+        function attach(ed, markup) {
+            ed._boxEditor = { markup: String(markup), open: false, dirty: false, rich: richTextEnabled, hist: [], hi: -1,
+                lastKind: '', lastTime: 0, lastTyped: '', composing: false, openSrc: null, lastSel: null, pendingSel: null };
+            ed.tabIndex = -1;
+            ed.spellcheck = true;
+            Object.defineProperty(ed, 'value', {
+                configurable: true,
+                get() { const s = st(ed); return s.open && s.dirty ? serialize(ed) : s.markup; },
+                set(v) { const s = st(ed); s.markup = String(v); if (s.open) { load(ed, s.markup); s.dirty = false; } }
+            });
+            Object.defineProperty(ed, 'readOnly', {
+                configurable: true,
+                get() { return !st(ed).open; },
+                set(v) { if (v) close(ed); else open(ed); }
+            });
+            Object.defineProperty(ed, 'selectionStart', { configurable: true, get() { return markupSelection(ed).start; } });
+            Object.defineProperty(ed, 'selectionEnd', { configurable: true, get() { return markupSelection(ed).end; } });
+            ed.setSelectionRange = (a, b) => setMarkupSelection(ed, a, b === undefined ? a : b);
+
+            ed.addEventListener('beforeinput', e => {
+                if (!st(ed).open) return;
+                const t = e.inputType;
+                if (t === 'historyUndo') { e.preventDefault(); undo(ed); return; }
+                if (t === 'historyRedo') { e.preventDefault(); redo(ed); return; }
+                if (t === 'formatBold') { e.preventDefault(); toggleFormat(ed, 'strong'); return; }
+                if (t === 'formatItalic') { e.preventDefault(); toggleFormat(ed, 'em'); return; }
+                if (t === 'formatUnderline') { e.preventDefault(); toggleFormat(ed, 'u'); return; }
+                if (t === 'insertParagraph') { e.preventDefault(); return; }
+                if (t === 'insertLineBreak') { e.preventDefault(); newLine(ed); return; }
+                if (t === 'insertFromDrop' || t === 'deleteByDrag') { e.preventDefault(); return; }
+                if (e.data) st(ed).lastTyped = e.data.slice(-1);
+            });
+            ed.addEventListener('input', e => {
+                const s = st(ed);
+                if (e.boxEditorInternal || !s.open || s.composing) return;
+                sanitize(ed);
+                const kind = e.inputType && e.inputType.indexOf('delete') === 0 ? 'delete' : 'type';
+                if (e.data) s.lastTyped = e.data.slice(-1);
+                pushState(ed, kind);
+                if (kind === 'type' && !autoformat(ed) && e.data && e.data.length > 1) flushAtCaret(ed);
+                markSelectedChip(ed);
+            });
+            ed.addEventListener('compositionstart', () => { st(ed).composing = true; });
+            ed.addEventListener('compositionend', () => {
+                const s = st(ed);
+                s.composing = false;
+                if (!s.open) return;
+                sanitize(ed); pushState(ed, 'type');
+                if (autoformat(ed)) changed(ed);
+            });
+            ed.addEventListener('keydown', e => {
+                if (!st(ed).open) return;
+                const mod = e.ctrlKey || e.metaKey;
+                const stop = () => { e.preventDefault(); e.stopPropagation(); };
+                if (e.key === 'Enter' && !e.shiftKey && !mod && !e.altKey) {
+                    const c = selectedChip(ed);
+                    if (c && (c.classList.contains('ed-math') || c.classList.contains('ed-code'))) { stop(); openSource(ed, c); }
+                    return;   // otherwise Enter closes the box (its own handler)
+                }
+                if (mod && !e.altKey) {
+                    const k = e.key.toLowerCase();
+                    if (k === 'z' && !e.shiftKey) { stop(); undo(ed); return; }
+                    if (k === 'y' || (k === 'z' && e.shiftKey)) { stop(); redo(ed); return; }
+                    if (k === 'b' && !e.shiftKey) { stop(); toggleFormat(ed, 'strong'); return; }
+                    if (k === 'i' && !e.shiftKey) { stop(); toggleFormat(ed, 'em'); return; }
+                    if (k === 'u' && !e.shiftKey) { stop(); toggleFormat(ed, 'u'); return; }
+                }
+                if ((e.key === 'Backspace' || e.key === 'Delete') && !mod && !e.altKey) {
+                    const c = selectedChip(ed);
+                    if (c) { stop(); removeChip(ed, c); return; }
+                    const o = getOffsets(ed);
+                    if (o && o.start === o.end) {
+                        const near = e.key === 'Backspace' ? (o.start > 0 ? chipAt(ed, o.start - 1) : null) : chipAt(ed, o.start);
+                        if (near) { stop(); selectChip(ed, near); }
+                    }
+                }
+            });
+            // A link or a formula is one piece: a press selects it. Ctrl+click
+            // (Cmd+click on a Mac) follows a link, as Word's does.
+            ed.addEventListener('mousedown', e => {
+                if (!st(ed).open || e.button !== 0) return;
+                const link = e.target.closest && e.target.closest('.ed-link');
+                if (link && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    const url = link.dataset.url;
+                    if (url) window.open(/^https?:\/\//.test(url) ? url : 'https://' + url, '_blank', 'noopener,noreferrer');
+                    return;
+                }
+                const c = e.target.closest && e.target.closest('.ed-chip');
+                if (!c || !ed.contains(c)) return;
+                e.preventDefault();
+                if ((e.ctrlKey || e.metaKey) && c.dataset.boxId) { goToBoxLink(c.dataset.boxId, Number(c.dataset.boxIdx) || 0); return; }
+                selectChip(ed, c);
+            });
+            ed.addEventListener('dblclick', e => {
+                if (!st(ed).open) return;
+                const c = e.target.closest && e.target.closest('.ed-chip');
+                if (c && (c.classList.contains('ed-math') || c.classList.contains('ed-code'))) { e.preventDefault(); e.stopPropagation(); openSource(ed, c); }
+            });
+            ed.addEventListener('paste', e => {
+                if (!st(ed).open) return;
+                e.preventDefault();
+                const dt = e.clipboardData;
+                const text = dt ? (dt.getData('application/x-argmap-markup') || dt.getData('text/plain') || '').replace(/\r\n?/g, '\n') : '';
+                if (text) insertMarkup(ed, text);
+            });
+            ed.addEventListener('copy', e => { if (st(ed).open) copySelection(ed, e); });
+            ed.addEventListener('cut', e => {
+                if (!st(ed).open || !copySelection(ed, e)) return;
+                const o = getOffsets(ed);
+                window.getSelection().getRangeAt(0).deleteContents();
+                sanitize(ed); ed.normalize();
+                if (o) setOffsets(ed, o.start, o.start);
+                pushState(ed, 'delete'); changed(ed);
+            });
+            ed.addEventListener('dragstart', e => { if (st(ed).open) e.preventDefault(); });
+            ed.addEventListener('drop', e => { if (st(ed).open) e.preventDefault(); });
+        }
+        // The box being edited follows its selection: a link or formula
+        // selected shows so; a formula's source closes once the cursor leaves.
+        document.addEventListener('selectionchange', () => {
+            const ed = document.activeElement;
+            if (!ed || !ed._boxEditor || !st(ed).open) return;
+            markSelectedChip(ed);
+            const s = st(ed), sel = window.getSelection();
+            const o = getOffsets(ed);
+            if (o) s.lastSel = { start: markupOffsetAt(ed, o.start), end: markupOffsetAt(ed, o.end) };
+            if (s.openSrc && sel && sel.rangeCount && !s.openSrc.contains(sel.anchorNode)) closeSource(ed);
+        });
+        // The cursor at a point on the screen, if it falls in the words.
+        function caretAtPoint(ed, x, y) {
+            let r = null;
+            if (document.caretRangeFromPoint) r = document.caretRangeFromPoint(x, y);
+            else if (document.caretPositionFromPoint) {
+                const p = document.caretPositionFromPoint(x, y);
+                if (p) { r = document.createRange(); r.setStart(p.offsetNode, p.offset); r.collapse(true); }
+            }
+            if (!r || !ed.contains(r.startContainer)) return false;
+            const at = r.startContainer.nodeType === 1 ? r.startContainer : r.startContainer.parentElement;
+            const chip = at && at.closest('.ed-chip');
+            if (chip) { r = document.createRange(); r.setStartAfter(chip); r.collapse(true); }
+            const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            return true;
+        }
+        // Is this a box's editor, open?
+        const isOpen = n => !!(n && n._boxEditor && n._boxEditor.open);
+        return { attach, insertMarkup, isOpen, finish, closeSource, caretAtPoint, format: toggleFormat, formatState, wholeState, formatWhole,
+                 // for the tests
+                 _internals: { nodesFor, serialize, atomsOf, countUnits, getOffsets, setOffsets, chipAt, markupOffsetAt, unitAtMarkup, autoformat, newLine, toggleFormat, undo, redo, flush, renderFor } };
+    })();
 
     // --- Search state ---
     let searchMatches = [];   // [{id, idx}] node-id + box index of matches
@@ -4275,6 +5353,58 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const c = boxCaretFor(nodeId, idx);
         startBoxLinkPicking(nodeId, idx, c.start, c.end);
     }
+    // Bold, italic or underline on all the words of each selected box: a
+    // box's menu, the Formatting buttons, Ctrl+B, Ctrl+I and Ctrl+U with no
+    // box open (the user, 2026-10-05: "B, I, U should affect all of the text
+    // in a node when the context menu is opened for the entire node"). On for
+    // every box unless every word already has it; then off.
+    function selectedBoxRefs() {
+        const out = [];
+        selectedIds.forEach(sel => {
+            const ps = parseSel(sel);
+            const ctx = findNodeContext(state.trees, ps.id);
+            if (!ctx) return;
+            (ps.hasBox ? [ps.box] : ctx.node.texts.map((_, i) => i)).forEach(i => {
+                if (i < ctx.node.texts.length && !out.some(r => r.node === ctx.node && r.idx === i)) out.push({ node: ctx.node, idx: i });
+            });
+        });
+        return out.filter(r => /\S/.test(String(r.node.texts[r.idx] || '')));
+    }
+    const boxKeptRaw = r => !!(r.node.raw && r.node.raw[r.idx]);
+    function selectedBoxesFormat() {
+        const refs = selectedBoxRefs(), out = { strong: refs.length > 0, em: refs.length > 0, u: refs.length > 0 };
+        refs.forEach(r => {
+            const has = boxEditor.wholeState(r.node.texts[r.idx], boxKeptRaw(r));
+            ['strong', 'em', 'u'].forEach(t => { if (!has[t]) out[t] = false; });
+        });
+        return out;
+    }
+    function formatSelectedBoxes(tag) {
+        if (reviewMode || collabReadOnly()) return;
+        if (!richTextEnabled) { showHintToast('Rich text is off: formatting is not kept.', true); return; }
+        const refs = selectedBoxRefs();
+        if (!refs.length) { showHintToast('Select a box to format its words.', true); return; }
+        const on = !selectedBoxesFormat()[tag];
+        pushHistory();
+        refs.forEach(r => {
+            const raw = boxKeptRaw(r);
+            const next = boxEditor.formatWhole(r.node.texts[r.idx], tag, on, raw);
+            if (next === r.node.texts[r.idx] && !raw) return;
+            r.node.texts[r.idx] = next;
+            // Formatted, its marks are read as marks.
+            if (raw) { delete r.node.raw[r.idx]; if (!Object.keys(r.node.raw).length) delete r.node.raw; }
+            updateEvalOverviewSourceText(r.node.id, r.idx);
+        });
+        scheduleAutosave();
+        render();
+    }
+    // The Formatting buttons: the words selected in an open box (the button
+    // takes no focus from it), else the selected boxes.
+    function formatButton(tag) {
+        const ae = document.activeElement;
+        if (boxEditor.isOpen(ae)) { boxEditor.format(ae, tag); return; }
+        formatSelectedBoxes(tag);
+    }
     // ... or to a web address: the words last selected in it become the
     // link, or the address goes in at the caret.
     function linkWebAddressInto(nodeId, idx) {
@@ -4317,7 +5447,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         cancelCrossRefPicking();
         endSelectMore();
         const host = document.querySelector('.node[data-node-id="' + cssEsc(sourceId) + '"][data-node-idx="' + sourceIdx + '"]');
-        const ta = host && host.querySelector('textarea');
+        const ta = host && host.querySelector('.box-editor');
         if (ta && document.activeElement === ta) ta.blur();
         boxLinkPicking = { sourceId, sourceIdx, start, end };
         document.getElementById('canvas').classList.add('picking-crossref');
@@ -4355,7 +5485,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function reopenBoxEditor(id, idx, caret) {
         const host = document.querySelector('.node[data-node-id="' + cssEsc(id) + '"][data-node-idx="' + idx + '"]');
         if (!host || !enterEditMode(host)) return;
-        const ta = host.querySelector('textarea');
+        const ta = host.querySelector('.box-editor');
         const c = Math.max(0, Math.min(caret, ta.value.length));
         try { ta.setSelectionRange(c, c); } catch (e) {}
     }
@@ -7746,42 +8876,34 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // guards and on matching the rendered height (which prevents jitter).
     // Callers must invoke this synchronously inside the user gesture: iOS
     // only raises the on-screen keyboard for a focus() made there.
-    // The editor is opened at the rendered text's height so the box does not
-    // jitter. A source that is hidden -- or not laid out yet -- measures 0,
-    // and writing that 0 straight onto the textarea collapses the box until
-    // something else resizes it. Fall back to the textarea's own content
-    // height, and never write a zero.
-    function setEditHeight(ta, measuredH) {
-        const h = measuredH || ta.scrollHeight;
-        if (h) ta.style.height = h + 'px';
-    }
+    // The editor shows the words as the box does, so it opens as tall as the
+    // box was: nothing to measure (the text field it replaced had to be told
+    // its height, and a hidden source measuring 0 once collapsed the box).
 
-    function enterEditMode(nodeEl) {
+    // `at` ({ x, y }, a click's or a tap's point) puts the cursor there, as
+    // the prototype did (r27.74); without it, at the end.
+    function enterEditMode(nodeEl, at) {
         if (!nodeEl) return false;
         if (presentMode || reviewMode || collabReadOnly()) return false;
-        const ta = nodeEl.querySelector('textarea');
+        const ed = nodeEl.querySelector('.box-editor');
         const renderDiv = nodeEl.querySelector('.rendered-text');
-        if (!ta || !renderDiv) return false;
-        // Already editing: the rendered div is display:none by now, so
-        // re-measuring it would return 0. A second double-click inside an
-        // open editor is the browser selecting a word -- don't reopen, and
-        // don't move the caret out from under that selection.
+        if (!ed || !renderDiv) return false;
+        // Already editing: a second double-click inside an open editor is
+        // the browser selecting a word -- don't reopen, and don't move the
+        // caret out from under that selection.
         if (renderDiv.style.display === 'none') {
-            if (document.activeElement !== ta) ta.focus();
+            if (document.activeElement !== ed) ed.focus();
             return true;
         }
-        const targetH = renderDiv.offsetHeight;
         renderDiv.style.display = 'none';
-        ta.style.display = '';
+        ed.style.display = '';
         // Premise links show the labels the boxes have now (see boxLinkLabel).
-        const fresh = refreshBoxLinkLabels(ta.value);
-        if (fresh !== ta.value) ta.value = fresh;
-        ta.readOnly = false; ta.style.cursor = 'text';
-        setEditHeight(ta, targetH);
-        // A link's words run longer than its label: the box grows to show them.
-        if (hasBoxLinks(ta.value)) { ta.style.height = '0'; ta.style.height = Math.max(targetH, ta.scrollHeight) + 'px'; scheduleLayout(); }
-        ta.focus();
-        ta.setSelectionRange(ta.value.length, ta.value.length);
+        const fresh = refreshBoxLinkLabels(ed.value);
+        if (fresh !== ed.value) ed.value = fresh;
+        ed.readOnly = false;
+        ed.focus();
+        if (!(at && boxEditor.caretAtPoint(ed, at.x, at.y))) ed.setSelectionRange(ed.value.length, ed.value.length);
+        scheduleLayout();
         return true;
     }
 
@@ -7805,25 +8927,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
     function tryFocusTextarea(nodeId, index) {
-        const tas = document.querySelectorAll(`[data-id="${nodeId}"]`);
-        if (tas.length <= index) return false;
-        const ta = tas[index];
-        // Switch to edit mode: hide rendered div, show textarea
-        const renderDiv = ta.parentElement.querySelector('.rendered-text');
-        if (renderDiv) {
-            // offsetHeight is 0 when this box is already in edit mode; the
-            // helper falls back to the content height rather than writing it.
-            const targetH = renderDiv.offsetHeight;
-            renderDiv.style.display = 'none';
-            ta.style.display = '';
-            setEditHeight(ta, targetH);
-        } else {
-            ta.style.display = '';
-            ta.style.height = '0'; ta.style.height = ta.scrollHeight + 'px';
-        }
-        ta.readOnly = false;
-        ta.style.cursor = 'text';
-        ta.focus();
+        const eds = document.querySelectorAll(`.box-editor[data-id="${nodeId}"]`);
+        if (eds.length <= index) return false;
+        const ed = eds[index];
+        // Switch to edit mode: hide the rendered text, open the editor.
+        const renderDiv = ed.parentElement.querySelector('.rendered-text');
+        if (renderDiv) renderDiv.style.display = 'none';
+        ed.style.display = '';
+        ed.readOnly = false;
+        ed.focus();
+        ed.setSelectionRange(ed.value.length, ed.value.length);
+        scheduleLayout();
         return true;
     }
 
@@ -8243,12 +9357,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // is "I would" (or "I had", before a past participle). These are the
     // common English contractions; slang ("ain't", "gonna") is left as
     // written, and so is a possessive "'s" ("someone's view").
-    const CLAIM_NOT_CONTRACTIONS = {
+    // Like every table the reader looks words up in, it has no prototype:
+    // "constructor" is a word, not the name of an object's constructor.
+    const CLAIM_NOT_CONTRACTIONS = Object.assign(Object.create(null), {
         "isn't": 'is not', "aren't": 'are not', "wasn't": 'was not', "weren't": 'were not', "won't": 'will not',
         "can't": 'can not', cannot: 'can not', "couldn't": 'could not', "shouldn't": 'should not', "wouldn't": 'would not',
         "mightn't": 'might not', "mustn't": 'must not', "don't": 'do not', "doesn't": 'does not', "didn't": 'did not',
         "haven't": 'have not', "hasn't": 'has not', "hadn't": 'had not', "shan't": 'shall not', "needn't": 'need not', "oughtn't": 'ought not'
-    };
+    });
     const CLAIM_CONTRACTING = 'i|you|he|she|it|we|they|somebody|someone|something|who|what|when|where|why|how|which|this|these|that|those|here|there';
     const CLAIM_S_CONTRACTING = /^(?:he|she|it|who|what|when|where|why|how|which|this|that|here|there)$/;
     function expandClaimContractions(text) {
@@ -8470,7 +9586,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return bases.some(b => !!b && CLAIM_THING_VERBS.has(b));
     }
     // "its" has its own slot: it may be the thing an "it" is, or another.
-    const CLAIM_PRONOUN_KIND = { he: 'm', him: 'm', his: 'm', she: 'f', her: 'f', it: 'n', its: 'q', they: 'p', them: 'p', their: 'p' };
+    const CLAIM_PRONOUN_KIND = Object.assign(Object.create(null), { he: 'm', him: 'm', his: 'm', she: 'f', her: 'f', it: 'n', its: 'q', they: 'p', them: 'p', their: 'p' });
     const CLAIM_AMBIENT_WORDS = /^(?:cold|hot|warm|cool|chilly|mild|humid|windy|sunny|cloudy|foggy|stormy|rainy|wet|dry|dark|light|late|early|noon|midnight|night|day|morning|evening|freezing|icy|quiet|noisy|time)$/;
     function claimPronounReadingsUncached(t) {
         const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
@@ -9174,7 +10290,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // better to leave a step uncertified than to read two sentences as one.)
     // BEGIN GENERATED MORPHOLOGY
     // Online source snapshots, licenses, exclusions: language-data/.
-    const CLAIM_VENDOR_MORPHOLOGY = {"past":{"arose":"arise","backslid":"backslide","became":"become","began":"begin","bent":"bend","bit":"bite","bled":"bleed","blew":"blow","broke":"break","bred":"breed","brought":"bring","built":"build","bought":"buy","caught":"catch","chose":"choose","clung":"cling","came":"come","crept":"creep","crossbred":"crossbreed","dealt":"deal","dug":"dig","disproved":"disprove","drew":"draw","drank":"drink","drove":"drive","ate":"eat","fed":"feed","felt":"feel","fought":"fight","fled":"flee","flung":"fling","flew":"fly","forbade":"forbid","forewent":"forego","foresaw":"foresee","foretold":"foretell","forgot":"forget","forgave":"forgive","forsook":"forsake","froze":"freeze","frostbit":"frostbite","got":"get","gave":"give","went":"go","grew":"grow","hand-fed":"hand-feed","handwrote":"handwrite","hung":"hang","heard":"hear","hewed":"hew","hid":"hide","held":"hold","inbred":"inbreed","inlaid":"inlay","interbred":"interbreed","interwound":"interwind","jerry-built":"jerry-build","kept":"keep","knew":"know","laid":"lay","led":"lead","lent":"lend","lost":"lose","made":"make","meant":"mean","met":"meet","misdealt":"misdeal","misdid":"misdo","misheard":"mishear","mislaid":"mislay","misled":"mislead","misspoke":"misspeak","misspent":"misspend","mistook":"mistake","mistaught":"misteach","misunderstood":"misunderstand","miswrote":"miswrite","mowed":"mow","outbred":"outbreed","outdid":"outdo","outdrew":"outdraw","outdrank":"outdrink","outdrove":"outdrive","outfought":"outfight","outflew":"outfly","outgrew":"outgrow","outrode":"outride","outran":"outrun","outsold":"outsell","outshot":"outshoot","outsang":"outsing","outsat":"outsit","outslept":"outsleep","outspoke":"outspeak","outsped":"outspeed","outspent":"outspend","outswore":"outswear","outswam":"outswim","outthought":"outthink","outthrew":"outthrow","outwrote":"outwrite","overbred":"overbreed","overbuilt":"overbuild","overbought":"overbuy","overcame":"overcome","overdid":"overdo","overdrew":"overdraw","overdrank":"overdrink","overate":"overeat","overfed":"overfeed","overhung":"overhang","overheard":"overhear","overlaid":"overlay","overpaid":"overpay","overrode":"override","overran":"overrun","oversaw":"oversee","oversold":"oversell","oversewed":"oversew","overshot":"overshoot","overslept":"oversleep","overspoke":"overspeak","overspent":"overspend","overtook":"overtake","overthought":"overthink","overthrew":"overthrow","overwound":"overwind","overwrote":"overwrite","partook":"partake","paid":"pay","prebuilt":"prebuild","predid":"predo","premade":"premake","prepaid":"prepay","presold":"presell","preshrank":"preshrink","proved":"prove","quick-froze":"quick-freeze","reawoke":"reawake","rebound":"rebind","rebuilt":"rebuild","redealt":"redeal","redid":"redo","redrew":"redraw","reground":"regrind","regrew":"regrow","rehung":"rehang","reheard":"rehear","relaid":"relay","remade":"remake","repaid":"repay","reran":"rerun","resold":"resell","resent":"resend","resewed":"resew","retook":"retake","retaught":"reteach","retore":"retear","retold":"retell","rethought":"rethink","rewore":"rewear","rewon":"rewin","rewound":"rewind","rewrote":"rewrite","rode":"ride","rang":"ring","ran":"run","sawed":"saw","said":"say","sought":"seek","sold":"sell","sent":"send","sewed":"sew","shook":"shake","shaved":"shave","sheared":"shear","shot":"shoot","showed":"show","sang":"sing","sat":"sit","slept":"sleep","slid":"slide","slung":"sling","sowed":"sow","spoke":"speak","spent":"spend","spun":"spin","spoon-fed":"spoon-feed","stood":"stand","stole":"steal","stuck":"stick","stung":"sting","strewed":"strew","strode":"stride","struck":"strike","strung":"string","swore":"swear","swept":"sweep","swelled":"swell","swam":"swim","swung":"swing","took":"take","taught":"teach","tore":"tear","told":"tell","test-drove":"test-drive","test-flew":"test-fly","thought":"think","threw":"throw","trod":"tread","typewrote":"typewrite","unbent":"unbend","unbound":"unbind","underfed":"underfeed","underwent":"undergo","underlay":"underlie","undersold":"undersell","underspent":"underspend","understood":"understand","undertook":"undertake","underwrote":"underwrite","undid":"undo","unfroze":"unfreeze","unhung":"unhang","unhid":"unhide","unsewed":"unsew","unslung":"unsling","unspun":"unspin","unstuck":"unstick","unstrung":"unstring","unwound":"unwind","upheld":"uphold","waylaid":"waylay","wore":"wear","wept":"weep","won":"win","withdrew":"withdraw","withheld":"withhold","withstood":"withstand","wrung":"wring","wrote":"write","daydreamt":"daydream","daydreamed":"daydream","sunburnt":"sunburn","sunburned":"sunburn","unlearnt":"unlearn","unlearned":"unlearn","spoilt":"spoil","spoiled":"spoil","snuck":"sneak","sneaked":"sneak","dove":"dive","dived":"dive","mislearnt":"mislearn","mislearned":"mislearn","misspelt":"misspell","misspelled":"misspell","outleapt":"outleap","outleaped":"outleap","overspilt":"overspill","overspilled":"overspill","pled":"plead","pleaded":"plead","relearnt":"relearn","relearned":"relearn","relighted":"relight","relit":"relight","rewaked":"rewake","rewoke":"rewake"},"plurals":{"abscissae":"abscissa","addenda":"addendum","afreets":"afreet","afrits":"afrit","agenda":"agendum","albinos":"albino","algae":"alga","altos":"alto","alumnae":"alumna","alumni":"alumnus","alveoli":"alveolus","amoebas":"amoeba","analyses":"analysis","anathemas":"anathema","antennas":"antenna","antitheses":"antithesis","aphelia":"aphelion","apparatuses":"apparatus","appendixes":"appendix","aquariums":"aquarium","archipelagos":"archipelago","armadillos":"armadillo","asyndetons":"asyndeton","auroras":"aurora","automatons":"automaton","bacilli":"bacillus","bacteria":"bacterium","bacula":"baculum","bassos":"basso","beaus":"beau","beefs":"beef","bemas":"bema","brothers":"brother","bureaus":"bureau","businessmen":"businessman","cactuses":"cactus","calves":"calf","candelabra":"candelabrum","cantos":"canto","carcinomas":"carcinoma","censuses":"census","chapeaus":"chapeau","charismas":"charisma","chairmen":"chairman","cherubs":"cherub","children":"child","clitorises":"clitoris","cloacae":"cloaca","codices":"codex","commandos":"commando","compendiums":"compendium","concertos":"concerto","consortia":"consortium","contraltos":"contralto","corpora":"corpus","cortices":"cortex","crania":"cranium","crescendos":"crescendo","crises":"crisis","criteria":"criterion","curricula":"curriculum","cyclopses":"cyclops","cystomata":"cystoma","desiderata":"desideratum","diagnoses":"diagnosis","dicta":"dictum","dice":"die","dingoes":"dingo","diplomas":"diploma","dittos":"ditto","djinn":"djinni","dogmata":"dogma","dramas":"drama","dwarfs":"dwarf","dynamos":"dynamo","echoes":"echo","edemas":"edema","efreets":"efreet","elves":"elf","embargoes":"embargo","embryos":"embryo","emphases":"emphasis","emporia":"emporium","encomia":"encomium","enigmas":"enigma","ephemerides":"ephemeris","errata":"erratum","extrema":"extremum","fezzes":"fez","fiascos":"fiasco","fibulae":"fibula","focuses":"focus","feet":"foot","foramina":"foramen","formulas":"formula","forums":"forum","fungi":"fungus","ganglia":"ganglion","generalissimos":"generalissimo","genies":"genie","gentlemen":"gentleman","genera":"genus","ghettos":"ghetto","glomeruli":"glomerulus","geese":"goose","goyim":"goy","gummata":"gumma","gymnasiums":"gymnasium","halves":"half","hamuli":"hamulus","heroes":"hero","hiatuses":"hiatus","hippopotamuses":"hippopotamus","honoraria":"honorarium","hooves":"hoof","humeri":"humerus","hyperbata":"hyperbaton","hyperbolae":"hyperbola","hypotheses":"hypothesis","ilia":"ilium","impetuses":"impetus","incubi":"incubus","indexes":"index","infernos":"inferno","interregna":"interregnum","interstitia":"interstitium","jumbos":"jumbo","knives":"knife","lacunas":"lacuna","larvae":"larva","leaves":"leaf","lemmas":"lemma","librettos":"libretto","lives":"life","lingos":"lingo","loaves":"loaf","loculi":"loculus","loci":"locus","looies":"looey","lice":"louse","lumbagos":"lumbago","lumina":"lumen","lustra":"lustrum","lymphomata":"lymphoma","magmas":"magma","magnetos":"magneto","men":"man","manifestos":"manifesto","matrices":"matrix","maxima":"maximum","medicos":"medico","media":"medium","melismas":"melisma","memoranda":"memorandum","menisci":"meniscus","miasmas":"miasma","millennia":"millennium","minima":"minimum","minutiae":"minutia","momenta":"momentum","mongooses":"mongoose","mice":"mouse","murices":"murex","mythoi":"mythos","nebulas":"nebula","nemeses":"nemesis","neuroses":"neurosis","nexuses":"nexus","nimbuses":"nimbus","noumena":"noumenon","novas":"nova","nucleoli":"nucleolus","nuclei":"nucleus","oases":"oasis","occipita":"occiput","octavos":"octavo","octopuses":"octopus","oedemas":"oedema","omphaloi":"omphalos","optima":"optimum","opuses":"opus","organons":"organon","ova":"ovum","oxen":"ox","parabolas":"parabola","paralyses":"paralysis","parentheses":"parenthesis","passersby":"passerby","pennies":"penny","perihelia":"perihelion","people":"person","phalanges":"phalanx","phenomena":"phenomenon","photos":"photo","phyla":"phylum","plateaus":"plateau","platypuses":"platypus","plexuses":"plexus","policemen":"policeman","polyhedra":"polyhedron","pontifices":"pontifex","potatoes":"potato","pros":"pro","prognoses":"prognosis","prolegomena":"prolegomenon","prospectuses":"prospectus","quanta":"quantum","quartos":"quarto","quizzes":"quiz","radii":"radius","referendums":"referendum","rhinos":"rhino","roofs":"roof","rostrums":"rostrum","sarcomas":"sarcoma","sarcophagi":"sarcophagus","scarves":"scarf","schemas":"schema","scrota":"scrotum","selves":"self","seminomas":"seminoma","seraphs":"seraph","shelves":"shelf","silices":"silex","simplexes":"simplex","simulacra":"simulacrum","sinuses":"sinus","soliloquies":"soliloquy","solos":"solo","somas":"soma","sopranos":"soprano","spokesmen":"spokesman","spectra":"spectrum","specula":"speculum","sphinxes":"sphinx","stadiums":"stadium","staffs":"staff","stamens":"stamen","statuses":"status","stigmas":"stigma","stimuli":"stimulus","stomas":"stoma","strata":"stratum","styluses":"stylus","succubi":"succubus","syconia":"syconium","syllabuses":"syllabus","symposiums":"symposium","synopses":"synopsis","syntheses":"synthesis","tableaus":"tableau","tempos":"tempo","testes":"testis","theses":"thesis","thieves":"thief","thrombi":"thrombus","tibias":"tibia","tomatoes":"tomato","teeth":"tooth","torpedoes":"torpedo","tornadoes":"tornado","tori":"torus","trapezia":"trapezium","traumas":"trauma","trilbies":"trilby","ultimatums":"ultimatum","umbilici":"umbilicus","uteruses":"uterus","vacuums":"vacuum","vela":"velum","vertebrae":"vertebra","vertices":"vertex","vetoes":"veto","viscera":"viscus","vitae":"vita","volcanoes":"volcano","vortices":"vortex","wharves":"wharf","wives":"wife","wolves":"wolf","women":"woman","octopi":"octopus","dwarves":"dwarf","zeros":"zero","zeroes":"zero"},"participles":["arisen","awakened","awoken","backslid","backslidden","beat","beaten","become","been","begun","bent","bet","betted","bid","bidden","bitten","bled","blown","born","borne","bought","bound","bred","broadcast","broadcasted","broken","brought","browbeat","browbeaten","built","burned","burnt","burst","bust","busted","cast","caught","chosen","clad","clothed","clung","come","cost","crept","crossbred","cut","daydreamed","daydreamt","dealt","disproved","disproven","dived","done","drawn","dreamed","dreamt","driven","drunk","dug","dwelled","dwelt","eaten","fallen","fed","felt","fit","fitted","fled","flown","flung","forbidden","forecast","foregone","foreseen","foretold","forgiven","forgot","forgotten","forsaken","fought","found","frostbitten","frozen","given","gone","got","gotten","ground","grown","had","hand-fed","handwritten","heard","held","hewed","hewn","hidden","hit","hung","hurt","inbred","inlaid","input","inputted","interbred","interweaved","interwound","interwoven","jerry-built","kept","kneeled","knelt","knit","knitted","known","laid","lain","leaned","leant","leaped","leapt","learned","learnt","led","left","lent","let","lighted","lip-read","lit","lost","made","meant","met","miscast","misdealt","misdone","misheard","mislaid","mislearned","mislearnt","misled","misread","misset","misspelled","misspelt","misspent","misspoken","mistaken","mistaught","misunderstood","miswritten","mowed","mown","offset","outbid","outbred","outdone","outdrawn","outdriven","outdrunk","outflown","outfought","outgrown","outleaped","outleapt","outridden","outrun","outsat","outshined","outshone","outshot","outslept","outsmelled","outsmelt","outsold","outsped","outspent","outspoken","outsung","outsworn","outswum","outthought","outthrown","outwritten","overbid","overbought","overbred","overbuilt","overcome","overdone","overdrawn","overdrunk","overeaten","overfed","overheard","overhung","overlaid","overpaid","overridden","overrun","overseen","oversewed","oversewn","overshot","overslept","oversold","overspent","overspilled","overspilt","overspoken","overtaken","overthought","overthrown","overwound","overwritten","paid","partaken","pleaded","pled","prebuilt","predone","premade","prepaid","preset","preshrunk","presold","proofread","proved","proven","put","quick-frozen","quit","quitted","read","reawaken","rebid","rebound","rebroadcast","rebroadcasted","rebuilt","recast","recut","redealt","redone","redrawn","refit","refitted","reground","regrown","reheard","rehung","reknit","reknitted","relaid","relearned","relearnt","relighted","relit","remade","repaid","reread","rerun","resent","reset","resewed","resewn","resold","retaken","retaught","rethought","retold","retorn","retread","retrofit","retrofitted","rewaked","rewaken","reweaved","rewed","rewedded","rewet","rewetted","rewon","reworn","rewound","rewoven","rewritten","rid","ridden","risen","roughcast","run","rung","said","sand-cast","sat","sawed","sawn","seen","sent","set","sewed","sewn","shaken","shat","shaved","shaven","sheared","shed","shined","shit","shitted","shone","shorn","shot","showed","shown","shrunk","shut","sight-read","slain","slayed","slept","slid","slinked","slit","slung","slunk","smelled","smelt","sneaked","snuck","sold","sought","sowed","sown","spat","sped","speeded","spelled","spelt","spent","spilled","spilt","spit","split","spoiled","spoilt","spoken","spoon-fed","spread","sprung","spun","stolen","stood","strewed","strewn","stricken","stridden","strived","striven","struck","strung","stuck","stung","stunk","sublet","sunburned","sunburnt","sung","sunk","sweat","sweated","swelled","swept","swollen","sworn","swum","swung","taken","taught","telecast","test-driven","test-flown","thought","thrown","thrust","told","torn","trod","trodden","typecast","typeset","typewritten","unbent","unbound","unclad","unclothed","underbid","undercut","underfed","undergone","underlain","undersold","underspent","understood","undertaken","underwritten","undone","unfrozen","unhidden","unhung","unknit","unknitted","unlearned","unlearnt","unsewed","unsewn","unslung","unspun","unstrung","unstuck","unweaved","unwound","unwoven","upheld","upset","waked","waylaid","weaved","wed","wedded","wept","wet","wetted","withdrawn","withheld","withstood","woken","won","worn","wound","woven","written","wrung"],"spellings":{"colour":"color","colours":"colors","coloured":"colored","colouring":"coloring","honour":"honor","honours":"honors","honoured":"honored","honouring":"honoring","flavour":"flavor","flavours":"flavors","flavoured":"flavored","flavouring":"flavoring","humour":"humor","humours":"humors","labour":"labor","labours":"labors","laboured":"labored","labouring":"laboring","neighbour":"neighbor","neighbours":"neighbors","centre":"center","centres":"centers","centred":"centered","centring":"centering","fibre":"fiber","fibres":"fibers","litre":"liter","litres":"liters","theatre":"theater","theatres":"theaters","traveller":"traveler","travellers":"travelers","travelled":"traveled","travelling":"traveling","cancelled":"canceled","cancelling":"canceling","labelled":"labeled","labelling":"labeling","modelled":"modeled","modelling":"modeling","organise":"organize","organises":"organizes","organised":"organized","organising":"organizing","realise":"realize","realises":"realizes","realised":"realized","realising":"realizing","recognise":"recognize","recognises":"recognizes","recognised":"recognized","recognising":"recognizing","globalise":"globalize","globalises":"globalizes","globalised":"globalized","globalising":"globalizing","specialise":"specialize","specialises":"specializes","specialised":"specialized","specialising":"specializing","analyse":"analyze","analysed":"analyzed","analysing":"analyzing"},"presentBases":{"organizes":"organize","realizes":"realize","recognizes":"recognize","globalizes":"globalize","specializes":"specialize","analyzes":"analyze"},"pastVariants":{"daydreamt":"daydreamed","sunburnt":"sunburned","unlearnt":"unlearned","spoilt":"spoiled","snuck":"sneaked","dove":"dived","mislearnt":"mislearned","misspelt":"misspelled","outleapt":"outleaped","overspilt":"overspilled","pled":"pleaded","relearnt":"relearned","relighted":"relit","rewaked":"rewoke"},"compoundPlurals":{"mothers-in-law":"mother-in-law","fathers-in-law":"father-in-law","brothers-in-law":"brother-in-law","sisters-in-law":"sister-in-law","sons-in-law":"son-in-law","daughters-in-law":"daughter-in-law","passers-by":"passer-by","attorneys general":"attorney general"}};
+    const CLAIM_VENDOR_MORPHOLOGY = {"past":Object.assign(Object.create(null), {"arose":"arise","backslid":"backslide","became":"become","began":"begin","bent":"bend","bit":"bite","bled":"bleed","blew":"blow","broke":"break","bred":"breed","brought":"bring","built":"build","bought":"buy","caught":"catch","chose":"choose","clung":"cling","came":"come","crept":"creep","crossbred":"crossbreed","dealt":"deal","dug":"dig","disproved":"disprove","drew":"draw","drank":"drink","drove":"drive","ate":"eat","fed":"feed","felt":"feel","fought":"fight","fled":"flee","flung":"fling","flew":"fly","forbade":"forbid","forewent":"forego","foresaw":"foresee","foretold":"foretell","forgot":"forget","forgave":"forgive","forsook":"forsake","froze":"freeze","frostbit":"frostbite","got":"get","gave":"give","went":"go","grew":"grow","hand-fed":"hand-feed","handwrote":"handwrite","hung":"hang","heard":"hear","hewed":"hew","hid":"hide","held":"hold","inbred":"inbreed","inlaid":"inlay","interbred":"interbreed","interwound":"interwind","jerry-built":"jerry-build","kept":"keep","knew":"know","laid":"lay","led":"lead","lent":"lend","lost":"lose","made":"make","meant":"mean","met":"meet","misdealt":"misdeal","misdid":"misdo","misheard":"mishear","mislaid":"mislay","misled":"mislead","misspoke":"misspeak","misspent":"misspend","mistook":"mistake","mistaught":"misteach","misunderstood":"misunderstand","miswrote":"miswrite","mowed":"mow","outbred":"outbreed","outdid":"outdo","outdrew":"outdraw","outdrank":"outdrink","outdrove":"outdrive","outfought":"outfight","outflew":"outfly","outgrew":"outgrow","outrode":"outride","outran":"outrun","outsold":"outsell","outshot":"outshoot","outsang":"outsing","outsat":"outsit","outslept":"outsleep","outspoke":"outspeak","outsped":"outspeed","outspent":"outspend","outswore":"outswear","outswam":"outswim","outthought":"outthink","outthrew":"outthrow","outwrote":"outwrite","overbred":"overbreed","overbuilt":"overbuild","overbought":"overbuy","overcame":"overcome","overdid":"overdo","overdrew":"overdraw","overdrank":"overdrink","overate":"overeat","overfed":"overfeed","overhung":"overhang","overheard":"overhear","overlaid":"overlay","overpaid":"overpay","overrode":"override","overran":"overrun","oversaw":"oversee","oversold":"oversell","oversewed":"oversew","overshot":"overshoot","overslept":"oversleep","overspoke":"overspeak","overspent":"overspend","overtook":"overtake","overthought":"overthink","overthrew":"overthrow","overwound":"overwind","overwrote":"overwrite","partook":"partake","paid":"pay","prebuilt":"prebuild","predid":"predo","premade":"premake","prepaid":"prepay","presold":"presell","preshrank":"preshrink","proved":"prove","quick-froze":"quick-freeze","reawoke":"reawake","rebound":"rebind","rebuilt":"rebuild","redealt":"redeal","redid":"redo","redrew":"redraw","reground":"regrind","regrew":"regrow","rehung":"rehang","reheard":"rehear","relaid":"relay","remade":"remake","repaid":"repay","reran":"rerun","resold":"resell","resent":"resend","resewed":"resew","retook":"retake","retaught":"reteach","retore":"retear","retold":"retell","rethought":"rethink","rewore":"rewear","rewon":"rewin","rewound":"rewind","rewrote":"rewrite","rode":"ride","rang":"ring","ran":"run","sawed":"saw","said":"say","sought":"seek","sold":"sell","sent":"send","sewed":"sew","shook":"shake","shaved":"shave","sheared":"shear","shot":"shoot","showed":"show","sang":"sing","sat":"sit","slept":"sleep","slid":"slide","slung":"sling","sowed":"sow","spoke":"speak","spent":"spend","spun":"spin","spoon-fed":"spoon-feed","stood":"stand","stole":"steal","stuck":"stick","stung":"sting","strewed":"strew","strode":"stride","struck":"strike","strung":"string","swore":"swear","swept":"sweep","swelled":"swell","swam":"swim","swung":"swing","took":"take","taught":"teach","tore":"tear","told":"tell","test-drove":"test-drive","test-flew":"test-fly","thought":"think","threw":"throw","trod":"tread","typewrote":"typewrite","unbent":"unbend","unbound":"unbind","underfed":"underfeed","underwent":"undergo","underlay":"underlie","undersold":"undersell","underspent":"underspend","understood":"understand","undertook":"undertake","underwrote":"underwrite","undid":"undo","unfroze":"unfreeze","unhung":"unhang","unhid":"unhide","unsewed":"unsew","unslung":"unsling","unspun":"unspin","unstuck":"unstick","unstrung":"unstring","unwound":"unwind","upheld":"uphold","waylaid":"waylay","wore":"wear","wept":"weep","won":"win","withdrew":"withdraw","withheld":"withhold","withstood":"withstand","wrung":"wring","wrote":"write","daydreamt":"daydream","daydreamed":"daydream","sunburnt":"sunburn","sunburned":"sunburn","unlearnt":"unlearn","unlearned":"unlearn","spoilt":"spoil","spoiled":"spoil","snuck":"sneak","sneaked":"sneak","dove":"dive","dived":"dive","mislearnt":"mislearn","mislearned":"mislearn","misspelt":"misspell","misspelled":"misspell","outleapt":"outleap","outleaped":"outleap","overspilt":"overspill","overspilled":"overspill","pled":"plead","pleaded":"plead","relearnt":"relearn","relearned":"relearn","relighted":"relight","relit":"relight","rewaked":"rewake","rewoke":"rewake"}),"plurals":Object.assign(Object.create(null), {"abscissae":"abscissa","addenda":"addendum","afreets":"afreet","afrits":"afrit","agenda":"agendum","albinos":"albino","algae":"alga","altos":"alto","alumnae":"alumna","alumni":"alumnus","alveoli":"alveolus","amoebas":"amoeba","analyses":"analysis","anathemas":"anathema","antennas":"antenna","antitheses":"antithesis","aphelia":"aphelion","apparatuses":"apparatus","appendixes":"appendix","aquariums":"aquarium","archipelagos":"archipelago","armadillos":"armadillo","asyndetons":"asyndeton","auroras":"aurora","automatons":"automaton","bacilli":"bacillus","bacteria":"bacterium","bacula":"baculum","bassos":"basso","beaus":"beau","beefs":"beef","bemas":"bema","brothers":"brother","bureaus":"bureau","businessmen":"businessman","cactuses":"cactus","calves":"calf","candelabra":"candelabrum","cantos":"canto","carcinomas":"carcinoma","censuses":"census","chapeaus":"chapeau","charismas":"charisma","chairmen":"chairman","cherubs":"cherub","children":"child","clitorises":"clitoris","cloacae":"cloaca","codices":"codex","commandos":"commando","compendiums":"compendium","concertos":"concerto","consortia":"consortium","contraltos":"contralto","corpora":"corpus","cortices":"cortex","crania":"cranium","crescendos":"crescendo","crises":"crisis","criteria":"criterion","curricula":"curriculum","cyclopses":"cyclops","cystomata":"cystoma","desiderata":"desideratum","diagnoses":"diagnosis","dicta":"dictum","dice":"die","dingoes":"dingo","diplomas":"diploma","dittos":"ditto","djinn":"djinni","dogmata":"dogma","dramas":"drama","dwarfs":"dwarf","dynamos":"dynamo","echoes":"echo","edemas":"edema","efreets":"efreet","elves":"elf","embargoes":"embargo","embryos":"embryo","emphases":"emphasis","emporia":"emporium","encomia":"encomium","enigmas":"enigma","ephemerides":"ephemeris","errata":"erratum","extrema":"extremum","fezzes":"fez","fiascos":"fiasco","fibulae":"fibula","focuses":"focus","feet":"foot","foramina":"foramen","formulas":"formula","forums":"forum","fungi":"fungus","ganglia":"ganglion","generalissimos":"generalissimo","genies":"genie","gentlemen":"gentleman","genera":"genus","ghettos":"ghetto","glomeruli":"glomerulus","geese":"goose","goyim":"goy","gummata":"gumma","gymnasiums":"gymnasium","halves":"half","hamuli":"hamulus","heroes":"hero","hiatuses":"hiatus","hippopotamuses":"hippopotamus","honoraria":"honorarium","hooves":"hoof","humeri":"humerus","hyperbata":"hyperbaton","hyperbolae":"hyperbola","hypotheses":"hypothesis","ilia":"ilium","impetuses":"impetus","incubi":"incubus","indexes":"index","infernos":"inferno","interregna":"interregnum","interstitia":"interstitium","jumbos":"jumbo","knives":"knife","lacunas":"lacuna","larvae":"larva","leaves":"leaf","lemmas":"lemma","librettos":"libretto","lives":"life","lingos":"lingo","loaves":"loaf","loculi":"loculus","loci":"locus","looies":"looey","lice":"louse","lumbagos":"lumbago","lumina":"lumen","lustra":"lustrum","lymphomata":"lymphoma","magmas":"magma","magnetos":"magneto","men":"man","manifestos":"manifesto","matrices":"matrix","maxima":"maximum","medicos":"medico","media":"medium","melismas":"melisma","memoranda":"memorandum","menisci":"meniscus","miasmas":"miasma","millennia":"millennium","minima":"minimum","minutiae":"minutia","momenta":"momentum","mongooses":"mongoose","mice":"mouse","murices":"murex","mythoi":"mythos","nebulas":"nebula","nemeses":"nemesis","neuroses":"neurosis","nexuses":"nexus","nimbuses":"nimbus","noumena":"noumenon","novas":"nova","nucleoli":"nucleolus","nuclei":"nucleus","oases":"oasis","occipita":"occiput","octavos":"octavo","octopuses":"octopus","oedemas":"oedema","omphaloi":"omphalos","optima":"optimum","opuses":"opus","organons":"organon","ova":"ovum","oxen":"ox","parabolas":"parabola","paralyses":"paralysis","parentheses":"parenthesis","passersby":"passerby","pennies":"penny","perihelia":"perihelion","people":"person","phalanges":"phalanx","phenomena":"phenomenon","photos":"photo","phyla":"phylum","plateaus":"plateau","platypuses":"platypus","plexuses":"plexus","policemen":"policeman","polyhedra":"polyhedron","pontifices":"pontifex","potatoes":"potato","pros":"pro","prognoses":"prognosis","prolegomena":"prolegomenon","prospectuses":"prospectus","quanta":"quantum","quartos":"quarto","quizzes":"quiz","radii":"radius","referendums":"referendum","rhinos":"rhino","roofs":"roof","rostrums":"rostrum","sarcomas":"sarcoma","sarcophagi":"sarcophagus","scarves":"scarf","schemas":"schema","scrota":"scrotum","selves":"self","seminomas":"seminoma","seraphs":"seraph","shelves":"shelf","silices":"silex","simplexes":"simplex","simulacra":"simulacrum","sinuses":"sinus","soliloquies":"soliloquy","solos":"solo","somas":"soma","sopranos":"soprano","spokesmen":"spokesman","spectra":"spectrum","specula":"speculum","sphinxes":"sphinx","stadiums":"stadium","staffs":"staff","stamens":"stamen","statuses":"status","stigmas":"stigma","stimuli":"stimulus","stomas":"stoma","strata":"stratum","styluses":"stylus","succubi":"succubus","syconia":"syconium","syllabuses":"syllabus","symposiums":"symposium","synopses":"synopsis","syntheses":"synthesis","tableaus":"tableau","tempos":"tempo","testes":"testis","theses":"thesis","thieves":"thief","thrombi":"thrombus","tibias":"tibia","tomatoes":"tomato","teeth":"tooth","torpedoes":"torpedo","tornadoes":"tornado","tori":"torus","trapezia":"trapezium","traumas":"trauma","trilbies":"trilby","ultimatums":"ultimatum","umbilici":"umbilicus","uteruses":"uterus","vacuums":"vacuum","vela":"velum","vertebrae":"vertebra","vertices":"vertex","vetoes":"veto","viscera":"viscus","vitae":"vita","volcanoes":"volcano","vortices":"vortex","wharves":"wharf","wives":"wife","wolves":"wolf","women":"woman","octopi":"octopus","dwarves":"dwarf","zeros":"zero","zeroes":"zero"}),"participles":["arisen","awakened","awoken","backslid","backslidden","beat","beaten","become","been","begun","bent","bet","betted","bid","bidden","bitten","bled","blown","born","borne","bought","bound","bred","broadcast","broadcasted","broken","brought","browbeat","browbeaten","built","burned","burnt","burst","bust","busted","cast","caught","chosen","clad","clothed","clung","come","cost","crept","crossbred","cut","daydreamed","daydreamt","dealt","disproved","disproven","dived","done","drawn","dreamed","dreamt","driven","drunk","dug","dwelled","dwelt","eaten","fallen","fed","felt","fit","fitted","fled","flown","flung","forbidden","forecast","foregone","foreseen","foretold","forgiven","forgot","forgotten","forsaken","fought","found","frostbitten","frozen","given","gone","got","gotten","ground","grown","had","hand-fed","handwritten","heard","held","hewed","hewn","hidden","hit","hung","hurt","inbred","inlaid","input","inputted","interbred","interweaved","interwound","interwoven","jerry-built","kept","kneeled","knelt","knit","knitted","known","laid","lain","leaned","leant","leaped","leapt","learned","learnt","led","left","lent","let","lighted","lip-read","lit","lost","made","meant","met","miscast","misdealt","misdone","misheard","mislaid","mislearned","mislearnt","misled","misread","misset","misspelled","misspelt","misspent","misspoken","mistaken","mistaught","misunderstood","miswritten","mowed","mown","offset","outbid","outbred","outdone","outdrawn","outdriven","outdrunk","outflown","outfought","outgrown","outleaped","outleapt","outridden","outrun","outsat","outshined","outshone","outshot","outslept","outsmelled","outsmelt","outsold","outsped","outspent","outspoken","outsung","outsworn","outswum","outthought","outthrown","outwritten","overbid","overbought","overbred","overbuilt","overcome","overdone","overdrawn","overdrunk","overeaten","overfed","overheard","overhung","overlaid","overpaid","overridden","overrun","overseen","oversewed","oversewn","overshot","overslept","oversold","overspent","overspilled","overspilt","overspoken","overtaken","overthought","overthrown","overwound","overwritten","paid","partaken","pleaded","pled","prebuilt","predone","premade","prepaid","preset","preshrunk","presold","proofread","proved","proven","put","quick-frozen","quit","quitted","read","reawaken","rebid","rebound","rebroadcast","rebroadcasted","rebuilt","recast","recut","redealt","redone","redrawn","refit","refitted","reground","regrown","reheard","rehung","reknit","reknitted","relaid","relearned","relearnt","relighted","relit","remade","repaid","reread","rerun","resent","reset","resewed","resewn","resold","retaken","retaught","rethought","retold","retorn","retread","retrofit","retrofitted","rewaked","rewaken","reweaved","rewed","rewedded","rewet","rewetted","rewon","reworn","rewound","rewoven","rewritten","rid","ridden","risen","roughcast","run","rung","said","sand-cast","sat","sawed","sawn","seen","sent","set","sewed","sewn","shaken","shat","shaved","shaven","sheared","shed","shined","shit","shitted","shone","shorn","shot","showed","shown","shrunk","shut","sight-read","slain","slayed","slept","slid","slinked","slit","slung","slunk","smelled","smelt","sneaked","snuck","sold","sought","sowed","sown","spat","sped","speeded","spelled","spelt","spent","spilled","spilt","spit","split","spoiled","spoilt","spoken","spoon-fed","spread","sprung","spun","stolen","stood","strewed","strewn","stricken","stridden","strived","striven","struck","strung","stuck","stung","stunk","sublet","sunburned","sunburnt","sung","sunk","sweat","sweated","swelled","swept","swollen","sworn","swum","swung","taken","taught","telecast","test-driven","test-flown","thought","thrown","thrust","told","torn","trod","trodden","typecast","typeset","typewritten","unbent","unbound","unclad","unclothed","underbid","undercut","underfed","undergone","underlain","undersold","underspent","understood","undertaken","underwritten","undone","unfrozen","unhidden","unhung","unknit","unknitted","unlearned","unlearnt","unsewed","unsewn","unslung","unspun","unstrung","unstuck","unweaved","unwound","unwoven","upheld","upset","waked","waylaid","weaved","wed","wedded","wept","wet","wetted","withdrawn","withheld","withstood","woken","won","worn","wound","woven","written","wrung"],"spellings":Object.assign(Object.create(null), {"colour":"color","colours":"colors","coloured":"colored","colouring":"coloring","honour":"honor","honours":"honors","honoured":"honored","honouring":"honoring","flavour":"flavor","flavours":"flavors","flavoured":"flavored","flavouring":"flavoring","humour":"humor","humours":"humors","labour":"labor","labours":"labors","laboured":"labored","labouring":"laboring","neighbour":"neighbor","neighbours":"neighbors","centre":"center","centres":"centers","centred":"centered","centring":"centering","fibre":"fiber","fibres":"fibers","litre":"liter","litres":"liters","theatre":"theater","theatres":"theaters","traveller":"traveler","travellers":"travelers","travelled":"traveled","travelling":"traveling","cancelled":"canceled","cancelling":"canceling","labelled":"labeled","labelling":"labeling","modelled":"modeled","modelling":"modeling","organise":"organize","organises":"organizes","organised":"organized","organising":"organizing","realise":"realize","realises":"realizes","realised":"realized","realising":"realizing","recognise":"recognize","recognises":"recognizes","recognised":"recognized","recognising":"recognizing","globalise":"globalize","globalises":"globalizes","globalised":"globalized","globalising":"globalizing","specialise":"specialize","specialises":"specializes","specialised":"specialized","specialising":"specializing","analyse":"analyze","analysed":"analyzed","analysing":"analyzing"}),"presentBases":Object.assign(Object.create(null), {"organizes":"organize","realizes":"realize","recognizes":"recognize","globalizes":"globalize","specializes":"specialize","analyzes":"analyze"}),"pastVariants":Object.assign(Object.create(null), {"daydreamt":"daydreamed","sunburnt":"sunburned","unlearnt":"unlearned","spoilt":"spoiled","snuck":"sneaked","dove":"dived","mislearnt":"mislearned","misspelt":"misspelled","outleapt":"outleaped","overspilt":"overspilled","pled":"pleaded","relearnt":"relearned","relighted":"relit","rewaked":"rewoke"}),"compoundPlurals":Object.assign(Object.create(null), {"mothers-in-law":"mother-in-law","fathers-in-law":"father-in-law","brothers-in-law":"brother-in-law","sisters-in-law":"sister-in-law","sons-in-law":"son-in-law","daughters-in-law":"daughter-in-law","passers-by":"passer-by","attorneys general":"attorney general"})};
     // END GENERATED MORPHOLOGY
     // Heads that restrict nothing: "a thing that sings" is whatever sings. Not
     // "person": "everyone who sings" is a person who sings -- nor "object", "being".
@@ -9370,11 +10486,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_COPULAS = new Set(['is', 'are', 'am']);
     // Fused negations, and the positive word each denies. "must not", "may
     // not" and "should not" are NOT here: "must not V" does not deny "must V".
-    const CLAIM_NEGATED = {
+    const CLAIM_NEGATED = Object.assign(Object.create(null), {
         "isn't": 'is', "aren't": 'are', "wasn't": 'was', "weren't": 'were',
         "can't": 'can', 'cannot': 'can', "couldn't": 'could', "won't": 'will', "wouldn't": 'would', "shan't": 'shall',
         "doesn't": 'does', "don't": 'do', "didn't": 'did', "hasn't": 'has', "haven't": 'have', "hadn't": 'had'
-    };
+    });
     const CLAIM_SCOPED_NOT = new Set(['must', 'may', 'might', 'should', 'need', 'ought']);
     const CLAIM_VERB_MARKERS = new Set(['is', 'are', 'am', 'was', 'were', 'does', 'do', 'did', 'has', 'have', 'had',
         'can', 'could', 'must', 'may', 'might', 'shall', 'should', 'will', 'would', 'need', 'ought'].concat(Object.keys(CLAIM_NEGATED)));
@@ -10106,8 +11222,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         woolen woollen cotton silk nylon golden silver clay wax chocolate straw tin wicker velvet denim`);
     // True of what can be true (a claim, a belief), else not in that sense:
     // "a true friend", "a false dilemma"; complete of a theory or a list.
-    const CLAIM_BEARER_ADJECTIVES = { true: ['bearer', 'sub', 'bearer'], false: ['bearer', 'non', 'privative'], analytic: ['bearer', 'sub', 'bearer'],
-        synthetic: ['bearer', 'non', 'privative'], empirical: ['bearer', 'sub', 'bearer'], complete: ['system', 'sub', 'nonpredicative'] };
+    const CLAIM_BEARER_ADJECTIVES = Object.assign(Object.create(null), { true: ['bearer', 'sub', 'bearer'], false: ['bearer', 'non', 'privative'], analytic: ['bearer', 'sub', 'bearer'],
+        synthetic: ['bearer', 'non', 'privative'], empirical: ['bearer', 'sub', 'bearer'], complete: ['system', 'sub', 'nonpredicative'] });
     const CLAIM_TRUTH_BEARERS = claimWordSet(`
         claim statement proposition sentence belief theory hypothesis thesis conjecture premise conclusion judgment judgement assertion
         thought opinion view account answer explanation description report story definition principle axiom theorem lemma formula fact
@@ -10575,7 +11691,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Adjectives by the words that open the phrases they take ("afraid of",
     // "kind to") -- where one joined to another before its phrase may take
     // it too. Not "tall", "black", "old": they take none.
-    const CLAIM_ADJ_COMPLEMENTS = Object.fromEntries(Object.entries({
+    const CLAIM_ADJ_COMPLEMENTS = Object.assign(Object.create(null), Object.fromEntries(Object.entries({
         of: 'afraid aware unaware proud fond tired sick weary full capable incapable jealous envious sure certain conscious ashamed scared ' +
             'frightened terrified guilty innocent independent free short typical characteristic worthy unworthy mindful careful careless ' +
             'critical supportive tolerant intolerant suspicious wary fearful hopeful respectful sceptical skeptical devoid representative ' +
@@ -10602,7 +11718,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         in: 'interested involved rich poor lacking skilled experienced expert successful deficient abundant engaged absorbed fluent ' +
             'proficient weak strong',
         on: 'dependent keen reliant based intent focused'
-    }).map(([prep, words]) => [prep, new Set(words.split(' '))]));
+    }).map(([prep, words]) => [prep, new Set(words.split(' '))])));
     const CLAIM_ADJ_TAKING = new Set([].concat(...Object.values(CLAIM_ADJ_COMPLEMENTS).map(set => [...set])));
     // Nouns said of one by another -- "a friend of", "an heir to" -- whose
     // phrase another joined before may take too.
@@ -11004,7 +12120,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "anyone" is "someone"; elsewhere "any" is free choice ("can beat any
         // player": every one), kept as written.
         const denied = negated || claimReadState.anyIsSome > 0;
-        const NPI = { anyone: 'someone', anybody: 'somebody', anything: 'something', anywhere: 'somewhere' };
+        const NPI = Object.assign(Object.create(null), { anyone: 'someone', anybody: 'somebody', anything: 'something', anywhere: 'somewhere' });
         if (denied) words = words.map((w, i) => i > 0 && NPI[claimWord(w)] ? w.replace(claimWord(w), NPI[claimWord(w)]) : w);
         words = words.filter((w, i) => i === 0 || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)));
         words = claimCanonicalObjects(words, denied);
@@ -11267,10 +12383,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'triggers drives shapes guarantees ensures violates satisfies promotes raises lowers costs owes').split(' ')));
     // A common noun's ending, for a capitalized word opening the box.
     const CLAIM_NOUN_ENDING = /(?:ences|ances|ions|ments|ities|isms|ists|ships|nesses|ogies|ents|ants)$/;
-    const CLAIM_VERB_NUMBER = { is: 'is', was: 'was', has: 'has', does: 'does', "isn't": 'is', "wasn't": 'was', "hasn't": 'has', "doesn't": 'does',
-        are: 'are', were: 'were', have: 'have', do: 'do', "aren't": 'are', "weren't": 'were', "haven't": 'have', "don't": 'do' };
-    const CLAIM_VERB_PAIRS = { is: 'are', was: 'were', has: 'have', does: 'do', "isn't": "aren't", "wasn't": "weren't", "hasn't": "haven't", "doesn't": "don't",
-        are: 'is', were: 'was', have: 'has', do: 'does', "aren't": "isn't", "weren't": "wasn't", "haven't": "hasn't", "don't": "doesn't" };
+    const CLAIM_VERB_NUMBER = Object.assign(Object.create(null), { is: 'is', was: 'was', has: 'has', does: 'does', "isn't": 'is', "wasn't": 'was', "hasn't": 'has', "doesn't": 'does',
+        are: 'are', were: 'were', have: 'have', do: 'do', "aren't": 'are', "weren't": 'were', "haven't": 'have', "don't": 'do' });
+    const CLAIM_VERB_PAIRS = Object.assign(Object.create(null), { is: 'are', was: 'were', has: 'have', does: 'do', "isn't": "aren't", "wasn't": "weren't", "hasn't": "haven't", "doesn't": "don't",
+        are: 'is', were: 'was', have: 'has', do: 'does', "aren't": "isn't", "weren't": "wasn't", "haven't": "hasn't", "don't": "doesn't" });
     const claimSingularVerb = w => /^(?:is|was|has|does|isn't|wasn't|hasn't|doesn't)$/.test(w);
     const claimBaseVerb = w => w === 'has' ? 'have' : /[^aeiou]ies$/.test(w) ? w.slice(0, -3) + 'y' : /(?:ss|x|z|ch|sh|o)es$/.test(w) ? w.slice(0, -2) : w.slice(0, -1);
     function claimAgreementSlips(text) {
@@ -12773,7 +13889,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // both readings: "does not love each raven" (not every raven, or none);
     // "does not think that P" (neg-raising: that he does not think it, or that
     // he thinks it is not so); "does not love Fido and Bob" (not both, or neither).
-    const CLAIM_NEG_RAISING = { think: 'thought', believe: 'believed', suppose: 'supposed', expect: 'expected', imagine: 'imagined', reckon: 'reckoned', feel: 'felt' };
+    const CLAIM_NEG_RAISING = Object.assign(Object.create(null), { think: 'thought', believe: 'believed', suppose: 'supposed', expect: 'expected', imagine: 'imagined', reckon: 'reckoned', feel: 'felt' });
     // Words that join or subordinate clauses: a "not" and a quantifier with
     // one of these between them are in different clauses.
     const CLAIM_CLAUSE_JOIN = /(?:^|\s)(?:and|or|but|nor|if|then|because|since|unless|although|though|while|whereas|so|yet|iff)(?=\s|,|$)|[,;]/;
@@ -13955,13 +15071,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_SINGULAR_QUANTIFIED = new Set(['every', 'each', 'every single', 'each and every', 'not a single', 'not one', 'at least one',
         'each of the', 'each of', 'every one of the', 'every one of', 'each one of the', 'each and every one of the', 'every single one of the',
         'not one of the', 'at least one of the']);
-    const CLAIM_QUANTIFIER_PRONOUNS = {
+    const CLAIM_QUANTIFIER_PRONOUNS = Object.assign(Object.create(null), {
         everything: ['all', CLAIM_ANY], anything: ['any', CLAIM_ANY], nothing: ['no', CLAIM_ANY], something: ['some', CLAIM_ANY],
         whatever: ['all', CLAIM_ANY],
         everyone: ['all', CLAIM_PERSON], everybody: ['all', CLAIM_PERSON], anyone: ['any', CLAIM_PERSON], anybody: ['any', CLAIM_PERSON],
         nobody: ['no', CLAIM_PERSON], someone: ['some', CLAIM_PERSON], somebody: ['some', CLAIM_PERSON], whoever: ['all', CLAIM_PERSON]
-    };
-    const CLAIM_NONE_OF = { everything: 'nothing', anything: 'nothing', everyone: 'no one', everybody: 'nobody', anyone: 'no one', anybody: 'nobody' };
+    });
+    const CLAIM_NONE_OF = Object.assign(Object.create(null), { everything: 'nothing', anything: 'nothing', everyone: 'no one', everybody: 'nobody', anyone: 'no one', anybody: 'nobody' });
     // The sentence with its one denial taken out: "all ravens are not white" -> "all ravens are white".
     function claimWithoutDenial(tokens) {
         const out = tokens.slice();
@@ -14271,7 +15387,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (i >= ws.length || depth > 3) return out;
         const x = ws[i];
         // "Both ... and", "either ... or", "neither ... nor": two joined.
-        const pairs = { both: 'and', either: 'or', neither: 'nor' };
+        const pairs = Object.assign(Object.create(null), { both: 'and', either: 'or', neither: 'nor' });
         if (pairs[x.w] && depth < 3) {
             claimSynNounPhrases(ws, i + 1, depth + 1).forEach(a => {
                 if (ws[a.end] && ws[a.end].w === pairs[x.w]) claimSynNounPhrases(ws, a.end + 1, depth + 1).forEach(b => add(b.end, x.w === 'both' ? 'pl' : b.number));
@@ -15243,8 +16359,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         ['∀', 'all'], ['∃', 'some'],
         ['(', '('], [')', ')'], ['[', '('], [']', ')'], ['{', '('], ['}', ')'], [',', ','], ['.', '.'], [':', '.']
     ].sort((a, b) => b[0].length - a[0].length);
-    const SYMBOL_LATEX = { bot: '⊥', forall: '∀', exists: '∃', neg: '¬', lnot: '¬', land: '∧', wedge: '∧', lor: '∨', vee: '∨',
-        to: '→', rightarrow: '→', Rightarrow: '→', supset: '→', implies: '→', leftrightarrow: '↔', Leftrightarrow: '↔', iff: '↔', equiv: '↔' };
+    const SYMBOL_LATEX = Object.assign(Object.create(null), { bot: '⊥', forall: '∀', exists: '∃', neg: '¬', lnot: '¬', land: '∧', wedge: '∧', lor: '∨', vee: '∨',
+        to: '→', rightarrow: '→', Rightarrow: '→', supset: '→', implies: '→', leftrightarrow: '↔', Leftrightarrow: '↔', iff: '↔', equiv: '↔' });
     function readEmbeddedSymbolicClaim(text) {
         // Bare names such as Poe are nouns in English, not compact P(o,e).
         // A symbolic operator or explicit grouping must signal a formula.
@@ -16920,13 +18036,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "-able" words that mean "can be ...-ed", each with its verb: not those
     // whose meaning has moved ("readable", "respectable", "desirable",
     // "questionable", "comparable").
-    const CLAIM_ABLE_WORDS = Object.fromEntries(('conceivable:conceive imaginable:imagine knowable:know provable:prove disprovable:disprove ' +
+    const CLAIM_ABLE_WORDS = Object.assign(Object.create(null), Object.fromEntries(('conceivable:conceive imaginable:imagine knowable:know provable:prove disprovable:disprove ' +
         'refutable:refute verifiable:verify falsifiable:falsify observable:observe detectable:detect explainable:explain measurable:measure ' +
         'predictable:predict solvable:solve decidable:decide derivable:derive computable:compute definable:define expressible:express ' +
         'describable:describe achievable:achieve attainable:attain believable:believe justifiable:justify deniable:deny thinkable:think ' +
         'avoidable:avoid preventable:prevent testable:test confirmable:confirm countable:count recognizable:recognize recognisable:recognise ' +
         'identifiable:identify distinguishable:distinguish separable:separate resolvable:resolve translatable:translate ' +
-        'representable:represent perceivable:perceive').split(' ').map(p => p.split(':')));
+        'representable:represent perceivable:perceive').split(' ').map(p => p.split(':'))));
     const CLAIM_ABLE_VERBS = new Set(Object.values(CLAIM_ABLE_WORDS));
     // A verb's forms after "be": "conceived", "known", "proved" or "proven".
     function claimAbleParticiples(verb) {
@@ -18567,18 +19683,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // black" -> "some ravens are not black", "no raven is white" -> "some raven
     // is white", "something is not physical" -> "everything is physical".
     const CLAIM_UNIVERSAL_LEADS = /^(?:each and every|every one of the|every one of|all of the|all of|each of the|each of|every single|all the|all|every|each|any|everything|anything|everyone|everybody|anyone|anybody)$/;
-    const CLAIM_DUAL_LEADS = {
+    const CLAIM_DUAL_LEADS = Object.assign(Object.create(null), {
         'each and every': 'some', 'every one of the': 'some of the', 'every one of': 'some of', 'all of the': 'some of the', 'all of': 'some of',
         'each of the': 'some of the', 'each of': 'some of', 'every single': 'some', 'all the': 'some of the', all: 'some', every: 'some',
         each: 'some', any: 'some', everything: 'something', anything: 'something', everyone: 'someone', everybody: 'somebody',
         anyone: 'someone', anybody: 'somebody',
         'none of the': 'some of the', 'none of': 'some of', 'not one of the': 'some of the', 'not a single': 'some', 'not one': 'some',
         'not any': 'some', 'no one': 'someone', no: 'some', nothing: 'something', nobody: 'somebody'
-    };
-    const CLAIM_EXISTENTIAL_DUALS = {
+    });
+    const CLAIM_EXISTENTIAL_DUALS = Object.assign(Object.create(null), {
         'at least one of the': ['none of the', 'all of the'], 'at least one': ['no', 'every'], 'some of the': ['none of the', 'all of the'],
         some: ['no', null], certain: ['no', 'all'], something: ['nothing', 'everything'], someone: ['no one', 'everyone'], somebody: ['nobody', 'everybody']
-    };
+    });
     function claimSayDual(form, ctx) {
         if (!form.src || !form.vp || !form.src.endsWith(form.vp)) return null;
         const lead = form.src.slice(0, form.src.length - form.vp.length).trim();
@@ -18775,8 +19891,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // Verb agreement: "are mortal" said of Socrates is "is mortal", "are birds"
     // is "is a bird"; "flies" said of ravens is "fly".
-    const CLAIM_TO_SINGULAR = { are: 'is', were: 'was', do: 'does', have: 'has', "aren't": "isn't", "weren't": "wasn't", "don't": "doesn't", "haven't": "hasn't" };
-    const CLAIM_TO_PLURAL = Object.keys(CLAIM_TO_SINGULAR).reduce((o, p) => { o[CLAIM_TO_SINGULAR[p]] = p; return o; }, {});
+    const CLAIM_TO_SINGULAR = Object.assign(Object.create(null), { are: 'is', were: 'was', do: 'does', have: 'has', "aren't": "isn't", "weren't": "wasn't", "don't": "doesn't", "haven't": "hasn't" });
+    const CLAIM_TO_PLURAL = Object.keys(CLAIM_TO_SINGULAR).reduce((o, p) => { o[CLAIM_TO_SINGULAR[p]] = p; return o; }, Object.create(null));
     function claimNumberOf(vp) {
         const head = claimWord(claimTokens(vp)[0]);
         if (CLAIM_TO_SINGULAR[head]) return 'plural';
@@ -20291,7 +21407,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // dragging requires the drag handle; tapping the node body selects.
             nodeDiv.onpointerdown = (e) => {
                 if (reviewMode || collabReadOnly()) return; // structure frozen; tap-select still bubbles
-                if (e.target.tagName === 'TEXTAREA' && !e.target.readOnly) return;
+                if (boxEditor.isOpen(e.target.closest && e.target.closest('.box-editor'))) return;   // selecting words
                 if (e.target.closest('.node-link, .collapse-btn, .status-dot, .crossref-badge')) return;
                 // On touch, only drag from the drag handle. An Apple Pencil
                 // reports pointerType 'pen', not 'touch', so on iPad it used to
@@ -20390,7 +21506,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 } else { selectedIds = [selKey]; }
                 updateSelectionVisuals();
                 // Editing: One click -- the click opens the box's text.
-                if (clickToEdit && !selectMoreMode && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.target.closest('.drag-handle, .touch-grip')) enterEditMode(nodeDiv);
+                if (clickToEdit && !selectMoreMode && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.target.closest('.drag-handle, .touch-grip')) enterEditMode(nodeDiv, { x: e.clientX, y: e.clientY });
             };
 
             const dragHandle = document.createElement('div');
@@ -20418,10 +21534,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 nodeDiv.appendChild(btn);
             }
 
-            const ta = document.createElement('textarea');
-            ta.setAttribute('data-id', node.id); ta.value = text; ta.rows = 1;
-            ta.readOnly = true; ta.style.cursor = 'pointer';
-            ta.style.display = 'none'; ta.style.textAlign = boxAlign;
+            // The box's editor (boxEditor): it shows the words as the box
+            // does, and is opened, read and closed as a text field is.
+            const ed = document.createElement('div');
+            ed.className = 'box-editor';
+            ed.setAttribute('data-id', node.id);
+            ed.style.display = 'none'; ed.style.textAlign = boxAlign;
+            boxEditor.attach(ed, text);
 
             // Rendered text overlay (visible by default)
             const renderDiv = document.createElement('div');
@@ -20449,16 +21568,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // it again on the way back: that is still the same edit, so the
             // editor stays open, and its undo step still starts where it began.
             let editOpen = false;
-            ta.addEventListener('focus', () => {
-                if (editOpen && !ta.readOnly) return;
+            ed.addEventListener('focus', () => {
+                if (editOpen && !ed.readOnly) return;
                 editOpen = true;
-                originalText = ta.value; preEditSnapshot = historySnapshot();
+                originalText = ed.value; preEditSnapshot = historySnapshot();
             });
-            ta.addEventListener('blur', () => {
-                if (!ta.readOnly && document.activeElement === ta && !document.hasFocus()) return;
+            ed.addEventListener('blur', () => {
+                if (!ed.readOnly && document.activeElement === ed && !document.hasFocus()) return;
                 editOpen = false;
-                boxCaret.set(node.id + '-' + index, { start: ta.selectionStart, end: ta.selectionEnd, text: ta.value });
-                const changed = ta.value !== originalText;
+                // Closing converts what is finished and keeps the text the box
+                // will show exactly as the editor did (boxEditor's finish).
+                if (!ed.readOnly) ed.readOnly = true;
+                const now = ed.value;
+                if (node.texts[index] !== now) { node.texts[index] = now; scheduleAutosave(); updateEvalOverviewSourceText(node.id, index); }
+                boxCaret.set(node.id + '-' + index, { start: ed.selectionStart, end: ed.selectionEnd, text: now });
+                const changed = now !== originalText;
                 if (changed) {
                     // The ONE place the toggle acts: record how this commit is
                     // stored -- raw iff the toggle is currently off.
@@ -20473,16 +21597,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // whole edit, escapes included.
                     if (preEditSnapshot) pushHistorySnapshot(preEditSnapshot);
                 }
-                ta.readOnly = true; ta.style.cursor = 'pointer';
-                ta.style.display = 'none';
-                renderDiv.innerHTML = renderField(node, index, ta.value);
+                ed.style.display = 'none';
+                renderDiv.innerHTML = renderField(node, index, now);
                 renderDiv.style.display = '';
                 scheduleLayout();
             });
 
             // Enter = finish editing, Shift+Enter = new line,
             // Escape = cancel the edit session.
-            ta.addEventListener('keydown', (e) => {
+            ed.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     // Restore the pre-edit text through the normal input
                     // pipeline (state/height/autosave stay consistent), then
@@ -20491,19 +21614,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // Escape actions (placement disarm, cross-ref cancel)
                     // out of a plain edit-cancel.
                     e.preventDefault(); e.stopPropagation();
-                    ta.value = originalText;
-                    ta.dispatchEvent(new Event('input', { bubbles: true }));
-                    ta.blur();
+                    ed.value = originalText;
+                    ed.dispatchEvent(new Event('input', { bubbles: true }));
+                    ed.blur();
                     return;
                 }
                 if (e.key === 'Enter') {
                     if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                        return; // Shift+Enter: allow default newline
+                        return; // Shift+Enter: a new line (the editor makes it)
                     }
                     if (!e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
                         e.preventDefault();
                         e.stopPropagation();
-                        ta.blur();
+                        ed.blur();
                         return;
                     }
                 }
@@ -20512,28 +21635,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             nodeDiv.ondblclick = (e) => {
                 if (e.target.closest('.node-link')) return; // let link navigate
                 e.stopPropagation();
-                enterEditMode(nodeDiv);   // guards and height matching live there
+                enterEditMode(nodeDiv, { x: e.clientX, y: e.clientY });   // the guards live there
             };
 
-            const autoResizeText = () => {
-                ta.style.height = '0'; ta.style.height = (ta.scrollHeight) + 'px';
-                scheduleLayout();
-            };
-            ta.addEventListener('input', (e) => { node.texts[index] = e.target.value; autoResizeText(); scheduleAutosave(); updateEvalOverviewSourceText(node.id, index); });
+            ed.addEventListener('input', () => { node.texts[index] = ed.value; scheduleLayout(); scheduleAutosave(); updateEvalOverviewSourceText(node.id, index); });
 
             // Select-to-link WHILE EDITING. A previous attempt
             // wrongly targeted the rendered div, which is hidden during edit;
-            // the real selection lives in the textarea (selectionStart/End).
+            // the real selection lives in the editor (selectionStart/End,
+            // offsets into the box's text).
             // Right-clicking a non-empty selection offers to wrap it as a
             // markdown link at those exact character offsets.
-            ta.addEventListener('contextmenu', (e) => {
-                if (ta.readOnly) return;   // only in edit mode
+            ed.addEventListener('contextmenu', (e) => {
+                if (ed.readOnly) return;   // only in edit mode
                 if (e.shiftKey) return;    // Shift: the browser's own menu (spelling, paste)
-                const a = ta.selectionStart, b = ta.selectionEnd;
+                const a = ed.selectionStart, b = ed.selectionEnd;
                 e.preventDefault(); e.stopPropagation();
                 document.querySelectorAll('#link-menu').forEach(m => m.remove());
                 const menu = document.createElement('div');
                 menu.id = 'link-menu';
+                // Bold, italic, underline: the selection, or the word at the
+                // caret, as Ctrl+B, Ctrl+I and Ctrl+U do.
+                const fmtRow = document.createElement('div');
+                fmtRow.className = 'link-menu-format';
+                const has = boxEditor.formatState(ed);
+                [['strong', 'B', 'Bold (Ctrl+B)'], ['em', 'I', 'Italic (Ctrl+I)'], ['u', 'U', 'Underline (Ctrl+U)']].forEach(([tag, letter, tip]) => {
+                    const fb = document.createElement('button');
+                    fb.type = 'button'; fb.className = 'fmt-' + tag; fb.textContent = letter; fb.title = tip;
+                    fb.setAttribute('aria-label', tip.replace(/ \(.*\)$/, ''));
+                    fb.setAttribute('aria-pressed', String(!!has[tag]));
+                    fb.onmousedown = (ev) => ev.preventDefault();   // keep the box's selection
+                    fb.onclick = (ev) => { ev.stopPropagation(); menu.remove(); boxEditor.format(ed, tag); };
+                    fmtRow.appendChild(fb);
+                });
+                menu.appendChild(fmtRow);
                 // A link to another box, at the caret (or for the selection):
                 // shown by that box's label, and following it wherever it goes.
                 const boxBtn = document.createElement('button');
@@ -20546,19 +21681,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 btn.textContent = 'Link selection\u2026';
                 btn.title = 'Link the selected words to a web address';
                 if (a === b) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'default'; btn.title = 'Select words first to link them to a web address'; }
-                btn.onmousedown = (ev) => ev.preventDefault();   // keep textarea selection
+                btn.onmousedown = (ev) => ev.preventDefault();   // keep the box's selection
                 btn.onclick = (ev) => {
                     if (a === b) return;
                     ev.stopPropagation();
                     menu.remove();
                     let url = null;
                     try { url = prompt('Link URL:', 'https://'); } catch (_) {}
-                    if (!url || url === 'https://') { ta.focus(); return; }
-                    const sel = ta.value.slice(a, b);
-                    const before = ta.value.slice(0, a), after = ta.value.slice(b);
+                    if (!url || url === 'https://') { ed.focus(); return; }
+                    const sel = ed.value.slice(a, b);
+                    const before = ed.value.slice(0, a), after = ed.value.slice(b);
                     pushHistory();
                     node.texts[index] = before + '[' + sel + '](' + url + ')' + after;
-                    ta.value = node.texts[index];
+                    ed.value = node.texts[index];
                     render();
                 };
                 menu.appendChild(btn);
@@ -20573,7 +21708,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 setTimeout(() => document.addEventListener('mousedown', kill, true), 0);
             });
 
-            nodeDiv.appendChild(ta); nodeDiv.appendChild(renderDiv); resizeObserver.observe(nodeDiv); group.appendChild(nodeDiv);
+            nodeDiv.appendChild(ed); nodeDiv.appendChild(renderDiv); resizeObserver.observe(nodeDiv); group.appendChild(nodeDiv);
 
             // An implicit box's IMPLICIT tag straddles its top border, which
             // the box itself would clip, so it follows the box in the group
@@ -20631,14 +21766,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 surface.appendChild(buildGroupDOM(n, argumentKinds));
                 visibleChildren(n).forEach(walk);
             })(tree);
-        });
-
-        // Size textareas synchronously so group heights are real before measuring
-        // (only visible textareas, i.e. those in active edit mode)
-        document.querySelectorAll('.node textarea').forEach(ta => {
-            if (ta.style.display !== 'none') {
-                ta.style.height = '0'; ta.style.height = ta.scrollHeight + 'px';
-            }
         });
 
         layoutAll();
@@ -24741,7 +25868,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 minX = Math.min(minX, x - pad); minY = Math.min(minY, y - pad);
                 maxX = Math.max(maxX, x + wd + pad); maxY = Math.max(maxY, y + ht + pad);
                 const isNote = type === 'note';
-                const ta = box.querySelector('textarea');
+                const ta = box.querySelector('.box-editor');
                 const rd = box.querySelector('.rendered-text');
                 const font = `${FS}px ${isNote ? EXPORT_THEME.noteFont : EXPORT_THEME.font}`;
                 const color = isNote ? EXPORT_THEME.noteText : EXPORT_THEME.text;
@@ -26242,8 +27369,331 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Steps -- shows every step, in the order the map reads.
     let deductiveLive = false;
     const deductiveChecked = new Set();   // box ids checked one at a time
+    // --- Inference colors (r27.75) ---------------------------------------------
+    // The user, 2026-10-05: "an option to turn on a coloring scheme that changed
+    // the color of the text inside the nodes to reflect which parts of an
+    // inference they correspond to ... to help users tell which parts of a node
+    // are combining with other parts (especially when they contain the same
+    // phrase) to derive the conclusion above." Agreed over three mockups: where
+    // premises meet, a color for each part that meets (in the light theme with
+    // a pale tint of it behind the words); what goes on to the conclusion,
+    // normal text, with a thin red dashed underline when the conclusion denies
+    // it; everything else dimmed, a part the step does not use included; words
+    // that deny, red and bold; in a chain of ifs, the "if" and the "then" that
+    // carry on into the conclusion, normal; a step the check does not
+    // recognize, each part its own color (one part said twice, one color), so
+    // that nothing meeting is plain to see. The swatch after Deductive turns
+    // them on, and the check with them.
+    let inferenceColorsOn = false;
+    const IC_COLORS = 6;
+    const IC_NEG = /\bit\s+is\s+(?:not\s+the\s+case|false)\s+that\b|\b(?:(?:do|does|did|is|are|was|were|am|has|have|had|will|would|can|could|should|must|may|might|shall)\s+)?not\b|\b[a-z]+n['\u2019]t\b|\bcannot\b|\b(?:no|never|none|nothing|nobody|neither|nor)\b|\bnon-(?=[a-z])|\u00ac/gi;
+    const IC_WORD = /[\p{L}\p{N}][\p{L}\p{N}'\u2019\u2060-]*/gu;
+    const IC_COPULA = /^(?:is|are|was|were|am|be|been|being)\s+/i;
+    const IC_CONTRACTED = { "can't": ['can', 'not'], cannot: ['can', 'not'], "won't": ['will', 'not'], "shan't": ['shall', 'not'], "ain't": ['is', 'not'] };
+    const IC_CLITIC = { s: 'is', re: 'are', ve: 'have', ll: 'will', d: 'would', m: 'am' };
+    const icPlans = new Map();
+    function toggleInferenceColors() {
+        inferenceColorsOn = !inferenceColorsOn;
+        syncInferenceColorsButton();
+        // The colors come from the check: turning them on turns it on.
+        if (inferenceColorsOn && !deductiveLive) toggleDeductiveLive();
+        else refreshDerivationTags();
+    }
+    function syncInferenceColorsButton() {
+        const btn = document.getElementById('colors-btn');
+        if (btn) { btn.classList.toggle('active', inferenceColorsOn); btn.setAttribute('aria-pressed', String(inferenceColorsOn)); }
+    }
+    const icDenies = words => { IC_NEG.lastIndex = 0; const r = IC_NEG.test(words || ''); IC_NEG.lastIndex = 0; return r; };
+    // A claim's clauses in reading order, each { form, ctx, words }: its "if"
+    // parts and its "then" part, each side of an "and" or an "or", or the
+    // claim itself.
+    function icClauses(form, ctx, out) {
+        if (!form) return out;
+        const joined = f => ['and', 'or', 'then'].includes(f.kind) && Array.isArray(f.parts);
+        if (form.kind === 'if' && Array.isArray(form.conds) && form.cons) {
+            form.conds.forEach(c => icClauses(c, 'if', out));
+            icClauses(form.cons, 'then', out);
+        } else if (joined(form)) form.parts.forEach(p => icClauses(p, ctx, out));
+        // "It is not the case that P and Q": its parts (the denial is in its words).
+        else if (form.kind === 'not' && form.inner && (form.inner.kind === 'if' || joined(form.inner))) icClauses(form.inner, ctx, out);
+        else out.push({ form, ctx: ctx || '', words: icWords(form) });
+        return out;
+    }
+    function icWords(f) {
+        if (!f) return '';
+        if (f.src) return f.src;
+        if (f.subjectText && f.vpText) return f.subjectText + ' ' + f.vpText;
+        if (f.text) return String(f.text);
+        return f.kind === 'not' ? icWords(f.inner) : '';
+    }
+    // Whether a clause denies: in its words, or as the check made it (an
+    // objection's conclusion is the denial of its box).
+    function icNeg(f) {
+        if (!f || f.kind !== 'not') return false;
+        return f.src || f.vpText ? true : !icNeg(f.inner);
+    }
+    // Below a clause: for all or some of a kind, the kind with its quantifier
+    // ("all ravens") and what is said of it ("black"); for one thing, the
+    // thing ("Poe") and what is said of it ("a raven"). What is said carries
+    // whether its own words deny it.
+    function icSplit(cl) {
+        const made = cl.form.kind === 'not' && !cl.form.src && !cl.form.vpText;
+        const f = cl.form.kind === 'not' && cl.form.inner ? cl.form.inner : cl.form;
+        if ((f.kind === 'all' || f.kind === 'some') && f.subject && f.predicate) {
+            const src = f.src || '', vp = f.vp || '';
+            const at = vp ? src.toLowerCase().lastIndexOf(vp.toLowerCase()) : -1;
+            const said = vp.replace(IC_COPULA, '');
+            return [{ key: 'p:' + f.subject, words: at > 0 ? src.slice(0, at).trim() : (f.np || '') },
+                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: said, said: true, neg: icDenies(said) !== made }];
+        }
+        if (f.kind === 'pred' && f.term && f.prop) {
+            const said = String(cl.form.vpText || f.vpText || '').replace(IC_COPULA, '');
+            return [{ key: 't:' + f.term, words: cl.form.subjectText || f.subjectText || '' },
+                    { key: 'p:' + String(f.prop).replace(/^\u00ac/, ''), words: said, said: true, neg: icDenies(said) !== made }];
+        }
+        return null;
+    }
+    const icQuantified = f => !!f && (f.kind === 'all' || f.kind === 'some' || (f.kind === 'not' && icQuantified(f.inner)));
+    // Each premise's parts in reading order, { words, cls, ctx }, and whether
+    // to keep its "if" and its "then" normal.
+    function icPlan(step) {
+        const P = step.premises;
+        if (!Array.isArray(P) || !P.length || P.some(p => !p)) return null;
+        const C = step.rule ? step.conclusion : null;
+        const same = (a, b) => claimSame(a, b) || claimDenies(a, b);
+        const clauses = P.map(f => icClauses(f, '', []));
+        const cClauses = C ? icClauses(C, '', []) : [];
+        const colors = [];   // what each color stands for: a claim, or a key
+        const colorOf = (test, item) => { let k = colors.findIndex(test); if (k < 0) { colors.push(item); k = colors.length - 1; } return k % IC_COLORS; };
+        // Whole clauses: in the conclusion, or where premises meet.
+        clauses.forEach(list => list.forEach(cl => {
+            const inC = C && cClauses.find(x => same(cl.form, x.form));
+            if (inC) { cl.role = 'c'; cl.denied = icNeg(cl.form) !== icNeg(inC.form); return; }
+            if (clauses.some(other => other.some(o => o !== cl && same(cl.form, o.form)))) {
+                cl.role = 'link'; cl.color = colorOf(x => x.form && same(x.form, cl.form), { form: cl.form });
+            }
+        }));
+        // All or some of a kind in the step: the kinds, the things and what
+        // is said of them, where whole clauses do not meet.
+        if (P.concat(C ? [C] : []).some(f => icClauses(f, '', []).some(cl => icQuantified(cl.form)))) {
+            const cParts = [].concat(...cClauses.map(x => icSplit(x) || []));
+            const splits = clauses.map(list => list.map(cl => cl.role ? null : icSplit(cl)));
+            const every = [].concat(...splits.map(list => [].concat(...list.filter(Boolean))));
+            splits.forEach((list, i) => list.forEach((parts, ci) => {
+                if (!parts) return;
+                parts.forEach(sp => {
+                    const inC = cParts.find(x => x.key === sp.key);
+                    if (inC) { sp.role = 'c'; sp.denied = !!(sp.said && inC.said) && sp.neg !== inC.neg; return; }
+                    if (every.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
+                });
+                clauses[i][ci].parts = parts;
+            }));
+        }
+        return clauses.map((list, i) => {
+            // A certified step uses every premise: one none of whose parts
+            // is found goes on to the conclusion whole.
+            const whole = !!C && !list.some(cl => (cl.parts || [cl]).some(p => p.role));
+            const parts = [];
+            list.forEach(cl => (whole ? [cl] : cl.parts || [cl]).forEach(p => {
+                let cls;
+                if (whole) cls = 'ic-c';
+                else if (p.role === 'c') cls = 'ic-c' + (p.denied ? ' ic-cn' : '');
+                else if (p.role === 'link') cls = 'ic-k' + p.color;
+                // Not recognized: each part its own color.
+                else if (!C) cls = 'ic-k' + (p.key ? colorOf(x => x.key === p.key, { key: p.key }) : colorOf(x => x.form && same(x.form, p.form), { form: p.form }));
+                else cls = 'ic-u';
+                parts.push({ words: p.words, cls, ctx: cl.ctx });
+            }));
+            // A chain of ifs: the "if" and the "then" that carry on into the conclusion.
+            const keep = { if: false, then: false };
+            if (C && C.kind === 'if' && P[i].kind === 'if') {
+                const ifs = list.filter(cl => cl.ctx === 'if'), thens = list.filter(cl => cl.ctx === 'then');
+                keep.if = ifs.length > 0 && ifs.every(cl => cl.role === 'c');
+                keep.then = thens.length > 0 && thens.every(cl => cl.role === 'c');
+            }
+            return { parts, keep };
+        });
+    }
+    // Words as the check reads them: small letters, contractions as two
+    // words, regional spellings as one.
+    function icNorm(word) {
+        const w = word.toLowerCase().replace(/\u2019/g, "'").replace(/\u2060/g, '').replace(/['-]+$/, '');
+        if (Object.prototype.hasOwnProperty.call(IC_CONTRACTED, w)) return IC_CONTRACTED[w];
+        let m = /^(.+)n't$/.exec(w);
+        if (m) return [m[1], 'not'];
+        m = /^(.+)'(s|re|ve|ll|d|m)$/.exec(w);
+        if (m) return [m[1], IC_CLITIC[m[2]]];
+        const spell = CLAIM_VENDOR_MORPHOLOGY.spellings;
+        return [Object.prototype.hasOwnProperty.call(spell, w) ? spell[w] : w.replace(/'/g, '')];
+    }
+    const icStem = w => w.length > 4 ? w.replace(/(?:ies|es|s|ed|ing)$/, '') : w.length > 3 ? w.replace(/s$/, '') : w;
+    function icTokens(text) {
+        const out = [];
+        for (const m of String(text || '').matchAll(IC_WORD))
+            icNorm(m[0]).forEach(n => out.push({ n, s: icStem(n), a: m.index, b: m.index + m[0].length }));
+        return out;
+    }
+    // Where a part's words stand among a box's: in order, most of them (the
+    // check rewrites a few -- "he" as the name it stands for, "does sing" as
+    // "sings"), none already another part's. Words from `from` on are tried
+    // first. The first and the last of the box's words, or null.
+    function icAlign(box, part, taken, from) {
+        const m = part.length, need = m <= 2 ? m : Math.ceil(m * 0.6);
+        const score = (b, p) => b.n === p.n ? 3 : b.s === p.s ? 2 : -1;
+        const run = lo => {
+            let best = null, prev = null;
+            for (let i = lo; i <= box.length; i++) {
+                const cur = new Array(m + 1);
+                cur[0] = { h: 0, s: i, k: 0 };
+                const w = i > lo ? box[i - 1] : null, open = !!w && !taken[i - 1];
+                for (let j = 1; j <= m; j++) {
+                    let c = { h: cur[j - 1].h - 1.5, s: cur[j - 1].s, k: cur[j - 1].k };
+                    if (open) {
+                        const d = prev[j - 1], sc = score(w, part[j - 1]), l = prev[j];
+                        if (d.h + sc > c.h) c = { h: d.h + sc, s: d.s, k: d.k + (sc > 0 ? 1 : 0) };
+                        if (l.h - 1.5 > c.h) c = { h: l.h - 1.5, s: l.s, k: l.k };
+                    }
+                    cur[j] = c;
+                }
+                if (open && cur[m].k >= need && cur[m].h > 0 && (!best || cur[m].h > best.h)) best = { h: cur[m].h, s: cur[m].s, e: i - 1 };
+                prev = cur;
+            }
+            return best ? [best.s, best.e] : null;
+        };
+        return (from > 0 && run(from)) || run(0);
+    }
+    // A box's words as one string (a premise link one character, read as its
+    // box's words; a formula left out), its words in order, and the pieces
+    // of the box they come from.
+    function icContent(rd) {
+        const segs = [], links = [];
+        let text = '';
+        (function walk(el) {
+            for (const n of Array.from(el.childNodes)) {
+                if (n.nodeType === 3) { segs.push({ node: n, at: text.length }); text += n.data; }
+                else if (n.nodeType === 1 && !n.matches('.katex, .katex-display, .md-math')) {
+                    if (n.matches('.box-link')) { segs.push({ el: n, at: text.length }); links.push({ el: n, at: text.length }); text += '\uFFFC'; }
+                    else walk(n);
+                }
+            }
+        })(rd);
+        const words = icTokens(text);
+        links.forEach(l => {
+            const id = l.el.dataset.boxId, idx = Number(l.el.dataset.boxIdx || 0);
+            const ctx = id ? (findNodeContext(state.trees, id) || findNodeContext(state.trees, Number(id))) : null;
+            const said = ctx && ctx.node.texts[idx] != null
+                ? stripClaimMarkup(claimWithBoxLinks(ctx.node.texts[idx], new Set([ctx.node.id + '#' + idx]))) : l.el.textContent;
+            icTokens(said).forEach(t => words.push({ n: t.n, s: t.s, a: l.at, b: l.at + 1 }));
+        });
+        words.sort((x, y) => x.a - y.a);
+        return { text, segs, words };
+    }
+    function icClear(rd) {
+        rd.querySelectorAll('span.ic').forEach(sp => sp.replaceWith(...Array.from(sp.childNodes)));
+        rd.normalize();
+        delete rd.dataset.icSig;
+    }
+    // A box's words painted by its part in the step. Words and colors as they
+    // were are left alone; true when the box was painted anew.
+    function icPaint(rd, plan) {
+        let c = icContent(rd);
+        const cls = new Array(c.text.length).fill('ic-rest');
+        const taken = new Array(c.words.length).fill(false);
+        const first = {};
+        let from = 0;
+        plan.parts.forEach(p => {
+            const part = icTokens(p.words);
+            const hit = part.length ? icAlign(c.words, part, taken, from) : null;
+            if (!hit) return;
+            const a = c.words[hit[0]].a, b = c.words[hit[1]].b;
+            c.words.forEach((w, k) => { if (w.a >= a && w.b <= b) taken[k] = true; });
+            for (let i = a; i < b; i++) cls[i] = p.cls;
+            if (p.ctx && first[p.ctx] === undefined) first[p.ctx] = a;
+            from = hit[1] + 1;
+        });
+        // A chain of ifs: the "if" before the part that carries on, the "then" before the other.
+        const keepWord = (word, before) => {
+            if (before === undefined) return;
+            let last = null;
+            for (const m of c.text.matchAll(new RegExp('\\b' + word + '\\b', 'gi'))) if (m.index < before && cls[m.index] === 'ic-rest') last = m;
+            if (last) for (let i = last.index; i < last.index + word.length; i++) cls[i] = 'ic-c';
+        };
+        if (plan.keep.if) keepWord('if', first.if);
+        if (plan.keep.then) keepWord('then', first.then);
+        // Words that deny, wherever they stand.
+        for (const m of c.text.matchAll(IC_NEG)) for (let i = m.index; i < m.index + m[0].length; i++) cls[i] += ' ic-neg';
+        const sig = c.text + '\u0001' + cls.join('|');
+        if (rd.dataset.icSig === sig && rd.querySelector('span.ic')) return false;
+        if (rd.querySelector('span.ic')) { icClear(rd); c = icContent(rd); }
+        c.segs.forEach(sg => {
+            if (sg.el) {
+                const w = document.createElement('span');
+                w.className = 'ic ' + cls[sg.at];
+                sg.el.replaceWith(w);
+                w.appendChild(sg.el);
+                return;
+            }
+            const t = sg.node.data;
+            if (!t || !sg.node.parentNode) return;
+            const frag = document.createDocumentFragment();
+            for (let k = 0; k < t.length; ) {
+                const cc = cls[sg.at + k];
+                let e = k + 1;
+                while (e < t.length && cls[sg.at + e] === cc) e++;
+                const sp = document.createElement('span');
+                sp.className = 'ic ' + cc;
+                sp.textContent = t.slice(k, e);
+                frag.appendChild(sp);
+                k = e;
+            }
+            sg.node.replaceWith(frag);
+        });
+        rd.dataset.icSig = sig;
+        return true;
+    }
+    // Each step's premises painted (`steps` null: none); a box no step
+    // paints now, as it was.
+    function applyInferenceColors(steps) {
+        const painted = new Set();
+        let moved = false;
+        if (inferenceColorsOn && steps) {
+            const noted = claimNearMisses;
+            claimNearMisses = null;   // reading for colors notes no near misses
+            try {
+                const rules = claimRulesSignature();
+                steps.forEach(step => {
+                    if (step.referenceArgument || step.missingPremises || !Array.isArray(step.premiseRefs)) return;
+                    const key = rules + '\u0001' + (step.rule ? step.rule.id : '-') + '\u0001' + (step.attack ? 'A' : 'S') + '\u0001' +
+                        (step.premiseTexts || []).join('\u0002') + '\u0001' + (step.conclusionText || '');
+                    let plan = icPlans.get(key);
+                    if (plan === undefined) {
+                        try { plan = icPlan(step); } catch (e) { plan = null; }
+                        if (icPlans.size > 2000) icPlans.clear();
+                        icPlans.set(key, plan);
+                    }
+                    if (!plan) return;
+                    step.premiseRefs.forEach((ref, j) => {
+                        const box = document.querySelector('#surface .node[data-node-id="' + cssEsc(ref.targetId) + '"][data-node-idx="' + (ref.targetIdx || 0) + '"]');
+                        const rd = box && box.querySelector('.rendered-text');
+                        if (!rd || !plan[j] || painted.has(rd)) return;
+                        painted.add(rd);
+                        // Open for editing: hidden under the editor, painted
+                        // again once it closes.
+                        if (rd.style.display === 'none') return;
+                        if (icPaint(rd, plan[j])) moved = true;
+                    });
+                });
+            } finally { claimNearMisses = noted; }
+        }
+        document.querySelectorAll('#surface .rendered-text[data-ic-sig]').forEach(rd => { if (!painted.has(rd)) { icClear(rd); moved = true; } });
+        // Bold words are wider: the boxes are measured again (once; colors
+        // as they were change nothing).
+        if (moved) scheduleLayout();
+    }
     function toggleDeductiveLive() {
         deductiveLive = !deductiveLive;
+        // The colors come from the check: they go with it.
+        if (!deductiveLive && inferenceColorsOn) { inferenceColorsOn = false; syncInferenceColorsButton(); }
         const btn = document.getElementById('logic-btn');
         if (btn) btn.classList.toggle('active', deductiveLive);
         refreshDerivationTags();
@@ -26384,8 +27834,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             tag.dataset.theoremIdx = box.dataset.nodeIdx;
             box.parentElement.appendChild(tag);
         });
-        if (!deductiveLive && !deductiveChecked.size) { positionDerivationTags(); keepReadingChooser(); return; }
+        if (!deductiveLive && !deductiveChecked.size) { applyInferenceColors(null); positionDerivationTags(); keepReadingChooser(); return; }
         const steps = collectDeductiveSteps(state.trees, deductiveLive ? null : deductiveChecked);
+        applyInferenceColors(steps);
         const warrantVerdict = steps.some(st => st.warrantTarget)
             ? claimMapVerdict(state.trees, deductiveLive ? steps : collectDeductiveSteps(state.trees)) : null;
         steps.forEach(step => {
@@ -27090,7 +28541,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             selectedIds = [];
             updateSelectionVisuals();
         }
-        if (presentMode && document.activeElement && document.activeElement.tagName === 'TEXTAREA') document.activeElement.blur();
+        if (presentMode && document.activeElement && (document.activeElement.tagName === 'TEXTAREA' || boxEditor.isOpen(document.activeElement))) document.activeElement.blur();
     }
 
     // Fullscreen across engines that disagree about the prefix. Safari only
@@ -27159,7 +28610,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     (function initTouchTips() {
         let timer = null, tip = null, x0 = 0, y0 = 0;
-        const eligible = el => !!el && !el.closest('.drag-handle, .crossref-badge, .node-link, .crossref-popover-row, textarea, input, select, #string-editor') &&
+        const eligible = el => !!el && !el.closest('.drag-handle, .crossref-badge, .node-link, .crossref-popover-row, textarea, .box-editor, input, select, #string-editor') &&
             !(el.classList && el.classList.contains('node'));
         function hide() { if (tip) { tip.remove(); tip = null; } }
         function show(el) {
@@ -27439,7 +28890,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             html += '</div>';
             if (node.type !== 'note') html += `<button class="ctx-item" onclick="ctxAction(()=>openReferenceArguments('${nodeId}', ${boxIdx || 0}))">Reference arguments…</button>`;
             html += `<button class="ctx-item" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference…</button>`;
-            // Links in the box's words, put in where it was last edited.
+            // Bold, italic, underline: all of the box (of every selected box),
+            // pressed when all of it has it. (While a box is open, its own
+            // menu formats the words selected in it.) Links go in where it
+            // was last edited.
+            {
+                const has = selectedBoxesFormat(), whose = selectedIds.length > 1 ? 'the selected boxes' : 'the whole box';
+                const fmt = (tag, letter, verb, name) => `<button class="fmt-${tag}${has[tag] ? ' ctx-active' : ''}" aria-pressed="${has[tag]}" title="${verb} ${whose}" aria-label="${name}" onclick="ctxAction(()=>formatSelectedBoxes('${tag}'))">${letter}</button>`;
+                html += '<div class="ctx-row ctx-format">' + fmt('strong', 'B', 'Bold', 'Bold') + fmt('em', 'I', 'Italicize', 'Italic') + fmt('u', 'U', 'Underline', 'Underline') + '</div>';
+            }
             html += `<button class="ctx-item" title="Link to another premise in this box's text" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise…</button>`;
             html += `<button class="ctx-item" title="Link words in this box to a web address" onclick="ctxAction(()=>linkWebAddressInto('${nodeId}', ${boxIdx || 0}))">Link to Web Address…</button>`;
             // Touch screens: several boxes, tap by tap (a mouse has Ctrl-click).
@@ -27556,7 +29015,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // touched here.
     document.addEventListener('pointerdown', (e) => {
         const ae = document.activeElement;
-        if (!ae || ae.tagName !== 'TEXTAREA' || ae.readOnly) return;
+        if (!boxEditor.isOpen(ae)) return;
         const editingBox = ae.closest && ae.closest('.node');
         if (!editingBox) return;
         const pressed = e.target && e.target.closest && e.target.closest('.node, .group-fork-hitbox');
@@ -27735,7 +29194,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // stays inside the user gesture -- iOS raises the on-screen keyboard only
     // for a focus() made there. The trailing compatibility mouse burst is
     // eaten for the same reason it is after a long press: its mousedown would
-    // otherwise blur the textarea we just focused.
+    // otherwise blur the editor we just focused.
     const DBL_TAP_MS = 350;    // WebKit's own double-tap window is about this
     const DBL_TAP_SLOP = 28;   // px; generous, because a finger is not a mouse
     let lastTapKey = null, lastTapAt = 0, lastTapX = 0, lastTapY = 0;
@@ -27745,7 +29204,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (e.target.closest('.node-link, .collapse-btn, .status-dot, .crossref-badge, .drag-handle, .node-action-btn')) return false;
         const nd = e.target.closest('.node');
         if (!nd) { lastTapKey = null; return false; }
-        if (e.target.tagName === 'TEXTAREA' && !e.target.readOnly) return false;   // already editing
+        if (boxEditor.isOpen(e.target.closest('.box-editor'))) return false;   // already editing
         // Key on the box, not the element: render() rebuilds node DOM, and the
         // two taps must still count as landing on the same premise.
         const key = nd.getAttribute('data-node-id') + '-' + (nd.getAttribute('data-node-idx') || '0');
@@ -27754,7 +29213,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             Math.abs(e.clientX - lastTapX) < DBL_TAP_SLOP &&
             Math.abs(e.clientY - lastTapY) < DBL_TAP_SLOP) {
             lastTapKey = null;
-            if (enterEditMode(nd)) { armPostGestureEater(); return true; }
+            if (enterEditMode(nd, { x: e.clientX, y: e.clientY })) { armPostGestureEater(); return true; }
             return false;
         }
         lastTapKey = key; lastTapAt = now; lastTapX = e.clientX; lastTapY = e.clientY;
@@ -27884,7 +29343,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
     document.addEventListener('keydown', e => {
-        const isTyping = document.activeElement && ((document.activeElement.tagName.toLowerCase() === 'textarea' && !document.activeElement.readOnly) || document.activeElement.id === 'search-input' || document.activeElement.id === 'replace-input' || document.activeElement.id === 'string-editor' || document.activeElement.id === 'map-name' || document.activeElement.id === 'zoom-display' || document.activeElement.id === 'zoom-slider' || document.activeElement.id === 'eval-search-input' || (document.activeElement.closest && (document.activeElement.closest('#eval-user-menu') || document.activeElement.closest('#collab-modal'))));
+        const isTyping = document.activeElement && ((document.activeElement.tagName.toLowerCase() === 'textarea' && !document.activeElement.readOnly) || boxEditor.isOpen(document.activeElement) || document.activeElement.id === 'search-input' || document.activeElement.id === 'replace-input' || document.activeElement.id === 'string-editor' || document.activeElement.id === 'map-name' || document.activeElement.id === 'zoom-display' || document.activeElement.id === 'zoom-slider' || document.activeElement.id === 'eval-search-input' || (document.activeElement.closest && (document.activeElement.closest('#eval-user-menu') || document.activeElement.closest('#collab-modal'))));
 
         if (e.altKey && !e.ctrlKey && !e.metaKey) {
             // Resolve which logical letter this chord means. The typed
@@ -27908,7 +29367,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (presentMode || collabReadOnly()) return;
             // Alt+Up: a parent above the selected box -- from its text field too.
             if (e.code === 'ArrowUp') {
-                const inBox = document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea[data-id]');
+                const inBox = boxEditor.isOpen(document.activeElement);
                 if (isTyping && !inBox) return;
                 e.preventDefault();
                 if (reviewMode) return;
@@ -27957,6 +29416,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (e.shiftKey && (code === 'KeyL' || code === 'KeyE' || code === 'KeyR')) {
                 e.preventDefault();
                 setSelectedAlign(code === 'KeyL' ? 'left' : code === 'KeyR' ? 'right' : 'center');
+                return;
+            }
+            // Ctrl+B, Ctrl+I, Ctrl+U with boxes selected: all their words (an
+            // open box formats its own selection).
+            if (!isTyping && !e.shiftKey && !e.altKey && (code === 'KeyB' || code === 'KeyI' || code === 'KeyU') && selectedIds.length) {
+                e.preventDefault();
+                formatSelectedBoxes(code === 'KeyB' ? 'strong' : code === 'KeyI' ? 'em' : 'u');
                 return;
             }
             if (code === 'KeyZ') { if (!isTyping) { if(e.shiftKey)redo();else undo(); } return; }
@@ -29134,7 +30600,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // the PRE-merge map, so a box can be re-found by the raw text it held.
     function preMergeBoxText(nodeId, idx) {
         var host = document.querySelector('.node[data-node-id="' + cssEsc(nodeId) + '"][data-node-idx="' + idx + '"]');
-        var ta = host && host.querySelector('textarea');
+        var ta = host && host.querySelector('.box-editor');
         return ta ? ta.value : undefined;
     }
     function preMergeBoxCount(nodeId) {
@@ -29180,7 +30646,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         var ctx = { active: null, drafts: [] };
         try {
             var a = document.activeElement;
-            if (a && a.tagName && a.tagName.toLowerCase() === 'textarea' && !a.readOnly) {
+            if (a && a.tagName && (a.tagName.toLowerCase() === 'textarea' || boxEditor.isOpen(a)) && !a.readOnly) {
                 if (a.hasAttribute('data-id') && a.closest('.node')) {
                     var host = a.closest('.node');
                     ctx.active = { kind: 'node', id: a.getAttribute('data-id'),
@@ -29241,12 +30707,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 var at = relocateBoxIdx(act.id, act.idx, act.value, act.boxCount);
                 if (at === null) return;
                 var host = document.querySelector('.node[data-node-id="' + cssEsc(act.id) + '"][data-node-idx="' + at + '"]');
-                var ta = host && host.querySelector('textarea');
+                var ta = host && host.querySelector('.box-editor');
                 var rd = host && host.querySelector('.rendered-text');
                 if (!ta || !rd) return;   // the box was deleted remotely
                 rd.style.display = 'none';
-                ta.style.display = ''; ta.readOnly = false; ta.style.cursor = 'text';
-                ta.style.height = '0'; ta.style.height = ((ta.scrollHeight || rd.offsetHeight || 24)) + 'px';
+                ta.style.display = ''; ta.readOnly = false;
                 ta.focus();
                 var len = ta.value.length;
                 ta.setSelectionRange(Math.min(act.selStart || 0, len), Math.min(act.selEnd || 0, len));

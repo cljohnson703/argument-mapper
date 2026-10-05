@@ -70,7 +70,11 @@ for (const [base,pairs] of Object.entries(reviewed.pastAlternatives)) {
 }
 audit.reviewed = reviewed;
 const data = {past, plurals, participles:[...participles].sort(), spellings, presentBases, pastVariants, compoundPlurals:reviewed.compoundPlurals};
-const js = '    // BEGIN GENERATED MORPHOLOGY\n    // Online source snapshots, licenses, exclusions: language-data/.\n    const CLAIM_VENDOR_MORPHOLOGY = ' + JSON.stringify(data) + ';\n    // END GENERATED MORPHOLOGY';
+// The app looks the user's own words up in these tables, so each is made
+// without a prototype: "constructor" finds nothing, as any word not listed.
+const table = value => Array.isArray(value) ? JSON.stringify(value) : 'Object.assign(Object.create(null), ' + JSON.stringify(value) + ')';
+const js = '    // BEGIN GENERATED MORPHOLOGY\n    // Online source snapshots, licenses, exclusions: language-data/.\n    const CLAIM_VENDOR_MORPHOLOGY = {' +
+    Object.entries(data).map(([key, value]) => JSON.stringify(key) + ':' + table(value)).join(',') + '};\n    // END GENERATED MORPHOLOGY';
 const escape = s => s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const legal = '<!-- BEGIN MORPHOLOGY LICENSES -->\n<details><summary>Word-form data sources and licenses</summary><p>Adapted from RosaeNLG english-verbs-irregular and Sindre Sorhus irregular-plurals. The imported tables are filtered; local additions and ambiguity policies are described in the source distribution.</p><pre>' + escape(read('verbs-LICENSE.txt') + '\n\n' + read('plurals-LICENSE.txt')) + '</pre></details>\n<!-- END MORPHOLOGY LICENSES -->';
 const file = path.join(root, 'argument-mapper-r27.html');

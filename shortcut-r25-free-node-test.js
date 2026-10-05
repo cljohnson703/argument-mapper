@@ -219,11 +219,11 @@ async function testShortcutGuardsAndPrecedence() {
         pressA(win, { shiftKey: true }, search);
         ok(win.__argmap.state.trees.length === count, 'Shift+A is inert in a search field');
 
-        const textarea = win.document.querySelector('.node textarea');
+        const textarea = win.document.querySelector('.node .box-editor');
         textarea.readOnly = false;
         textarea.focus();
         pressA(win, { shiftKey: true }, textarea);
-        ok(win.__argmap.state.trees.length === count, 'Shift+A is inert in an editable node textarea');
+        ok(win.__argmap.state.trees.length === count, 'Shift+A is inert in an open box editor');
 
         textarea.readOnly = true;
         textarea.focus();

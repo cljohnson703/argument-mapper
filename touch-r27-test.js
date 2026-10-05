@@ -188,7 +188,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             __t.box('k').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             __t.box('b').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             r.sel = selectedIds.slice().sort();
-            r.editing = !!(document.activeElement && document.activeElement.tagName === 'TEXTAREA' && !document.activeElement.readOnly);
+            r.editing = !!(document.activeElement && (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.classList.contains('box-editor')) && !document.activeElement.readOnly);
             document.getElementById('select-more-done').click();
             r.after = { on: selectMoreMode, hint: hint.classList.contains('visible') };
             __t.box('b').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
@@ -214,7 +214,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             const armed = !!boxLinkPicking;
             __t.box('k').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             return { items: items.filter(t => /Link/.test(t)), armed, text: __t.node('b').texts[0],
-                editing: document.activeElement && document.activeElement.tagName === 'TEXTAREA' && !document.activeElement.readOnly };`);
+                editing: document.activeElement && (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.classList.contains('box-editor')) && !document.activeElement.readOnly };`);
         ok(lp.items.includes('Link a Premise…') && lp.items.includes('Link to Web Address…'), 'a box\'s menu has Link a Premise… and Link to Web Address…', JSON.stringify(lp.items));
         ok(lp.armed && /^B, as with \[S\d+\]\(#box:k\) in view\.$/.test(lp.text) && lp.editing,
             'Link a Premise… puts the link where the text was last edited, and opens the box again', JSON.stringify(lp));

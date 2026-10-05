@@ -33,6 +33,8 @@
 //       being established, in the common wordings;
 //  (2d) the equivalences, reductio, absorption, and biconditional elimination's
 //       denials, with look-alikes that must not pass;
+//  (2e) a word every object has ("constructor") read as itself, where a noun,
+//       a plural or a verb goes; no word table with a prototype;
 //   (3) diagnosis on a map: the "? ambiguous" tag, its tooltip, the list row;
 //   (4) deriving a conclusion: every generative rule, in English and in
 //       symbols, and premises that derive nothing obvious;
@@ -198,7 +200,11 @@ const CORPUS = {
         ['some, plain verb', ['Some raven flies', 'Some ravens fly', 'At least one raven flies', 'There is a raven that flies', 'Something that is a raven flies']],
         ['everything, plain verb', ['Everything changes', 'All things change']],
         ['relative clause, plain verb', ['Everything that flies is a bird', 'All things that fly are birds', 'Whatever flies is a bird', 'Anything that flies is a bird']],
-        ['whoever', ['Whoever is wise is happy', 'Everyone who is wise is happy', 'Anyone who is wise is happy', 'All who are wise are happy']]
+        ['whoever', ['Whoever is wise is happy', 'Everyone who is wise is happy', 'Anyone who is wise is happy', 'All who are wise are happy']],
+        // ---- A word every object has ("constructor"): read as itself ----
+        ['"constructor"', ['The constructor is not broken', "The constructor isn't broken", 'It is not the case that the constructor is broken']],
+        ['"constructors"', ['All constructors are useful', 'Every constructor is useful', 'Each constructor is useful']],
+        ['"constructor" where a verb goes', ['Poe did not constructor the bridge', "Poe didn't constructor the bridge", 'It is not the case that Poe constructored the bridge']]
     ],
     different: [
         ['everyone is not everything', 'Everyone is mortal', 'Everything is mortal'],
@@ -298,7 +304,14 @@ const CORPUS = {
         [null, ['Most ravens are black'], 'If Poe is a raven, then Poe is black', 'most is not all'],
         [null, ['Even if it rains, the match goes on', 'It rains'], 'The match goes on', 'even if is not a conditional'],
         [null, ['It rains', 'The ground is wet'], 'The ground is wet because it rains', 'because is not and'],
-        [null, ['The ground is wet'], 'It is unclear if it rains', 'unclear if']
+        [null, ['The ground is wet'], 'It is unclear if it rains', 'unclear if'],
+        // ---- A word every object has ("constructor"): read as itself ----
+        ['modus ponens', ['If the constructor is broken, then we stop', 'The constructor is broken'], 'We stop', 'MP, "constructor"'],
+        ['modus tollens', ['If the constructor is broken, then we stop', 'We do not stop'], "The constructor isn't broken", 'MT, "constructor" denied'],
+        ['universal modus ponens', ['All constructors are useful', 'Poe is a constructor'], 'Poe is useful', 'UMP, "constructors"'],
+        ['modus tollens', ['If Poe constructored the bridge, then Ann left', 'Ann did not leave'], 'Poe did not constructor the bridge', 'MT, "constructor" where a verb goes'],
+        ['modus ponens', ['If Constructor theory is true, then we stop', 'Constructor theory is true'], 'We stop', 'MP, "Constructor" first'],
+        ['conjunction elimination', ['The constructor is broken, and it is old'], 'The constructor is old', 'AndE, "it" for "the constructor"']
     ],
     notes: [
         ['All ravens are not white', 'ambiguous'],
@@ -332,7 +345,9 @@ const CORPUS = {
         ['All ravens are black', null],
         ['No raven is white', null],
         ['Poe is not black', null],
-        ['If it rains, then the ground is wet and the match is off', null]
+        ['If it rains, then the ground is wet and the match is off', null],
+        ['The constructor is broken', null],
+        ['Constructors are useful', 'ambiguous']
     ]
 };
 // Held out while the reader was being fixed against the corpus above.
@@ -708,6 +723,66 @@ function reportCorpus(name, res) {
             bad.map(([c, g]) => c[3] + ': got ' + g + ', want ' + c[0]).join(' | '));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
+    /* ---------------- 2e. a word every object has ---------------- */
+    console.log('\n-- a word every object has --');
+    try {
+        const names = [...new Set([...HTML.matchAll(/\n {4}const ((?:CLAIM|SYMBOL)_[A-Z_]+) = /g)].map(m => m[1]))];
+        const c = T(W, `
+            var safe = function (f) { try { return f(); } catch (e) { return 'ERR ' + e.message; } };
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear();
+                var s = collectDeductiveSteps(state.trees)[0];
+                return { rule: s.rule && s.rule.name, ambiguous: s.ambiguous };
+            };
+            // Every table the reader looks words up in; not these, keyed by rule and a style.
+            var tables = [], withPrototype = [];
+            ${J(names)}.forEach(function (n) {
+                var t = eval(n);
+                if (!t || typeof t !== 'object' || Array.isArray(t) || t instanceof Set || t instanceof Map || t instanceof RegExp ||
+                    n === 'CLAIM_EQUIVALENCES' || n === 'CLAIM_SYMBOL_STYLE') return;
+                if (n !== 'CLAIM_VENDOR_MORPHOLOGY') tables.push([n, t]);
+                else Object.keys(t).forEach(function (k) { if (!Array.isArray(t[k])) tables.push([n + '.' + k, t[k]]); });   // a table of tables
+            });
+            tables.forEach(function (x) { if (Object.getPrototypeOf(x[1]) !== null) withPrototype.push(x[0]); });
+            return {
+                norm: normalizeClaimText('The constructor is broken'),
+                src: (parseClaim('The constructor is broken') || {}).src,
+                slips: claimAgreementSlips('The constructor is broken').map(function (s) { return s.message; }),
+                mp: safe(function () { return step(['If the constructor is broken, then we stop', 'The constructor is broken'], 'We stop'); }),
+                // With Deductive on, a box beginning "Constructor" beside another tree.
+                first: safe(function () {
+                    state.trees = [{ id: 'M', type: 'contention', texts: ['We stop'], collapsed: [], x: 30000, y: 30000, children: [
+                        { id: 'A', type: 'support', texts: ['If Constructor theory is true, then we stop', 'Constructor theory is true'], collapsed: [], children: [] } ] },
+                        { id: 'N', type: 'contention', texts: ['Poe is black'], collapsed: [], x: 30000, y: 32000, children: [
+                        { id: 'B', type: 'support', texts: ['If Poe is a raven, then Poe is black', 'Poe is a raven'], collapsed: [], children: [] } ] }];
+                    ensureCollabFields(state); selectedIds = []; render();
+                    try {
+                        toggleDeductiveLive();
+                        var tag = function (id) { var t = document.querySelector('.derivation-tag[data-step="' + id + '"]'); return t ? t.textContent : null; };
+                        return [tag('A'), tag('B')];
+                    } finally { if (deductiveLive) toggleDeductiveLive(); }
+                }),
+                tables: tables.length, withPrototype: withPrototype,
+                // Read as "conductor" is, word for word.
+                unlike: ['The constructor is broken', 'Constructor is broken', 'The constructor is broken, and it is old', 'If the constructor breaks, then it is old',
+                    'Poe saw the bridge and constructor kits', 'A constructor claim is true', 'Poe is a good constructor', 'Engineers constructor bridges',
+                    'All ravens constructor', 'Constructors are useful'].filter(function (s) {
+                    var read = function (t) { return safe(function () { var f = parseClaim(t); return JSON.stringify([f && claimKey(f), claimNotes(t).map(function (n) { return n.kind + ': ' + n.message; }),
+                        claimPronounReadings(t).texts]); }); };
+                    return read(s) !== read(s.replace(/onstructor/g, 'onductor')).replace(/onductor/g, 'onstructor');
+                })
+            };`);
+        ok(c.norm === 'the constructor is broken' && c.src === 'the constructor is broken',
+            '"The constructor is broken" reads as itself, not with the function every object\'s "constructor" names', J([c.norm, c.src]));
+        ok(J(c.slips) === '[]' && c.mp && c.mp.rule === 'modus ponens' && c.mp.ambiguous === false,
+            'on the map its modus ponens is certified, nothing asked: "constructor" is not a plural', J([c.slips, c.mp]));
+        ok(J(c.first) === J(['✓ modus ponens', '✓ modus ponens']), 'a box beginning "Constructor" is read, and with Deductive on every step on the map is tagged', J(c.first));
+        ok(J(c.unlike) === '[]', 'it is read as "conductor" is: a pronoun for it, joined to another noun, before a noun, as a verb, as a plural', J(c.unlike));
+        ok(c.tables > 20 && J(c.withPrototype) === '[]', 'no table the reader looks words up in has a prototype (' + c.tables + ' tables)', J(c.withPrototype));
+    } catch (e) { ok(false, 'the section ran to the end', e.message); }
+
     /* ---------------- 3. diagnosis on a map ---------------- */
     console.log('\n-- ambiguous steps --');
     try {
@@ -1004,7 +1079,7 @@ function reportCorpus(name, res) {
             ensureCollabFields(state); selectedIds = ['O-1']; render();
             ${altUp}
             var child = shape(state.trees);
-            var focus = document.activeElement && document.activeElement.matches('textarea[data-id]') ? document.activeElement.dataset.id : null;
+            var focus = document.activeElement && document.activeElement.matches('.box-editor') ? document.activeElement.dataset.id : null;
             var newId = state.trees[0].children[0].children[0].id;
             var focusedNew = focus === newId, selectedNew = JSON.stringify(selectedIds) === JSON.stringify([newId + '-0']);
             document.activeElement.blur();

@@ -714,7 +714,7 @@ function ok(cond, label, detail) {
         A.win.eval(`
             (function () {
                 const host = document.querySelector('.node[data-node-id="kidA"][data-node-idx="0"]');
-                const ta = host.querySelector('textarea');
+                const ta = host.querySelector('.box-editor');
                 const rd = host.querySelector('.rendered-text');
                 rd.style.display = 'none';
                 ta.style.display = ''; ta.readOnly = false;
@@ -731,7 +731,7 @@ function ok(cond, label, detail) {
         ok(true, 'live-typing: peer edit appears while a textbox is being edited');
         const st = A.win.eval(`(function () {
             const a = document.activeElement;
-            return { isTa: !!(a && a.tagName && a.tagName.toLowerCase() === 'textarea'),
+            return { isTa: !!(a && a.tagName && (a.tagName.toLowerCase() === 'textarea' || a.classList.contains('box-editor'))),
                      id: a && a.getAttribute && a.getAttribute('data-id'),
                      ro: a ? a.readOnly : null, val: a && a.value, sel: a && a.selectionStart };
         })()`);
