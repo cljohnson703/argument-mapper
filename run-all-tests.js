@@ -45,6 +45,7 @@ const SUITES = [
     'copremise-r27-left-test.js',
     'editexit-r27-press-test.js',
     'collab-r27-boxshift-test.js',
+    'collab-r27-name-lease-test.js',
     'shortcut-r27-save-present-test.js',
     'platform-shortcuts-r27-test.js',
     'sides-r27-color-test.js',

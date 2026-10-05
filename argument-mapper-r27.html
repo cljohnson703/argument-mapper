@@ -2814,7 +2814,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.72';
+    const APP_BUILD = '2026-10-05 r27.77';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -2985,12 +2985,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // Keep the signed-in name's lease fresh while its holder is actually
         // editing. Gated on real stamps having happened above, so this never
-        // changes the fingerprint on its own (no churn).
+        // changes the fingerprint on its own (no churn). A verified lease
+        // keeps its uid: without it the same Google account on a second
+        // device would be blocked as "someone else" (see applySignIn).
         const stampedAny = Object.values(st._nodeVersions).some(v => v && v.ts === now)
             || Object.values(st._moveVersions || {}).some(v => v && v.ts === now);
-        if (stampedAny && currentUser && st._nameClaims && st._nameClaims[currentUser]
-            && st._nameClaims[currentUser].by === _clientId && !st._nameClaims[currentUser].released) {
-            st._nameClaims[currentUser] = { by: _clientId, ts: now };
+        const held = currentUser && st._nameClaims ? st._nameClaims[currentUser] : null;
+        if (stampedAny && held && held.by === _clientId && !held.released) {
+            st._nameClaims[currentUser] = held.uid
+                ? { by: _clientId, ts: now, uid: held.uid }
+                : { by: _clientId, ts: now };
         }
         _shadowSnapshot = JSON.stringify(st);
     }

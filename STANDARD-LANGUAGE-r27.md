@@ -4,6 +4,16 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5, afternoon: one Google account on two devices (r27.77)
+
+The user: "the display-name lease refresh in `diffAndStamp` drops the verified Google uid from the signed-in user's claim, which defeats the 'same verified person on two devices' exemption in `applySignIn`."
+
+* **What happened.** A name is leased while it is in use: signing in takes the lease, each real edit renews it, and for ten minutes anyone else signing in under that name is turned away. A Google sign-in writes the account's uid on the lease, so the same account on another device is let in (r26). The renewal wrote the lease again without the uid, so once the first device had made one edit, the second was told the name "is in use by someone else right now", for up to ten minutes.
+* **The fix.** The renewal keeps the uid. A lease taken by typing a name has none and is renewed as before, with no uid key, so its saved form is unchanged. The sync fingerprint reads only a lease's time and holder, so it is unchanged either way.
+* **Still turned away** while the lease runs: a different Google account under the same name, and the name typed with no account. A Google account cannot take a typed name's lease either.
+
+Tests. collab-r27-name-lease-test.js 15, a new suite: two devices and the sync engine, the lease reaching the second device as the shared map does. Four fail on r27.72: the renewed lease's uid, on the device and in the room's copy; the second device's sign-in; and the lease it then holds. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository.
+
 ### October 5, later: a link read as its label is one name (r27.72)
 
 The user, on r27.71's "-O1" read as "not O1": "We need to fix that. Any suggestions on how? For what it's worth, if it's a linked premise like -O1 and someone wants to negate it, the negation would be outside of the syntax for the linked -O1."
