@@ -2896,11 +2896,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.79';
+    const APP_BUILD = '2026-10-05 r27.80';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
     const NAME_LEASE_MS = 10 * 60 * 1000;
+    // The leases (_nameClaims) are keyed by display names, and a name is
+    // whatever someone types: "constructor" and "__proto__" are names like
+    // any other. A plain object answers "constructor" with Object's own
+    // function, and `claims["__proto__"] = claim` sets the table's prototype
+    // instead of storing the claim (so JSON drops it). A claim is therefore
+    // read only as an OWN property, and written as one: defineProperty
+    // never calls the __proto__ setter. The saved JSON is the same as ever.
+    function nameClaimOf(claims, name) {
+        return claims && Object.prototype.hasOwnProperty.call(claims, name) ? claims[name] : undefined;
+    }
+    function setNameClaim(st, name, claim) {
+        if (!st._nameClaims) st._nameClaims = Object.create(null);
+        Object.defineProperty(st._nameClaims, name, { value: claim, writable: true, enumerable: true, configurable: true });
+    }
     try { console.log('%c[argmap] build ' + APP_BUILD, 'color:#6ab04c'); } catch (_) {}
     // Surface the build in Help too: iOS has no console a student can reach,
     // so this is the only way to confirm which version a phone or tablet
@@ -3076,13 +3090,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // theirs.
         const stampedAny = Object.values(st._nodeVersions).some(v => v && v.ts === now)
             || Object.values(st._moveVersions || {}).some(v => v && v.ts === now);
-        const held = currentUser && st._nameClaims ? st._nameClaims[currentUser] : null;
+        const held = currentUser ? nameClaimOf(st._nameClaims, currentUser) : null;
         const ours = !!held && ((held.by === _clientId && !held.released)
             || (!!currentUserUid && held.uid === currentUserUid));
         if (stampedAny && ours) {
-            st._nameClaims[currentUser] = held.uid
+            setNameClaim(st, currentUser, held.uid
                 ? { by: _clientId, ts: now, uid: held.uid }
-                : { by: _clientId, ts: now };
+                : { by: _clientId, ts: now });
         }
         _shadowSnapshot = JSON.stringify(st);
     }
@@ -3271,11 +3285,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // hands when nobody is using it, instead of being owned forever by
         // whoever (or whatever ghost of a closed incognito window) claimed
         // it first.
+        // The keys are typed names, so any string: a claim is an OWN property
+        // only (every object answers to "constructor"), and the merged table
+        // has no prototype, so "__proto__" is stored as a key instead of
+        // setting one. Inline, not nameClaimOf: see the conflict dedupe below.
         const lClaims = local._nameClaims || {};
         const rClaims = remote._nameClaims || {};
-        const mergedClaims = {};
+        const ownClaim = (claims, nm) => Object.prototype.hasOwnProperty.call(claims, nm) ? claims[nm] : undefined;
+        const mergedClaims = Object.create(null);
         for (const nm of new Set([...Object.keys(lClaims), ...Object.keys(rClaims)])) {
-            const a = lClaims[nm], b = rClaims[nm];
+            const a = ownClaim(lClaims, nm), b = ownClaim(rClaims, nm);
             const bWins = !!b && (!a || b.ts > a.ts || (b.ts === a.ts && (b.by || '') > (a.by || '')));
             mergedClaims[nm] = bWins ? b : a;
         }
@@ -5842,7 +5861,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // device can know which of the others are still signed in.
         if (takeLease && name && name !== currentUser) {
             const NOW = Date.now();
-            const claim = (state._nameClaims || {})[name];
+            const claim = nameClaimOf(state._nameClaims, name);
             const sameVerifiedPerson = !!(authUid && claim && claim.uid === authUid);
             const leaseActive = !!(claim && claim.by !== _clientId && !claim.released
                 && (NOW - (claim.ts || 0)) < NAME_LEASE_MS) && !sameVerifiedPerson;
@@ -5873,10 +5892,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // Take or refresh the lease (this also takes over released,
             // expired, and ghost claims). render() below routes through
             // scheduleAutosave, which syncs the claim out.
-            if (!state._nameClaims) state._nameClaims = {};
-            state._nameClaims[name] = authUid
+            setNameClaim(state, name, authUid
                 ? { by: _clientId, ts: NOW, uid: authUid }
-                : { by: _clientId, ts: NOW };
+                : { by: _clientId, ts: NOW });
         }
         // Release the lease on the name we are leaving, if we hold it, so
         // sign-out (and name switches) free the name immediately -- but only
@@ -5884,13 +5902,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // or the question declined) has returned above, its user still
         // signed in under the old name and still holding it.
         if (takeLease && currentUser && currentUser !== name) {
-            const prev = (state._nameClaims || {})[currentUser];
+            const prev = nameClaimOf(state._nameClaims, currentUser);
             if (prev && prev.by === _clientId && !prev.released) {
                 // A verified release keeps its uid, so the account's other
                 // devices, if still signed in, can take the name back.
-                state._nameClaims[currentUser] = prev.uid
+                setNameClaim(state, currentUser, prev.uid
                     ? { by: _clientId, ts: Date.now(), released: true, uid: prev.uid }
-                    : { by: _clientId, ts: Date.now(), released: true };
+                    : { by: _clientId, ts: Date.now(), released: true });
             }
         }
         currentUser = name;
@@ -30291,7 +30309,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function syncStableStringify(v) {
         return JSON.stringify(v, function (k, val) {
             if (val && typeof val === 'object' && !Array.isArray(val)) {
-                var out = {};
+                // No prototype: some keys are typed names (_nameClaims), and
+                // assigned into {} a "__proto__" key would set the copy's
+                // prototype and drop out of the JSON. The JSON is unchanged.
+                var out = Object.create(null);
                 Object.keys(val).sort().forEach(function (kk) { out[kk] = val[kk]; });
                 return out;
             }
@@ -30497,9 +30518,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         // this client authored and hasn't released, newest-wins
                         // against the shared doc so we never clobber a fresher
                         // remote holder. (Nodes/threads are still fully adopted,
-                        // so the boot placeholder cannot leak.)
+                        // so the boot placeholder cannot leak.) The copy has no
+                        // prototype: names are typed, and copied into {} a
+                        // "__proto__" claim would set the copy's prototype, and
+                        // "constructor" would read back as Object's function.
                         var localClaims = (local._nameClaims || {});
-                        var adoptedClaims = Object.assign({}, adopted._nameClaims || {});
+                        var adoptedClaims = Object.assign(Object.create(null), adopted._nameClaims || {});
                         Object.keys(localClaims).forEach(function (nm) {
                             var mine = localClaims[nm];
                             if (!mine || mine.by !== local._clientId || mine.released) return;

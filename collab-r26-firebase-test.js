@@ -1071,6 +1071,66 @@ function ok(cond, label, detail) {
         ok(code === 'guest-editor-denied', 'legacy room: guest EDITING still refused by default', String(code));
     }
 
+    // --- 33. Display names that Object.prototype also has ----------------
+    // An account may be named anything, "__proto__" and "constructor"
+    // included, and the leases are keyed by the name. Before r27.80 a
+    // "__proto__" lease never reached the room (it set the lease table's
+    // prototype, and the wire serializer dropped the key), and a
+    // "constructor" lease held on one side only merged into Object's own
+    // function, which JSON drops: the two clients then rewrote the document
+    // back and forth, and anyone could take either name.
+    {
+        const protoUser = { uid: 'pk1', displayName: '__proto__', email: 'proto@school.edu' };
+        const ctorUser = { uid: 'pk2', displayName: 'constructor', email: 'ctor@school.edu' };
+        const twinUser = { uid: 'pk3', displayName: '__proto__', email: 'proto.twin@school.edu' };
+        const has = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+        const settles = async (fn, ms = 1500) => { try { await waitFor(fn, 'settles', ms); return true; } catch (e) { return false; } };
+        const PO = makeWin('protoowner', cloud, { user: protoUser }); wins.push(PO);
+        await sleep(340);
+        seedMap(PO, [N('pkRoot', [N('pkKid', [], 'A premise')], 'Keys contention', { type: 'contention' })], 'Name Keys');
+        const fbPO = await PO.win.__argmap.collab.firebase();
+        const uPO = await PO.win.__argmap.collab.signIn();
+        const { roomId: keyRoom } = await PO.win.__argmap.collab.createRoom(fbPO, uPO);
+        await PO.win.__argmap.collab.startSession(fbPO, uPO, keyRoom, { role: 'owner' });
+        await waitFor(() => PO.win.__argmap.engine && PO.win.__argmap.engine.getStatus() === 'idle', 'name keys: owner engine idle');
+        const keyDoc = () => cloud.getPath('rooms/' + keyRoom + '/document');
+        const leases = () => JSON.parse(keyDoc().content)._nameClaims || {};
+        ok(PO.win.eval('currentUser') === '__proto__', 'name keys: the owner is signed in as "__proto__"');
+        defocus(PO); await PO.win.__argmap.engine.pushNow();
+        ok(await settles(() => has(leases(), '__proto__') && leases()['__proto__'].uid === 'pk1'),
+            'name keys: the "__proto__" lease reaches the room document', JSON.stringify(Object.keys(leases())));
+
+        const keyInvites = cloud.getPath('rooms/' + keyRoom + '/invites');
+        const keyTok = Object.keys(keyInvites).find(t => keyInvites[t] === 'editor');
+        const CT = makeWin('ctoreditor', cloud, { user: ctorUser }); wins.push(CT);
+        await sleep(340);
+        const fbCT = await CT.win.__argmap.collab.firebase();
+        const uCT = await CT.win.__argmap.collab.signIn();
+        const memCT = await CT.win.__argmap.collab.joinRoom(fbCT, uCT, keyRoom, keyTok, 'e');
+        await CT.win.__argmap.collab.startSession(fbCT, uCT, keyRoom, memCT);
+        await waitFor(() => texts(CT) === texts(PO), 'name keys: the "constructor" editor adopts the map');
+        ok(CT.win.eval('currentUser') === 'constructor', 'name keys: the editor is signed in as "constructor"');
+        await syncRound(PO, CT); await syncRound(PO, CT);
+        const L = leases();
+        ok(has(L, '__proto__') && L['__proto__'].uid === 'pk1' && has(L, 'constructor') && typeof L.constructor === 'object' && L.constructor.uid === 'pk2',
+            'name keys: the room document holds both leases', JSON.stringify(Object.keys(L)));
+        ok(fp(PO) === fp(CT), 'name keys: both clients converge');
+        const v0 = keyDoc().version;
+        await syncRound(PO, CT); await syncRound(PO, CT);
+        ok(keyDoc().version === v0, 'name keys: and stop writing (no back-and-forth over a lease)', v0 + ' -> ' + keyDoc().version);
+
+        // A second account with the same display name, while the first holds it.
+        const TW = makeWin('prototwin', cloud, { user: twinUser }); wins.push(TW);
+        await sleep(340);
+        const fbTW = await TW.win.__argmap.collab.firebase();
+        const uTW = await TW.win.__argmap.collab.signIn();
+        const memTW = await TW.win.__argmap.collab.joinRoom(fbTW, uTW, keyRoom, keyTok, 'e');
+        await TW.win.__argmap.collab.startSession(fbTW, uTW, keyRoom, memTW);
+        await waitFor(() => texts(TW) === texts(PO), 'name keys: the second "__proto__" account adopts the map');
+        ok(TW.win.eval('currentUser') !== '__proto__',
+            'name keys: a second account named "__proto__" is refused the name while the first holds it', TW.win.eval('currentUser'));
+    }
+
     // --- Runtime error audit ---------------------------------------------
     for (const W of wins) {
         // jsdom reports uncaught exceptions via the virtual console

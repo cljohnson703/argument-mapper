@@ -4,6 +4,17 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 5, third follow-up: display names that Object.prototype also has (r27.80)
+
+The user: "the collaboration code keeps display-name leases in plain objects keyed by the name a user types, so names that are Object.prototype property names misbehave".
+
+* **What went wrong.** Signing in as "__proto__" set the lease table's prototype instead of storing a lease, so none was kept (JSON dropped it) and anyone could take the name. A name the table inherits -- "constructor", "toString", "valueOf" -- read back as Object's own function where no one held it. A merge in which one side held such a name kept the function, which JSON drops: the lease left the shared map, the two windows wrote the map back and forth (four writes in two idle rounds, over Firebase too), and each could take the other's name.
+* **Now** a lease is read only as the name's own entry, and written as one (defineProperty never calls the __proto__ setter), whether it is taken, renewed or released. The tables the merge and a window's first pull build have no prototype, nor has the copy the wire serializer makes for the server, which dropped "__proto__" as well. As with the reader's word tables in r27.76, "constructor" is a name like any other.
+* **The JSON is unchanged.** A map without such a name is saved and shared byte for byte as before; "__proto__" is kept as an ordinary key, and Firebase and saved files read it back.
+* **Checked, not changed:** _presence, _commentDeletions, _orphanComments, the version and deletion registries, and a room's invites and members are keyed by ids the app makes (client, comment and node ids, random tokens, Firebase uids), never by anything typed.
+
+Tests. New suite collab-r27-name-keys-test.js (68 checks: signing in as "constructor", "__proto__", "toString", "hasOwnProperty" and "valueOf"; the lease through the browser's copy, a saved file and an open elsewhere, which then refuses the name; merges with such a name on one side, the other and both; the shared JSON byte for byte; two windows over the sync engine; a window's first pull). collab-r26-firebase-test.js 126 (7 new: a room owned by "__proto__" with an editor named "constructor": both leases reach its document, the clients settle, and a second "__proto__" account is refused the name). Without this change, 33 of the new checks fail, and 5 of the Firebase ones; collab-r27-name-lease-test.js passes as it did. Every suite passes but qualified-undercut-r27-test.js, which reads zombie-verdict-diagnostic.txt, a file not in the repository; the public build's smoke test passes. The reader is unchanged.
+
 ### October 5, second follow-up: a refused name switch keeps your name (r27.79)
 
 Found while checking r27.78's release. The user: "Do this task here: 'Keep your name when a name switch is refused'".
