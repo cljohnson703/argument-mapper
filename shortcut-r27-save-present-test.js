@@ -127,7 +127,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
 
         const typing = await TT(`__s.load(); editNodeText('o', 0);
             const ta = document.activeElement;
-            const editing = ta && ta.tagName === 'TEXTAREA' && !ta.readOnly;
+            const editing = ta && (ta.tagName === 'TEXTAREA' || ta.classList.contains('box-editor')) && !ta.readOnly;
             __s.key('KeyS', 's', { ctrlKey: true }, ta);
             return { editing: editing, saves: __s.saves, stillEditing: document.activeElement === ta };`);
         ok(typing.editing && typing.saves === 1 && typing.stillEditing,

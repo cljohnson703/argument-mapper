@@ -73,7 +73,7 @@ const HELPERS = `
     node(id) { const c = findNodeContext(state.trees, id); return c ? JSON.parse(JSON.stringify(c.node)) : null; },
     editing() {
       const a = document.activeElement;
-      if (!a || a.tagName !== 'TEXTAREA' || a.readOnly) return null;
+      if (!a || !(a.tagName === 'TEXTAREA' || (a.classList && a.classList.contains('box-editor'))) || a.readOnly) return null;
       const host = a.closest('.node');
       if (!host) return { other: a.className };
       return { id: host.getAttribute('data-node-id'), idx: +host.getAttribute('data-node-idx'), value: a.value };
@@ -212,7 +212,7 @@ async function scenario(name, fn) {
         const ed = E(c.B.win, 'return __t.editing();');
         ok(ed && ed.id === 'P' && ed.idx === 1 && ed.value === 'P-text',
             "the peer's editor is now on P-text at index 1, not on the new box", JSON.stringify(ed));
-        E(c.B.win, `var a = document.activeElement; if (a && a.tagName === 'TEXTAREA') { a.value = a.value + ' (Bob)'; a.dispatchEvent(new Event('input', { bubbles: true })); a.blur(); } autosaveNow(); return 1;`);
+        E(c.B.win, `var a = document.activeElement; if (a && (a.tagName === 'TEXTAREA' || (a.classList && a.classList.contains('box-editor')))) { a.value = a.value + ' (Bob)'; a.dispatchEvent(new Event('input', { bubbles: true })); a.blur(); } autosaveNow(); return 1;`);
         await c.sync(2);
         const want = ['Q-new', 'P-text (Bob)'];
         ok(same(view(c.A.win, 'P').texts, want) && same(view(c.B.win, 'P').texts, want),
@@ -227,7 +227,7 @@ async function scenario(name, fn) {
         await c.GB.engine.pushNow(); await c.GA.engine.pullNow(); await sleep(30);
         const ed = E(c.A.win, 'return __t.editing();');
         ok(ed === null, "the inserter's editor on the vanished box closes instead of reopening on Bob's premise", JSON.stringify(ed));
-        E(c.A.win, `var a = document.activeElement; if (a && a.tagName === 'TEXTAREA' && !a.readOnly) { a.value = 'my new premise' + a.value; a.dispatchEvent(new Event('input', { bubbles: true })); a.blur(); } autosaveNow(); return 1;`);
+        E(c.A.win, `var a = document.activeElement; if (a && (a.tagName === 'TEXTAREA' || (a.classList && a.classList.contains('box-editor'))) && !a.readOnly) { a.value = 'my new premise' + a.value; a.dispatchEvent(new Event('input', { bubbles: true })); a.blur(); } autosaveNow(); return 1;`);
         await c.sync(2);
         ok(same(view(c.B.win, 'P').texts, ['edited by Bob']), "Bob's text is intact", JSON.stringify(view(c.B.win, 'P').texts));
     });

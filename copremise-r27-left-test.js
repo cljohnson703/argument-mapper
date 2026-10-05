@@ -105,7 +105,7 @@ const HELPERS = `
         node(id) { return JSON.parse(JSON.stringify(findNodeContext(state.trees, id).node)); },
         editing() {
             const a = document.activeElement;
-            if (!a || a.tagName !== 'TEXTAREA' || a.readOnly) return null;
+            if (!a || !(a.tagName === 'TEXTAREA' || (a.classList && a.classList.contains('box-editor'))) || a.readOnly) return null;
             const host = a.closest('.node');
             return { id: host.getAttribute('data-node-id'), idx: +host.getAttribute('data-node-idx'), value: a.value };
         },

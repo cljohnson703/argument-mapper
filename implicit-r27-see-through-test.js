@@ -139,7 +139,7 @@ const rule = (sel) => {
             'light theme: the same, from its own connector colors');
         ok(/--color-given-see-through:\s*rgba\(38, 62, 48, 0\.55\)/.test(dark) && /--color-given-see-through:\s*rgba\(201, 229, 211, 0\.6\)/.test(nodesLight),
             'the see-through given tint is defined for dark and light boxes');
-        ok(/\.node\.implicit \.rendered-text, \.node\.implicit textarea\s*\{\s*color:\s*var\(--implicit-text\)/.test(CSS) &&
+        ok(/\.node\.implicit \.rendered-text, \.node\.implicit \.box-editor\s*\{\s*color:\s*var\(--implicit-text\)/.test(CSS) &&
            /--implicit-text:\s*#b3b3b3/.test(dark) && /--implicit-text:\s*#505050/.test(nodesLight),
             'its text, shown or being edited, takes the fainter --implicit-text in both themes');
         // WCAG contrast of the text against what shows through the box, from

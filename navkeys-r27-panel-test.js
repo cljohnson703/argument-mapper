@@ -89,7 +89,7 @@ const HELPERS = `
             var ev = new KeyboardEvent('keydown', Object.assign({ code: code, key: code, bubbles: true, cancelable: true }, opts || {}));
             target.dispatchEvent(ev);
             var ae = document.activeElement;
-            if (ae && ae.tagName === 'TEXTAREA' && !ae.readOnly) ae.blur();
+            if (ae && (ae.tagName === 'TEXTAREA' || ae.classList.contains('box-editor')) && !ae.readOnly) ae.blur();
             return ev.defaultPrevented;
         },
         // Tab then Enter from the current focus, reporting what the map did.

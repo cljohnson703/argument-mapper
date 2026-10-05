@@ -34,12 +34,19 @@
 //     up, the control's title is set aside so the browser's does not show
 //     as well, and it comes back after (a new title the app gave it meanwhile
 //     wins). A touch shows none (press and hold does, as before).
-// (5) Darker in the light theme: "Saved in browser only …", note times, the
-//     Logic panel's "Basis: the axioms", its notes, counts and arrows, Recent
+// (5) Darker in the light theme: "Saved in browser only …", the Logic
+//     panel's "Basis: the axioms", its notes, counts and arrows, Recent
 //     Maps' times and note, the note popover's ✕ and "No notes yet.", the
 //     Depth labels, the reading chooser's own-words line, and its "the step
 //     follows by …" in a deeper green. In the dark theme the ⠿ grip is
 //     lighter (it was #555 on a #2a2f30 box, 1.8:1).
+//
+// Then (the user): "I'd like to undo the note timestamp contrast change in
+// light mode. Also, slightly increase note timestamp contrast in dark mode,
+// please." (r27.73)
+//
+// (6) A note's time: #777 again in the light theme, as before r27.70; in
+//     the dark theme #888 (3.8:1 on the panel, where #777 was 3.0:1).
 //
 // Run:  node theme-r27-light-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -89,7 +96,7 @@ function contrast(a, b) {
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 (async () => {
-    console.log('=== r27.69-r27.70 light theme: readable headers, words, references and buttons; tips in the theme; File keeps its row ===');
+    console.log('=== r27.69-r27.73 light theme: readable headers, words, references and buttons; tips in the theme; note times; File keeps its row ===');
     const W = makeWin('light');
     await sleep(300);
     const CSS = W.win.eval(`Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\\n')`);
@@ -262,9 +269,9 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     console.log('\n-- (5) darker small words; a lighter grip on dark boxes --');
     {
         const dark = ['#save-indicator', '.depth-label', '.logic-basis-head', '.logic-basis-note', '.logic-count', '.logic-chev',
-            '.eval-comment-time', '.eval-popover-thread:empty::before', '.recent-when, body.bg-light #recent-modal-foot', '#reading-chooser .rc-own'];
+            '.eval-popover-thread:empty::before', '.recent-when, body.bg-light #recent-modal-foot', '#reading-chooser .rc-own'];
         const missing = dark.filter(sel => !new RegExp('body\\.bg-light ' + esc(sel) + '\\s*\\{[^}]*color:\\s*var\\(--label-text\\)').test(CSS));
-        ok(missing.length === 0, '"Saved in browser only …", note times, "Basis: the axioms" and the Logic panel\'s notes, counts and arrows, Recent Maps\' times and note, "No notes yet.", the Depth labels and the own-words line take the headers\' color', J(missing));
+        ok(missing.length === 0, '"Saved in browser only …", "Basis: the axioms" and the Logic panel\'s notes, counts and arrows, Recent Maps\' times and note, "No notes yet.", the Depth labels and the own-words line take the headers\' color', J(missing));
         ok(/body\.bg-light \.eval-popover-close\s*\{\s*color:\s*#666;\s*\}/.test(CSS), 'the note popover\'s ✕ is #666, as the other ✕s');
         ok(/body\.bg-light #reading-chooser \.rc-follows\s*\{\s*color:\s*#007a00;\s*\}/.test(CSS) && contrast('#007a00', '#f5f5f5') >= 4.5 && contrast('#00a800', '#f5f5f5') < 3,
             'the reading chooser\'s "the step follows by …" is a deeper green: ' + contrast('#007a00', '#f5f5f5').toFixed(1) + ':1 on its panel, where the tags\' green is ' + contrast('#00a800', '#f5f5f5').toFixed(1) + ':1');
@@ -277,6 +284,16 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             'readable on a dark box (' + contrast('#999', '#2a2f30').toFixed(1) + ':1) and a dark note (' + contrast('#999', '#4a4118').toFixed(1) + ':1), where it was ' + contrast('#555', '#2a2f30').toFixed(1) + ':1');
         const alone = CSS.indexOf('.drag-handle.drag-handle-alone {'), noteRules = [CSS.indexOf('.type-note .drag-handle { color: #999; }'), CSS.indexOf(':where(body.nodes-light) .type-note .drag-handle')];
         ok(alone > 0 && noteRules.every(i => i > 0 && i < alone), 'a held grip still turns blue: its rule comes after the notes\' (the same weight) and outweighs the rest', J({ alone, noteRules }));
+    }
+
+    console.log('\n-- (6) a note\'s time --');
+    {
+        ok(/body\.bg-light \.eval-comment-time\s*\{\s*color:\s*#777;\s*\}/.test(CSS) && !/body\.bg-light \.eval-comment-time\s*\{[^}]*--label-text/.test(CSS),
+            'in the light theme it is #777 again, as before r27.70');
+        const base = (CSS.match(/\n\s*\.eval-comment-time\s*\{[^}]*\}/) || [''])[0];
+        const was = contrast('#777', '#2a2f30'), now = contrast('#888', '#2a2f30'), popover = contrast('#888', '#2a2a2a');
+        ok(/color:\s*#888;/.test(base) && now > was && now < 4.5,
+            'in the dark theme it is a little lighter, #888: ' + now.toFixed(1) + ':1 on the panel (' + popover.toFixed(1) + ':1 in the note popover), where #777 was ' + was.toFixed(1) + ':1', base.trim());
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

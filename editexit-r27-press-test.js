@@ -90,11 +90,11 @@ const HELPERS = `
             updateSelectionVisuals();
         },
         box(id, idx) { return document.querySelector('.node[data-node-id="' + id + '"][data-node-idx="' + idx + '"]'); },
-        ta(id, idx) { return this.box(id, idx).querySelector('textarea'); },
+        ta(id, idx) { return this.box(id, idx).querySelector('.box-editor'); },
         open(id, idx) { editNodeText(id, idx); return this.editing(); },
         editing() {
             const a = document.activeElement;
-            if (!a || a.tagName !== 'TEXTAREA' || a.readOnly) return null;
+            if (!a || !(a.tagName === 'TEXTAREA' || (a.classList && a.classList.contains('box-editor'))) || a.readOnly) return null;
             const host = a.closest('.node');
             return host ? host.getAttribute('data-node-id') + '-' + host.getAttribute('data-node-idx') : 'non-node textarea';
         },
@@ -183,7 +183,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         const itself = T(W, `__p.load(); __p.open('s', 0);
             __p.press(__p.ta('s', 0), { noClick: true });
             return __p.editing();`);
-        ok(itself === 's-0', 'a press inside the textarea itself keeps editing', JSON.stringify(itself));
+        ok(itself === 's-0', 'a press inside the editor itself keeps editing', JSON.stringify(itself));
     }
 
     /* ================================================================

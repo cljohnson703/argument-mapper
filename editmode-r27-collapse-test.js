@@ -1,7 +1,11 @@
 'use strict';
 // r27 edit-mode collapse regression.
 //
-// enterEditMode opens the editor at the rendered text's height so the box does
+// r27.74: the box editor shows the words as the box does and is as tall as
+// they are, so no height is written at all -- this suite now pins that, and
+// the rest of what it guarded (the selection kept, another box still opens).
+//
+// enterEditMode opened the editor at the rendered text's height so the box did
 // not jitter. It read that height from .rendered-text — which it then hides.
 // A SECOND double-click on an already-open editor therefore measured a
 // display:none element, got 0, and wrote `height: 0px` onto the textarea: the
@@ -77,7 +81,7 @@ const MAP = [{
             selectedIds = [];
             render();
             var box = document.querySelector('.node[data-node-id="s1"]');
-            var ta = box.querySelector('textarea');
+            var ta = box.querySelector('.box-editor');
             var rd = box.querySelector('.rendered-text');
             // Give the rendered div a measurable height the way a browser would.
             Object.defineProperty(rd, 'offsetHeight', {
@@ -96,7 +100,7 @@ const MAP = [{
 
             // A real dblclick, both on the textarea and on the node padding.
             function dbl(el) { el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true })); }
-            dbl(ta);  out.steps.push({ at: 'dblclick textarea', h: ta.style.height });
+            dbl(ta);  out.steps.push({ at: 'dblclick editor', h: ta.style.height });
             dbl(box); out.steps.push({ at: 'dblclick node padding', h: ta.style.height });
 
             // The browser selects a word on that second double-click; the app
@@ -108,7 +112,7 @@ const MAP = [{
 
             // The guard must not stop a genuine first open on another box.
             var main = document.querySelector('.node[data-node-id="root"]');
-            var mainTa = main.querySelector('textarea');
+            var mainTa = main.querySelector('.box-editor');
             var mainRd = main.querySelector('.rendered-text');
             Object.defineProperty(mainRd, 'offsetHeight', {
                 configurable: true,
@@ -121,16 +125,16 @@ const MAP = [{
     `));
 
     const heights = res.steps.map(s => s.h);
-    ok(res.steps[0].h === '42px', 'open: the editor matches the rendered height', res.steps[0].h);
+    ok(res.steps[0].h === '', 'open: no height is written (the editor is as tall as its words)', res.steps[0].h);
     ok(res.steps[0].rendered === 'none', 'open: the rendered text is swapped out');
-    ok(heights.every(h => h === '42px'),
-        'reopening never changes the height', JSON.stringify(res.steps));
+    ok(heights.every(h => h === ''),
+        'reopening and double-clicks never write a height', JSON.stringify(res.steps));
     ok(heights.every(h => h !== '0px' && h !== '0'),
         'a zero measurement is never written as a height', JSON.stringify(heights));
     ok(String(res.selection.before) === String(res.selection.after),
         'a second double-click leaves the selection alone (word-select survives)',
         JSON.stringify(res.selection));
-    ok(res.otherBox.h === '21px' && res.otherBox.rendered === 'none',
+    ok(res.otherBox.h === '' && res.otherBox.rendered === 'none',
         'the guard does not block a genuine first open on another box',
         JSON.stringify(res.otherBox));
 
