@@ -142,7 +142,7 @@ const J = JSON.stringify;
             return { kids: kids, inAddNodes: inAddNodes, inView: !!(pb && pb.closest('#group-view')),
                      pair: pair && pair.className, pairKids: pair ? Array.prototype.slice.call(pair.children).map(function (el) { return el.id; }) : null,
                      exportGroup: !!exportGroup, fileLabel: file && (file.querySelector('.toolbar-group-label') || {}).textContent,
-                     newText: nb && nb.textContent.trim(), nextIsOpen: !!(next && /Open…/.test(next.textContent)),
+                     newText: nb && nb.textContent.trim(), nextIsOpen: !!(next && /^Open$/.test(next.textContent.trim())),
                      onclick: nb && nb.getAttribute('onclick'),
                      exportHasNew: !!(exportGroup && Array.prototype.slice.call(exportGroup.querySelectorAll('button')).some(function (b) { return b.textContent.trim() === 'New'; })),
                      newButtons: Array.prototype.slice.call(document.querySelectorAll('button[onclick="newMap()"]')).length };`);

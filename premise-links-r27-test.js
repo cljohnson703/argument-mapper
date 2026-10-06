@@ -165,8 +165,8 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             const text = __p.node('33333333-3333-4333-8333-333333333333').texts[0];
             return { items, armed, text, editing: __p.editing(), caret: __p.editing() ? document.activeElement.selectionStart : null,
                 len: document.activeElement.value ? document.activeElement.value.length : null, picking: !!boxLinkPicking };`);
-        ok(made.items && made.items.slice(0, 3).join("") === "BIU" && made.items[3] === 'Link a premise\u2026' && /Link selection/.test(made.items[4]) && /\(off\)/.test(made.items[4]),
-            'the menu of a box being edited offers B, I, U, then "Link a premise…" (and "Link selection…" for a selection)', JSON.stringify(made.items));
+        ok(made.items && made.items.slice(0, 3).join("") === "BIU" && made.items[3] === 'Link a premise' && /Link selection/.test(made.items[4]) && /\(off\)/.test(made.items[4]),
+            'the menu of a box being edited offers B, I, U, then "Link a premise" (and "Link selection" for a selection)', JSON.stringify(made.items));
         ok(made.armed, 'choosing it asks for the box to link, as adding a reference does', JSON.stringify(made));
         ok(/^Rex is a dog, and \[S\d+\]\(#box:22222222\)$/.test(made.text) && !made.picking,
             'a click on the box puts its link in at the caret', JSON.stringify(made.text));

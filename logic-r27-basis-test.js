@@ -793,7 +793,8 @@ try {
         ok(built.groups === 10 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-', 'Modal (later)-']),
             'at the bottom of the Evaluation Overview: Standard (others later), the eight axiom schemas, ten groups of steps', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
-        ok(built.rules === want && built.lists === 7, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want);
+        // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
+        ok(built.rules === want && built.lists === 8, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want + ', ' + built.lists + ' lists');
         // A map with a modus tollens step.
         ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['It does not rain'], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ['If it rains, then the match is off', 'The match is not off'], collapsed: [], children: [] }] }]; render(); return 1;`);

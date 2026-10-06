@@ -148,7 +148,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         __a.dispatchEvent(click);
         r.followed = !click.defaultPrevented; r.stillOpen = !!document.getElementById('link-menu');
         return r;`);
-    ok(link.menu && link.menu.includes('Open link') && link.menu.includes('Edit URL…') && link.menu.includes('Convert to plain text'),
+    ok(link.menu && link.menu.includes('Open link') && link.menu.includes('Edit URL') && link.menu.includes('Convert to plain text'),
         'held, a link opens its menu, as a right-click does', JSON.stringify(link));
     ok(!link.followed && link.stillOpen, 'and the tap that ends the hold neither follows the link nor closes the menu', JSON.stringify(link));
 
@@ -215,7 +215,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             __t.box('k').dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             return { items: items.filter(t => /Link/.test(t)), armed, text: __t.node('b').texts[0],
                 editing: document.activeElement && (document.activeElement.tagName === 'TEXTAREA' || document.activeElement.classList.contains('box-editor')) && !document.activeElement.readOnly };`);
-        ok(lp.items.includes('Link a Premise…') && lp.items.includes('Link to Web Address…'), 'a box\'s menu has Link a Premise… and Link to Web Address…', JSON.stringify(lp.items));
+        ok(lp.items.includes('Link a Premise') && lp.items.includes('Link to Web Address'), 'a box\'s menu has Link a Premise and Link to Web Address', JSON.stringify(lp.items));
         ok(lp.armed && /^B, as with \[S\d+\]\(#box:k\) in view\.$/.test(lp.text) && lp.editing,
             'Link a Premise… puts the link where the text was last edited, and opens the box again', JSON.stringify(lp));
         const web = T(W, `__t.load();

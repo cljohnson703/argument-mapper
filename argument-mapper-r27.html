@@ -382,6 +382,11 @@
     body.bg-light #colors-btn:not(.active) i:nth-child(2) { background: #c2367a; }
     body.bg-light #colors-btn:not(.active) i:nth-child(3) { background: #6a4fd0; }
     #colors-btn.active, body.bg-light #colors-btn.active { background: var(--btn-active-bg) !important; border-color: var(--btn-active-border) !important; }
+    /* On, the third bar says which: white for colors 1 (what goes on stays
+       plain), green for colors 2. */
+    #colors-btn[data-version="1"] i:nth-child(3) { background: #ffffff; }
+    #colors-btn[data-version="2"] i:nth-child(3) { background: #6fbf8b; }
+
     /* B, I and U head Formatting: a row of their own in the side panel. */
     .format-trio { display: contents; }
     body.toolbar-left .format-trio { display: flex; flex: 0 0 100%; gap: 8px; }
@@ -395,7 +400,6 @@
        conclusion, normal text -- a thin red dashed underline when the
        conclusion denies it; words that deny, red and bold; the rest dimmed. */
     .rendered-text .ic-rest, .rendered-text .ic-u { opacity: .45; }
-    .rendered-text .ic.ic-neg { opacity: 1; color: #ff7b72; font-weight: 600; }
     .rendered-text .ic-cn { text-decoration-line: underline; text-decoration-style: dashed; text-decoration-color: #ff7b72; text-decoration-thickness: 1px; text-underline-offset: 3px; }
     .rendered-text .ic-k0 { color: #5fd3e8; }
     .rendered-text .ic-k1 { color: #f59bc4; }
@@ -409,8 +413,27 @@
     body.nodes-light .rendered-text .ic-k3 { color: #7a5200; background: rgba(230,170,0,.20); padding: 1px 0; }
     body.nodes-light .rendered-text .ic-k4 { color: #a6430f; background: rgba(240,120,60,.16); padding: 1px 0; }
     body.nodes-light .rendered-text .ic-k5 { color: #1f5fa0; background: rgba(40,130,230,.15); padding: 1px 0; }
-    body.nodes-light .rendered-text .ic.ic-neg { color: #c62828; }
     body.nodes-light .rendered-text .ic-cn { text-decoration-color: #c62828; }
+    /* Colors 2 (r27.81): what goes on to the conclusion green, nothing dimmed. */
+    body.ic-v2 .rendered-text .ic-rest, body.ic-v2 .rendered-text .ic-u { opacity: 1; }
+    /* ... and underlined, the whole stretch, in its green (r27.82); a part
+       the conclusion denies keeps its red dashes. */
+    body.ic-v2 .rendered-text .ic-c { color: #6fbf8b; text-decoration-line: underline; text-decoration-style: solid; text-decoration-color: #6fbf8b; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    body.ic-v2.nodes-light .rendered-text .ic-c { color: #17803a; background: rgba(23,128,58,.12); padding: 1px 0; text-decoration-color: #17803a; }
+    body.ic-v2 .rendered-text .ic-c.ic-cn { text-decoration-style: dashed; text-decoration-color: #ff7b72; }
+    body.ic-v2.nodes-light .rendered-text .ic-c.ic-cn { text-decoration-color: #c62828; }
+    /* Under math (r27.83) the line is a strip of its own where the underline
+       would be (--ic-base: from the top of the tint to the baseline), reaching
+       a pixel into a neighbor it goes on into: an underline under each
+       symbol shows a faint seam where two meet. */
+    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn) { text-decoration-line: none; position: relative; }
+    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn)::after { content: ''; position: absolute; left: 0; right: 0; top: calc(var(--ic-base) + 3px); height: 1px; background: #6fbf8b; pointer-events: none; }
+    body.ic-v2.nodes-light .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn)::after { background: #17803a; }
+    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit][data-ic-jl]:not(.ic-cn)::after { left: -.5px; }
+    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit][data-ic-jr]:not(.ic-cn)::after { right: -.5px; }
+    /* Words that deny, in either: red and bold, never dimmed, over any color. */
+    body .rendered-text span.ic.ic-neg { opacity: 1; color: #ff7b72; font-weight: 600; }
+    body.nodes-light .rendered-text span.ic.ic-neg { color: #c62828; }
     /* Keep whole words inside their buttons when Advanced adds a scrollbar. */
     body.toolbar-left #group-file { display: grid; grid-template-columns: repeat(3,minmax(min-content,1fr)); }
     body.toolbar-left #group-file .toolbar-group-label { grid-column: 1 / -1; }
@@ -2285,7 +2308,7 @@
             <div class="logic-row">
                 <button id="eval-overview-btn" onclick="toggleEvalOverview()" title="List every evaluation and comment (V)">Evaluations <span class="hotkey">V</span></button>
                 <button id="logic-btn" onclick="toggleDeductiveLive()" title="Check the logic of every step (K); Shift+K checks only the selected one">Deductive <span class="hotkey">K</span></button>
-                <button id="colors-btn" onclick="toggleInferenceColors()" aria-pressed="false" aria-label="Inference colors" title="Color each premise's words by the part they play in its step (turns on Deductive)"><i></i><i></i><i></i>&#8203;</button>
+                <button id="colors-btn" onclick="cycleInferenceColors()" aria-pressed="false" aria-label="Inference colors: off" data-version="0" title="Color each premise by its part in its step (Shift+C)"><i></i><i></i><i></i>&#8203;</button>
             </div>
             <button id="layout-btn" onclick="toggleLayoutMode()" title="Narrow packs the map tightly; Wide gives each branch its own room (B)">Breadth: Narrow <span class="hotkey">B</span></button>
             <div class="edit-place-pair">
@@ -2296,10 +2319,10 @@
         <div class="toolbar-group" id="group-file">
             <span class="toolbar-group-label">File</span>
             <button onclick="saveMap()" title="Save the map to its file (Ctrl+S)">Save to File <span class="hotkey">Ctrl+S</span></button>
-            <button id="save-as-btn" onclick="saveMapAs()" title="Save a copy: the map, a picture, a PDF or a text outline (Ctrl+Shift+S)">Save As… <span class="hotkey">Ctrl+Shift+S</span></button>
+            <button id="save-as-btn" onclick="saveMapAs()" title="Save a copy: the map, a picture, a PDF or a text outline (Ctrl+Shift+S)">Save As <span class="hotkey">Ctrl+Shift+S</span></button>
             <button id="new-map-btn" onclick="newMap()" title="Start a new map (this one stays in Recent Maps)">New</button>
-            <button id="open-file-btn" onclick="openMapFile()" title="Open a saved map">Open…</button>
-            <button onclick="toggleRecentMaps()" title="Maps saved in this browser">Recent…</button>
+            <button id="open-file-btn" onclick="openMapFile()" title="Open a saved map">Open</button>
+            <button onclick="toggleRecentMaps()" title="Maps saved in this browser">Recent</button>
             <button id="collab-btn" onclick="toggleCollabPanel()" title="Share this map for live editing, or open a shared map">Collaborate</button>
             <input type="file" id="open-file-input" accept=".json" onchange="loadMap(event)">
             <button id="shortcuts-btn" onclick="toggleShortcutBar()" title="More tools">&#9432; Advanced</button>
@@ -2322,7 +2345,7 @@
         <div class="toolbar-group">
             <span class="toolbar-group-label">Import / Options</span>
             <label class="file-upload-label">
-                Import Text...
+                Import Text
                 <input type="file" accept=".txt,.text" onchange="importTextFile(event)">
             </label>
             <button onclick="openStringMode()">String Mode</button>
@@ -2494,18 +2517,18 @@
             <li><strong>?</strong> with a reason, such as <strong>? ambiguous</strong>: a box can be read more than one way. Click the tag to choose what you mean, and your choice is written into the box.</li>
             <li><strong>✗</strong> with a reason: something to fix first, such as <em>because</em> inside a box (a box holds one claim; put the reason in a box below it). Click the tag to see what.</li>
         </ul>
-        <p>The colors button after Deductive colors each premise by its part in the step: where premises meet, a color; what goes on to the conclusion, plain (underlined in red dashes when the conclusion denies it); words that deny, red; the rest, dimmed.</p>
+        <p>The colors button after Deductive (<kbd>Shift+C</kbd>) colors each premise by its part in the step: where premises meet, a color; words that deny, red; a part the conclusion denies, underlined in red dashes. Once a step is valid, what goes on to the conclusion is one stretch: plain in colors 1, which dims the rest; green and underlined in colors 2, which dims nothing. Until then each part has its own color. Each press moves on: off, 1, 2, off.</p>
         <p>Commas can settle what you mean: <em>Mary sang, and danced, in the hall</em> (both in the hall); <em>Mary sang, and she danced in the hall</em> (only the dancing). So can <em>both … and</em>, <em>either … or</em> and brackets. Symbols work too: <code>~ &amp; ∨ → ↔ ∀ ∃</code>.</p>
         <p><strong>✓ Warranted</strong> means the main contention is established by the argument as it stands; <strong>✗ Unwarranted</strong> means it isn't yet, not that it's false. The <strong>Logic</strong> panel lists the rules the checker uses.</p>
         <h3>Reuse premises</h3>
-        <p>To use a premise again in another argument, choose <strong>Add Cross-Reference…</strong> from a box's menu, then click the original. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise…</strong> from the right-click menu while editing.</p>
+        <p>To use a premise again in another argument, choose <strong>Add Cross-Reference</strong> from a box's menu, then click the original; <strong>Reference Arguments</strong> (or the box's ↗ badge) groups such premises into arguments for or against the box, each checked as a step. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise</strong> from the right-click menu while editing.</p>
         <h3>Arrange and annotate</h3>
         <p>Drop a box beside another to make it a co-premise, below a box to make it a child, or above one to make it a parent. Hold <strong>Shift</strong> as you drop to leave it unconnected. To move a box without its children, hold its <strong>⠿</strong> handle until it turns into <strong>✥</strong>, then drag. <strong>Place: Free</strong> keeps boxes where you drop them.</p>
         <p><strong>Implicit</strong> marks an unstated assumption, and <strong>Given</strong> a premise accepted without argument. <strong>Evaluate</strong> marks a box and adds comments; <strong>Evaluations</strong> lists them. <strong>Review</strong> locks the map except for evaluations.</p>
         <h3>On a touch screen</h3>
         <p>Press and hold a box or the canvas for its menu, or a button to see what it does. On an iPhone or iPad, <strong>Save to File</strong> opens the share sheet: choose <strong>Save to Files</strong>.</p>
         <h3>Save and share</h3>
-        <p><strong>Save to File</strong> saves the map. <strong>Save As…</strong> saves a copy as the map, a picture (PNG, JPEG, SVG), a PDF or a text outline. <strong>Recent Maps</strong> keeps copies in this browser, and the save indicator shows where the map is saved. <strong>String Mode</strong> edits the map as text; <strong>Collaborate</strong> shares it for live editing.</p>
+        <p><strong>Save to File</strong> saves the map. <strong>Save As</strong> saves a copy as the map, a picture (PNG, JPEG, SVG), a PDF or a text outline. <strong>Recent Maps</strong> keeps copies in this browser, and the save indicator shows where the map is saved. <strong>String Mode</strong> edits the map as text; <strong>Collaborate</strong> shares it for live editing.</p>
         <details class="help-more">
             <summary>Keyboard shortcuts and formatting</summary>
             <p>Shortcuts act on the selected box when you aren't typing.</p>
@@ -2896,7 +2919,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.80';
+    const APP_BUILD = '2026-10-05 r27.85';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -8025,7 +8048,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     try { navigator.clipboard.writeText(href); }
                     catch (_) { try { prompt('URL:', href); } catch (_) {} }
                 });
-                add('Edit URL\u2026', () => {
+                add('Edit URL', () => {
                     let nu = null;
                     try { nu = prompt('Link URL:', href); } catch (_) {}
                     if (!nu) return;
@@ -9492,6 +9515,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // says P.
     // Normalized once per wording: the reader asks for the same text many times.
     const claimNormalCache = new Map();
+    // While a step is read: the "not established" phrasings its boxes use
+    // ("we can't conclude that ...", "we don't know that ..."), as their
+    // warrant words. Beside its own denial an affirmation is read as that
+    // denial's denial, and "we can conclude that" is no inference word there
+    // (the user, 2026-10-05: "one's affirmation and one's denial").
+    let claimStepDenials = null;
     // Words that start a sentence with a capital and are no one's name.
     const CLAIM_NOT_A_NAME = new Set(('while when if the a an in on at since because although every each all some no not it this that these those there ' +
         'and but or for we you they he she him his her hers himself herself i so then therefore thus either neither both whether after before during unless until whenever wherever ' +
@@ -9775,8 +9804,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (let m, re = /\b(?:he|she|him|his|her|it|its|they|them|their)\b/gi; (m = re.exec(said));) {
             if (read.has(m.index)) continue;
             const w = m[0].toLowerCase();
-            const next = said.slice(m.index + m[0].length).replace(/^'s\b/, ' is').replace(/^'ll\b/, ' will').replace(/^'d\b/, ' would')
-                .split(/[\s,;:.!?()]+/).filter(Boolean).map(x => x.toLowerCase());
+            // Formatting marks part words too: "**it rains**", "*it* rains" (r27.83).
+            const next = said.slice(m.index + m[0].length).replace(/^[*_`~=]+/, '').replace(/^'s\b/, ' is').replace(/^'ll\b/, ' will').replace(/^'d\b/, ' would')
+                .split(/[\s,;:.!?()*_`~=]+/).filter(Boolean).map(x => x.toLowerCase());
             if (w === 'it') {
                 if (claimDummyItNext(next) || (/^(?:is|was)$/.test(next[0] || '') && next.slice(1, 5).some(x => /^(?:who|whom)$/.test(x)))) continue;
                 // "It is cold": the weather, where nothing before it is a thing.
@@ -10217,10 +10247,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             ' read as "' + found.name + '", the one name this claim gives';
     }
     function normalizeClaimText(text) {
-        const key = String(text == null ? '' : text);
+        const raw = String(text == null ? '' : text), key = (claimStepDenials ? '\u0002' : '') + raw;
         let hit = claimNormalCache.get(key);
         if (hit === undefined) {
-            hit = normalizeClaimTextUncached(key);
+            hit = normalizeClaimTextUncached(raw);
             if (claimNormalCache.size > 20000) claimNormalCache.clear();
             claimNormalCache.set(key, hit);
         }
@@ -10299,10 +10329,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return w && (/^(?:cost|costs|times|events|hours|levels|ages|points|places|stages|moments)$/.test(w) || (claimPluralWord(w) && !/(?:ous|ss)$/.test(w))) ? m : '';
             })
             .replace(/[.!?;:,]+$/, '')
-            .replace(/^(?:therefore|thus|hence|consequently|accordingly|so(?!\s+long\b)|it follows that|we can conclude that)\s*,?\s+/, '')
+            .replace(/^(?:therefore|thus|hence|consequently|accordingly|so(?!\s+long\b)|it follows that|we can conclude that)\s*,?\s+/, m =>
+                claimStepDenials && /^(?:we can conclude|it follows) that/.test(m) ? m : '')
             .replace(/^(?:and|but)\s+(?=\S)/, '')
             .replace(CLAIM_EMPTY_START, '$1')
             .replace(/\s+and\/or\s+/g, ' or ')
+            // "It is not the case both that A and that B": not both A and B.
+            .replace(/\b(it is(?: not)? (?:the case|true)) both that (.+?) and that /g, '$1 that both $2 and ')
             .replace(/,?\s+if,\s+and only if,?\s+/g, ' if and only if ')
             .replace(/,?\s+or else\s+/g, ' or ')
             .replace(/\b(?:none|nothing|no one|nobody) but\b/g, 'only')
@@ -10521,6 +10554,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimWithAnyAsSome(fn) {
         claimReadState.anyIsSome++;
         try { return fn(); } finally { claimReadState.anyIsSome--; }
+    }
+    // "Any" in a that-clause under a denial or a condition ("we can't conclude
+    // that any machine can think", "... that Mary loves any raven", "... that
+    // anyone left"): every one, or at least one -- each asked where a step
+    // turns on it, read as "every" otherwise (the user, 2026-10-05). After
+    // "there is" only "at least one" makes sense. The clause with each
+    // settled, or null if it has none.
+    const CLAIM_ANY_NOT_A_DETERMINER = /^(?:of|one|more|longer|less|further|way|time|case)$/;
+    const CLAIM_ANY_WORDS = Object.assign(Object.create(null), {
+        any: ['every', 'some'], anyone: ['everyone', 'someone'], anybody: ['everybody', 'somebody'], anything: ['everything', 'something'] });
+    function claimAnyResolved(said) {
+        const toks = String(said).split(' ');
+        let found = false;
+        toks.forEach((t, i) => {
+            const w = claimWord(t), pair = CLAIM_ANY_WORDS[w];
+            if (!pair || (w === 'any' && (i + 1 >= toks.length || CLAIM_ANY_NOT_A_DETERMINER.test(claimWord(toks[i + 1]))))) return;
+            found = true;
+            if (claimWord(toks[i - 2] || '') === 'there' && /^(?:is|are|was|were)$/.test(claimWord(toks[i - 1] || ''))) { toks[i] = t.replace(w, pair[1]); return; }
+            const subject = w === 'any' ? 'any ' + claimWord(toks[i + 1]) : w;
+            const reading = k => toks.slice(0, i).concat([t.replace(w, pair[k])], toks.slice(i + 1)).join(' ');
+            const pick = claimAmbiguous('"' + claimShowWords(subject) + '" may mean every one or at least one',
+                [0, 1].map(k => ({ label: reading(k), build: () => pair[k] })), false, { generic: true, anyScope: true, subject });
+            toks[i] = t.replace(w, pick || pair[0]);
+        });
+        return found ? toks.join(' ') : null;
+    }
+    // The part after a verb's "that": "conclude that any machine ..." with its
+    // "any" settled (asked only if `ask`).
+    function claimAnyAfterThat(vp, ask) {
+        const t = /^(.*? (?:that|whether) )(.+)$/.exec(vp);
+        const r = t && ask ? claimAnyResolved(t[2]) : null;
+        return r ? t[1] + r : vp;
     }
 
 
@@ -12162,6 +12227,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "anyone" is "someone"; elsewhere "any" is free choice ("can beat any
         // player": every one), kept as written.
         const denied = negated || claimReadState.anyIsSome > 0;
+        // "If Mary believes that any raven is black": in a that-clause, "any"
+        // may mean every one or at least one, asked where a step turns on it
+        // (the user, 2026-10-05). It had been dropped ("believes that raven
+        // is black").
+        const that = denied ? words.findIndex((w, i) => i > 0 && /^(?:that|whether)$/.test(claimWord(w))) : -1;
+        const thatClause = that > 0 ? claimAnyResolved(words.slice(that + 1).join(' ')) : null;
+        if (thatClause) words = words.slice(0, that + 1).concat(thatClause.split(' '));
         const NPI = Object.assign(Object.create(null), { anyone: 'someone', anybody: 'somebody', anything: 'something', anywhere: 'somewhere' });
         if (denied) words = words.map((w, i) => i > 0 && NPI[claimWord(w)] ? w.replace(claimWord(w), NPI[claimWord(w)]) : w);
         words = words.filter((w, i) => i === 0 || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)));
@@ -12280,7 +12352,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const saved = claimReadState;
         claimReadState = { notes: [], sites: 0, choice: choice || null, anyIsSome: 0, quiet: 0, memo: new Map(), reads: 0 };
         try {
-            const symbolic = readSymbolicClaim(String(text == null ? '' : text).replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*`]/g, ''));
+            // Its formatting is no part of a formula: bold, italic and code
+            // marks go, and so do underline's "__" and italic's "_" around
+            // words (not the "_" inside a name, "P_1") -- an underlined
+            // letter had made the box no formula at all (r27.83).
+            const symbolic = readSymbolicClaim(String(text == null ? '' : text).replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*`]/g, '')
+                .replace(/(^|[^A-Za-z0-9_])__(?=\S)([^_]*?\S)__(?![A-Za-z0-9_])/g, '$1$2')
+                .replace(/(^|[^A-Za-z0-9_])_(?=\S)([^_]*?\S)_(?![A-Za-z0-9_])/g, '$1$2'));
             // A slip in how the box is typed ("two spaces"): asked first, with
             // its fix. The fix changes no meaning, so the box is read as fixed;
             // its step waits on the map until the box is (claimAsksUser).
@@ -12765,6 +12843,121 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'remains to be (?:seen|shown|established|proven|proved|demonstrated|settled|determined)|does not follow)$');
     const CLAIM_GROUNDS_LACKING = new RegExp('^(?:the )?(?:' + CLAIM_GROUNDS + ') for (?:' + CLAIM_BELIEVING + ' )?(that|whether)\\s+(.+?)\\s+((?:is|are) (?:lacking|insufficient|not sufficient|inadequate|absent|missing|wanting|inconclusive|not conclusive))$');
     const claimUnestablished = (inner, whether, words) => ({ kind: 'unestablished', inner, whether: !!whether, words: String(words).replace(/\s+/g, ' ') });
+    // The step's denials: each "not established" phrasing in its boxes, by its
+    // warrant words.
+    const CLAIM_UNESTABLISHED_ANYWHERE = new RegExp('(?:^|[\\s,;:(])(' + CLAIM_NOT_ESTABLISHED.join('|') + ')\\s+(?:that|whether)\\s', 'g');
+    function claimDenialHeads(texts) {
+        const out = new Set();
+        texts.forEach(t => {
+            const said = normalizeClaimText(t), re = new RegExp(CLAIM_UNESTABLISHED_ANYWHERE.source, 'g');
+            let m;
+            while ((m = re.exec(said))) { out.add(claimWarrantWords(m[1])); re.lastIndex = m.index + 1; }
+        });
+        return out;
+    }
+    // A clause head's English denial, the ways it may go: "not" after its
+    // first helping verb ("we can know" -> "we can not know", "it has been
+    // shown" -> "it has not been shown"), or "do not" before its verb ("we
+    // know" -> "we do not know", "this shows" -> "this does not show").
+    const CLAIM_HELPING_VERB = /^(?:can|could|will|would|shall|should|may|might|must|is|are|am|was|were|do|does|did)$/;
+    function claimHeadDenials(head) {
+        const w = head.split(' '), out = [];
+        const aux = w.findIndex((x, i) => i > 0 && (CLAIM_HELPING_VERB.test(x) || (/^(?:has|have|had)$/.test(x) && /^(?:been|[a-z]+(?:ed|en|wn))$/.test(w[i + 1] || ''))));
+        if (aux > 0) return w[aux + 1] === 'not' ? [] : [w.slice(0, aux + 1).concat(['not'], w.slice(aux + 1)).join(' ')];
+        for (let v = 1; v <= Math.min(3, w.length - 1); v++) {
+            const verb = w[v], third = /[^s]s$/.test(verb), past = /ed$/.test(verb);
+            const bases = third ? [verb.replace(/ies$/, 'y'), verb.replace(/es$/, ''), verb.slice(0, -1)] : past ? [verb.replace(/ied$/, 'y'), verb.slice(0, -2), verb.slice(0, -1)] : [verb];
+            bases.forEach(b => out.push(w.slice(0, v).concat([third ? 'does' : past ? 'did' : 'do', 'not', b], w.slice(v + 1)).join(' ')));
+        }
+        return out;
+    }
+    // The denial an affirmation is beside, if the step holds it: { words,
+    // conj, said } as the denial reads. The rule is one for every phrasing:
+    // an affirmation is the sentence whose English denial is one of them.
+    function claimAffirmedHead(s) {
+        if (!claimStepDenials || !claimStepDenials.size) return null;
+        const m = /^(.+?) (that|whether) (.+)$/.exec(s);
+        if (!m || /\bnot\b/.test(m[1])) return null;
+        for (const d of claimHeadDenials(m[1])) {
+            const u = (d + ' ' + m[2] + ' ' + m[3]).match(CLAIM_UNESTABLISHED);
+            if (u && u[2] === m[2] && claimStepDenials.has(claimWarrantWords(u[1]))) return { words: u[1], conj: m[2], said: m[3] };
+        }
+        return null;
+    }
+    // "We can't conclude that P" may say that P is not established (we are
+    // not entitled to conclude it), or that it is impossible for us to
+    // conclude it (the user, 2026-10-05) -- on which "we do conclude that P"
+    // refutes it too. A "can" head's person and verb, or null.
+    function claimCanHead(words) {
+        const verbs = '(conclude|infer|determine|establish|ascertain|show|prove|demonstrate|know|be sure|be certain|say|assume|tell)';
+        const m = String(words).match(new RegExp('^(we|i|you|one|they) can not ' + verbs + '$')) ||
+            String(words).match(new RegExp('^(?:(we|you|they) are|(i) am|(one) is) (?:unable|not able) to ' + verbs + '$'));
+        if (!m) return null;
+        const g = m.slice(1).filter(Boolean);
+        return { subj: g[0], verb: g[g.length - 1] };
+    }
+    const CLAIM_FOR_PERSON = Object.assign(Object.create(null), { we: 'us', i: 'me', you: 'you', they: 'them', one: 'one', he: 'him', she: 'her', it: 'it' });
+    const CLAIM_PERSON_FOR = Object.assign(Object.create(null), { us: 'we', me: 'i', you: 'you', them: 'they', one: 'one', him: 'he', her: 'she', it: 'it' });
+    // "Poe can fly": what is possible for Poe, what Poe is able to do, or what
+    // Poe is allowed to do (the user, 2026-10-05). Only the first gives "Poe
+    // can fly" from "Poe flies" (ab esse ad posse); one lucky success shows
+    // no ability (Kenny 1976), and what is so need not be allowed. Asked where
+    // a step follows on "possible" and not on "able" (claimGenericRole); read
+    // as "able" otherwise, as before.
+    function claimPlainCan(text, form) {
+        const m = /^(.+?) can (?!not\b)(.+)$/.exec(text);
+        if (!m || /\b(?:if|then|that|whether|and|or|but|not)\b/.test(m[1])) return null;
+        const subj = m[1], vp = m[2], last = claimWord(subj.split(' ').pop());
+        const be = subj === 'i' ? 'am' : /^(?:we|you|they)$/.test(subj) || (subj.split(' ').length > 1 && claimPluralWord(last)) ? 'are' : 'is';
+        const obj = CLAIM_FOR_PERSON[subj] || subj, who = claimShowWords(subj);
+        const labels = [subj + ' ' + be + ' able to ' + vp, 'it is possible for ' + obj + ' to ' + vp, subj + ' ' + be + ' allowed to ' + vp];
+        return claimAmbiguous(claimRecase('"can" may say what ' + who + ' ' + be + ' able to do, what is possible for ' + claimShowWords(obj) + ', or what ' + who + ' ' + be + ' allowed to do', claimBoxRaw || ''),
+            [{ label: labels[0], build: () => form }, { label: labels[1], build: () => Object.assign({}, form, { possible: true, src: text }) },
+             { label: labels[2], build: () => readClaim(labels[2]) }], false,
+            { generic: true, canScope: true, canPlain: true, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be }) || form;
+    }
+    // "We can conclude that P" read as what is possible for us: a predication
+    // marked so (the "can" ab esse ad posse and "we do" speak to).
+    function claimPossibleCan(text) {
+        const f = claimWithout('established', text);
+        // One wording, however it is said ("it is possible for us to
+        // conclude that P"), so it is one claim.
+        return f && f.kind === 'pred' && /^~can /.test(f.prop) ? Object.assign(f, { possible: true, src: text }) : null;
+    }
+    // The question, both readings in the words the box can be given: "we are
+    // not entitled to conclude that P" or "it is impossible for us to
+    // conclude that P" ("entitled" or "possible" for an affirmation).
+    // Asked only where a step follows on the second reading and not the
+    // first (claimGenericRole); the first is read otherwise.
+    function claimCanAsked(can, conj, said, denied, established) {
+        const obj = CLAIM_FOR_PERSON[can.subj], be = { we: 'are', i: 'am', you: 'are', they: 'are', one: 'is' }[can.subj];
+        const entitled = /^(?:conclude|infer|assume)$/.test(can.verb) ? 'entitled to ' : 'in a position to ';
+        const labels = [can.subj + ' ' + be + (denied ? ' not ' : ' ') + entitled + can.verb + ' ' + conj + ' ' + said,
+            'it is ' + (denied ? 'impossible' : 'possible') + ' for ' + obj + ' to ' + can.verb + ' ' + conj + ' ' + said];
+        const possible = () => { const f = claimPossibleCan(can.subj + ' can ' + can.verb + ' ' + conj + ' ' + said); return f && (denied ? negateClaim(f) : f); };
+        return claimAmbiguous('"' + (denied ? 'can\u2019t ' : 'can ') + can.verb + '" may mean ' + (denied ? 'it has not been established, or that it is impossible for ' : 'it has been established, or that it is possible for ') + obj,
+            [{ label: labels[0], build: established }, { label: labels[1], build: possible }], false,
+            { generic: true, canScope: true, canDenied: denied, subject: 'can ' + can.verb }) || established();
+    }
+    // Read before the qualifiers: "it is impossible for us to conclude that
+    // P", and an affirmation beside its own denial ("we know that P" beside
+    // "we don't know that P", "we can conclude that P" beside "we can't
+    // conclude that P").
+    function readAffirmedClaim(s) {
+        if (claimSkips('established', s)) return null;
+        let m;
+        if ((m = s.match(/^it is (impossible|not possible|possible) for (.+?) to (.+)$/))) {
+            const subj = CLAIM_PERSON_FOR[m[2]] || m[2], denied = m[1] !== 'possible';
+            const f = claimPossibleCan(subj + ' can ' + claimAnyAfterThat(m[3], denied || claimReadState.anyIsSome > 0));
+            if (f) return denied ? negateClaim(f) : f;
+        }
+        const aff = claimAffirmedHead(s);
+        if (!aff) return null;
+        const said = (claimReadState.anyIsSome ? claimAnyResolved(aff.said) : null) || aff.said;
+        const established = () => { const i = readClaim(said); return i && negateClaim(claimUnestablished(i, aff.conj === 'whether', aff.words)); };
+        const can = claimCanHead(aff.words);
+        return can ? claimCanAsked(can, aff.conj, said, false, established) : established();
+    }
     // The premises of an argument named in a claim: quoted ("'P1' and 'P2'"),
     // "the premises that P1 and that P2", or clauses joined by "and". Null
     // unless every one reads as a clause.
@@ -13022,6 +13215,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Every way of saying that a claim has not been established, relative to
     // an argument or not; null for anything else.
     function readNotEstablished(s) {
+        if (claimSkips('established', s)) return null;
         let m, inner;
         const explicitWarrant = readQuotedWarrant(s);
         if (explicitWarrant) return explicitWarrant;
@@ -13079,7 +13273,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const rel = follows && claimQuietly(() => claimPremiseList(follows[2])) ? (() => { const from = claimPremiseList(follows[2]); const i = from && readClaim(claimUnquoted(follows[1])); return i ? { inner: i, from } : null; })()
                 : / from /.test(m[3]) ? claimSplitFrom(m[3]) : null;
             if (rel) return Object.assign(claimRelative('unestablished', rel.inner, rel.from, m[1]), { whether: m[2] === 'whether' });
-            if ((inner = readClaim(m[3]))) return claimUnestablished(inner, m[2] === 'whether', m[1]);
+            const said = claimAnyResolved(m[3]) || m[3], can = claimCanHead(m[1]);
+            const established = () => { const i = readClaim(said); return i && claimUnestablished(i, m[2] === 'whether', m[1]); };
+            if (can) return claimCanAsked(can, m[2], said, true, established);
+            if ((inner = readClaim(said))) return claimUnestablished(inner, m[2] === 'whether', m[1]);
         }
         if ((m = s.match(CLAIM_UNESTABLISHED_AFTER))) {
             if ((inner = readClaim(m[2]))) return claimUnestablished(inner, m[1] === 'whether', m[3]);
@@ -13845,7 +14042,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return joins && joins.filter(j => j.then).length === thens.length ? joins : null;
         };
         const mark = st.notes.length, sites = st.sites;
-        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous').length;
+        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope).length;
         const whole = readClaim(joined), joins = joinsIn(whole);
         if (joins) {
             const parts = whole.parts;
@@ -13923,6 +14120,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 claimUnread('"would" makes this a what-if claim: only modus ponens and modus tollens apply to it');
             }
         }
+        // "Poe can fly": which "can" (claimPlainCan).
+        if (!would && form && form.kind === 'pred' && !form.possible && /^~can /.test(form.prop)) form = claimPlainCan(String(text || '').trim(), form) || form;
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
         return form;
@@ -14263,7 +14462,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (a && a.kind !== 'atom') {
                 const mark = claimReadState.notes.length, b = readClaim(m[4]);
-                const asked = claimReadState.notes.slice(mark).filter(n => n.kind === 'ambiguous' && !n.part);
+                const asked = claimReadState.notes.slice(mark).filter(n => n.kind === 'ambiguous' && !n.part && !n.anyScope && !n.canScope);
                 // A list its answer gives goes on the first clause's list.
                 if (b && (b.kind === 'if' || (b.kind !== 'atom' && asked.length)))
                     return claimList(word, [a].concat(b.kind === word && !b.iff && !b.compound && !b.grouped ? b.parts : [b]));
@@ -14404,6 +14603,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const a = readClaim(claimUninvert(m[1])), b = readClaim(m[2].replace(/\s+also\s+/, ' '));
             if (a && b) return claimList('and', [a, b]);
         }
+        // "Both A and B" or "either A or B", the whole sentence, with a
+        // that-clause in A: the junction, before anything looks inside A,
+        // whose that-clause would take in the group's own "and" ("both we
+        // can't conclude that P and Q").
+        if (/^(?:both|either)\s/.test(s)) {
+            const g = claimPairGroups(claimTopLevelMask(s)).find(x => x.from === 0 && x.end >= s.length);
+            if (g && /\s(?:that|whether)\s/.test(s.slice(0, g.pair)) && (f = readCoordination(s))) return f;
+        }
+        // "We know that P" beside "we don't know that P"; "it is impossible for
+        // us to conclude that P".
+        if ((f = readAffirmedClaim(s))) return f;
         // A word or phrase that qualifies the whole claim ("probably",
         // "apparently", "according to Bob", "Bob thinks that").
         if ((f = readQualifiedClaim(s))) return f;
@@ -17115,8 +17325,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'bottom': return 'BOTTOM';
             case 'identity': return 'EQ:' + words(form.left) + '=' + words(form.right);
             case 'atom': return 'A:' + words(claimExactVariables && form.exact ? form.exact : form.text);
+            // "It is possible for Poe to fly" is not "Poe is able to fly"
+            // (claimPlainCan): the "can" of what is possible is its own.
             case 'pred': return 'P:' + (loose ? normalizeClaimTerm(claimUnmarked(form.term)) : form.term) +
-                (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + words(form.prop);
+                (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(form.prop);
             case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimPropCanon(form.subject)) + '|' + words(claimPropCanon(form.predicate));
             case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimPropCanon(form.subject)) + '|' + words(claimPropCanon(form.predicate));
             case 'not': return 'N(' + key(form.inner) + ')';
@@ -17162,9 +17374,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // with proof merely because both leave a claim unestablished.
     function claimWarrantWords(words) {
         return String(words || '').replace(/^it /, '')
-            .replace(/^(we|you|they) are (?:unable|not able) to /, '$1 can not ')
-            .replace(/^i am (?:unable|not able) to /, 'i can not ')
-            .replace(/^one is (?:unable|not able) to /, 'one can not ');
+            .replace(/^(we|you|they) are (?:unable|not able|not entitled|not in a position) to /, '$1 can not ')
+            .replace(/^i am (?:unable|not able|not entitled|not in a position) to /, 'i can not ')
+            .replace(/^one is (?:unable|not able|not entitled|not in a position) to /, 'one can not ');
     }
     function claimSame(a, b) {
         if (!a || !b) return false;
@@ -17286,7 +17498,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     : claimCanonicalObjects(kept, denied).join(' ');
                 return src.slice(0,-f.vpText.length) + vp;
             };
-            return regionalSource(a) === regionalSource(b);
+            // "Poe is able to fly" says what "Poe can fly" says, read as ability
+            // (its "can" of what is possible is marked, and keyed, apart).
+            const ableSaid = t => String(t).replace(/(^|\s)(?:is|are|am) able to (?=\S)/, '$1can ');
+            return ableSaid(regionalSource(a)) === ableSaid(regionalSource(b));
         }
         if (a.kind === 'if' && b.kind === 'if') {
             const x = claimMergedIf(a), y = claimMergedIf(b);
@@ -18134,6 +18349,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'able-meaning', name: 'meaning of ‘-able’', optional: true,
           gloss: '"we can conceive of X" gives "X is conceivable" (likewise knowable, provable, imaginable…), not the reverse',
           test: (P, C) => P.length === 1 && claimAbleStep(P[0], C) },
+        // What is, can be: "we conclude that P" gives "it is possible for us to
+        // conclude that P" -- the "can" of what is possible for us, not of
+        // what is established (the user, 2026-10-05).
+        { id: 'ab-esse-ad-posse', name: 'ab esse ad posse', optional: true,
+          gloss: 'what is, can be: "we conclude that X" gives "it is possible for us to conclude that X"',
+          test: (P, C) => P.length === 1 && C.kind === 'pred' && !!C.possible && P[0].kind === 'pred' && !P[0].possible &&
+              P[0].term === C.term && C.prop === '~can ' + String(P[0].prop).slice(1) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
           test: (P, C) => claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C) },
@@ -18349,7 +18571,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'quantifier', label: 'Quantifier equivalences', on: true, rules: ['bound-variable-change', 'quantifier-negation', 'quantifier-commutation', 'rules-of-passage',
             'quantifier-distribution-anywhere', 'null-quantification-anywhere'] },
         { id: 'inside', label: 'Rules inside quantifiers', on: true, rules: ['under-quantifier'] },
-        { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning'] },
+        { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },
@@ -20160,6 +20382,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!unread.some(u => u.text === texts[i] && u.message === note.message)) unread.push({ text: texts[i], message: note.message });
                 return;
             }
+            // Which "can" is meant is asked of the whole step, where it matters
+            // (claimGenericRole), not one box at a time.
+            if (note.canScope) return;
             const derives = [];
             note.readings.forEach((label, reading) => {
                 const alt = parseClaim(texts[i], { site: note.site, reading });
@@ -20176,7 +20401,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     derives.push({ label, bareChallenge: true });
             });
             if (note.always || derives.length) ambiguous.push({ text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
-                generic: !!note.generic, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
+                generic: !!note.generic, anyScope: !!note.anyScope, canScope: !!note.canScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 typo: !!note.typo, missing: !!note.missing, single: !!note.single });
         }));
         // Worded alike, would it follow? Then say which words differ.
@@ -20299,10 +20524,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return quote ? text : out;
     }
     const claimInferenceCache = new Map();
-    function claimInferenceFlag(text) {
+    // A conclusion phrase ("we can conclude that", "it follows that") whose
+    // own denial the step holds: a claim there, no inference word.
+    function claimAffirmsDenial(phrase, denials) {
+        const head = String(phrase).toLowerCase().replace(/\s+that$/, '');
+        return !!denials && claimHeadDenials(head).some(d => { const u = (d + ' that x').match(CLAIM_UNESTABLISHED); return !!u && denials.has(claimWarrantWords(u[1])); });
+    }
+    // `denials`: the step's (claimDenialHeads).
+    function claimInferenceFlag(text, denials) {
         const raw = String(text == null ? '' : text).replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '')
             .replace(/\$\\therefore\$/g, '∴').replace(/\$\\because\$/g, '∵').replace(/\s+/g, ' ').trim();
-        if (claimInferenceCache.has(raw)) return claimInferenceCache.get(raw);
+        const cached = (denials && denials.size ? '\u0002' + [...denials].sort().join('\u0003') + '\u0002' : '') + raw;
+        if (claimInferenceCache.has(cached)) return claimInferenceCache.get(cached);
         const masked = claimMaskQuoted(raw);
         const hits = [];
         // A pattern with a leading context group gives its word in the second group.
@@ -20319,6 +20552,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (const h of hits.sort((a, b) => a.at - b.at)) {
             const word = raw.slice(h.at, h.at + h.word.length), before = raw.slice(0, h.at), after = raw.slice(h.at + h.word.length);
             if (!clean(after)) continue;
+            if (h.kind === 'conclusion' && claimAffirmsDenial(word, denials)) continue;
             // "Since 1990", "ever since", "since the war": a time.
             if (/^since$/i.test(word) && (/^\s*(?:\d|then\b|when\b|yesterday\b|today\b|last\b|early\b|birth\b|childhood\b|antiquity\b|the\s+(?:beginning|start|dawn|time|day|days|age|end|war|\d))/i.test(after) ||
                 /\b(?:ever|long)\s*$/i.test(before))) continue;
@@ -20343,7 +20577,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             break;
         }
         if (claimInferenceCache.size > 5000) claimInferenceCache.clear();
-        claimInferenceCache.set(raw, flag);
+        claimInferenceCache.set(cached, flag);
         return flag;
     }
     // Whether a box asks the user something before its steps are checked: a
@@ -20365,7 +20599,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimEveryReadingRule(premiseTexts, conclusionText, attack, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
-        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous'));
+        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope));
         if (!asked.some(a => a.length) || asked.some(a => a.some(n => !n.shared || !n.readings || n.readings.length < 2)) ||
             reads.some(r => r.notes.some(n => n.kind === 'unread'))) return null;
         // Each box's choices: one site map per combination of its questions.
@@ -20413,7 +20647,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const parent = forms[forms.length - 1];
                 results.push(forms.every(Boolean) && parent ? certifyStep(forms.slice(0, -1), claimStepConclusions(parent, attack, weak), attack) : null);
             }
-            if (results.some(Boolean) && !results.every(Boolean))
+            if (entries[0].note.canScope ? !results[0] && results.some(Boolean) : results.some(Boolean) && !results.every(Boolean))
                 return { entries, derives: results.map((rule, r) => rule ? { reading: r, rule } : null).filter(Boolean) };
         }
         return null;
@@ -20462,6 +20696,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function collectDeductiveSteps(trees, only) {
         const steps = [];
         const kinds = computeArgumentKinds(trees || []);
+        // The "not established" phrasings of each step, given to each of its
+        // boxes: a step reads an affirmation as a claim where its own denial
+        // is in the step or in one it shares a box with ("we do conclude that
+        // P" supporting "we can conclude that P", which a step beside says
+        // "we can't conclude that P").
+        const boxDenials = new Map();
+        (function pass(nodes) {
+            (nodes || []).forEach(node => {
+                (node.children || []).forEach(child => {
+                    if (child.type === 'note' || node.type === 'note') return;
+                    const target = boxOf(node, child), heads = claimDenialHeads((child.texts || []).concat([node.texts[target]]));
+                    if (heads.size) (child.texts || []).map((_, j) => child.id + '#' + j).concat([node.id + '#' + target]).forEach(b => {
+                        if (!boxDenials.has(b)) boxDenials.set(b, new Set());
+                        heads.forEach(d => boxDenials.get(b).add(d));
+                    });
+                });
+                pass(node.children);
+            });
+        })(trees || []);
         // Bare steps whose box nothing argues for below it, by their node: an
         // attack on one has nothing to answer.
         const voidBare = new Map();
@@ -20487,9 +20740,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     });
                     // Read and proved once per wording: the live check runs on
                     // every layout.
-                    const key = claimRulesSignature() + '\u0003' + (weak ? 'W' : attack ? 'A' : 'S') + '\u0001' + premiseTexts.join('\u0002') + '\u0001' + (conclusionText || '');
+                    // The denials beside it: its own, and those of the steps
+                    // it shares a box with -- a box reads one way in each.
+                    const denials = new Set(claimDenialHeads(premiseTexts.concat([conclusionText])));
+                    if (!child.__members) child.texts.map((_, j) => child.id + '#' + j).concat([node.id + '#' + target])
+                        .forEach(b => (boxDenials.get(b) || []).forEach(d => denials.add(d)));
+                    const key = claimRulesSignature() + '\u0003' + (weak ? 'W' : attack ? 'A' : 'S') + '\u0001' + premiseTexts.join('\u0002') + '\u0001' + (conclusionText || '') +
+                        (denials.size ? '\u0004' + [...denials].sort().join('\u0002') : '');
                     let found = deductiveCache.get(key);
-                    const inference = !found && premiseTexts.concat([conclusionText]).map(claimInferenceFlag).find(Boolean);
+                    const savedDenials = claimStepDenials;
+                    claimStepDenials = denials.size ? denials : null;
+                    try {
+                    const inference = !found && premiseTexts.concat([conclusionText]).map(t => claimInferenceFlag(t, denials)).find(Boolean);
                     if (inference) {
                         found = { premises: premiseTexts.map(parseClaim), warrantTarget: null, conclusion: null, rule: null, inference,
                             why: { unread: [], ambiguous: [], nearMiss: null, worded: null, ordered: null, short: null, partial: null, text: inference.message, inference } };
@@ -20537,7 +20799,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             const texts = premiseTexts.concat([conclusionText]);
                             const quote = t => '\u201c' + stripClaimMarkup(t) + '\u201d';
                             const asked = role.entries.filter((e, k, all) => all.findIndex(x => x.box === e.box) === k).map(e => ({
-                                text: texts[e.box], message: e.note.message, readings: e.note.readings, site: e.note.site, generic: true, grammar: false,
+                                text: texts[e.box], message: e.note.message, readings: e.note.readings, site: e.note.site, generic: true, anyScope: !!e.note.anyScope, canScope: !!e.note.canScope, canDenied: !!e.note.canDenied,
+                                canPlain: !!e.note.canPlain, canFrom: e.note.canFrom || null, canBe: e.note.canBe || null, grammar: false,
                                 subject: e.note.subject || null,
                                 derives: role.derives.map(d => ({ label: e.note.readings[d.reading], rule: d.rule }))
                             }));
@@ -20572,7 +20835,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                     // once they are checked: said plainly, or with the box in
                                     // brackets (a conditional box needs them).
                                     const pair = q => ['If we lack reasons to think that ' + q + ', then we can\u2019t conclude that ' + q, 'We lack reasons to think that ' + q];
-                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous')) &&
+                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope)) &&
                                         (fs => fs.every(Boolean) && !!certifyStep(fs, conclusions, attack))(ps.map(t => parseClaim(t)));
                                     const offer = [pair(p), pair('(' + p + ')')].find(passes);
                                     return '\u201c' + stripClaimMarkup(premiseTexts[0]) + '\u201d only says that \u201c' + box +
@@ -20592,6 +20855,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         if (deductiveCache.size > 5000) deductiveCache.clear();
                         deductiveCache.set(key, found);
                     }
+                    } finally { claimStepDenials = savedDenials; }
                     // A bare step whose box is argued for below it: an argument
                     // through that argument.
                     const arguedBelow = (found.bare || found.bareChallenge || found.restates) && !child.__members &&
@@ -20617,7 +20881,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         ' stands or falls with that argument.' }) : null;
                     steps.push({
                         parentId: node.id, boxIdx: target, childId: child.id, kind, attack,
-                        premiseTexts, conclusionText,
+                        premiseTexts, conclusionText, denials: [...denials],
                         premises: found.premises, conclusion: found.conclusion, rule: answers ? null : arguedBelow ? DEDUCTIVE_ARGUED_BELOW
                             : child.__members && (child.__members.some(m => m.missing) || !child.__members.length || !REFERENCE_ARGUMENT_KINDS.includes(kind)) ? null : found.rule,
                         referenceArgument: child.__argument || null,
@@ -21714,13 +21978,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // A link to another box, at the caret (or for the selection):
                 // shown by that box's label, and following it wherever it goes.
                 const boxBtn = document.createElement('button');
-                boxBtn.textContent = 'Link a premise\u2026';
+                boxBtn.textContent = 'Link a premise';
                 boxBtn.title = 'Click a box to link to it here';
                 boxBtn.onmousedown = (ev) => ev.preventDefault();
                 boxBtn.onclick = (ev) => { ev.stopPropagation(); menu.remove(); startBoxLinkPicking(node.id, index, a, b); };
                 menu.appendChild(boxBtn);
                 const btn = document.createElement('button');
-                btn.textContent = 'Link selection\u2026';
+                btn.textContent = 'Link selection';
                 btn.title = 'Link the selected words to a web address';
                 if (a === b) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'default'; btn.title = 'Select words first to link them to a web address'; }
                 btn.onmousedown = (ev) => ev.preventDefault();   // keep the box's selection
@@ -27425,40 +27689,92 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // carry on into the conclusion, normal; a step the check does not
     // recognize, each part its own color (one part said twice, one color), so
     // that nothing meeting is plain to see. The swatch after Deductive turns
-    // them on, and the check with them.
-    let inferenceColorsOn = false;
+    // them on.
+    // Then (r27.81, the user): "let's not have color mode turn on deductive.
+    // And I'd like the color mode to be assigned to a key ... pressing color
+    // cycles through them (off, on v1, on v2)" -- v2 being the second
+    // mockup's: what goes on to the conclusion green, nothing dimmed. The
+    // swatch's third bar says which: white (plain) or green. Shift+C (C is
+    // Re-Center; H is kept free).
+    // Then (r27.82, the user): "the parts that go into the conclusion
+    // (including the connectives, like 'the roads freeze or the game is off')
+    // should be a single color ... once there's a validity ... Until the
+    // validity has been established, they can keep separate colors." So once
+    // a step is valid, what goes on is one stretch: plain in colors 1, green
+    // in 2. A colors 3 that also gave every other claim its own color came to
+    // little more than colors 2 ("Let's just take the underlined portion of
+    // the conclusion from Colors 3 and put it into Colors 2. Then remove
+    // Colors 3"): in colors 2 the stretch is underlined too.
+    let inferenceColorsOn = false, inferenceColorsVersion = 1;
     const IC_COLORS = 6;
     const IC_NEG = /\bit\s+is\s+(?:not\s+the\s+case|false)\s+that\b|\b(?:(?:do|does|did|is|are|was|were|am|has|have|had|will|would|can|could|should|must|may|might|shall)\s+)?not\b|\b[a-z]+n['\u2019]t\b|\bcannot\b|\b(?:no|never|none|nothing|nobody|neither|nor)\b|\bnon-(?=[a-z])|\u00ac/gi;
+    // Denials in symbols, each spelling the reader takes (r27.83): "¬", "~",
+    // "∼" before a letter or a bracket, spaced or not; "!", "−", "-" right
+    // before one -- and none after a letter or digit ("well-known", "x-1").
+    const IC_NEG_SYM = /(?<![\p{L}\p{N}_'\u2019])(?:[\u00ac~\u223c]+(?=\s*[\p{L}(\[\u00ac~\u223c])|[!\u2212-]+(?=[\p{L}(\[\u00ac~\u223c]))/gu;
+    const IC_ARROW = /-->|->|=>|\u2192|\u2283|\u21d2|\u27f6|\u27f9/g;
     const IC_WORD = /[\p{L}\p{N}][\p{L}\p{N}'\u2019\u2060-]*/gu;
     const IC_COPULA = /^(?:is|are|was|were|am|be|been|being)\s+/i;
     const IC_CONTRACTED = { "can't": ['can', 'not'], cannot: ['can', 'not'], "won't": ['will', 'not'], "shan't": ['shall', 'not'], "ain't": ['is', 'not'] };
     const IC_CLITIC = { s: 'is', re: 'are', ve: 'have', ll: 'will', d: 'would', m: 'am' };
     const icPlans = new Map();
-    function toggleInferenceColors() {
-        inferenceColorsOn = !inferenceColorsOn;
+    // Off, colors 1, colors 2, off: the swatch and Shift+C.
+    function cycleInferenceColors() {
+        if (!inferenceColorsOn) { inferenceColorsOn = true; inferenceColorsVersion = 1; }
+        else if (inferenceColorsVersion < 2) inferenceColorsVersion++;
+        else inferenceColorsOn = false;
         syncInferenceColorsButton();
-        // The colors come from the check: turning them on turns it on.
-        if (inferenceColorsOn && !deductiveLive) toggleDeductiveLive();
-        else refreshDerivationTags();
+        refreshDerivationTags();
     }
     function syncInferenceColorsButton() {
+        const v = inferenceColorsOn ? inferenceColorsVersion : 0;
+        document.body.classList.toggle('ic-v2', v === 2);
         const btn = document.getElementById('colors-btn');
-        if (btn) { btn.classList.toggle('active', inferenceColorsOn); btn.setAttribute('aria-pressed', String(inferenceColorsOn)); }
+        if (!btn) return;
+        btn.classList.toggle('active', v > 0);
+        btn.dataset.version = String(v);
+        btn.setAttribute('aria-pressed', String(v > 0));
+        btn.setAttribute('aria-label', v ? 'Inference colors ' + v : 'Inference colors: off');
+        btn.title = ['Color each premise by its part in its step (Shift+C)',
+            'Colors 1: what goes on to the conclusion plain, the rest dimmed. Click for colors 2 (Shift+C)',
+            'Colors 2: what goes on to the conclusion green and underlined, nothing dimmed. Click to turn the colors off (Shift+C)'][v];
     }
-    const icDenies = words => { IC_NEG.lastIndex = 0; const r = IC_NEG.test(words || ''); IC_NEG.lastIndex = 0; return r; };
+    const icDenies = words => {
+        IC_NEG.lastIndex = 0; IC_NEG_SYM.lastIndex = 0;
+        const r = IC_NEG.test(words || '') || IC_NEG_SYM.test(words || '');
+        IC_NEG.lastIndex = 0; IC_NEG_SYM.lastIndex = 0;
+        return r;
+    };
     // A claim's clauses in reading order, each { form, ctx, words }: its "if"
     // parts and its "then" part, each side of an "and" or an "or", or the
     // claim itself.
-    function icClauses(form, ctx, out) {
+    // A premise is taken apart only where each piece has words of its own in
+    // the box: "Poe is a raven that lives in a city" is read as two claims,
+    // but only the whole has words, so it stays one part (it had gone
+    // uncolored). `groups` gets each compound taken apart: its words, and the
+    // clauses it spans.
+    function icClauses(form, ctx, out, groups, needWords) {
         if (!form) return out;
         const joined = f => ['and', 'or', 'then'].includes(f.kind) && Array.isArray(f.parts);
-        if (form.kind === 'if' && Array.isArray(form.conds) && form.cons) {
-            form.conds.forEach(c => icClauses(c, 'if', out));
-            icClauses(form.cons, 'then', out);
-        } else if (joined(form)) form.parts.forEach(p => icClauses(p, ctx, out));
-        // "It is not the case that P and Q": its parts (the denial is in its words).
-        else if (form.kind === 'not' && form.inner && (form.inner.kind === 'if' || joined(form.inner))) icClauses(form.inner, ctx, out);
-        else out.push({ form, ctx: ctx || '', words: icWords(form) });
+        const pieces = form.kind === 'if' && Array.isArray(form.conds) && form.cons ? form.conds.map(c => [c, 'if']).concat([[form.cons, 'then']])
+            : joined(form) ? form.parts.map(p => [p, ctx])
+            // "It is not the case that P and Q": its parts (the denial is in its words).
+            : form.kind === 'not' && form.inner && (form.inner.kind === 'if' || joined(form.inner)) ? [[form.inner, ctx]]
+            : null;
+        if (pieces) {
+            const sub = [], subGroups = [];
+            pieces.forEach(([p, c]) => icClauses(p, c, sub, subGroups, needWords));
+            if (sub.length && (!needWords || sub.every(cl => cl.words))) {
+                const base = out.length;
+                sub.forEach(cl => out.push(cl));
+                if (groups) {
+                    subGroups.forEach(g => groups.push({ words: g.words, from: g.from + base, to: g.to + base }));
+                    if (icWords(form)) groups.push({ words: icWords(form), from: base, to: out.length });
+                }
+                return out;
+            }
+        }
+        out.push({ form, ctx: ctx || '', words: icWords(form) });
         return out;
     }
     function icWords(f) {
@@ -27503,7 +27819,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!Array.isArray(P) || !P.length || P.some(p => !p)) return null;
         const C = step.rule ? step.conclusion : null;
         const same = (a, b) => claimSame(a, b) || claimDenies(a, b);
-        const clauses = P.map(f => icClauses(f, '', []));
+        const groupsOf = P.map(() => []);
+        const clauses = P.map((f, i) => icClauses(f, '', [], groupsOf[i], true));
         const cClauses = C ? icClauses(C, '', []) : [];
         const colors = [];   // what each color stands for: a claim, or a key
         const colorOf = (test, item) => { let k = colors.findIndex(test); if (k < 0) { colors.push(item); k = colors.length - 1; } return k % IC_COLORS; };
@@ -27531,6 +27848,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 clauses[i][ci].parts = parts;
             }));
         }
+        const ownColor = p => p.key ? colorOf(x => x.key === p.key, { key: p.key }) : colorOf(x => x.form && same(x.form, p.form), { form: p.form });
         return clauses.map((list, i) => {
             // A certified step uses every premise: one none of whose parts
             // is found goes on to the conclusion whole.
@@ -27542,10 +27860,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 else if (p.role === 'c') cls = 'ic-c' + (p.denied ? ' ic-cn' : '');
                 else if (p.role === 'link') cls = 'ic-k' + p.color;
                 // Not recognized: each part its own color.
-                else if (!C) cls = 'ic-k' + (p.key ? colorOf(x => x.key === p.key, { key: p.key }) : colorOf(x => x.form && same(x.form, p.form), { form: p.form }));
+                else if (!C) cls = 'ic-k' + ownColor(p);
                 else cls = 'ic-u';
                 parts.push({ words: p.words, cls, ctx: cl.ctx });
             }));
+            // Valid: what goes on to the conclusion is one stretch -- a
+            // compound all of whose parts go on, with the words joining them.
+            const goesOn = cl => (cl.parts || [cl]).every(p => p.role === 'c');
+            const spans = !C ? [] : whole ? [icWords(P[i])].filter(Boolean)
+                : groupsOf[i].filter(g => g.to > g.from && list.slice(g.from, g.to).every(goesOn)).map(g => g.words);
             // A chain of ifs: the "if" and the "then" that carry on into the conclusion.
             const keep = { if: false, then: false };
             if (C && C.kind === 'if' && P[i].kind === 'if') {
@@ -27553,7 +27876,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 keep.if = ifs.length > 0 && ifs.every(cl => cl.role === 'c');
                 keep.then = thens.length > 0 && thens.every(cl => cl.role === 'c');
             }
-            return { parts, keep };
+            return { parts, keep, spans };
         });
     }
     // Words as the check reads them: small letters, contractions as two
@@ -27605,15 +27928,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return (from > 0 && run(from)) || run(0);
     }
     // A box's words as one string (a premise link one character, read as its
-    // box's words; a formula left out), its words in order, and the pieces
-    // of the box they come from.
+    // box's words), its words in order, and the pieces of the box they come
+    // from. A formula in "$...$" is read as the math shows it: its letters
+    // and symbols, each in a span of its own, and not the hidden copy kept
+    // for screen readers (r27.83, the user: "Is it possible to color those as
+    // well?").
     function icContent(rd) {
         const segs = [], links = [];
         let text = '';
         (function walk(el) {
             for (const n of Array.from(el.childNodes)) {
                 if (n.nodeType === 3) { segs.push({ node: n, at: text.length }); text += n.data; }
-                else if (n.nodeType === 1 && !n.matches('.katex, .katex-display, .md-math')) {
+                else if (n.nodeType === 1 && !n.matches('.katex-mathml')) {
                     if (n.matches('.box-link')) { segs.push({ el: n, at: text.length }); links.push({ el: n, at: text.length }); text += '\uFFFC'; }
                     else walk(n);
                 }
@@ -27631,17 +27957,108 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return { text, segs, words };
     }
     function icClear(rd) {
+        rd.querySelectorAll('[data-ic-margin]').forEach(e => { e.style.marginRight = e.dataset.icMargin; delete e.dataset.icMargin; });
         rd.querySelectorAll('span.ic').forEach(sp => sp.replaceWith(...Array.from(sp.childNodes)));
         rd.normalize();
         delete rd.dataset.icSig;
     }
+    // Math spaces its symbols with margins (around "→", after a slanted
+    // letter), which no tint or underline covers, and draws them in fonts of
+    // different heights. So between two symbols of one color each margin
+    // becomes padding after the first, as wide, and each colored symbol's
+    // tint is as tall as the box's words': a stretch of math is colored as
+    // the same symbols typed are (r27.83, at the user's asking). Sub- and
+    // superscripts are left as they are.
+    function icMathGaps(rd) {
+        const role = sp => sp.className.replace(/ ic-neg\b/g, '');
+        const after = el => {
+            for (let n = el; n && n !== rd; n = n.parentNode)
+                for (let s = n.nextSibling; s; s = s.nextSibling) {
+                    const f = s.nodeType === 1 && (s.matches('span.ic') ? s : s.querySelector('span.ic'));
+                    if (f) return f;
+                }
+            return null;
+        };
+        const before = el => {
+            for (let n = el; n && n !== rd; n = n.parentNode)
+                for (let s = n.previousSibling; s; s = s.previousSibling) {
+                    const all = s.nodeType === 1 ? (s.matches('span.ic') ? [s] : s.querySelectorAll('span.ic')) : [];
+                    if (all.length) return all[all.length - 1];
+                }
+            return null;
+        };
+        rd.querySelectorAll('.katex-html [style]').forEach(el => {
+            const m = /^(\d*\.?\d+)em$/.exec(el.style.marginRight);
+            if (!m || el.closest('.vlist')) return;
+            let host = el;
+            if (el.matches('.mspace')) {
+                do host = host.previousElementSibling; while (host && host.matches('.mspace'));
+                if (!host || host.matches('.strut')) return;
+            }
+            const inner = host.querySelectorAll('span.ic'), sp = inner[inner.length - 1], next = after(el);
+            if (!sp || !next || sp.closest('.vlist') || next.closest('.vlist') || !/\bic-(?:k\d|c|cn)\b/.test(sp.className) || role(sp) !== role(next)) return;
+            if (getComputedStyle(sp).fontSize !== getComputedStyle(el).fontSize) return;
+            sp.style.paddingRight = +((parseFloat(sp.style.paddingRight) || 0) + Number(m[1])).toFixed(5) + 'em';
+            el.dataset.icMargin = el.style.marginRight;
+            el.style.marginRight = '0px';
+        });
+        // Where a symbol's underline goes on into its neighbor's: it reaches
+        // into the next one, and into the one before when that one is not a
+        // symbol's of its own (typed words, a sub- or superscript).
+        const own = sp => !!sp.closest('.katex-html') && !sp.closest('.vlist');
+        rd.querySelectorAll('.katex-html span.ic.ic-c:not(.ic-cn)').forEach(sp => {
+            if (!own(sp)) return;
+            const p = before(sp), n = after(sp);
+            if (p && role(p) === role(sp) && !own(p)) sp.dataset.icJl = '';
+            if (n && role(n) === role(sp)) sp.dataset.icJr = '';
+        });
+    }
+    // How far a font's text reaches above and below its baseline, in px.
+    const icFontBoxes = new Map();
+    function icFontBox(cs) {
+        const key = [cs.fontStyle, cs.fontWeight, cs.fontSize, cs.fontFamily].join('|');
+        let b = icFontBoxes.get(key);
+        if (b) return b;
+        const host = document.createElement('div'), t = document.createElement('span'), mark = document.createElement('span');
+        host.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap';
+        Object.assign(t.style, { fontStyle: cs.fontStyle, fontWeight: cs.fontWeight, fontSize: cs.fontSize, fontFamily: cs.fontFamily });
+        t.textContent = 'x';
+        mark.style.cssText = 'display:inline-block;width:0;height:0';
+        host.append(t, mark);
+        document.body.appendChild(host);
+        const r = t.getBoundingClientRect(), base = mark.getBoundingClientRect().top;
+        host.remove();
+        b = { a: base - r.top, d: r.bottom - base };
+        icFontBoxes.set(key, b);
+        return b;
+    }
+    function icMathFit(rd) {
+        rd.querySelectorAll('.katex-html').forEach(html => {
+            const k = html.closest('.katex');
+            const spans = Array.from(html.querySelectorAll('span.ic')).filter(sp => /\bic-(?:k\d|c)\b/.test(sp.className) && !sp.closest('.vlist'));
+            if (!spans.length || !k || !k.parentElement) return;
+            const words = icFontBox(getComputedStyle(k.parentElement));
+            spans.forEach(sp => {
+                const own = icFontBox(getComputedStyle(sp)), top = Math.max(0, words.a - own.a + 1);
+                sp.dataset.icFit = '';
+                sp.style.paddingTop = top + 'px';
+                sp.style.paddingBottom = Math.max(0, words.d - own.d + 1) + 'px';
+                sp.style.setProperty('--ic-base', top + own.a + 'px');
+            });
+        });
+    }
+    // The math's fonts can arrive after it is painted: measured again then.
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => {
+        icFontBoxes.clear();
+        document.querySelectorAll('#surface .rendered-text[data-ic-sig]').forEach(icMathFit);
+    });
     // A box's words painted by its part in the step. Words and colors as they
     // were are left alone; true when the box was painted anew.
     function icPaint(rd, plan) {
         let c = icContent(rd);
         const cls = new Array(c.text.length).fill('ic-rest');
         const taken = new Array(c.words.length).fill(false);
-        const first = {};
+        const first = {}, end = {};
         let from = 0;
         plan.parts.forEach(p => {
             const part = icTokens(p.words);
@@ -27651,19 +28068,58 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             c.words.forEach((w, k) => { if (w.a >= a && w.b <= b) taken[k] = true; });
             for (let i = a; i < b; i++) cls[i] = p.cls;
             if (p.ctx && first[p.ctx] === undefined) first[p.ctx] = a;
+            if (p.ctx) end[p.ctx] = b;
             from = hit[1] + 1;
         });
         // A chain of ifs: the "if" before the part that carries on, the "then" before the other.
         const keepWord = (word, before) => {
-            if (before === undefined) return;
+            if (before === undefined) return false;
             let last = null;
             for (const m of c.text.matchAll(new RegExp('\\b' + word + '\\b', 'gi'))) if (m.index < before && cls[m.index] === 'ic-rest') last = m;
             if (last) for (let i = last.index; i < last.index + word.length; i++) cls[i] = 'ic-c';
+            return !!last;
         };
-        if (plan.keep.if) keepWord('if', first.if);
-        if (plan.keep.then) keepWord('then', first.then);
-        // Words that deny, wherever they stand.
+        const keptIf = plan.keep.if && keepWord('if', first.if);
+        const keptThen = plan.keep.then && keepWord('then', first.then);
+        // In symbols the arrow is both: "P \u2192 Q" keeps its arrow with the
+        // part that carries on, as "If P" or "then Q" would (r27.83).
+        if (((plan.keep.if && !keptIf) || (plan.keep.then && !keptThen)) && first.then !== undefined) {
+            const lo = end.if !== undefined ? end.if : 0, hi = first.then;
+            const m = Array.from(c.text.slice(lo, hi).matchAll(IC_ARROW))[0];
+            if (m) for (let i = lo + m.index; i < lo + m.index + m[0].length; i++) if (cls[i] === 'ic-rest') cls[i] = 'ic-c';
+        }
+        // What goes on to the conclusion, one stretch: the words joining its
+        // parts ("or" in "the roads freeze or the game is off") go with them,
+        // and so does a space between two pieces of it.
+        (plan.spans || []).forEach(words => {
+            const part = icTokens(words);
+            const hit = part.length ? icAlign(c.words, part, new Array(c.words.length).fill(false), 0) : null;
+            if (!hit) return;
+            for (let i = c.words[hit[0]].a; i < c.words[hit[1]].b; i++) if (cls[i] === 'ic-rest') cls[i] = 'ic-c';
+        });
+        // ... as do the symbols between two pieces of it ("P \u2192 Q" when
+        // both go on), which have no words to be found by (r27.83).
+        for (let i = 0; i < cls.length; i++) {
+            if (cls[i] !== 'ic-rest' || /[\p{L}\p{N}]/u.test(c.text[i])) continue;
+            let j = i;
+            while (j < cls.length && cls[j] === 'ic-rest' && !/[\p{L}\p{N}]/u.test(c.text[j])) j++;
+            if (i > 0 && j < cls.length && cls[i - 1].startsWith('ic-c') && cls[j].startsWith('ic-c')) for (let k = i; k < j; k++) cls[k] = 'ic-c';
+            i = j - 1;
+        }
+        // A denial in symbols binds the letter after it: "~Q" is one claim, as
+        // "the dog didn't bark" is, so the "~" takes its part's color -- and
+        // on light boxes its tint (the user: "the highlight extends to the
+        // negations"). Not before a bracket ("~(P & Q)"), and not the words
+        // "it is not the case that", which may deny more than what follows.
+        for (const m of c.text.matchAll(IC_NEG_SYM)) {
+            let j = m.index + m[0].length;
+            while (j < cls.length && cls[j] === 'ic-rest' && /\s/.test(c.text[j])) j++;
+            if (j >= cls.length || cls[j] === 'ic-rest' || !/[\p{L}\p{N}]/u.test(c.text[j])) continue;
+            for (let i = m.index; i < j; i++) if (cls[i] === 'ic-rest') cls[i] = cls[j];
+        }
+        // Words that deny, wherever they stand, and their symbols.
         for (const m of c.text.matchAll(IC_NEG)) for (let i = m.index; i < m.index + m[0].length; i++) cls[i] += ' ic-neg';
+        for (const m of c.text.matchAll(IC_NEG_SYM)) for (let i = m.index; i < m.index + m[0].length; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg';
         const sig = c.text + '\u0001' + cls.join('|');
         if (rd.dataset.icSig === sig && rd.querySelector('span.ic')) return false;
         if (rd.querySelector('span.ic')) { icClear(rd); c = icContent(rd); }
@@ -27690,6 +28146,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             sg.node.replaceWith(frag);
         });
+        if (rd.querySelector('.katex-html span.ic')) { icMathGaps(rd); icMathFit(rd); }
         rd.dataset.icSig = sig;
         return true;
     }
@@ -27734,8 +28191,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function toggleDeductiveLive() {
         deductiveLive = !deductiveLive;
-        // The colors come from the check: they go with it.
-        if (!deductiveLive && inferenceColorsOn) { inferenceColorsOn = false; syncInferenceColorsButton(); }
         const btn = document.getElementById('logic-btn');
         if (btn) btn.classList.toggle('active', deductiveLive);
         refreshDerivationTags();
@@ -27834,7 +28289,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimAskedKind(step) {
         const asked = (step.why && step.why.ambiguous) || [];
         return asked.some(a => a.typo) ? 'typo' : asked.some(a => a.missing) ? 'no referent' : asked.some(a => a.grammar) ? 'grammar'
-            : asked.length && asked.every(a => a.generic) ? 'generic' : 'ambiguous';
+            : asked.length && asked.every(a => a.generic && !a.anyScope && !a.canScope) ? 'generic' : 'ambiguous';
     }
     // Its tag: a typo or a missing referent is a fault ("✗"), the rest questions.
     function claimAskedTag(step) {
@@ -27876,9 +28331,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             tag.dataset.theoremIdx = box.dataset.nodeIdx;
             box.parentElement.appendChild(tag);
         });
-        if (!deductiveLive && !deductiveChecked.size) { applyInferenceColors(null); positionDerivationTags(); keepReadingChooser(); return; }
+        if (!deductiveLive && !deductiveChecked.size) {
+            applyInferenceColors(inferenceColorsOn ? collectDeductiveSteps(state.trees, null) : null);
+            positionDerivationTags(); keepReadingChooser(); return;
+        }
         const steps = collectDeductiveSteps(state.trees, deductiveLive ? null : deductiveChecked);
-        applyInferenceColors(steps);
+        applyInferenceColors(inferenceColorsOn ? (deductiveLive ? steps : collectDeductiveSteps(state.trees, null)) : null);
         const warrantVerdict = steps.some(st => st.warrantTarget)
             ? claimMapVerdict(state.trees, deductiveLive ? steps : collectDeductiveSteps(state.trees)) : null;
         steps.forEach(step => {
@@ -28049,6 +28507,62 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // A generic inside a longer box ("If mosquitoes carry malaria, then ..."),
     // answered in place: "all", "some" or "most" put before its subject -- at
     // the occurrence that is this question's, counted among the box's generics.
+    // "Any" answered in place: the occurrence that is this question's, "every"
+    // or "some" (everyone, someone ...) put for it.
+    function claimAnyWords(entry, label) {
+        const r = entry.readings.indexOf(label), first = String(entry.subject || '').split(' ')[0], pair = CLAIM_ANY_WORDS[first];
+        if (!entry.anyScope || r < 0 || !pair) return null;
+        const subject = String(entry.subject).trim();
+        const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.anyScope && String(n.subject).trim() === subject);
+        const rank = asked.findIndex(n => n.site === entry.site);
+        const re = new RegExp('(^|[^A-Za-z])(' + subject.replace(/\s+/g, '\\s+') + ')(?![A-Za-z])', 'gi');
+        let m, k = 0;
+        while ((m = re.exec(entry.text))) {
+            if (k++ !== rank) continue;
+            const at = m.index + m[1].length, said = m[2], cap = /^[A-Z]/.test(said);
+            const word = cap ? pair[r].charAt(0).toUpperCase() + pair[r].slice(1) : pair[r];
+            return entry.text.slice(0, at) + word + said.slice(first.length) + entry.text.slice(at + said.length);
+        }
+        return null;
+    }
+    // "Can't" answered in place: "we can't conclude" put as "we are not
+    // entitled to conclude" or "it is impossible for us to conclude".
+    function claimCanWords(entry, label) {
+        const r = entry.readings.indexOf(label), verb = String(entry.subject || '').replace(/^can /, '');
+        if (!entry.canScope || r < 0 || !verb) return null;
+        // "Poe can fly": "Poe is able to fly", "it is possible for Poe to fly",
+        // "Poe is allowed to fly" -- the box's own words for Poe kept.
+        if (entry.canPlain) {
+            const subj = claimUnmarked(String(entry.canFrom || '')).trim();
+            if (!subj) return null;
+            const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.canPlain && n.subject === entry.subject);
+            const rank = asked.findIndex(n => n.site === entry.site);
+            const re = new RegExp('(^|[^A-Za-z])(' + subj.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + ')\\s+can\\s+(?=' + verb.replace(/\s+/g, '\\s+') + '(?![A-Za-z]))', 'gi');
+            let m, k = 0;
+            while ((m = re.exec(entry.text))) {
+                if (k++ !== rank) continue;
+                const at = m.index + m[1].length, said = m[2], start = !entry.text.slice(0, at).trim() || /[.!?:]\s*$/.test(entry.text.slice(0, at));
+                const word = r === 1 ? (start ? 'It' : 'it') + ' is possible for ' + (CLAIM_FOR_PERSON[said.toLowerCase()] || said) + ' to '
+                    : said + ' ' + (entry.canBe || 'is') + (r === 0 ? ' able to ' : ' allowed to ');
+                return entry.text.slice(0, at) + word + entry.text.slice(m.index + m[0].length);
+            }
+            return null;
+        }
+        const head = label.slice(0, label.search(/ (?:that|whether) /));
+        const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.canScope && n.subject === entry.subject && !!n.canDenied === !!entry.canDenied);
+        const rank = asked.findIndex(n => n.site === entry.site);
+        const v = verb.replace(/\s+/g, '\\s+');
+        const re = entry.canDenied
+            ? new RegExp('(^|[^A-Za-z])((?:we|i|you|one|they)\\s+(?:can(?:\'|\u2019)t|cannot|can\\s+not|(?:are|am|is)\\s+(?:unable|not\\s+able)\\s+to)\\s+' + v + ')(?![A-Za-z])', 'gi')
+            : new RegExp('(^|[^A-Za-z])((?:we|i|you|one|they)\\s+can\\s+' + v + ')(?![A-Za-z])', 'gi');
+        let m, k = 0;
+        while ((m = re.exec(entry.text))) {
+            if (k++ !== rank) continue;
+            const at = m.index + m[1].length, word = /^[A-Z]/.test(m[2]) ? head.charAt(0).toUpperCase() + head.slice(1) : head;
+            return entry.text.slice(0, at) + word + entry.text.slice(at + m[2].length);
+        }
+        return null;
+    }
     function claimGenericWords(entry, label) {
         const q = /^(all|some|most|every)\s/.exec(label);
         if (!entry.generic || !entry.subject || !q) return null;
@@ -28059,7 +28573,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let m, k = 0;
         while ((m = re.exec(entry.text))) {
             if (k++ !== rank) continue;
-            const noun = m[2].replace(/^(?:a|an)\s+/i, '');
+            const noun = m[2].replace(/^(?:a|an|any)\s+/i, '');
             const at = m.index + m[1].length, word = /^[A-Z]/.test(m[2]) && at === 0 ? q[1].charAt(0).toUpperCase() + q[1].slice(1) + ' ' + noun.charAt(0).toLowerCase() + noun.slice(1) : q[1] + ' ' + noun;
             return entry.text.slice(0, at) + word + entry.text.slice(at + m[2].length);
         }
@@ -28108,6 +28622,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (pop && !pop.contains(e.target)) closeReadingChooser();
     }
     function readingChooserKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closeReadingChooser(); } }
+    // Read as the step is read: an affirmation beside its own denial is a
+    // claim there (claimDenialHeads).
+    function claimAsStepReads(step, fn) {
+        const saved = claimStepDenials;
+        claimStepDenials = step && step.denials && step.denials.length ? new Set(step.denials) : null;
+        try { return fn(); } finally { claimStepDenials = saved; }
+    }
     function openReadingChooser(step, anchor) {
         closeReadingChooser();
         const entries = ((step.why && step.why.ambiguous) || []).filter(a => a.readings && a.readings.length && a.site !== undefined);
@@ -28135,10 +28656,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             entry.readings.forEach((label, r) => {
                 let words = entry.typo ? label : claimReadingWords(label, entry.text);
                 const linked = !!where && (() => { const c = findNodeContext(state.trees, where.id); return !!c && hasBoxLinks(c.node.texts[where.idx]); })();
-                let fits = !!where && !linked && (entry.typo || claimReadingRoundTrips(entry, r, words));
+                let fits = !!where && !linked && (entry.typo || claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, words)));
                 if (!fits && where && !linked) {
-                    const inPlace = claimGenericWords(entry, label) || claimPartWords(entry, label);
-                    if (inPlace && claimReadingRoundTrips(entry, r, inPlace)) { words = inPlace; fits = true; }
+                    const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimGenericWords(entry, label) || claimPartWords(entry, label));
+                    if (inPlace && claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, inPlace))) { words = inPlace; fits = true; }
                 }
                 const row = document.createElement('label');
                 row.className = 'rc-row' + (fits ? '' : ' rc-unfit');
@@ -28923,49 +29444,54 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             html += '</div>';
             html += '<div class="ctx-divider"></div>';
 
-            // --- Evaluate + Implicit ---
+            // --- Status: its evaluation, implicit, given; its evaluation notes ---
             html += '<div class="ctx-label">Status</div>';
             html += '<div class="ctx-row">';
             html += `<button onclick="ctxAction(()=>cycleEvaluation())" class="${status?'ctx-active':''}">Eval: ${status ? evalLabel(status) : 'none'}</button>`;
             html += `<button onclick="ctxAction(()=>toggleImplicit())" class="${isImplicit?'ctx-active':''}">Implicit</button>`;
             html += `<button onclick="ctxAction(()=>toggleGiven())" class="${isGiven?'ctx-active':''}">Given</button>`;
             html += '</div>';
-            if (node.type !== 'note') html += `<button class="ctx-item" onclick="ctxAction(()=>openReferenceArguments('${nodeId}', ${boxIdx || 0}))">Reference arguments…</button>`;
-            html += `<button class="ctx-item" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference…</button>`;
-            // Bold, italic, underline: all of the box (of every selected box),
-            // pressed when all of it has it. (While a box is open, its own
-            // menu formats the words selected in it.) Links go in where it
-            // was last edited.
+            html += `<button class="ctx-item" onclick="ctxAction(()=>openEvalNotesForBox('${nodeId}', ${boxIdx || 0}))">Evaluation Notes</button>`;
+            html += '<div class="ctx-divider"></div>';
+
+            // --- Text: bold, italic, underline on all of the box (of every
+            // selected box), pressed when all of it has it (while a box is
+            // open, its own menu formats the words selected in it); its
+            // alignment; links, put in where it was last edited ---
+            html += '<div class="ctx-label">Text</div>';
             {
                 const has = selectedBoxesFormat(), whose = selectedIds.length > 1 ? 'the selected boxes' : 'the whole box';
                 const fmt = (tag, letter, verb, name) => `<button class="fmt-${tag}${has[tag] ? ' ctx-active' : ''}" aria-pressed="${has[tag]}" title="${verb} ${whose}" aria-label="${name}" onclick="ctxAction(()=>formatSelectedBoxes('${tag}'))">${letter}</button>`;
                 html += '<div class="ctx-row ctx-format">' + fmt('strong', 'B', 'Bold', 'Bold') + fmt('em', 'I', 'Italicize', 'Italic') + fmt('u', 'U', 'Underline', 'Underline') + '</div>';
             }
-            html += `<button class="ctx-item" title="Link to another premise in this box's text" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise…</button>`;
-            html += `<button class="ctx-item" title="Link words in this box to a web address" onclick="ctxAction(()=>linkWebAddressInto('${nodeId}', ${boxIdx || 0}))">Link to Web Address…</button>`;
-            // Touch screens: several boxes, tap by tap (a mouse has Ctrl-click).
-            if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
-                html += `<button class="ctx-item" onclick="ctxAction(()=>startSelectMore())">Select More…</button>`;
-            html += `<button class="ctx-item" onclick="ctxAction(()=>openEvalNotesForBox('${nodeId}', ${boxIdx || 0}))">Evaluation Notes…</button>`;
-            // The deductive check for this box's step, and the list of every step.
+            html += '<div class="ctx-row ctx-align">';
+            html += `<button title="Align the text left" onclick="ctxAction(()=>setSelectedAlign('left'))" class="${currentAlign==='left'?'ctx-active':''}">Left</button>`;
+            html += `<button title="Center the text" onclick="ctxAction(()=>setSelectedAlign('center'))" class="${currentAlign==='center'?'ctx-active':''}">Center</button>`;
+            html += `<button title="Align the text right" onclick="ctxAction(()=>setSelectedAlign('right'))" class="${currentAlign==='right'?'ctx-active':''}">Right</button>`;
+            html += '</div>';
+            html += `<button class="ctx-item" title="Link to another premise in this box's text" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise</button>`;
+            html += `<button class="ctx-item" title="Link words in this box to a web address" onclick="ctxAction(()=>linkWebAddressInto('${nodeId}', ${boxIdx || 0}))">Link to Web Address</button>`;
+            html += '<div class="ctx-divider"></div>';
+
+            // --- References: premises elsewhere linked to this box, and the
+            // arguments made of them (what its ↗ badge opens) ---
+            html += `<button class="ctx-item" title="Link this box to a premise elsewhere in the map" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference</button>`;
+            if (node.type !== 'note') html += `<button class="ctx-item" title="Group linked premises into arguments for or against this box (its ↗ badge opens the same)" onclick="ctxAction(()=>openReferenceArguments('${nodeId}', ${boxIdx || 0}))">Reference Arguments</button>`;
+            html += '<div class="ctx-divider"></div>';
+
+            // --- The deductive check: this box's step, and the list of every step ---
             if (hasDeductiveStep(nodeId)) {
                 html += `<button class="ctx-item" onclick="ctxAction(()=>toggleStepChecks(['${nodeId}']))">${deductiveChecked.has(nodeId) ? 'Stop Checking This Step' : 'Check This Step'}<span class="ctx-key">Shift+K</span></button>`;
             } else if (isTopPremiseGroup(nodeId)) {
                 html += `<button class="ctx-item" onclick="ctxAction(()=>toggleStepChecks(['${nodeId}']))">Derive Parent<span class="ctx-key">Shift+K</span></button>`;
             }
-            html += `<button class="ctx-item" title="Show the check of every step (K turns checking on or off)" onclick="ctxAction(()=>openDeductiveCheck('${nodeId}'))">Deductive Check: All Steps…<span class="ctx-key">K</span></button>`;
-            html += '<div class="ctx-divider"></div>';
-
-            // --- Align ---
-            html += '<div class="ctx-label">Align Text</div>';
-            html += '<div class="ctx-row">';
-            html += `<button onclick="ctxAction(()=>setSelectedAlign('left'))" class="${currentAlign==='left'?'ctx-active':''}">Left</button>`;
-            html += `<button onclick="ctxAction(()=>setSelectedAlign('center'))" class="${currentAlign==='center'?'ctx-active':''}">Center</button>`;
-            html += `<button onclick="ctxAction(()=>setSelectedAlign('right'))" class="${currentAlign==='right'?'ctx-active':''}">Right</button>`;
-            html += '</div>';
+            html += `<button class="ctx-item" title="Show the check of every step (K turns checking on or off)" onclick="ctxAction(()=>openDeductiveCheck('${nodeId}'))">Deductive Check: All Steps<span class="ctx-key">K</span></button>`;
             html += '<div class="ctx-divider"></div>';
 
             // --- Edit actions ---
+            // Touch screens: several boxes, tap by tap (a mouse has Ctrl-click).
+            if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+                html += `<button class="ctx-item" onclick="ctxAction(()=>startSelectMore())">Select More</button>`;
             // Take Out of Branch: the box on its own, its children left in place.
             const connected = !!(ctx && (ctx.parent || ctx.node.texts.length > 1 || (ctx.node.children || []).length));
             html += `<button class="ctx-item" title="Take this box out of its branch; its children stay where they are" onclick="ctxAction(()=>takeOutOfBranch())" ${connected ? '' : 'disabled'}>Take Out of Branch</button>`;
@@ -29478,6 +30004,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const code = e.code;
             const key = e.key.toLowerCase();
             // View shortcuts — always available, even in present mode
+            // Shift+C: the inference colors, off, 1, 2. Plain C stays Re-Center.
+            if ((code === 'KeyC' || key === 'c') && e.shiftKey) { cycleInferenceColors(); return; }
             if (code === 'KeyC' || key === 'c') { recenter(); return; }
             if (code === 'KeyZ' || key === 'z') { zoomToFit(); return; }
             // B: Breadth, Narrow or Wide.
@@ -29602,8 +30130,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // because the opening click itself bubbles to document.)
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.crossref-popover') && !e.target.closest('.crossref-badge')) {
-            document.querySelectorAll('.crossref-popover').forEach(p => p.remove());
-            highlightReferenceArgument(null);
+            // ... except one this very click opened: Reference Arguments from a
+            // box's menu (or a step in the Deductive Check list) opened its
+            // panel and the same click closed it at once (r27.81).
+            document.querySelectorAll('.crossref-popover').forEach(p => { if (p._openedBy !== e) p.remove(); });
+            if (!document.querySelector('.crossref-popover')) highlightReferenceArgument(null);
         }
     });
     const canvas = document.getElementById('canvas');
@@ -29909,6 +30440,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const steps=deductiveLive&&args.length?collectDeductiveSteps(state.trees):[];
         const pop=document.createElement('div');pop.className='crossref-popover reference-arguments-popover';
         pop.dataset.sourceId=id;pop.dataset.sourceIdx=idx;
+        // The click that opens it (a menu item, a step in the Deductive Check
+        // list) goes on to the document, whose outside-click closer must let it be.
+        pop._openedBy=window.event||null;
         pop.setAttribute('role','dialog');pop.setAttribute('aria-label','References');
         let dragged=null,menu=null;
         const closeMenu=()=>{menu?.remove();menu=null;};
@@ -29935,17 +30469,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             referenceArgumentMembers(state.trees,ctx.node,idx,arg).filter(m=>!m.missing).forEach(m=>{if(!out.some(r=>!isReferenceArgument(r)&&r.targetId===m.targetId&&r.targetIdx===m.targetIdx))out.push({targetId:m.targetId,targetIdx:m.targetIdx});});return out;
         });
         const groupItems=arg=>[
-            {label:'Argument type…',disabled:argumentLocked,run:e=>roles(e,arg)},
-            {label:'Add linked premise…',disabled:argumentLocked,run:()=>{close();armCrossRefPicking(id,idx,arg.argumentId);}},
-            {label:'Include children…',disabled:argumentLocked||!(ctx.node.children||[]).some(c=>c.type!=='note'&&boxOf(ctx.node,c)===idx),run:e=>addChild(e,arg)},
+            {label:'Argument type',disabled:argumentLocked,run:e=>roles(e,arg)},
+            {label:'Add linked premise',disabled:argumentLocked,run:()=>{close();armCrossRefPicking(id,idx,arg.argumentId);}},
+            {label:'Include children',disabled:argumentLocked||!(ctx.node.children||[]).some(c=>c.type!=='note'&&boxOf(ctx.node,c)===idx),run:e=>addChild(e,arg)},
             {label:'Ungroup argument',disabled:argumentLocked,run:()=>ungroupArgument(arg)}
         ];
         const rowMenu=(event,member,arg)=>{
             const target=findNodeContext(state.trees,member.targetId),eligible=target&&target.node.type!=='note'&&!member.missing;
             const destinations=(e,copy)=>showMenu(e,[{label:'New group',disabled:argumentLocked,run:()=>transferReferenceMember(id,idx,member,arg?.argumentId,'new',copy)},...args.filter(a=>a!==arg).map((a,i)=>({label:'Argument '+(args.indexOf(a)+1)+' · '+KIND_NAME[groupKind(a).kind],disabled:argumentLocked,run:()=>transferReferenceMember(id,idx,member,arg?.argumentId,a.argumentId,copy)}))]);
             const items=[];
-            if(eligible){items.push({label:arg?'Move to group…':'Add to group…',disabled:argumentLocked,run:e=>destinations(e,false)});if(arg)items.push({label:'Also use in group…',disabled:argumentLocked,run:e=>destinations(e,true)});}
-            if(eligible&&!arg)items.push({label:'Argument type…',disabled:argumentLocked,run:e=>showMenu(e,allowedKinds.map(kind=>({label:KIND_NAME[kind],disabled:argumentLocked,run:()=>transferReferenceMember(id,idx,member,null,'new',false,null,kind)})))});
+            if(eligible){items.push({label:arg?'Move to group':'Add to group',disabled:argumentLocked,run:e=>destinations(e,false)});if(arg)items.push({label:'Also use in group',disabled:argumentLocked,run:e=>destinations(e,true)});}
+            if(eligible&&!arg)items.push({label:'Argument type',disabled:argumentLocked,run:e=>showMenu(e,allowedKinds.map(kind=>({label:KIND_NAME[kind],disabled:argumentLocked,run:()=>transferReferenceMember(id,idx,member,null,'new',false,null,kind)})))});
             if(arg&&eligible)items.push({label:'Ungroup premise',disabled:argumentLocked,run:()=>transferReferenceMember(id,idx,member,arg.argumentId,null)});
             items.push({label:arg?'Remove from argument':'Remove link',disabled:locked,run:()=>{
                 if(arg)update(arg,a=>referenceGroupWithout(ctx.node,idx,a,member));else{removeCrossRef(id,idx,member.targetId,member.targetIdx);openReferenceArguments(id,idx);}
@@ -29982,7 +30516,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const header=document.createElement('div');header.className='reference-argument-heading';
         const title=document.createElement('strong');title.textContent='References';header.appendChild(title);
-        const add=button('+',e=>showMenu(e,[{label:'Add reference…',disabled:locked,run:()=>{close();armCrossRefPicking(id,idx);}},{label:'New argument',disabled:argumentLocked,run:newGroup}]));add.title='Add reference or argument';add.setAttribute('aria-label',add.title);header.appendChild(add);
+        const add=button('+',e=>showMenu(e,[{label:'Add reference',disabled:locked,run:()=>{close();armCrossRefPicking(id,idx);}},{label:'New argument',disabled:argumentLocked,run:newGroup}]));add.title='Add reference or argument';add.setAttribute('aria-label',add.title);header.appendChild(add);
         const dismiss=button('×',close);dismiss.title='Close';header.appendChild(dismiss);pop.appendChild(header);
         args.forEach((arg,i)=>{
             const info=groupKind(arg);

@@ -244,11 +244,11 @@ const MAP = [{ id: 'm', type: 'contention', texts: ['Zombies are possible.'], co
     {
         ok(!/>Export SVG</.test(HTML) && !/>Export PNG</.test(HTML) && !/>Export Text</.test(HTML) && !/function exportSVG\(|function exportPNG\(|function exportText\(/.test(HTML),
             'Export SVG, Export PNG and Export Text are gone (Save As does them)');
-        ok(/<span class="toolbar-group-label">Import \/ Options<\/span>/.test(HTML) && /Import Text\.\.\./.test(HTML),
-            'their group is Import / Options, and Import Text stays');
+        ok(/<span class="toolbar-group-label">Import \/ Options<\/span>/.test(HTML) && />\s*Import Text\s*</.test(HTML) && !/Import Text\.\.\./.test(HTML),
+            'their group is Import / Options, and Import Text stays (since r27.81 without dots)');
         ok(/id="save-as-btn"[^>]*title="Save a copy: the map, a picture, a PDF or a text outline \(Ctrl\+Shift\+S\)"/.test(HTML),
             'the Save As button says what it saves');
-        ok(/<strong>Save As…<\/strong> saves a copy as the map, a picture \(PNG, JPEG, SVG\), a PDF or a text outline/.test(HTML),
+        ok(/<strong>Save As<\/strong> saves a copy as the map, a picture \(PNG, JPEG, SVG\), a PDF or a text outline/.test(HTML),
             'Help says so too (r27.68: in plain words)');
     }
 

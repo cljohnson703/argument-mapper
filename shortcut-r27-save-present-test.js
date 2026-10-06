@@ -168,7 +168,7 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(present.present && present.saves === 1, 'Ctrl+S saves in presentation mode', JSON.stringify(present));
 
         ok(/>Save to File <span class="hotkey">Ctrl\+S<\/span>/.test(HTML), 'the Save to File button shows Ctrl+S');
-        ok(/>Save As… <span class="hotkey">Ctrl\+Shift\+S<\/span>/.test(HTML), 'the Save As button shows Ctrl+Shift+S');
+        ok(/>Save As <span class="hotkey">Ctrl\+Shift\+S<\/span>/.test(HTML), 'the Save As button shows Ctrl+Shift+S');
         // r27.65 (the user, 2026-09-30): "Save now" is gone; Save to File
         // refreshes the browser's copy itself.
         ok(!/>Save now<\/button>/.test(HTML) && !/save-now-btn/.test(HTML), 'there is no "Save now" button: saving to a file refreshes the browser\'s copy too');

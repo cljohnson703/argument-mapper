@@ -35,6 +35,8 @@
 //       denials, with look-alikes that must not pass;
 //  (2e) a word every object has ("constructor") read as itself, where a noun,
 //       a plural or a verb goes; no word table with a prototype;
+//  (2f) formatting changes no reading: bold, italic and underline on a letter
+//       of a formula, on a weather "it", on a name;
 //   (3) diagnosis on a map: the "? ambiguous" tag, its tooltip, the list row;
 //   (4) deriving a conclusion: every generative rule, in English and in
 //       symbols, and premises that derive nothing obvious;
@@ -781,6 +783,215 @@ function reportCorpus(name, res) {
         ok(J(c.first) === J(['✓ modus ponens', '✓ modus ponens']), 'a box beginning "Constructor" is read, and with Deductive on every step on the map is tagged', J(c.first));
         ok(J(c.unlike) === '[]', 'it is read as "conductor" is: a pronoun for it, joined to another noun, before a noun, as a verb, as a plural', J(c.unlike));
         ok(c.tables > 20 && J(c.withPrototype) === '[]', 'no table the reader looks words up in has a prototype (' + c.tables + ' tables)', J(c.withPrototype));
+    } catch (e) { ok(false, 'the section ran to the end', e.message); }
+
+    /* ---------------- 2f. formatting changes no reading ---------------- */
+    // r27.83 (the user, 2026-10-05): "When a literal is underlined by the
+    // user, it behaves differently. When it's bold or in italics, it's not
+    // affected. How do we stop underlining from affecting the literal?" An
+    // underlined letter made a formula no formula; and bold or italic "it
+    // rains" had its "it" refer to nothing.
+    console.log('\n-- formatting changes no reading --');
+    try {
+        const f = T(W, `
+            var safe = function (g) { try { return g(); } catch (e) { return 'ERR ' + e.message; } };
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear();
+                var s = collectDeductiveSteps(state.trees)[0];
+                return s.rule ? s.rule.name : 'none: ' + (s.why ? String(s.why.text).slice(0, 80) : '');
+            };
+            var marks = [['plain', function (x) { return x; }], ['bold', function (x) { return '**' + x + '**'; }],
+                ['italic', function (x) { return '*' + x + '*'; }], ['italic _', function (x) { return '_' + x + '_'; }], ['underline', function (x) { return '__' + x + '__'; }]];
+            var out = {};
+            marks.forEach(function (m) {
+                out[m[0]] = {
+                    letter: safe(function () { return step([m[1]('P') + ' → Q', 'P'], 'Q'); }),
+                    letterOther: safe(function () { return step(['P → Q', m[1]('P')], 'Q'); }),
+                    tollens: safe(function () { return step(['P → ' + m[1]('Q'), '~Q'], '~P'); }),
+                    weather: safe(function () { return step(['If ' + m[1]('it rains') + ', then the ground is wet', 'It rains'], 'The ground is wet'); }),
+                    weatherIt: safe(function () { return step(['If ' + m[1]('it') + ' rains, then the ground is wet', 'It rains'], 'The ground is wet'); }),
+                    name: safe(function () { return step(['If ' + m[1]('Poe') + ' is a raven, then Poe is black', 'Poe is a raven'], 'Poe is black'); })
+                };
+            });
+            return out;`);
+        const bad = [];
+        Object.keys(f).forEach(k => Object.keys(f[k]).forEach(c => {
+            const want = c === 'tollens' ? 'modus tollens' : 'modus ponens';
+            if (f[k][c] !== want) bad.push(k + ' ' + c + ': ' + f[k][c]);
+        }));
+        ok(bad.length === 0, 'bold, italic (* or _) and underline change no reading: a letter in a formula, either premise, modus tollens, a weather "it", a name', bad.join(' | '));
+    } catch (e) { ok(false, 'the section ran to the end', e.message); }
+
+    /* ---------------- 2g. "we can conclude that", "any" in a that-clause, "not both" ---------------- */
+    // The user, 2026-10-05, on a Turing-test argument -- P; if we can't
+    // conclude that any machine ... can think, and if P, then we can't
+    // conclude that others think; we can conclude that others think; so we
+    // can conclude that any machine ... can think: (1) "we can conclude that
+    // X" is a claim, the denial of "we can't conclude that X", in a step that
+    // says both -- "we require at least 2 conclusion locutions (one's
+    // affirmation and one's denial) unless we flag it as an inference word";
+    // (2) "any" there may mean every one or at least one: "Ask when it
+    // matters"; (3) one rule per step: "Two steps, as now". And "it is not
+    // the case both that A and that B" is "not both A and B".
+    console.log('\n-- "we can conclude that", "any" in a that-clause, "not both" --');
+    try {
+        const g = T(W, `
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear();
+                var s = collectDeductiveSteps(state.trees)[0];
+                return { rule: s.rule ? s.rule.name : null, inference: s.inference ? s.inference.word : null, tag: deductiveStepTagText(s), why: s.why ? String(s.why.text) : '' };
+            };
+            var EV = 'The evidence we have that the machine thinks is the same kind of evidence that we have about other people';
+            var ev = EV.charAt(0).toLowerCase() + EV.slice(1);
+            var P2 = 'If ' + ev + ", and if we can't conclude that any machine that passes the Turing test can think, then we can't conclude that others think";
+            var MID = "If we can't conclude that any machine that passes the Turing test can think, then we can't conclude that others think";
+            var C = 'We can conclude that any machine that passes the Turing test can think';
+            var out = {
+                lone: step(['All men are mortal', 'Socrates is a man'], 'We can conclude that Socrates is mortal'),
+                one: step([EV, P2, 'We can conclude that others think'], C),
+                ponens: step([EV, P2], MID),
+                tollens: step([MID, 'We can conclude that others think'], C),
+                every: step([MID.replace('any machine', 'every machine'), 'We can conclude that others think'], C),
+                alike: step([MID, "It is not the case that we can't conclude that others think"], "It is not the case that we can't conclude that any machine that passes the Turing test can think"),
+                notBoth: step(['It is not the case both that Bob sings and that Mary dances', 'Mary dances'], 'Bob does not sing'),
+                both: step(["Both we can't conclude that others think and the evidence is the same"], "We can't conclude that others think"),
+                belief: step(['If Mary believes that any raven is black, then Mary is wrong', 'Mary believes that every raven is black'], 'Mary is wrong'),
+                beliefEvery: step(['If Mary believes that every raven is black, then Mary is wrong', 'Mary believes that any raven is black'], 'Mary is wrong')
+            };
+            // The question, answered in the box: "any" rewritten as "every".
+            state.trees = [{ id: 'M', type: 'contention', texts: [C], collapsed: [], x: 0, y: 0, children: [
+                { id: 'A', type: 'support', texts: [MID, 'We can conclude that others think'], collapsed: [], children: [] } ] }];
+            deductiveCache.clear(); ensureCollabFields(state); render();
+            var st = collectDeductiveSteps(state.trees)[0];
+            openReadingChooser(st, document.body);
+            out.offered = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + r.textContent; });
+            closeReadingChooser();
+            return out;`);
+        ok(g.lone.inference === 'we can conclude that' && /in a box/.test(g.lone.tag),
+            'alone, "We can conclude that Socrates is mortal" is still an inference word, flagged', J(g.lone));
+        ok(!g.one.inference && g.one.rule === null && g.one.tag === '? not recognized',
+            'beside "we can\'t conclude that ...", "we can conclude that ..." is a claim, not flagged; the whole argument is two rules, so not one step', J(g.one));
+        ok(g.ponens.rule === 'modus ponens', 'its first step: the evidence condition first, modus ponens gives "if we can\'t conclude that any machine ..., then we can\'t conclude that others think"', J(g.ponens));
+        ok(g.tollens.rule === null && g.tollens.tag === '? ambiguous' && /"any machine" may mean every one or at least one/.test(g.tollens.why) &&
+            /Read as “every machine that passes the Turing test can think”, the step follows by modus tollens/.test(g.tollens.why),
+            'its second step asks what "any machine" means there, and says the step follows by modus tollens on "every"', J(g.tollens));
+        ok(g.every.rule === 'modus tollens', 'with "every" in that box, modus tollens: "we can conclude that X" denies "we can\'t conclude that X"', J(g.every));
+        ok(g.alike.rule === 'modus tollens', 'worded alike in both boxes, it follows on either reading of "any", and nothing is asked', J(g.alike));
+        ok((g.offered || []).some(t => t.indexOf("If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think — the step follows by modus tollens") === 0) &&
+            (g.offered || []).some(t => t.indexOf("If we can't conclude that some machine that passes the Turing test can think") === 0),
+            'answered in the box: "any machine" rewritten "every machine" (the step follows) or "some machine"', J(g.offered));
+        ok(g.notBoth.rule === 'conjunctive syllogism', '"It is not the case both that A and that B" is "not both A and B" (it was read as about "it")', J(g.notBoth));
+        ok(g.both.rule === 'conjunction elimination', '"both" holds its own "and": "Both we can\'t conclude that P and Q" is two claims (the that-clause had taken in "and Q")', J(g.both));
+        ok(g.belief.rule === null && g.belief.tag === '? ambiguous' && /"any raven" may mean every one or at least one/.test(g.belief.why),
+            'in a condition, "believes that any raven is black" keeps its "any", and asks what it means where the step turns on it (it had been dropped)', J(g.belief));
+        ok(g.beliefEvery.rule === 'modus ponens', 'said plainly, "Mary believes that any raven is black" is every raven: modus ponens, nothing asked', J(g.beliefEvery));
+    } catch (e) { ok(false, 'the section ran to the end', e.message); }
+
+    /* ---------------- 2h. affirmations beside their denials; which "can"; "any" anywhere ---------------- */
+    // The user, 2026-10-05, on the same argument: "We can know that X" too --
+    // "Maybe there's a general rule that we can use instead of making sure we
+    // take care of every instance": an affirmation is read as the denial of
+    // its own English denial, when that is a "not established" phrasing the
+    // step (or a step it shares a box with) holds. "Can't" may mean "not
+    // established" or "impossible for us" ("I'll go with your
+    // recommendation"): asked where the second makes a step follow and the
+    // first does not; "we do" gives "we can" by its own step, ab esse ad
+    // posse ("'We can' is supported by 'We do'; a 1-premise step"). And
+    // "any" anywhere in such a that-clause is asked about ("Build it").
+    console.log('\n-- affirmations beside their denials; which "can"; "any" anywhere --');
+    try {
+        const h = T(W, `
+            var tag = function (trees) {
+                state.trees = trees; deductiveCache.clear();
+                return collectDeductiveSteps(state.trees).map(function (s) { return s.childId + ' ' + deductiveStepTagText(s) + (s.why && s.why.text ? ' | ' + String(s.why.text) : ''); });
+            };
+            var step = function (premises, conclusion, type) {
+                return tag([{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: type || 'support', texts: premises, collapsed: [], children: [] } ] }])[0];
+            };
+            var EV = 'The evidence we have that the machine thinks is the same kind of evidence that we have about other people';
+            var map = function (C, MID, P3) { return [{ id: 'C', type: 'contention', texts: [C], collapsed: [], x: 0, y: 0, children: [
+                { id: 'S', type: 'support', texts: [MID, P3], collapsed: [], children: [
+                    { id: 'U', type: 'support', targetIndex: 1, texts: ['We do conclude that others think'], collapsed: [], children: [] } ] } ] }]; };
+            var cant = "we can't conclude", imp = 'it is impossible for us to conclude';
+            var mid = function (h1, h2, any) { return 'If ' + h1 + ' that ' + any + ' machine that passes the Turing test can think, then ' + h2 + ' that others think'; };
+            return {
+                skeptic: step(['If I know that I have hands, then I know that I am not a brain in a vat', "I don't know that I am not a brain in a vat"], "I don't know that I have hands"),
+                shown: step(['If it has been shown that the drug works, then the trial succeeded', 'The trial did not succeed'], 'It has not been shown that the drug works'),
+                knowDS: step(["Either we don't know that the bridge is safe, or we can cross the river", 'We know that the bridge is safe'], 'We can cross the river'),
+                marker: step(['If it has not been shown that P, then Q', 'It has not been shown that P'], 'We can conclude that Q'),
+                written: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'We can conclude that others think')),
+                answered: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'It is possible for us to conclude that others think')),
+                plain: tag(map('It is possible for us to conclude that every machine that passes the Turing test can think', mid(imp, imp, 'every'), 'It is possible for us to conclude that others think')),
+                doDirect: step([mid(imp, imp, 'every'), 'We do conclude that others think'], 'It is possible for us to conclude that every machine that passes the Turing test can think'),
+                lone: step(['We do conclude that others think'], 'We can conclude that others think'),
+                fly: step(['Poe flies'], 'Poe can fly'),
+                challenge: step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable", 'We lack reasons to think that the tests are reliable'], 'The tests are reliable', 'weak-objection'),
+                object: step(["If we can't conclude that Mary loves any raven, then we can't conclude that others think", 'We can conclude that others think'], 'We can conclude that Mary loves every raven'),
+                anyone: step(["If we can't conclude that anyone left, then we can't conclude that others think", 'We can conclude that others think'], 'We can conclude that everyone left'),
+                reason: parseClaimFull("We can't conclude that there is any reason to doubt it").notes.filter(function (n) { return n.anyScope; }).length,
+                beliefObject: step(['If Mary believes that Poe loves any raven, then Mary is wrong', 'Mary believes that Poe loves every raven'], 'Mary is wrong')
+            };`);
+        ok(/✓ modus tollens/.test(h.skeptic), 'the skeptic\'s modus tollens: "I know that I am not a brain in a vat" beside "I don\'t know that ..." denies it', h.skeptic);
+        ok(/✓ modus tollens/.test(h.shown) && /✓ disjunctive syllogism/.test(h.knowDS), 'so for "it has been shown that" and "we know that": one rule for every phrasing', J([h.shown, h.knowDS]));
+        ok(/in a box/.test(h.marker), '"We can conclude that Q" beside a different denial ("it has not been shown that P") is still an inference word', h.marker);
+        ok(/^S ✓ modus tollens$/.test(h.written[0]) && /^U \? ambiguous \|.*"can conclude" may mean it has been established, or that it is possible for us.*Read as “it is possible for us to conclude that others think”, the step follows by ab esse ad posse/.test(h.written[1]),
+            '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can", it follows by ab esse ad posse', J(h.written));
+        ok(/^S \? ambiguous \|.*"can’t conclude" may mean it has not been established, or that it is impossible for us.*Read as “it is impossible for us to conclude that every machine that passes the Turing test can think”, the step follows by modus tollens/.test(h.answered[0]) &&
+            /^U ✓ ab esse ad posse$/.test(h.answered[1]), 'answered "possible for us", the step above asks the same of its "can\'t", and follows by modus tollens on it', J(h.answered));
+        ok(J(h.plain) === J(['S ✓ modus tollens', 'U ✓ ab esse ad posse']), 'worded "impossible/possible for us", modus tollens and ab esse ad posse, nothing asked', J(h.plain));
+        ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
+        ok(/in a box/.test(h.lone), 'alone, "We can conclude that ..." is still an inference word', h.lone);
+        ok(/✓ modus ponens/.test(h.challenge), 'a weak objection\'s "we can\'t conclude that ..." is "not established", as before: nothing asked', h.challenge);
+        ok(/\? ambiguous \|.*"any raven" may mean every one or at least one/.test(h.object) && /\? ambiguous \|.*"anyone" may mean every one or at least one/.test(h.anyone),
+            '"any" as an object, and "anyone", are asked about too', J([h.object, h.anyone]));
+        ok(h.reason === 0, '"there is any reason": only "at least one" makes sense, so nothing is asked', h.reason);
+        ok(/\? ambiguous \|.*"any raven" may mean every one or at least one/.test(h.beliefObject), 'a belief keeps an object\'s "any" too, and asks about it where it matters', h.beliefObject);
+    } catch (e) { ok(false, 'the section ran to the end', e.message); }
+
+    /* ---------------- 2i. plain "can": possible, able, allowed ---------------- */
+    // The user, 2026-10-05: of "'Poe flies' doesn't give 'Poe can fly'":
+    // "Maybe it should. When 'can' is interpreted in an alethic manner, it
+    // follows that Poe can fly." Then, of the three readings ("Possible,
+    // able, allowed"): ab esse ad posse on "possible for Poe" only -- one
+    // lucky success shows no ability (Kenny 1976), and what is so need not be
+    // allowed. Asked where a step follows on "possible" and not on "able".
+    console.log('\n-- plain "can": possible, able, allowed --');
+    try {
+        const c = T(W, `
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear(); ensureCollabFields(state); render();
+                var s = collectDeductiveSteps(state.trees)[0], rows = [];
+                if (s.ambiguous) { openReadingChooser(s, document.body);
+                    rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + r.textContent; });
+                    closeReadingChooser(); }
+                return { tag: deductiveStepTagText(s), why: s.why && s.why.text ? String(s.why.text) : '', rows: rows };
+            };
+            return {
+                fly: step(['Poe flies'], 'Poe can fly'),
+                possible: step(['Poe flies'], 'It is possible for Poe to fly'),
+                both: step(['If Poe can fly, then Poe is a bird', 'Poe can fly'], 'Poe is a bird'),
+                strict: step(['If Poe can fly, then Poe is a bird', 'It is possible for Poe to fly'], 'Poe is a bird'),
+                able: step(['If Poe can fly, then Poe is a bird', 'Poe is able to fly'], 'Poe is a bird'),
+                ravens: step(['The ravens fly'], 'The ravens can fly')
+            };`);
+        ok(c.fly.tag === '? ambiguous' && /"can" may say what Poe is able to do, what is possible for Poe, or what Poe is allowed to do/.test(c.fly.why) &&
+            /Read as “it is possible for Poe to fly”, the step follows by ab esse ad posse/.test(c.fly.why),
+            '"Poe flies", so "Poe can fly": asked which "can"; on "possible for Poe" it follows by ab esse ad posse', J(c.fly));
+        ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is possible for Poe to fly — the step follows by ab esse ad posse', 'Poe is allowed to fly']),
+            'answered in the box: "Poe is able to fly", "It is possible for Poe to fly" or "Poe is allowed to fly"', J(c.fly.rows));
+        ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '✓ modus ponens', 'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens asks nothing', J([c.possible.tag, c.both.tag]));
+        ok(c.strict.tag === '? ambiguous' && /Read as “it is possible for Poe to fly”, the step follows by modus ponens/.test(c.strict.why) &&
+            c.strict.rows[1] === 'If it is possible for Poe to fly, then Poe is a bird — the step follows by modus ponens',
+            '"possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));
+        ok(c.able.tag === '✓ modus ponens', '"Poe is able to fly" is "Poe can fly" read as ability: one claim', J(c.able));
+        ok(/what the ravens are able to do/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
     /* ---------------- 3. diagnosis on a map ---------------- */

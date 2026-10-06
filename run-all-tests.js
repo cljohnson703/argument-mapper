@@ -94,6 +94,7 @@ const SUITES = [
     'theme-r27-light-test.js',
     'editor-r27-wysiwyg-test.js',
     'colors-r27-inference-test.js',
+    'menus-r27-order-test.js',
     'negation-distribution-r27-test.js',
     'navkeys-r27-panel-test.js',
     'collab-r26-firebase-test.js',

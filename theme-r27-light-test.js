@@ -154,7 +154,7 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     {
         const open = JSON.parse(W.win.eval(`(function () { var b = document.getElementById('open-file-btn');
             return JSON.stringify({ text: b.textContent.trim(), hotkeys: b.querySelectorAll('.hotkey').length, title: b.title }); })()`));
-        ok(open.text === 'Open…' && open.hotkeys === 0 && open.title === 'Open a saved map', 'Open says "Open…", without "JSON"', J(open));
+        ok(open.text === 'Open' && open.hotkeys === 0 && open.title === 'Open a saved map', 'Open says "Open", without "JSON" (and since r27.81 without an ellipsis)', J(open));
         ok(/#toolbar\.file-compact #group-file \.hotkey\s*\{\s*display:\s*none;\s*\}/.test(CSS), 'a compact File hides its shortcuts');
         const tips = JSON.parse(W.win.eval(`JSON.stringify([].map.call(document.querySelectorAll('#group-file .hotkey'), function (h) { return h.parentElement.title; }))`));
         ok(tips.length === 3 && tips.every(t => /\((Ctrl\+S|Ctrl\+Shift\+S|\/)\)$/.test(t)), 'each shortcut it hides is in its button\'s tip', J(tips));

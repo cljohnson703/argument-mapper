@@ -29,7 +29,7 @@ const count=dom.window.eval(`(()=>{
  // Context menus work both with mouse and the keyboard context-menu key.
  row('Q').querySelector('button').dispatchEvent(new KeyboardEvent('keydown',{key:'ContextMenu',bubbles:true,cancelable:true}));
  let menu=document.querySelector('.reference-context-menu');check(!!menu&&menu.textContent.includes('Add to group'),'keyboard premise menu');
- [...menu.querySelectorAll('button')].find(b=>b.textContent==='Argument type…').click();
+ [...menu.querySelectorAll('button')].find(b=>b.textContent==='Argument type').click();
  menu=document.querySelector('.reference-context-menu');[...menu.querySelectorAll('button')].find(b=>b.textContent==='Weak Objection').click();
  check(referenceArguments(m,0).length===2&&referenceArguments(m,0)[1].kind==='weak-objection','type menu creates typed argument');
  check(getComputedStyle(cards()[1]).borderStyle==='dashed','weak group uses dashed border');
@@ -63,7 +63,7 @@ const count=dom.window.eval(`(()=>{
    check(cards()[0].dataset.color===color,'support inherits color of '+type);
    check((getComputedStyle(cards()[0]).borderStyle==='dashed')===type.startsWith('weak-'),'support inherits border of '+type);
    cards()[0].querySelector('legend button').click();
-   [...document.querySelectorAll('.reference-context-menu button')].find(b=>b.textContent==='Argument type…').click();
+   [...document.querySelectorAll('.reference-context-menu button')].find(b=>b.textContent==='Argument type').click();
    const labels=[...document.querySelectorAll('.reference-context-menu button')].map(b=>b.textContent.replace('✓ ',''));
    check(JSON.stringify(labels)===JSON.stringify(['Support',KIND_NAME[attack],KIND_NAME[weak]]),'child-compatible menu for '+type);
    for(const stored of ['support','objection','rebuttal','weak-objection','weak-rebuttal']){
