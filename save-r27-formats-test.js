@@ -16,6 +16,11 @@
 //     picture as invisible text, each character read back as itself. (The
 //     pictures themselves are drawn in a real browser: jsdom draws none.)
 // (5) Export SVG, Export PNG, Export Text and "Save now" are gone.
+// (6) r27.95 (the user, 2026-10-08: "on mobile, when choosing 'Save As', is
+//     it possible to allow selecting the type of file? It seems to default to
+//     JSON"): on a phone or tablet the save screen has no list of file types
+//     (Android's names a file and a folder only), so Save As asks the format
+//     first, in the menu, and then opens the save screen for that one.
 //
 // Run:  node save-r27-formats-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -74,6 +79,28 @@ function pickerWin(label) {
             };
         }
     });
+}
+// The same on a phone or tablet: its main pointer a finger.
+function touchPickerWin(label) {
+    const W = makeWin(label, {
+        beforeParse(win) {
+            win.matchMedia = q => ({ matches: /pointer:\s*coarse/.test(q), media: q, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return false; } });
+            win.__offered = []; win.__wrote = []; win.__nextName = 'Map.json'; win.__refuse = false;
+            win.showSaveFilePicker = function (opts) {
+                win.__offered.push(opts);
+                if (win.__refuse) return Promise.reject(Object.assign(new Error('not allowed'), { name: 'SecurityError' }));
+                const name = win.__nextName;
+                return Promise.resolve({
+                    name,
+                    createWritable: () => Promise.resolve({
+                        write: b => { win.__wrote.push(b); return Promise.resolve(); },
+                        close: () => Promise.resolve()
+                    })
+                });
+            };
+        }
+    });
+    return W;
 }
 const MAP = [{ id: 'm', type: 'contention', texts: ['Zombies are possible.'], collapsed: [], children: [
     { id: 's', type: 'support', texts: ['If zombies are conceivable, then zombies are possible.', 'Zombies are conceivable.'], collapsed: [], children: [] }] }];
@@ -158,6 +185,59 @@ const MAP = [{ id: 'm', type: 'contention', texts: ['Zombies are possible.'], co
         ok(r.escape.result && r.escape.result.saved === false && r.escape.got === 0 && r.escape.closed, 'Escape closes the menu and saves nothing', J(r.escape));
         ok(r.ctrlS.got.length === 1 && r.ctrlS.got[0].name === 'Zombie Map.json' && !r.ctrlS.menu,
             'Save to File (Ctrl+S) downloads the map at once, no menu', J(r.ctrlS));
+        ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
+        W.dom.window.close();
+    }
+
+    console.log('\n-- (6) a phone or tablet: the format first, then the save screen for it --');
+    {
+        const W = touchPickerWin('touch');
+        await sleep(300);
+        const r = JSON.parse(await W.win.eval(`(async function () {
+            __argmap.state.trees = ${J(MAP)}; __argmap.state.name = 'Zombie Map'; render();
+            var m = document.getElementById('context-menu'), wait = function (ms) { return new Promise(function (res) { setTimeout(res, ms); }); };
+            var pick = function (id) { var b = m.querySelector('[data-save-format="' + id + '"]'); if (b) b.click(); };
+            var out = {};
+            // Save As: the menu, and no save screen yet.
+            var result = null; saveMapAs().then(function (x) { result = x; });
+            out.menu = { open: m.classList.contains('open'), items: [].slice.call(m.querySelectorAll('[data-save-format]')).length, offered: window.__offered.length };
+            // A picture: the save screen for it alone, named for it; its own
+            // format written, though the screen hands back a name with no ending.
+            window.__nextName = 'Zombie Map';
+            pick('svg');
+            await wait(100);
+            var b = window.__wrote[0];
+            out.svg = { offered: window.__offered[0], type: b ? b.type : null, start: b ? (await b.text()).slice(0, 5) : null, result: result, linked: linkedFileName(), closed: !m.classList.contains('open') };
+            // The map: linked to its file, as on a computer.
+            window.__offered = []; window.__wrote = []; window.__nextName = 'Zombie Map.json'; result = null;
+            saveMapAs().then(function (x) { result = x; });
+            pick('json');
+            await wait(100);
+            out.json = { offered: window.__offered[0], type: window.__wrote[0] ? window.__wrote[0].type : null, result: result, linked: linkedFileName() };
+            // Save to File's first save: the map alone, no menu.
+            unlinkFile(); window.__offered = []; window.__nextName = 'First.json';
+            saveMap(); await wait(100);
+            out.first = { menu: m.classList.contains('open'), offered: window.__offered[0] };
+            // A save screen the page may not use: the format chosen, downloaded.
+            var got = []; downloadBlob = function (blob, name) { got.push({ name: name, type: blob.type }); return Promise.resolve(true); };
+            window.__offered = []; window.__refuse = true; result = null;
+            saveMapAs().then(function (x) { result = x; });
+            pick('txt');
+            await wait(100);
+            out.refused = { got: got, result: result };
+            return JSON.stringify(out);
+        })()`));
+        ok(r.menu.open && r.menu.items === 6 && r.menu.offered === 0, 'Save As opens the menu of the six formats first, before any save screen', J(r.menu));
+        ok(r.svg.offered && r.svg.offered.suggestedName === 'Zombie Map.svg' && J(r.svg.offered.types) === J([{ description: 'SVG image', accept: { 'image/svg+xml': ['.svg'] } }]) &&
+            r.svg.type === 'image/svg+xml' && r.svg.start === '<svg ' && r.svg.result && r.svg.result.format === 'svg' && r.svg.linked === null && r.svg.closed,
+            'choosing SVG opens the save screen for SVG alone, named .svg, and writes the picture -- though the screen drops the ending', J(r.svg));
+        ok(r.json.offered && J(r.json.offered.types.map(t => t.description)) === J(['Argument map (JSON)']) && r.json.type === 'application/json' &&
+            r.json.result && r.json.result.format === 'json' && r.json.linked === 'Zombie Map.json',
+            'choosing the map saves the map, linked to its file', J(r.json));
+        ok(!r.first.menu && r.first.offered && J(r.first.offered.types.map(t => t.description)) === J(['Argument map (JSON)']),
+            'Save to File\'s first save still offers the map alone, with no menu', J(r.first));
+        ok(r.refused.got.length === 1 && r.refused.got[0].name === 'Zombie Map.txt' && r.refused.got[0].type === 'text/plain' && r.refused.result && r.refused.result.format === 'txt',
+            'where the save screen is refused, the format chosen is downloaded', J(r.refused));
         ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
         W.dom.window.close();
     }

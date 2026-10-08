@@ -345,6 +345,54 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
         ok(derived.rule === 'modus ponens' && derived.box === '[-O1](#box:gonegone).' && !derived.hidden,
             'Derive Parent writes the name back as its link (not "-O1.", which says "not O1"), and nothing hidden goes into the map', JSON.stringify(derived));
         ok(derived.tag === '\u2713 modus ponens', 'and the new step reads it as the same name: modus ponens', JSON.stringify(derived));
+
+        // r27.86 (the user, 2026-10-06): a weak objection is WO1 now, not
+        // -O1. A link written to one before then says its new name, and
+        // reads as its box's words, like any link to a box that is there.
+        const live = T(W, `
+            state.trees = [{ id: 'mmmmmmmm', type: 'contention', texts: ['Ban cars downtown.'], collapsed: [], children: [
+                { id: 'ssssssss', type: 'support', texts: ['It cuts pollution.'], collapsed: [], children: [
+                    { id: 'wwwwwwww', type: 'weak-objection', texts: ['That needs evidence.'], collapsed: [], children: [] } ] },
+                { id: 'pppppppp', type: 'support', texts: ['If [-O1](#box:wwwwwwww), then the support fails.'], collapsed: [], children: [] } ] }];
+            ensureCollabFields(state); labelMode = 'none'; render();
+            const a = document.querySelector('a.box-link[data-box-id="wwwwwwww"]');
+            const simple = a && a.textContent;
+            labelMode = 'complex'; render();
+            const b = document.querySelector('a.box-link[data-box-id="wwwwwwww"]');
+            const complex = b && b.textContent;
+            labelMode = 'none'; render();
+            const text = state.trees[0].children[1].texts[0];
+            return { simple, complex, stored: refreshBoxLinkLabels(text), read: claimWithBoxLinks(text, new Set(['pppppppp#0'])) };`);
+        ok(live.simple === 'WO1' && live.complex === 'M1S1WO1' && live.stored === 'If [WO1](#box:wwwwwwww), then the support fails.',
+            'a link written to a weak objection as -O1 now says WO1 (M1S1WO1 with complex labels), and is brought up to date as WO1', JSON.stringify(live));
+        ok(/needs evidence/.test(live.read) && !/O1/.test(live.read),
+            'and the check reads it as the weak objection\'s words, not its name', JSON.stringify(live));
+
+        // r27.89 (the user, 2026-10-06, a map: "If [S4], and if [S5], then
+        // computers lack semantics", beside S4 and S5, was "? not
+        // recognized"): a linked box is read in brackets, and the capital it
+        // begins with had been read as a name's -- "If (Computer programs are
+        // only formal)" was about something named Computer.
+        const searle = T(W, `
+            const run = six => {
+                state.trees = [{ id: 'm1m1m1m1', type: 'contention', texts: ['Computers lack semantics.'], collapsed: [], children: [
+                    { id: 's4s4s4s4', type: 'support', texts: ['Computer programs are only formal.', 'Syntax by itself is not sufficient for semantics.', six], collapsed: [], children: [] } ] }];
+                ensureCollabFields(state); render();
+                const st = collectDeductiveSteps(state.trees).find(s => s.childId === 's4s4s4s4');
+                return st ? deductiveStepTagText(st) : null;
+            };
+            return [run('If [S4](#box:s4s4s4s4), and if [S5](#box:s4s4s4s4.1), then computers lack semantics.'),
+                run('If [S4](#box:s4s4s4s4) and [S5](#box:s4s4s4s4.1), then computers lack semantics.'),
+                run('If [S4](#box:s4s4s4s4), and if [S5](#box:s4s4s4s4.1), then [S1](#box:m1m1m1m1).')];`);
+        ok(searle.every(t => t === '✓ modus ponens, conditions together'),
+            'a linked box is read as it is alone: "If [S4], and if [S5], then ..." -- or "and", or a link to the conclusion -- follows by modus ponens, conditions together (it had read "Computer" as a name)', JSON.stringify(searle));
+        const typed = T(W, `
+            state.trees = [{ id: 'mmmmmmmm', type: 'contention', texts: ['Minds are programs.'], collapsed: [], children: [
+                { id: 'pppppppp', type: 'support', texts: ['If (Computers think), then minds are programs.', 'Computers think.'], collapsed: [], children: [] } ] }];
+            ensureCollabFields(state); render();
+            const st = collectDeductiveSteps(state.trees).find(s => s.childId === 'pppppppp');
+            return st ? deductiveStepTagText(st) : null;`);
+        ok(typed === '✓ modus ponens', 'so is a clause typed in brackets: "If (Computers think), ..."', typed);
     }
 
     console.log('\n-- (5) Editing: One click --');

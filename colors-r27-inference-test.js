@@ -184,8 +184,8 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J(ump.boxes[1]) === J(['ic-c: Poe', 'ic-rest:  is ', 'ic-k0: a raven']),
             '"All ravens" colored whole, quantifier and all, meeting "a raven"; "black" and "Poe" go on', J(ump));
         const no = paint(['No ravens are white', 'Poe is a raven'], 'Poe is not white');
-        ok(J(no.boxes[0]) === J(['ic-k0 ic-neg: No', 'ic-k0:  ravens', 'ic-rest:  are ', 'ic-c ic-cn: white']),
-            '"No ravens are white": "No" red in its colored part, and "white" underlined -- the conclusion denies it', J(no));
+        ok(J(no.boxes[0]) === J(['ic-k0: No ravens', 'ic-rest:  are ', 'ic-c ic-cn: white']),
+            '"No ravens are white": "No" denies nothing another premise says, so it is not red (r27.91); "white" underlined -- the conclusion denies it', J(no));
         const hs = paint(['If it rains, then the ground is wet', 'If the ground is wet, then the game is cancelled'], 'If it rains, then the game is cancelled');
         ok(hs.rule === 'hypothetical syllogism' &&
             J(hs.boxes[0]) === J(['ic-c: If it rains', 'ic-rest: , then ', 'ic-k0: the ground is wet']) &&
@@ -202,8 +202,8 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(J(bars.boxes[0]) === J(['ic-k0: All humans', 'ic-rest:  are ', 'ic-c: mortal']) && J(bars.boxes[1]) === J(['ic-c: All Greeks', 'ic-rest:  are ', 'ic-k0: humans']),
             'a syllogism: the middle term one color in both premises', J(bars));
         const obj = paint(['If Poe is a crow, then Poe is not a raven', 'Poe is a crow'], 'Poe is a raven', 'objection');
-        ok(obj.rule === 'modus ponens' && J(runs(obj.boxes[0], /^ic-c/)) === J(['Poe', 'is not', 'a raven']) && !obj.boxes[0].some(p => /ic-cn/.test(p)),
-            'an objection: what it concludes is the denial of its box, so "Poe is not a raven" goes on plain', J(obj));
+        ok(obj.rule === 'modus ponens' && J(runs(obj.boxes[0], /^ic-c/)) === J(['Poe is not a raven']) && !obj.boxes[0].some(p => /ic-cn|ic-neg/.test(p)),
+            'an objection: what it concludes is the denial of its box, so "Poe is not a raven" goes on plain -- its "not" denying no premise, not red (r27.91)', J(obj));
         const mtn = paint(["If the alarm didn't go off, then the dog was quiet", 'The dog was not quiet'], 'The alarm went off');
         ok(runs(mtn.boxes[0], /ic-cn/).join(' ') === "the alarm didn't go off", 'a denied part the conclusion affirms is underlined too', J(mtn));
         const ac = paint(['If it rains, then the ground is wet', 'The ground is wet'], 'It rains');
@@ -216,8 +216,29 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
     console.log('\n-- (3) words that deny --');
     {
         const neither = paint(['It is not the case that both it rains and it snows', 'It rains'], 'It does not snow');
-        ok(neither.boxes[0][0] === 'ic-rest ic-neg: It is not the case that' && /ic-c ic-cn: it snows/.test(J(neither.boxes[0])),
-            '"It is not the case that" red (never dimmed) where it stands; "it snows" goes on denied', J(neither));
+        ok(neither.boxes[0][0] === 'ic-rest: It is not the case that both ' && /ic-c ic-cn: it snows/.test(J(neither.boxes[0])),
+            '"It is not the case that" denies nothing another premise says ("It rains" is no "both"), so it is not red (r27.91); "it snows" goes on denied', J(neither));
+        // r27.91 (the user, 2026-10-06): red "only ... when they're
+        // contradicting a premise that lacks the negation".
+        const searle = paint(['Computer programs are only formal', 'Syntax by itself is not sufficient for semantics',
+            'If computer programs are only formal, and if syntax by itself is not sufficient for semantics, then computers lack semantics'], 'Computers lack semantics');
+        ok(searle.rule === 'modus ponens, conditions together' && !searle.boxes.some(b => b.some(p => /ic-neg/.test(p.split(': ')[0]))),
+            'a denial two premises share contradicts neither: "is not sufficient" is not red', J(searle.boxes));
+        // r27.92 (the user, 2026-10-07): "highlight the negation or negative
+        // word that's doing the contradicting ... rather than just every
+        // instance of 'not'".
+        const feather = paint(['If ravens are black, then some feather is black', 'No feather is black'], 'Ravens are not black');
+        ok(feather.rule === 'modus tollens' && J(feather.boxes[1]) === J(['ic-k0 ic-neg: No', 'ic-k0:  feather is black']),
+            'a negative quantifier that contradicts is red: "No" in "No feather is black", beside "some feather is black"', J(feather.boxes));
+        const nested = paint(['If it rains, then Poe does not fly', 'It is not the case that Poe does not fly'], 'It does not rain');
+        ok(nested.rule === 'modus tollens' && J(nested.boxes[1]) === J(['ic-k0 ic-neg: It is not the case that', 'ic-k0:  Poe does not fly']),
+            'only the denial doing the contradicting: "It is not the case that", not the "does not" both premises say', J(nested.boxes));
+        const someNot = paint(['All ravens are black', 'Some ravens are not black'], 'Poe is a raven');
+        ok(someNot.boxes[1].some(p => p === 'ic-k0 ic-neg: are not') && !someNot.boxes[0].some(p => /ic-neg/.test(p)),
+            '"Some ravens are not black" beside "All ravens are black": its "not" red', J(someNot.boxes));
+        const umt = paint(['All ravens are black', 'Poe is not black'], 'Poe is not a raven');
+        ok(umt.rule === 'universal modus tollens' && umt.boxes[1].some(p => /ic-neg/.test(p.split(': ')[0]) && /not/.test(p)),
+            'one that denies what another premise says of all ravens is red: "Poe is not black" beside "All ravens are black"', J(umt.boxes));
         const sym = paint(['P → Q', '¬Q'], '¬P');
         ok(sym.rule === 'modus tollens' && J(sym.boxes[1]) === J(['ic-k0 ic-neg: ¬', 'ic-k0: Q']) && J(sym.boxes[0]) === J(['ic-c ic-cn: P', 'ic-rest:  → ', 'ic-k0: Q']),
             'in symbols too: "¬" red (and part of its claim "¬Q"), "P" underlined', J(sym));
@@ -244,6 +265,14 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             const a = rd.querySelector('.box-link');
             return { wrap: a && a.parentElement.className, label: a && a.textContent, parts: __parts(0), rule: (collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A') || {}).rule }; })()`);
         ok(link.wrap === 'ic ic-k0' && link.rule, 'a premise link, read as its box\'s words, takes their color', J(link));
+        // r27.90 (the user, 2026-10-06): "if I put something in parentheses
+        // at the end, it cuts off the right parenthesis (dims it)".
+        const paren = paint(['Computer programs are only formal (syntactic).', 'If computer programs are only formal (syntactic), then computers lack semantics.'], 'Computers lack semantics.');
+        const held = paint(['(Poe is black).', 'If Poe is black, then Mary is happy.'], 'Mary is happy.');
+        ok(J(runs(paren.boxes[0], /ic-k0/)) === J(['Computer programs are only formal (syntactic)']) &&
+            J(runs(paren.boxes[1], /ic-k0/)) === J(['computer programs are only formal (syntactic)']) &&
+            J(runs(held.boxes[0], /ic-k0/)) === J(['(Poe is black)']) && runs(held.boxes[0], /ic-rest/).join('') === '.',
+            'a bracket that closes one opened inside a part, or that holds all of it, takes its color; the full stop does not', J([paren, held]));
     }
 
     console.log('\n-- (5) the look --');
@@ -283,8 +312,19 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             return { version: inferenceColorsVersion, dark, light, parts }; })()`);
         ok(v2.dark.c === 'rgb(111, 191, 139) / 1 / rgba(0, 0, 0, 0)' && / \/ 1 \/ /.test(v2.dark.rest || '') && /^rgb\(95, 211, 232\) \/ 1 \//.test(v2.dark.k0 || ''),
             'colors 2: what goes on to the conclusion green (#6fbf8b), the words around it not dimmed, meetings in their colors', J(v2.dark));
-        ok(/^rgb\(255, 123, 114\) \/ 1 \//.test(v2.dark.cneg || '') && /^rgb\(198, 40, 40\) \/ 1 \//.test(v2.light.cneg || ''),
-            'a word that denies inside a green part stays red', J({ dark: v2.dark.cneg, light: v2.light.cneg }));
+        const red2 = val(`(function () {
+            const cs = sel => { const x = document.querySelector('.node[data-node-id="A"] .rendered-text ' + sel); if (!x) return null; const c = getComputedStyle(x); return c.color + ' / ' + c.opacity + ' / ' + c.backgroundColor; };
+            if (inferenceColorsOn) { inferenceColorsOn = false; syncInferenceColorsButton(); }
+            cycleInferenceColors(); cycleInferenceColors();
+            __load(${J(step(['The dog did not bark', 'If the dog barked, then the alarm went off'], 'The dog did not bark, and if the dog barked, then the alarm went off'))});
+            const dark = cs('span.ic-c.ic-neg');
+            document.body.classList.add('nodes-light'); refreshDerivationTags();
+            const light = cs('span.ic-c.ic-neg');
+            document.body.classList.remove('nodes-light');
+            cycleInferenceColors(); cycleInferenceColors();   // off, then colors 1 again for what follows
+            return { dark, light }; })()`);
+        ok(/^rgb\(255, 123, 114\) \/ 1 \//.test(red2.dark || '') && /^rgb\(198, 40, 40\) \/ 1 \//.test(red2.light || ''),
+            'a word that denies another premise, inside a green part, stays red ("The dog did not bark", beside "if the dog barked")', J(red2));
         ok(v2.light.c === 'rgb(23, 128, 58) / 1 / rgba(23, 128, 58, 0.12)', 'on light boxes the green is darker (#17803a), on a pale green tint', v2.light.c);
         ok(/body\.ic-v2 \.rendered-text \.ic-rest, body\.ic-v2 \.rendered-text \.ic-u\s*\{\s*opacity:\s*1;\s*\}/.test(CSS) && J(v2.parts) === J(paint(['If Poe is a crow, then Poe is not a raven', 'Poe is a crow'], 'Poe is a raven', 'objection').boxes[0]),
             'a part not used is not dimmed either; the parts are those of colors 1 (only the look changes)', J(v2.parts));
@@ -342,8 +382,8 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(mpor.rule === 'modus ponens' && J(mpor.boxes[0]) === J(['ic-rest: If ', 'ic-k0: it rains', 'ic-rest:  and ', 'ic-k1: it is cold', 'ic-rest: , then ', 'ic-c: the roads freeze or the game is off']),
             '"the roads freeze or the game is off" one stretch; the parts that meet keep their own colors, the "and" between them outside it', J(mpor));
         const dm = paint(['It is not the case that both it rains and it snows'], 'It does not rain or it does not snow');
-        ok(J(dm.boxes[0]) === J(['ic-c ic-neg: It is not the case that', 'ic-c:  both ', 'ic-c ic-cn: it rains', 'ic-c:  and ', 'ic-c ic-cn: it snows']),
-            'a denied stretch: its words that deny still red, each part the conclusion denies still underlined', J(dm));
+        ok(J(dm.boxes[0]) === J(['ic-c: It is not the case that both ', 'ic-c ic-cn: it rains', 'ic-c:  and ', 'ic-c ic-cn: it snows']),
+            'a denied stretch: its "it is not the case that" plain, denying no premise (r27.91); each part the conclusion denies still underlined', J(dm));
         const ac = paint(['If it rains, then the ground is wet', 'The ground is wet'], 'It rains');
         ok(ac.rule === null && !ac.boxes.some(b => b.some(p => /^ic-c(?![a-z-])/.test(p.split(': ')[0]))), 'not valid yet: no stretch, each part its own color', J(ac));
         const kind = paint(['All ravens that live in cities are black', 'Poe is a raven that lives in a city'], 'Poe is black');
@@ -387,8 +427,8 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(mpor.rule === 'modus ponens' && mpor.boxes[0].includes('ic-c: Q ∨ S'), '"Q ∨ S" one stretch, as "the roads freeze or the game is off"', J(mpor.boxes[0]));
         const under = paint(['__P__ → Q', 'P'], 'Q');
         const tie = ['~Q', '¬ Q', '~(P & Q)'].map(t => paint(t === '~(P & Q)' ? ['~(P & Q)', 'P'] : ['P → Q', t], t === '~(P & Q)' ? '~Q' : '~P'));
-        ok(J(tie[0].boxes[1]) === J(['ic-k0 ic-neg: ~', 'ic-k0: Q']) && J(tie[1].boxes[1]) === J(['ic-k0 ic-neg: ¬', 'ic-k0:  Q']) && tie[2].boxes[0][0] === 'ic-rest ic-neg: ~',
-            'a denial in symbols is part of the claim it denies ("~Q", "¬ Q"): its color, still red; not one before a bracket', J(tie.map(t => t.boxes)));
+        ok(J(tie[0].boxes[1]) === J(['ic-k0 ic-neg: ~', 'ic-k0: Q']) && J(tie[1].boxes[1]) === J(['ic-k0 ic-neg: ¬', 'ic-k0:  Q']) && tie[2].boxes[0][0] === 'ic-rest: ~(',
+            'a denial in symbols is part of the claim it denies ("~Q", "¬ Q"): its color, still red; not one before a bracket, which here denies no premise (r27.91)', J(tie.map(t => t.boxes)));
         const tint = val(`(function () {
             document.body.classList.add('nodes-light');
             __step(${J(step(['P → Q', '~Q'], '~P'))});

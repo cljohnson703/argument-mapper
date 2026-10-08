@@ -334,10 +334,11 @@ function symbolicGenerator(rand) {
     function print(f, sp, top, parent, side) {
         const [open, close] = [sp.paren[0], sp.paren[1]];
         // Minimal: leave out brackets that precedence makes unneeded (not around
-        // ↔, and not on the left of →, which groups to the right).
+        // ↔, nor around a → inside a →: with none, which one is the main one
+        // is asked, r27.94).
         const needless = () => sp.minimal && parent && f.op !== 'iff' && parent !== 'iff' &&
             // A same-kind part keeps its brackets: a chain is a list of its own (association regroups it).
-            (RANK[f.op] > RANK[parent] || (f.op === 'imp' && parent === 'imp' && side === 'b'));
+            RANK[f.op] > RANK[parent];
         const wrap = s => top || needless() ? s : open + s + close;
         switch (f.op) {
             case 'letter': return f.name.slice(2, -1).toUpperCase();
@@ -1051,9 +1052,10 @@ const HARD_CASES = [
     ['no', 'O', ['Not surprisingly, Poe is black'], 'Surprisingly, Poe is black', '"not surprisingly" denies nothing'],
     ['no', 'S', ['Not necessarily, Poe is black'], 'Poe is not black', '"not necessarily" is not "not"'],
 
-    ['no', 'S', ['If Poe is black, so is Fido', 'Poe is black'], 'So is Fido', 'a clause cut short is not read'],
+    ['no', 'S', ['If Poe is black, so is Fido', 'Poe is black'], 'So is Fido', 'a clause cut short with nothing before it in its box is not read'],
+    ['modus ponens', 'S', ['If Poe is black, so is Fido', 'Poe is black'], 'Fido is black', 'one with the clause before it in its box is (r27.88)'],
     ['no', 'S', ['If the relation is asymmetric, then the relation is irreflexive', 'The relation is not irreflexive'], 'The relation is symmetric', '"asymmetric" is more than "not symmetric"'],
-    ['no', 'S', ['Poe is black, and so is Fido'], 'Poe is black', 'a clause cut short leaves its sentence unread'],
+    ['conjunction elimination', 'S', ['Poe is black, and so is Fido'], 'Fido is black', 'a clause cut short is read with the clause before it (r27.88; it had left its sentence unread)'],
 
     // ---- formulas ----
     ['universal elimination under ∀∀∀', 'S', ['∀x∀x∀y R(x,y)'], '∀z∀z∀z R(z,z)', 'bound variables are not confused: the outer quantifiers are vacuous, so this is valid'],

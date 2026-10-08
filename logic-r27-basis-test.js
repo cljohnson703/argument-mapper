@@ -470,8 +470,8 @@ try {
             'a run of thirty-two "iff"s is flagged at once, and its grouped reading -- which doubles at each "iff" -- is refused as too long');
         ok(ev('var t = "P iff Q because R"; return parseClaim(t).kind === "atom" && claimNotes(t).some(function (n) { return /because/.test(n.message); });') &&
             ev('var t = "if Bob sings, then Mary dances because Ann runs"; return parseClaim(t).kind === "atom";') &&
-            ev('var t = "if Poe is black, so is Fido"; return claimNotes(t).some(function (n) { return /cut short/.test(n.message); });'),
-            '"because" makes the whole sentence one claim, not only the part it is in; "so is" is still a clause cut short');
+            ev('var t = "if Poe is black, so is Fido"; return parseClaim(t).kind === "if" && claimNotes(t).some(function (n) { return /“so is Fido” as “Fido is black”/.test(n.message); });'),
+            '"because" makes the whole sentence one claim, not only the part it is in; "so is Fido" is read with the clause before it, "Fido is black" (r27.88; it had been a clause cut short)');
 
         // Brackets group, in English as in symbols (r27.43): a group is one
         // claim, and no connective is found inside it.
@@ -954,12 +954,12 @@ try {
         ok(bc[0] === '\u2717 bare challenge' && !!offer && tagOf(offer, 'Poe is black', 'weak-objection')[0] === '\u2713 modus ponens' &&
             verdictOf([bareMap]).status === 'asserted' && verdictOf([arguedMap]).status === 'unresolved',
             'a bare challenge ("It has not been shown that P" alone) has no force; the premises it offers instead pass, and challenge', J([bc, offer]));
-        // For a conditional box, the offer brackets the box, so that each
-        // "then" has its "if" -- and it passes.
+        // For a conditional box, the offer says the box as it is, each "if"
+        // with its own "then" (r27.93; it had been bracketed) -- and it passes.
         const cb = tagOf(['It has not been shown that if Poe is a raven, then Poe is black'], 'If Poe is a raven, then Poe is black', 'weak-objection'), coffer = offered(cb[1]);
-        ok(cb[0] === '\u2717 bare challenge' && !!coffer && /that \(if Poe is a raven, then Poe is black\)/.test(coffer[0]) &&
+        ok(cb[0] === '\u2717 bare challenge' && !!coffer && /think that if Poe is a raven, then Poe is black, then we can/.test(coffer[0]) &&
             tagOf(coffer, 'If Poe is a raven, then Poe is black', 'weak-objection')[0] === '\u2713 modus ponens',
-            'the offer is checked before it is made: a conditional box is bracketed in it', J([cb, coffer]));
+            'the offer is checked before it is made: a conditional box needs no brackets in it', J([cb, coffer]));
         // A bare step whose box is argued for below it is an argument through
         // that argument; alone it has no force.
         const zombie = ['If zombies are possible, then physicalism is false', 'Zombies are possible'];
@@ -1398,8 +1398,8 @@ try {
             'a name ending in -s opens a clause of its own; the weather\'s "it" asks nothing; "her" after "she" is someone else; "the storm hit Mary" is no thing; a plural may be "they"');
         // A clause is no thing: "that ..." as a subject, "which" after an adjective.
         ok(key('That the vase is broken surprised Mary.').replace(//g, '') === 'A:that the vase is broken surprised mary' &&
-            key('The vase is broken, which is sad.') === 'P:the vase|=broken which is sad' && key('Poe is a raven, which is black.') === key('Poe is a raven that is black.'),
-            '"That the vase is broken surprised Mary" is one claim (it had been "that the vase is Mary" and more); "which" after "broken" is no relative clause on the vase; after a noun it still is');
+            key('The vase is broken, which is sad.') === 'C[P:the vase|=broken;P:the fact that the vase is broken|=sad]' && key('Poe is a raven, which is black.') === key('Poe is a raven that is black.'),
+            '"That the vase is broken surprised Mary" is one claim (it had been "that the vase is Mary" and more); "which" after "broken" is no relative clause on the vase but what the clause says (r27.88: "the fact that the vase is broken"); after a noun it still is');
         // Typos: "✗ typo?", with the fix; the box is read as fixed, and the step waits for it.
         const typo = note('Mary  left the  room.'), twice = note('The the raven is black.');
         ok(typo.kind === 'typo' && /two spaces after “Mary”; two spaces after “the”/.test(typo.message) && J(typo.offers) === J(['Mary left the room.']) &&

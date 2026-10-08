@@ -320,13 +320,15 @@ const J = JSON.stringify;
             labelMode = 'none'; render();
             return { complex: o, simple: s };`);
         const c = lab.complex || {}, s = lab.simple || {};
-        ok(c.B1 === 'M1S1-O1' && c.W1 === 'M1-O1', 'weak objections are lettered -O: M1S1-O1, M1-O1', c.B1 + ' / ' + c.W1);
-        ok(c.BS === 'M1S1-O1S1' && c.BR === 'M1S1-O1R1', 'a support inside one stays S; an ordinary attack on it is R', c.BS + ' / ' + c.BR);
-        ok(c.BG === 'M1S1-O1-R1' && c.GS === 'M1S1-O1-R1S1' && c.GB === 'M1S1-O1-R1-O1', 'weak rebuttals are lettered -R, and weak attacks nest: M1S1-O1-R1-O1', [c.BG, c.GS, c.GB].join(' / '));
-        ok(c.G1 === 'M1S1O1-R1' && c.GO === 'M1S1O1-R1O1' && c.RB === 'M1S1O1R1-O1', '-R on an objection, O on that, -O on a rebuttal', [c.G1, c.GO, c.RB].join(' / '));
-        ok(c.BNS === 'M1S1-O1N1S1' && c.XS === '-R1S1', 'notes label as before; a separate tree is named by its top box, here a weak rebuttal: -R1', c.BNS + ' / ' + c.XS);
-        ok(s.B1 === '-O1' && s.GB === '-O2' && s.RB === '-O3' && s.W1 === '-O4' && s.BG === '-R1' && s.G1 === '-R2' && s.X === '-R3',
-            'simple labels count -O and -R separately', J(s));
+        // r27.86 (the user, 2026-10-06): WO and WR, no longer -O and -R,
+        // whose minus read as "not" or as a separator in a link.
+        ok(c.B1 === 'M1S1WO1' && c.W1 === 'M1WO1', 'weak objections are lettered WO: M1S1WO1, M1WO1', c.B1 + ' / ' + c.W1);
+        ok(c.BS === 'M1S1WO1S1' && c.BR === 'M1S1WO1R1', 'a support inside one stays S; an ordinary attack on it is R', c.BS + ' / ' + c.BR);
+        ok(c.BG === 'M1S1WO1WR1' && c.GS === 'M1S1WO1WR1S1' && c.GB === 'M1S1WO1WR1WO1', 'weak rebuttals are lettered WR, and weak attacks nest: M1S1WO1WR1WO1', [c.BG, c.GS, c.GB].join(' / '));
+        ok(c.G1 === 'M1S1O1WR1' && c.GO === 'M1S1O1WR1O1' && c.RB === 'M1S1O1R1WO1', 'WR on an objection, O on that, WO on a rebuttal', [c.G1, c.GO, c.RB].join(' / '));
+        ok(c.BNS === 'M1S1WO1N1S1' && c.XS === 'WR1S1', 'notes label as before; a separate tree is named by its top box, here a weak rebuttal: WR1', c.BNS + ' / ' + c.XS);
+        ok(s.B1 === 'WO1' && s.GB === 'WO2' && s.RB === 'WO3' && s.W1 === 'WO4' && s.BG === 'WR1' && s.G1 === 'WR2' && s.X === 'WR3',
+            'simple labels count WO and WR separately', J(s));
 
         // A hyphen is a place a line may break; a label is one name.
         const line = T(W, `__c.load(${J(TREES)}); labelMode = 'complex'; render();
@@ -334,7 +336,7 @@ const J = JSON.stringify;
             var out = { text: el && el.textContent, ws: el && getComputedStyle(el).whiteSpace };
             labelMode = 'none'; render();
             return out;`);
-        ok(line.text === 'M1S1-O1-R1-O1' && line.ws === 'nowrap', 'a label stays on one line: its hyphens are not places to break', J(line));
+        ok(line.text === 'M1S1WO1WR1WO1' && line.ws === 'nowrap', 'a label stays on one line', J(line));
 
         const rt = T(W, `__c.load(${J(TREES)});
             var text = generateTextRepresentation();
@@ -344,8 +346,8 @@ const J = JSON.stringify;
             (function walk(ns) { (ns || []).forEach(function (n) { var k = kinds.get(n.id); byText[n.texts[0]] = k.kind + '/' + k.side; walk(n.children); }); })(parsed.trees);
             return { text: text, byText: byText };`);
         rt.text = rt.text || ''; rt.byText = rt.byText || {};
-        ok(/M1S1-O1-R1-O1\s*:\s*GB/.test(rt.text) && /M1S1O1-R1\s*:\s*G1/.test(rt.text) && /M1-O1\s*:\s*W1/.test(rt.text),
-            'text export writes -O and -R', rt.text.split('\n').filter(l => /GB|G1|W1/.test(l)).join(' | '));
+        ok(/M1S1WO1WR1WO1\s*:\s*GB/.test(rt.text) && /M1S1O1WR1\s*:\s*G1/.test(rt.text) && /M1WO1\s*:\s*W1/.test(rt.text) && !/-[OR]\d/.test(rt.text),
+            'text export writes WO and WR, and no hyphen', rt.text.split('\n').filter(l => /GB|G1|W1/.test(l)).join(' | '));
         const bt = rt.byText;
         ok(bt.B1 === WO + '/' + WO && bt.BG === WR + '/' + WR && bt.GB === WO + '/' + WO && bt.G1 === WR + '/' + WR &&
            bt.RB === WO + '/' + WO && bt.W1 === WO + '/' + WO && bt.BS === 'support/' + WO && bt.GS === 'support/' + WR && bt.BR === 'rebuttal/rebuttal',
@@ -365,7 +367,24 @@ const J = JSON.stringify;
             return o;`);
         ok(hand['That needs evidence'] === WO + '>' + WO && hand['It does not'] === WR + '>' + WR &&
            hand['No evidence given'] === WR + '>' + WR && hand['Shops will close'] === 'objection>objection',
-            'a hand-written string reads -O as a weak objection and -R as a weak rebuttal', J(hand));
+            'a hand-written string in the letters before r27.86 still reads -O as a weak objection and -R as a weak rebuttal', J(hand));
+        const handNew = T(W, `var p = parseTextToState([
+                'M1: Ban cars downtown',
+                '  M1S1: It cuts pollution',
+                '    M1S1WO1: That needs evidence',
+                '      M1S1WO1WR1: It does not',
+                '    M1S1O1: Shops will close',
+                '      M1S1O1WR1: No evidence given',
+                '    M1S1aWO1: Not a co-premise mix-up',
+                'WR1: A separate weak rebuttal',
+                'WR1 @ +400,-200'
+            ].join('\\n'));
+            var kinds = computeArgumentKinds(p.trees), o = {};
+            (function walk(ns) { (ns || []).forEach(function (n) { o[n.texts[0]] = n.type + '>' + kinds.get(n.id).kind; walk(n.children); }); })(p.trees);
+            return o;`);
+        ok(handNew['That needs evidence'] === WO + '>' + WO && handNew['It does not'] === WR + '>' + WR &&
+           handNew['No evidence given'] === WR + '>' + WR && handNew['Shops will close'] === 'objection>objection' && handNew['A separate weak rebuttal'] === WR + '>' + WR,
+            'and in the letters it writes: WO a weak objection, WR a weak rebuttal (a separate one placed by "WR1 @ ...")', J(handNew));
     }
 
     /* ---------------- 5. keys ---------------- */

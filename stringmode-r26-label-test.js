@@ -138,8 +138,9 @@ function findByText(trees, needle) {
 
     // --- 4. -O and -R: weak objection and weak rebuttal -------------------
     // An objection or rebuttal, weakened. From r27.20 to r27.70 they were Q
-    // and P (and P, before that, a legacy support letter); text written then
-    // still imports, and is written back with -O and -R.
+    // and P (and P, before that, a legacy support letter), then -O and -R
+    // until r27.86; text written then still imports, and is written back
+    // with WO and WR (the user, 2026-10-06: the minus read as "not").
     {
         const weak = ['M1: Main', '  M1S1: Support', '    M1S1-O1: Weak objection',
             '      M1S1-O1-R1: Weak rebuttal', '      M1S1-O1S1: Backs the weak objection',
@@ -157,8 +158,10 @@ function findByText(trees, needle) {
         const o = findByText(wp.trees, 'Strong objection'), sup = findByText(wp.trees, 'Support');
         ok(!!o && o.type === 'objection' && !!sup && sup.children.length === 2 && o.children.length === 0,
             'weak: M1S1-O1 and M1S1O1 are different boxes, a weak objection and an objection', JSON.stringify(sup && sup.children.map(c => c.type)));
+        const weakNew = weak.replace(/-([OR])/g, 'W$1');
         const again = reexportOf(W, wp);
-        ok(again === weak, 'weak: re-exporting writes -O and -R back, byte for byte', again.replace(/\n/g, ' | '));
+        ok(again === weakNew, 'weak: re-exporting writes WO and WR for -O and -R', again.replace(/\n/g, ' | '));
+        ok(reexportOf(W, parseOf(W, weakNew)) === weakNew, 'weak: and WO and WR read back as written, byte for byte', reexportOf(W, parseOf(W, weakNew)).replace(/\n/g, ' | '));
 
         const old = parseOf(W, ['M1: Main', '  M1S1: Support', '    M1S1Q1: Weak objection',
             '      M1S1Q1P1: Weak rebuttal', '      M1S1Q1S1: Backs the weak objection',
@@ -166,7 +169,7 @@ function findByText(trees, needle) {
         const oq = findByText(old.trees, 'Weak objection'), op = findByText(old.trees, 'Weak rebuttal');
         ok(!!oq && oq.type === 'weak-objection' && !!op && op.type === 'weak-rebuttal',
             'weak: text from r27.20 to r27.70 still imports, Q as a weak objection and P as a weak rebuttal', JSON.stringify([oq && oq.type, op && op.type]));
-        ok(reexportOf(W, old) === weak, 'weak: and is written back with -O and -R', reexportOf(W, old).replace(/\n/g, ' | '));
+        ok(reexportOf(W, old) === weakNew, 'weak: and is written back with WO and WR', reexportOf(W, old).replace(/\n/g, ' | '));
     }
 
     // --- 5. Parentheses are ignored where implicit cannot apply ----------

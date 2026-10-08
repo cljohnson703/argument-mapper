@@ -27,7 +27,7 @@
 //   (5) hand-written text: no Positions entry, unsigned offsets, stray names,
 //       and no main contention at all;
 //   (6) old @x,y text, X text, untyped boxes, simple labels, cross-references;
-//   (7) a weak tree, whose name begins with a hyphen (-R1): its Positions
+//   (7) a weak tree, named WR1 (since r27.86; -R1 before): its Positions
 //       entry, a cross-reference and a premise link written by name;
 //   (8) Help.
 //
@@ -227,14 +227,14 @@ function fixture(mx, my, plain) {
             N('wr', 'weak-rebuttal', 'A separate weak rebuttal', [], { x: 30400, y: 29800, freePosition: true })
         ];
         const wt = exportOf(W, weak);
-        ok(/^-R1: A separate weak rebuttal$/m.test(wt) && /^-R1 @ \+400,-200$/m.test(wt),
-            'a separate weak rebuttal is named -R1, and placed by "-R1 @ +400,-200"', wt);
-        ok(/^M1S1 > -R1$/m.test(wt), 'a cross-reference names it the same way', wt);
-        ok(/^ {2}M1S2: If \[-O1\]\(#box:@M1S1-O1\), then the support fails\.$/m.test(wt), 'a premise link names the weak objection M1S1-O1', wt);
+        ok(/^WR1: A separate weak rebuttal$/m.test(wt) && /^WR1 @ \+400,-200$/m.test(wt),
+            'a separate weak rebuttal is named WR1, and placed by "WR1 @ +400,-200"', wt);
+        ok(/^M1S1 > WR1$/m.test(wt), 'a cross-reference names it the same way', wt);
+        ok(/^ {2}M1S2: If \[WO1\]\(#box:@M1S1WO1\), then the support fails\.$/m.test(wt), 'a premise link names the weak objection M1S1WO1', wt);
 
         const wp = parseOf(W, wt);
         const wm = find(wp.trees, 'Main'), wr = find(wp.trees, 'A separate weak rebuttal'), ws = find(wp.trees, 'A support'),
-              wo = find(wp.trees, 'Not shown'), wl = find(wp.trees, 'If [-O1](#box:' + (wo && wo.id) + '), then the support fails.');
+              wo = find(wp.trees, 'Not shown'), wl = find(wp.trees, 'If [WO1](#box:' + (wo && wo.id) + '), then the support fails.');
         ok(!!wr && wr.type === 'weak-rebuttal' && wr.x === wm.x + 400 && wr.y === wm.y - 200 && wr.freePosition === true,
             'it comes back a weak rebuttal, at its offset from M1, pinned', J(wr && [wr.type, wr.x - wm.x, wr.y - wm.y, wr.freePosition]));
         ok(!!ws && !!ws.crossRefs && !!wr && ws.crossRefs[0][0].targetId === wr.id, 'the cross-reference finds it', J(ws && ws.crossRefs));

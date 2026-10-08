@@ -155,7 +155,9 @@ const CORPUS = {
             'That it rains implies that the ground is wet', 'That it rains entails that the ground is wet']],
         ['two conditions', ['If it rains, and if it is cold, then it snows', 'If it rains, then if it is cold, then it snows',
             'If it rains, then if it is cold, it snows', 'It snows if it rains and if it is cold',
-            'If it rains, and if it is cold, it snows', 'If it rains, if it is cold, it snows']],
+            'If it rains, and if it is cold, it snows']],
+        // ("If it rains, if it is cold, it snows" is asked since r27.93: the
+        // second "if" may put its condition on "it rains" -- nesting-r27-test.js.)
         // ---- "If X, Y": no "then" ----
         ['if without then: two conditions, commas in the condition', ['If, in functionalism, zombies are possible, and if physicalism is false, dualism is true',
             'If, in functionalism, zombies are possible, and if physicalism is false, then dualism is true']],

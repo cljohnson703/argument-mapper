@@ -79,9 +79,12 @@ try {
      }
    }
  }
- const ambiguous=`If ${hedge}, then R`;
- check(call(s=>parseClaimFull(s).notes.some(n=>n.kind==='ambiguous'),ambiguous),'ungrouped nested conditional flagged');
- check(!rule([ambiguous,hedge],'R'),'ungrouped nested conditional not certified');
+ // Ungrouped, each "if" has its own "then" (r27.93): read as grouped. A
+ // "then" with no "if" of its own is still asked about, and not certified.
+ const ungrouped=`If ${hedge}, then R`, ambiguous=`If ${a}, then ${b}, then R`;
+ check(!call(s=>parseClaimFull(s).notes.some(n=>n.kind==='ambiguous'),ungrouped)&&rule([ungrouped,hedge],'R')==='modus-ponens','ungrouped nested conditional: each "if" its "then"');
+ check(call(s=>parseClaimFull(s).notes.some(n=>n.kind==='ambiguous'),ambiguous),'a "then" with no "if" of its own flagged');
+ check(!rule([ambiguous,a],'R')&&!rule([ambiguous,`If ${a}, then ${b}`],'R'),'a "then" with no "if" of its own not certified');
  check(!same('"P" "Q"','P & Q'),'separate quotes not stripped as one group');
  check(!same('(P) (Q)','P & Q'),'separate parentheses not stripped as one group');
  for(const [subject,be] of [['We','are'],['One','is'],['I','am'],['You','are'],['They','are']]) {

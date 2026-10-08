@@ -398,7 +398,8 @@
     /* Inference colors (r27.75): where premises meet, a color each (in the
        light theme a pale tint of it behind the words); what goes on to the
        conclusion, normal text -- a thin red dashed underline when the
-       conclusion denies it; words that deny, red and bold; the rest dimmed. */
+       conclusion denies it; words that deny what another premise says, red
+       and bold (r27.91); the rest dimmed. */
     .rendered-text .ic-rest, .rendered-text .ic-u { opacity: .45; }
     .rendered-text .ic-cn { text-decoration-line: underline; text-decoration-style: dashed; text-decoration-color: #ff7b72; text-decoration-thickness: 1px; text-underline-offset: 3px; }
     .rendered-text .ic-k0 { color: #5fd3e8; }
@@ -762,8 +763,8 @@
     .box-editor .ed-chip { cursor: default; border-radius: 3px; white-space: nowrap; }
     .box-editor .ed-chip.is-selected { outline: 2px solid var(--color-selected); outline-offset: 1px; background: rgba(33,118,193,0.18); }
 
-    /* Node labels (S1, O2, -R3, etc.), on one line: a weak box's hyphen
-       (M1S1-O1) is not a place to break. */
+    /* Node labels (S1, O2, WR3, etc.), on one line: no part of one is a place
+       to break (nor the hyphen of an old label, M1S1-O1). */
     .node-label {
         position: absolute; top: 3px; font-size: 10px; font-weight: 600;
         color: #ccc; user-select: none; letter-spacing: 0.3px; white-space: nowrap;
@@ -2517,8 +2518,8 @@
             <li><strong>?</strong> with a reason, such as <strong>? ambiguous</strong>: a box can be read more than one way. Click the tag to choose what you mean, and your choice is written into the box.</li>
             <li><strong>✗</strong> with a reason: something to fix first, such as <em>because</em> inside a box (a box holds one claim; put the reason in a box below it). Click the tag to see what.</li>
         </ul>
-        <p>The colors button after Deductive (<kbd>Shift+C</kbd>) colors each premise by its part in the step: where premises meet, a color; words that deny, red; a part the conclusion denies, underlined in red dashes. Once a step is valid, what goes on to the conclusion is one stretch: plain in colors 1, which dims the rest; green and underlined in colors 2, which dims nothing. Until then each part has its own color. Each press moves on: off, 1, 2, off.</p>
-        <p>Commas can settle what you mean: <em>Mary sang, and danced, in the hall</em> (both in the hall); <em>Mary sang, and she danced in the hall</em> (only the dancing). So can <em>both … and</em>, <em>either … or</em> and brackets. Symbols work too: <code>~ &amp; ∨ → ↔ ∀ ∃</code>.</p>
+        <p>The colors button after Deductive (<kbd>Shift+C</kbd>) colors each premise by its part in the step: where premises meet, a color; words that deny what another premise says, red; a part the conclusion denies, underlined in red dashes. Once a step is valid, what goes on to the conclusion is one stretch: plain in colors 1, which dims the rest; green and underlined in colors 2, which dims nothing. Until then each part has its own color. Each press moves on: off, 1, 2, off.</p>
+        <p>Commas can settle what you mean: <em>Mary sang, and danced, in the hall</em> (both in the hall); <em>Mary sang, and she danced in the hall</em> (only the dancing). So can <em>both … and</em>, <em>either … or</em>, <em>implies</em> (<em>If A implies B, then C</em>) and brackets. Symbols work too: <code>~ &amp; ∨ → ↔ ∀ ∃</code>.</p>
         <p><strong>✓ Warranted</strong> means the main contention is established by the argument as it stands; <strong>✗ Unwarranted</strong> means it isn't yet, not that it's false. The <strong>Logic</strong> panel lists the rules the checker uses.</p>
         <h3>Reuse premises</h3>
         <p>To use a premise again in another argument, choose <strong>Add Cross-Reference</strong> from a box's menu, then click the original; <strong>Reference Arguments</strong> (or the box's ↗ badge) groups such premises into arguments for or against the box, each checked as a step. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise</strong> from the right-click menu while editing.</p>
@@ -2919,7 +2920,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-05 r27.85';
+    const APP_BUILD = '2026-10-08 r27.95';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5321,9 +5322,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // words, in brackets -- "If S7 and S8, then S4" as "If (P) and (Q), then
     // (R)". A link back to a box on the way (`seen`, "id#idx") is read as its
     // label, as is a box that is gone.
-    // A label so read is one name, whatever it is spelled with: "-O1" is a
-    // weak objection's, not "not O1" (the user, 2026-10-05: a negation goes
-    // outside the link). A WORD JOINER before each hyphen inside it ("-O1",
+    // A label so read is one name, whatever it is spelled with: "-O1" (a weak
+    // objection's label until r27.86, and an old link's still) is not "not O1"
+    // (the user, 2026-10-05: a negation goes outside the link). A WORD JOINER
+    // before each hyphen inside it ("-O1",
     // "M1S1-O1"; not an arrow's, "->") keeps it one word to the English and
     // the symbolic reader alike. It is never written into a box: `names`
     // collects each name with the link it was read from, for Derive Parent
@@ -5576,11 +5578,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function toLetter(idx) { return String.fromCharCode(97 + idx); }
 
     // The letter that names each kind of box in labels and in the map string.
-    // 'S' for Support, matching the S shortcut. A weak objection is -O and a
-    // weak rebuttal -R: an objection or rebuttal, weakened (M1S1-O1-R1). They
-    // were Q and P, which the importer still reads (parseTextToState).
+    // 'S' for Support, matching the S shortcut. A weak objection is WO and a
+    // weak rebuttal WR: W for weak (the Weak Objection key) before the O or R
+    // it weakens (M1S1WO1WR1). They were -O and -R, whose minus read as "not"
+    // or as a separator in a link (the user, 2026-10-06), and before that Q
+    // and P; the importer still reads both (parseTextToState).
     const LABEL_LETTERS = { contention: 'M', support: 'S', objection: 'O', rebuttal: 'R',
-                            'weak-objection': '-O', 'weak-rebuttal': '-R', note: 'N' };
+                            'weak-objection': 'WO', 'weak-rebuttal': 'WR', note: 'N' };
 
     function computeSimpleLabels(kinds) {
         kinds = kinds || computeArgumentKinds(state.trees);
@@ -9406,7 +9410,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 sentenceStart = false;
             } else {
                 marked += ch;
-                if (/[.!?:;]/.test(ch)) sentenceStart = true;
+                // A bracket opens a clause, as a sentence does: its first
+                // capital is the sentence's. A linked box is read in brackets,
+                // and so as it is alone (r27.89: "If (Computer programs are
+                // only formal), ..." had read "Computer" as a name).
+                if (/[.!?:;(]/.test(ch)) sentenceStart = true;
                 else if (!/[\s"'“”‘’(\[]/.test(ch)) sentenceStart = false;
             }
         }
@@ -9477,10 +9485,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             edit(m.index + 1, m.index + 1 + m[2].length, '', 'a space before ' + quote(m[3]));
         // A small word twice: "the the".
         const words = [...masked.matchAll(/[A-Za-z]+/g)];
+        // "If if A, then B, then C": a condition that is itself an "if", where
+        // there are "then"s for both (r27.93).
+        const count = re => (masked.toLowerCase().match(re) || []).length;
+        const ifTwice = count(/\bthen\b/g) - count(/\band,?\s+then\b/g) >= count(/\bif\b/g);
         words.forEach((w, i) => {
             const v = words[i + 1];
             if (!v || w[0].toLowerCase() !== v[0].toLowerCase() || !CLAIM_TWICE_WORDS.has(v[0].toLowerCase())) return;
             if (!/^[ \t]+$/.test(masked.slice(w.index + w[0].length, v.index))) return;
+            if (ifTwice && v[0].toLowerCase() === 'if') return;
             edit(w.index + w[0].length, v.index + v[0].length, '', quote(v[0].toLowerCase()) + ' twice');
         });
         // A comma or a semicolon twice; a stop twice, not an ellipsis.
@@ -9659,9 +9672,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "its" has its own slot: it may be the thing an "it" is, or another.
     const CLAIM_PRONOUN_KIND = Object.assign(Object.create(null), { he: 'm', him: 'm', his: 'm', she: 'f', her: 'f', it: 'n', its: 'q', they: 'p', them: 'p', their: 'p' });
     const CLAIM_AMBIENT_WORDS = /^(?:cold|hot|warm|cool|chilly|mild|humid|windy|sunny|cloudy|foggy|stormy|rainy|wet|dry|dark|light|late|early|noon|midnight|night|day|morning|evening|freezing|icy|quiet|noisy|time)$/;
+    // Words whose full stop ends no sentence: "etc.", "et al.", "cf.".
+    const CLAIM_ABBREVIATION_STOP = /^(?:etc|vs|al|cf|ca|approx|ch|pp|vol|vols|no|nos|fig|figs|eq|eqs|op|cit|ibid|viz|resp|esp|incl|dept|est|ed|eds|trans|repr|cont|sec|para|art|ff|seq|var|sp|spp)$/i;
+    // A phrase that may point back: "that road", "this very road", "those
+    // roads", "the same road".
+    const CLAIM_POINTING_BACK = /\b(?:th(?:is|at|ese|ose)\s+(?:(?:very|same)\s+)?|the\s+(?:very\s+)?same\s+|the\s+(?:former|latter)\b|(?:the\s+)?(?:aforementioned|aforesaid|above|above-mentioned|abovementioned|said)\s+)[a-z]?|\bones?\b/i;
+    // A word a clause may follow with "that": "know that", "the fact that",
+    // "clear that", "so that", "is that".
+    // Words that say a phrase was named before: "the aforementioned road".
+    const CLAIM_NAMED_BEFORE = /^(?:aforementioned|aforesaid|above|above-mentioned|abovementioned|said)$/;
+    const claimThatTakesClause = w => CLAIM_ATTITUDE_WORD.test(w) || claimVerbBases(w).concat([CLAIM_IRREGULAR_PAST[w] || '']).some(b => CLAIM_ATTITUDE_VERBS.has(b)) ||
+        CLAIM_CONTENT_NOUNS.has(w) || CLAIM_CLAUSE_ADJECTIVES.has(w) || /^(?:so|such|now|given|provided|providing|except|in|than|is|was|are|were|be|been|being)$/.test(w);
     function claimPronounReadingsUncached(t) {
         const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
-        if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said)) return none;
+        if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said) && !CLAIM_POINTING_BACK.test(said)) return none;
         const nameSites = (claimPronounSites(t) || {}).sites || [];
         const read = new Set(nameSites.map(x => x.at));
         const toks = [];
@@ -9681,8 +9705,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const clauses = [];
         let from = 0, opened = false, by = null;
         const close = k => { if (k > from) clauses.push({ from, to: k, by }); };
+        // A full stop that ends a sentence -- not one after a title, an
+        // initial or "etc." (r27.88).
+        const sentenceStop = k => toks[k].l === '.' && k > 0 && /^[a-z][a-z0-9'\u2019-]+$/.test(toks[k - 1].w) && !CLAIM_ABBREVIATION_STOP.test(toks[k - 1].w) &&
+            !!toks[k + 1] && /^[A-Z]/.test(toks[k + 1].w);
         toks.forEach((x, k) => {
-            if (COORD.test(x.l) || (/^(?:so|yet)$/.test(x.l) && k > 0 && /^(?:,|and|but)$/.test(toks[k - 1].l))) { close(k); from = k + 1; opened = false; by = x.l; }
+            if (COORD.test(x.l) || (/^(?:so|yet)$/.test(x.l) && k > 0 && /^(?:,|and|but)$/.test(toks[k - 1].l)) || sentenceStop(k)) { close(k); from = k + 1; opened = false; by = x.l; }
             else if (SUBORD.test(x.l)) { close(k); from = k + 1; opened = true; by = x.l; }
             else if (x.l === ',' && opened) { close(k); from = k + 1; opened = false; by = ','; }
         });
@@ -9751,9 +9779,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // Where the phrases end it: before its verb ("the vase fell", "the
             // price increases were large").
             const synEnd = claimSynPhraseEnd(synWs, k);
-            for (let j = k + 1; j < toks.length && np.length < 3; j++) {
+            // Adjectives parted by commas, one word each: "the long, dark,
+            // windy road" (four words, where three is otherwise the most).
+            let commas = 0;
+            for (let j = k + 1; j < toks.length && np.length < 3 + commas; j++) {
                 const y = toks[j], prev = np[np.length - 1];
                 if (synEnd > k + 1 && j >= synEnd) break;
+                if (y.l === ',' && prev && synEnd > j + 1) { commas++; continue; }
                 if (!/^[a-z]/.test(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) || CLAIM_RELATIVES.has(y.l) || CLAIM_PREPOSITIONS.has(y.l) ||
                     CLAIM_PRONOUN_KIND[y.l] || (/^[A-Z]/.test(y.w) && !(synEnd > j)) || (prev && CLAIM_PAST_UNCHANGED.has(y.l) && !(synEnd > j))) break;
                 // A verb after the noun ends it, where the phrases do not say:
@@ -9764,16 +9796,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!np.length) return;
             const det = /^(?:a|an|some|one|another)$/.test(x.l) ? 'the' : /'s$/.test(x.l) ? x.w : x.l;
             const indef = /^(?:a|an|some|one|another)$/.test(x.l);
-            const say = n => [det].concat(np.slice(0, n).map(y => y.w)).join(' ').replace(/['\u2019]s$/, '');
+            // Its words as the box spells them, its commas too.
+            const say = n => (det + ' ' + t.slice(np[0].at, np[n - 1].at + np[n - 1].w.length)).replace(/['\u2019]s$/, '');
+            const k1 = toks.indexOf(np[np.length - 1]);
             // Someone in it -- "the teacher", "the teacher's book", "Mary's dog".
             const p = np.findIndex(y => CLAIM_HE_OR_SHE_NOUNS.has(base(y.l)) || CLAIM_HE_OR_SHE_ANIMALS.has(base(y.l)));
-            if (p >= 0 && !claimPluralWord(base(np[p].l))) add({ at: x.at, k0: k, k1: k + np.length, words: say(p + 1), kind: CLAIM_HE_OR_SHE_ANIMALS.has(base(np[p].l)) ? 'animal' : 'person', indef });
+            if (p >= 0 && !claimPluralWord(base(np[p].l))) add({ at: x.at, k0: k, k1, words: say(p + 1), kind: CLAIM_HE_OR_SHE_ANIMALS.has(base(np[p].l)) ? 'animal' : 'person', indef });
             const head = np[np.length - 1];
             if (/'s$/.test(head.l)) return;
             // "The sheep": one, or many.
-            if (CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1: k + np.length, words: say(np.length), kind: 'many', indef });
-            if (claimPluralWord(head.l) && !CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1: k + np.length, words: say(np.length), kind: 'many', indef });
-            else if (!CLAIM_HE_OR_SHE_NOUNS.has(head.l) && !CLAIM_HE_OR_SHE_ANIMALS.has(head.l)) add({ at: x.at, k0: k, k1: k + np.length, words: say(np.length), kind: 'thing', indef });
+            if (CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'many', indef });
+            if (claimPluralWord(head.l) && !CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'many', indef });
+            else if (!CLAIM_HE_OR_SHE_NOUNS.has(head.l) && !CLAIM_HE_OR_SHE_ANIMALS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'thing', indef });
         });
         // A plural that opens a clause before its verb: "Ravens are black and
         // they fly", "English premises give their conclusion".
@@ -9824,6 +9858,116 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 cands.some(c => (c.indef || /^(?:someone|somebody|something)$/.test(toks[c.k0].l)) && c.k0 >= inner[own].from && c.k0 < k && binds(c.kind)))) continue;
             open.push({ at: m.index, w: m[0], l: w, kind: CLAIM_PRONOUN_KIND[w], k, ci: clauseOf(k), ii: innerOf(k), next });
         }
+        // "That road", "this very road", "the same road": a phrase that points
+        // back, by its noun, to one an earlier clause of the box names (the
+        // user, 2026-10-06: "the long, dark, windy X ..., and that (very) X
+        // ..."). It is read as that phrase, as a pronoun is read as its
+        // referent: the one it can be, or asked which. Not one with nothing
+        // to point back to ("that road is dangerous" may point at a road
+        // there), a "that" that may open a clause ("we know that road salt
+        // melts ice"), nor one that a clause or "as" after it says which ("the
+        // same road as Bob's").
+        toks.forEach((x, k) => {
+            const theSame = x.l === 'the' && !!toks[k + 1] && (toks[k + 1].l === 'same' || (toks[k + 1].l === 'very' && !!toks[k + 2] && toks[k + 2].l === 'same'));
+            // "The aforementioned road", "the above road", "said road" (r27.88).
+            const theNamed = x.l === 'the' && !!toks[k + 1] && CLAIM_NAMED_BEFORE.test(toks[k + 1].l);
+            const saidRoad = x.l === 'said' && (k === 0 || /^(?:and|or|but|of|to|in|on|at|by|for|from|with|about|that|if|then|so|[,;:.])$/.test(toks[k - 1].l));
+            if (!/^(?:this|that|these|those)$/.test(x.l) && !theSame && !theNamed && !saidRoad) return;
+            let s = theNamed ? k + 2 : k + 1;
+            while (toks[s] && /^(?:very|same)$/.test(toks[s].l)) s++;
+            if (!toks[s] || !/^[a-z]/.test(toks[s].w) || claimSynClosed(toks[s].l) || CLAIM_PRONOUN_KIND[toks[s].l]) return;
+            const e = claimSynPhraseEnd(synWs, s), head = toks[e - 1];
+            if (e <= s || !head || !/^[a-z]/.test(head.w) || /'s$/.test(head.l)) return;
+            if (toks[e] && /^(?:as|that|which|who|whom|whose)$/.test(toks[e].l)) return;
+            if (x.l === 'that' && k > 0 && claimThatTakesClause(toks[k - 1].l) && claimSynVerbStart(synWs, e, '?')) return;
+            const mods = toks.slice(s, e - 1).map(y => y.l).filter(w => /^[a-z]/.test(w));
+            // A full stop between them ends a sentence, and so a clause: "The
+            // long road is long. That road is dangerous." -- not one after a
+            // title, an initial or "etc.".
+            const stop = j => toks[j].l === '.' && j > 0 && /^[a-z][a-z0-9'\u2019-]+$/.test(toks[j - 1].w) && !CLAIM_ABBREVIATION_STOP.test(toks[j - 1].w) &&
+                !!toks[j + 1] && /^[A-Z]/.test(toks[j + 1].w);
+            const pointed = cands.filter(c => {
+                if (c.name || c.fact || c.at >= x.at || !(c.k1 < k)) return false;
+                if (clauseOf(c.k0) === clauseOf(k) && !toks.slice(c.k1 + 1, k).some((y, i) => stop(c.k1 + 1 + i))) return false;
+                // With its determiner: "the ravens", "Mary's dog" -- not
+                // "ravens", which is said of a kind; not one that points back.
+                if (!/^(?:the|my|your|his|her|its|our|their)\s|^\S+['\u2019]s?\s/i.test(c.words)) return false;
+                const w = c.words.toLowerCase().replace(/['\u2019]s\b/g, '').split(/[\s,]+/).filter(Boolean);
+                if (w[1] === 'same' || (w[1] === 'very' && w[2] === 'same') || CLAIM_NAMED_BEFORE.test(w[1] || '')) return false;
+                return w[w.length - 1] === head.l && mods.every(m => w.includes(m));
+            });
+            if (pointed.length) open.push({ at: x.at, w: t.slice(x.at, head.at + head.w.length), l: x.l, kind: 'd:' + mods.concat([head.l]).join(' '), k,
+                ci: clauseOf(k), ii: innerOf(k), next: [], dem: pointed });
+        });
+        // "The former", "the latter": the first or the second of the two the
+        // box names last -- a pair joined by "and" or "or", or the only two
+        // (r27.88). Not "the former president".
+        toks.forEach((x, k) => {
+            if (x.l !== 'the' || !toks[k + 1] || !/^(?:former|latter)$/.test(toks[k + 1].l)) return;
+            const n = toks[k + 2];
+            if (n && /^[a-z]/.test(n.w) && !claimSynClosed(n.l) && claimSynVerbStart(synWs, k + 2, '?') !== 'strong') return;
+            const named = cands.filter(c => !c.fact && c.at < x.at && c.k1 < k).sort((a, b) => a.at - b.at);
+            const distinct = named.filter((c, i) => named.findIndex(d => d.words.toLowerCase() === c.words.toLowerCase()) === i);
+            let pair = null;
+            for (let i = named.length - 1; i > 0 && !pair; i--) {
+                const a = named[i - 1], b = named[i], between = toks.slice(a.k1 + 1, b.k0).map(y => y.l).filter(w => w !== ',');
+                if (between.length === 1 && /^(?:and|or)$/.test(between[0]) && a.words.toLowerCase() !== b.words.toLowerCase()) pair = [a, b];
+            }
+            if (!pair && distinct.length === 2) pair = distinct;
+            if (pair) open.push({ at: x.at, w: t.slice(x.at, toks[k + 1].at + toks[k + 1].w.length), l: toks[k + 1].l, kind: 'd:' + toks[k + 1].l + '@' + k, k,
+                ci: clauseOf(k), ii: innerOf(k), next: [], dem: [pair[toks[k + 1].l === 'former' ? 0 : 1]] });
+        });
+        // "Bob bought a red car, and Mary bought a blue one": the noun of a
+        // phrase the box names before it -- "a blue car" (r27.88). Not "no
+        // one", "one of them", "one another", "one road".
+        toks.forEach((x, k) => {
+            if (!/^ones?$/.test(x.l) || k === 0) return;
+            const n = toks[k + 1];
+            if (n && /^(?:of|another)$/.test(n.l)) return;
+            if (n && /^[a-z]/.test(n.w) && !claimSynClosed(n.l) && !CLAIM_RELATIVES.has(n.l) && claimSynVerbStart(synWs, k + 1, '?') !== 'strong') return;
+            let j = k - 1, adjectives = 0;
+            while (j >= 0 && /^[a-z]/.test(toks[j].w) && !claimSynClosed(toks[j].l) && (claimSynWord(toks[j].l).adj || claimKnownAdjective(toks[j].l))) { j--; adjectives++; }
+            const plural = x.l === 'ones', heads = [];
+            const det = j >= 0 && (/^(?:a|an|the|this|that|these|those|another|each|every|which|any|some|my|your|his|her|its|our|their)$/.test(toks[j].l) || /'s$/.test(toks[j].l));
+            // "White ones": a plural with adjectives needs no determiner.
+            if (!det && !(plural && adjectives)) return;
+            if (det && !adjectives && !/^(?:this|that|these|those|another|which)$/.test(toks[j].l)) return;
+            const from = det ? j : j + 1;
+            cands.forEach(c => {
+                if (c.name || c.fact || c.at >= toks[from].at || !(c.k1 < from)) return;
+                const w = c.words.toLowerCase().replace(/['\u2019]s\b/g, '').split(/[\s,]+/).filter(Boolean), h = w[w.length - 1];
+                if (!h || /^ones?$/.test(h) || !!claimPluralWord(h) !== plural || heads.some(o => o.words === h)) return;
+                heads.push({ at: c.at, k0: c.k0, k1: c.k1, words: h, kind: c.kind });
+            });
+            if (heads.length) open.push({ at: x.at, w: x.w, l: x.l, kind: 'd:one@' + k, k, ci: clauseOf(k), ii: innerOf(k), next: [], dem: heads });
+        });
+        // "Poe is black, and this surprises Mary": a "this" or "that" that
+        // opens its clause, with a verb after it, is what an "it" there may
+        // be -- a thing the box names, or what the clause before says
+        // (r27.88). With nothing before it, it stands as written ("This shows
+        // that God exists").
+        toks.forEach((x, k) => {
+            if (!/^(?:this|that)$/.test(x.l) || !toks[k + 1]) return;
+            if (k > 0 && !/^(?:[,;:.]|and|but|or|so|then|because|if|yet)$/.test(toks[k - 1].l)) return;
+            // Not after a quotation: "nothing in “A” and “B” that establishes".
+            if (k > 0 && said.slice(toks[k - 1].at + toks[k - 1].w.length, x.at).includes(CLAIM_MASK_FILL)) return;
+            // Its verb: a sure one, or a word in -s or the past ("this
+            // surprises": after "this", no plural noun).
+            const v = claimSynVerbStart(synWs, k + 1, 'sg'), y = synWs[k + 1];
+            if (v !== 'strong' && !(v && y && (y.s || y.past))) return;
+            const ci = clauseOf(k), next = said.slice(x.at + x.w.length).split(/[\s,;:.!?()]+/).filter(Boolean).map(w => w.toLowerCase());
+            const list = cands.filter(c => !c.fact && c.at < x.at && c.k1 < k && (c.at >= frameEnd || c.name) && (c.kind === 'thing' || c.kind === 'animal' || c.thingToo));
+            if (ci > 0 && !claimNoClauseSubject(next)) {
+                const before = clauses[ci - 1], said2 = clauseText(before);
+                const hasVerb = toks.slice(before.from, before.to).some(y => CLAIM_VERB_MARKERS.has(y.l) || claimPastStem(y.l) !== null || (claimEndsInS(y.l) && !claimPluralWord(y.l)));
+                if (said2 && hasVerb && claimLooksLikeClause(normalizeClaimText(said2))) {
+                    const opener = cands.find(c => c.k0 === before.from && c.name);
+                    list.push({ at: toks[before.from].at, words: 'the fact that ' + (opener || /^I\b/.test(said2) ? said2 : said2.charAt(0).toLowerCase() + said2.slice(1)), fact: said2 });
+                }
+            }
+            if (list.length) open.push({ at: x.at, w: x.w, l: x.l, kind: 'd:' + x.l + '@' + k, k, ci, ii: innerOf(k), next, dem: list });
+        });
+        open.sort((a, b) => a.at - b.at);
         if (!open.length) return none;
         // An object: "him", "her" before what ends it, an "it" or "them" after
         // a verb in its clause (not after "of" or "on": "a bell on it").
@@ -9873,6 +10017,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const fits = { m: ['person', 'animal'], f: ['person', 'animal'], n: ['thing', 'animal'], q: ['thing', 'animal'], p: ['many', 'person'] };
         const choices = slots.map(x => {
             const first = x.members[0];
+            // A phrase that points back: what it may point back to.
+            if (first.dem) return first.dem.filter((c, i) => c.indef || first.dem.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
             let list = cands.filter(c => c.at < first.at && (c.at >= frameEnd || c.name) && (fits[x.kind].includes(c.kind) || ((x.kind === 'n' || x.kind === 'q') && c.thingToo)) &&
                 !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase()));
             // A name, or "the raven", said twice is one thing (it had offered
@@ -9955,7 +10101,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (picks.length >= 4) return;
             if (k === slots.length) { picks.push(chosen); return; }
             choices[k].forEach(c => {
-                const two = (a, b) => a !== b && !(/^[nq]$/.test(a) && /^[nq]$/.test(b));
+                // ("That road" may be what an "it" is.)
+                const two = (a, b) => a !== b && !(/^[nq]$/.test(a) && /^[nq]$/.test(b)) && !/^d:/.test(a) && !/^d:/.test(b);
                 if (chosen.some((d, i) => (two(slots[i].kind, slots[k].kind) || slots[k].not === slots[i] || slots[i].not === slots[k]) && same(c, d))) return;
                 pick(k + 1, chosen.concat([c]));
             });
@@ -9974,8 +10121,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return { texts: [], message: null, itAsks: itAsks || slots.some(y => y.kind !== 'q'),
                 missing: quote(pb.w) + ' has nothing in this box to refer to: ' + two + ', and the box names only ' + say(choices[a][0]) + '; name ' + who(slots[b]) };
         }
-        // "A teacher left and she cried": "A teacher left and cried", one teacher.
-        const joins = (p, c) => c.indef && /^(?:he|she|it|they)$/.test(p.l) && p.ci > 0 && p.k === clauses[p.ci].from && c.k0 === clauses[p.ci - 1].from &&
+        // "A teacher left and she cried": "A teacher left and cried", one
+        // teacher; "a road ..., and that road" too.
+        const joins = (p, c) => c.indef && (/^(?:he|she|it|they)$/.test(p.l) || !!p.dem) && p.ci > 0 && p.k === clauses[p.ci].from && c.k0 === clauses[p.ci - 1].from &&
             /^(?:and|or|but|nor)$/.test(clauses[p.ci].by || '') && !clauses[p.ci - 1].by;
         const put = (p, c) => {
             const rest = t.slice(p.at + p.w.length);
@@ -9986,17 +10134,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         // With the names the check reads for pronouns written in as well.
         const named = nameSites.map(x => ({ at: x.at, end: x.at + x.word.length, say: x.becomes }));
-        const texts = picks.map(chosen => {
+        // What each pick changes: { at, end, say } in the box's words.
+        const editsOf = chosen => {
             // Joined, the comma before "and" goes too: "A teacher left and cried".
             const comma = p => { const j = toks.slice(0, p.k).map(x => x.l).lastIndexOf(','); return j >= 0 && j >= p.k - 3 ? [{ at: toks[j].at, end: toks[j].at + 1, say: '' }] : []; };
-            const all = [].concat(...slots.map((x, i) => [].concat(...x.members.map(p => joins(p, chosen[i])
+            return [].concat(...slots.map((x, i) => [].concat(...x.members.map(p => joins(p, chosen[i])
                 ? [{ at: p.at, end: p.at + p.w.length + (/^\s*/.exec(t.slice(p.at + p.w.length))[0].length), say: '' }].concat(comma(p))
                 : [{ at: p.at, end: p.at + p.w.length, say: put(p, chosen[i]) }]))), named)
-                .sort((a, b) => a.at - b.at);
-            let out = '', at = 0;
-            all.forEach(e => { out += t.slice(at, e.at) + (!t.slice(0, e.at).trim() ? e.say.charAt(0).toUpperCase() + e.say.slice(1) : e.say); at = e.end; });
-            return out + t.slice(at);
-        }).filter(x => x !== t);
+                .sort((a, b) => a.at - b.at)
+                // Where a sentence begins, with its capital.
+                .map(e => ({ at: e.at, end: e.end, say: !t.slice(0, e.at).trim() || /[.!?]\s+$/.test(t.slice(0, e.at)) ? e.say.charAt(0).toUpperCase() + e.say.slice(1) : e.say }));
+        };
+        const rewrite = edits => { let out = '', at = 0; edits.forEach(e => { out += t.slice(at, e.at) + e.say; at = e.end; }); return out + t.slice(at); };
+        const texts = picks.map(chosen => rewrite(editsOf(chosen))).filter(x => x !== t);
         // What to say of the first that may be more than one.
         const many = slots.findIndex((x, i) => choices[i].length > 1);
         const message = many >= 0
@@ -10012,10 +10162,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const said3 = slots.map((x, i) => quote(x.members[0].w) + ' as ' + say(chosen[i])).join(', ');
             auto = loose
                 ? { whole: true, text: texts[0], message: 'read with ' + said3 + ', the one it can be in this box, so the sentence is read as one claim' }
-                : { text: texts[0], message: 'read with ' + said3 + ', the one ' + (slots.length > 1 ? 'each' : 'it') + ' can be in this box' +
+                : { text: texts[0], edits: editsOf(chosen), message: 'read with ' + said3 + ', the one ' + (slots.length > 1 ? 'each' : 'it') + ' can be in this box' +
                     (slots.some((x, i) => x.members.some(p => joins(p, chosen[i]))) ? ': ' + quote(texts[0]) : '') };
         }
-        return { texts, message, missing: null, itAsks, auto };
+        return { texts, message, missing: null, itAsks, auto, dem: open.some(p => p.dem) };
     }
     // Whether a reading still has an "it" in it -- not one a quantifier took
     // ("if a raven sings, it is black" is every raven that sings) -- or, with
@@ -10298,13 +10448,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // marks an inference). It had been one predicate, "black. fido is
             // white". A full stop after an abbreviation ("etc.", "et al.") ends
             // no sentence.
-            .replace(/(\b[a-z0-9][a-z0-9'’-]+|[)\]"”’])\.\s+(?=[A-Z“"(])/g, (m, w) =>
-                /^(?:etc|vs|al|cf|ca|approx|ch|pp|vol|vols|no|nos|fig|figs|eq|eqs|op|cit|ibid|viz|resp|esp|incl|dept|est|ed|eds|trans|repr|cont|sec|para|art|ff|seq|var|sp|spp)$/i.test(w) ? m : w + '; ')
+            .replace(/(\b[a-z0-9][a-z0-9'’-]+|[)\]"”’])\.\s+(?=[A-Z“"(])/g, (m, w) => CLAIM_ABBREVIATION_STOP.test(w) ? m : w + '; ')
             .trim();
         return expandClaimContractions(claimDropShorthands(markClaimSpelling(claimResolvePronouns(plain))).replace(/[’‘]/g, "'"))
             // "Alice and Bob each ate the pizza": said of each -- "both Alice
-            // and Bob ate the pizza".
-            .replace(/^((?:\S+ ){0,3}\S+) and ((?:\S+ ){0,3}?\S+?),? each,? (?=[a-z\uE000])/, (m, a, b) => /^(?:both|either|neither)$/.test(a.split(' ')[0]) ? m : 'both ' + a + ' and ' + b + ' ')
+            // and Bob ate the pizza". Not the "each" of "each other".
+            .replace(/^((?:\S+ ){0,3}\S+) and ((?:\S+ ){0,3}?\S+?),? each,? (?!other\b)(?=[a-z\uE000])/, (m, a, b) => /^(?:both|either|neither)$/.test(a.split(' ')[0]) ? m : 'both ' + a + ' and ' + b + ' ')
             // Explicit regional spellings only; preserve marked proper names and unknown words.
             .replace(/(?<![\w\uE000'-])[a-z]+(?![\w\uE000'-])/g, w => CLAIM_VENDOR_MORPHOLOGY.spellings[w] || w)
             // "We do conclude that P", "Poe does sing": an emphatic "do" in an
@@ -10350,7 +10499,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // more: what follows may still be said under an "if" before it
             // ("If you are late, you miss the bus; you walk"), so that is
             // asked, as with ", and" -- not read into the "then" unasked.
-            .replace(/\s*;\s*(?:(?:moreover|however|furthermore|additionally|also|in addition|besides|still|nonetheless|nevertheless)\s*,?\s*)?/g, ', and ')
+            .replace(/\s*;\s*or\s+/g, ', or ')
+            .replace(/\s*;\s*(?:(?:and|but|yet)\s+)?(?:(?:moreover|however|furthermore|additionally|also|in addition|besides|still|nonetheless|nevertheless)\s*,?\s*)?/g, ', and ')
             // "But" is "and" -- its comma kept, which says where the clauses
             // part ("Poe flies, but he sings if it rains": the user's commas).
             .replace(/(,?)\s+(?:and yet|and also|but also|but|whereas)\s+/g, (m, comma) => comma + ' and ')
@@ -11041,7 +11191,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         })();
         if (!bracketedParts) {
             const tokens = claimTokens(text), ws = claimSynWords(tokens), k = claimSynSubjectEnd(tokens);
-            const inner = k > 0 ? claimSynInnerJoins(ws, k) : new Set();
+            let inner = k > 0 ? claimSynInnerJoins(ws, k) : new Set();
+            if (inner.size) {
+                // The verb inside a bracketed group: what is outside it is no
+                // part of the verb's phrase (r27.93).
+                let at = 0, verbAt = -1;
+                tokens.forEach((t, i) => { const p = text.indexOf(t, at); if (p >= 0) { if (i === k) verbAt = p; at = p + t.length; } });
+                if (verbAt >= 0 && top[verbAt] === CLAIM_MASK_FILL) inner = new Set();
+            }
             if (inner.size) {
                 let at = 0;
                 tokens.forEach((t, i) => {
@@ -11532,6 +11689,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !CLAIM_PREPOSITIONS.has(words[i - 1]) && !CLAIM_OBJECT_PREPOSITIONS.has(words[i - 1]) && !CLAIM_VERB_MARKERS.has(words[i + 2] || '') &&
             !CLAIM_NOUN_DETERMINERS.test(words[i + 1]) && !CLAIM_SUBJECT_PRONOUNS.has(words[i + 1]) && !/^(?:we|you|they|i|he|she|it|a|an)$/.test(words[i + 1]) &&
             !/^\uE000/.test(tokens[i + 1]) && !CLAIM_FUNCTION_WORDS.has(words[i + 1]));
+        // "Black, which surprises Mary": no noun before it, as above.
+        if (v === 1 && (claimKnownAdjective(tokens[0]) || CLAIM_CLAUSE_ADJECTIVES.has(words[0]) || CLAIM_VENDOR_MORPHOLOGY.participles.includes(words[0]) ||
+            /[^e]ed$/.test(words[0]))) return null;
         if (v > 0) {
             const headText = tokens.slice(0, v).join(' '), head = normalizeClaimTerm(headText), vp = tokens.slice(v + 1);
             // A relative clause of the verb's object is the verb phrase's own:
@@ -12348,6 +12508,171 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // A box's sentence, read: its form, and the notes left on the way. `choice`
     // ({ site, reading }) reads one ambiguous place a chosen way; { sites:
     // { site: reading } } reads several.
+    // A clause cut short says what it says with the clause before it in its
+    // box (the user, 2026-10-06: "If there are any other anaphors that we
+    // haven't taken care of, we should probably tackle those, too"): "Bob
+    // left, and Mary did too" is read as "Mary did leave"; "so does Mary",
+    // "neither did Mary", "but Fido is not", "but evil does" likewise. "If
+    // so" and "if not" take that clause whole, and "Mary thinks so" takes it
+    // as what she thinks. Not where nothing comes before it in the box, nor
+    // where the clause before it has a helping verb of another kind ("Bob
+    // can swim, and Mary does too"): it stays cut short, and says so.
+    const CLAIM_CUT_NOT = Object.assign(Object.create(null), { "don't": 'do', "doesn't": 'does', "didn't": 'did', "isn't": 'is', "aren't": 'are',
+        "wasn't": 'was', "weren't": 'were', "can't": 'can', cannot: 'can', "couldn't": 'could', "won't": 'will', "wouldn't": 'would', "shan't": 'shall',
+        "shouldn't": 'should', "mightn't": 'might', "mustn't": 'must', "hasn't": 'has', "haven't": 'have', "hadn't": 'had' });
+    const CLAIM_CUT_AUX = '(?:(?:do|does|did|is|are|am|was|were|can|could|will|would|shall|should|may|might|must|has|have|had)(?:\\s+not)?|' +
+        Object.keys(CLAIM_CUT_NOT).map(w => w.replace("'", "['\u2019]")).join('|') + ')';
+    const CLAIM_CUT_ATTITUDE = 'think|thinks|thought|believe|believes|believed|suppose|supposes|supposed|hope|hopes|hoped|expect|expects|expected|' +
+        'say|says|said|guess|guesses|guessed|imagine|imagines|imagined|fear|fears|feared|assume|assumes|assumed|suspect|suspects|suspected|' +
+        'presume|presumes|presumed|reckon|reckons|reckoned';
+    const claimAuxFamily = w => /^(?:do|does|did)$/.test(w) ? 'do' : /^(?:is|are|am|was|were)$/.test(w) ? 'be' : /^(?:has|have|had)$/.test(w) ? 'have'
+        : /^(?:can|could|will|would|shall|should|may|might|must)$/.test(w) ? 'modal' : null;
+    // A verb's plain form: "left" leave, "loves" love.
+    function claimVerbPlain(w) {
+        if (CLAIM_IRREGULAR_PAST[w]) return CLAIM_IRREGULAR_PAST[w];
+        const bases = claimVerbBases(w), known = bases.find(b => b && b !== w && claimSynKnownVerb(b));
+        if (known) return known;
+        if (claimPastStem(w) !== null) return bases[0];
+        // "Lies", "dies": the "s" only; "flies", "tries": "y".
+        if (/^[a-z]{1,2}ies$/.test(w)) return w.slice(0, -1);
+        if (/[^s']s$/.test(w) && !CLAIM_S_NOUNS.has(w)) return w.replace(/ies$/, 'y').replace(/(ch|sh|ss|x|z)es$/, '$1').replace(/([^s])s$/, '$1');
+        return w;
+    }
+    // The clause just before a place in the box: the last a connective, a
+    // comma or a semicolon begins.
+    function claimClauseBefore(text) {
+        const parts = String(text).split(/[,;.!?](?:\s+|$)(?:(?:and|but|or|then|yet|so)\s+)?|\b(?:and|but|or|then|yet|only if|if|unless|because|since|when|whenever|although|though|while|whereas|before|after|until)\b/i)
+            .map(x => x.trim()).filter(Boolean);
+        return parts.length ? parts[parts.length - 1] : '';
+    }
+    // A clause's verb phrase, for one cut short after it: its helping verb's
+    // kind and the words after it ("can swim": modal, "swim"), or, for a verb
+    // on its own, "do", the verb in its plain form ("left": do, "leave"), the
+    // words as they are ("left") and their form ('past', 's' or 'plain').
+    function claimClauseVerbPhrase(clause) {
+        const tokens = claimTokens(clause);
+        if (!tokens.length) return null;
+        const syn = tokens.map((x, i) => (i > 0 && /^[A-Z]/.test(x) ? '\uE000' : '') + x.toLowerCase().replace(/\u2019/g, "'"));
+        const k = Math.max(0, claimSynSubjectEnd(syn));
+        const words = syn.slice(k).map(claimWord), raw = tokens.slice(k);
+        let i = 0;
+        const pre = [];
+        while (i < words.length && /^(?:not|never|also|still|really|just|always|often|usually|sometimes|already|indeed|certainly|surely)$/.test(words[i])) {
+            if (!/^(?:not|never)$/.test(words[i])) pre.push(raw[i]);
+            i++;
+        }
+        const w = words[i];
+        if (!w) return null;
+        const clean = list => list.map(x => x.replace(/[,;.!?]+$/, '')).filter(Boolean).join(' ');
+        let family = claimAuxFamily(CLAIM_CUT_NOT[w] || w);
+        // "Has a car": "have" as the verb itself, not a helping verb.
+        const next = words[i + 1] === 'not' ? words[i + 2] : words[i + 1];
+        if (family === 'have' && !CLAIM_CUT_NOT[w] && words[i + 1] !== 'not' && !(next && (claimSynWord(next).past || claimSynWord(next).participle))) family = null;
+        if (family) { const rest = clean(pre.concat(raw.slice(i + 1 + (words[i + 1] === 'not' ? 1 : 0)))); return rest ? { family, rest } : null; }
+        if (!(claimSynWord(w).verb && !claimSynWord(w).closed) && !/^(?:has|have|had)$/.test(w)) return null;
+        const form = claimPastStem(w) !== null || CLAIM_IRREGULAR_PAST[w] ? 'past' : /[^s']s$/.test(w) ? 's' : 'plain';
+        return { family: 'do', rest: clean(pre.concat([claimVerbPlain(w)], raw.slice(i + 1))), as: clean(raw.slice(pre.length ? 0 : i)), form };
+    }
+    // The box with each clause cut short read whole: { text, edits, message },
+    // or null. Each edit is { at, end, say } in the box's words.
+    const claimEllipsisCache = new Map();
+    function claimEllipsisReading(t) {
+        t = String(t == null ? '' : t);
+        if (claimEllipsisCache.has(t)) return claimEllipsisCache.get(t);
+        const out = claimEllipsisReadingUncached(t);
+        if (claimEllipsisCache.size > 5000) claimEllipsisCache.clear();
+        claimEllipsisCache.set(t, out);
+        return out;
+    }
+    function claimEllipsisReadingUncached(t) {
+        const said = claimMaskQuoted(t);
+        if (!/\b(?:so|neither|nor|as|too|also|either|not|if|which|do|does|did|is|are|was|were|can|could|will|would|should|may|might|must|has|have|had|cannot)\b|n['\u2019]t\b/i.test(said)) return null;
+        const B = '(?:[,;]\\s*(?:(?:and|but|or|then|yet)\\s+)?|\\b(?:and|but|or|yet|if|unless|because|since|when|whenever|although|though|while|whereas|before|after|until)\\s+)';
+        const END = '(?=\\s*(?:[,;.!?]|$))', TOO = '(,?\\s+(?:too|also|either|as well))?';
+        const found = [];
+        // "So does Mary", "neither did Mary", "as is Fido".
+        for (const m of said.matchAll(new RegExp('(?:^|[,;]\\s*(?:(?:and|but|or|then)\\s+)?|\\b(?:and|but|or|then)\\s+)(so|neither|nor|as)\\s+(' + CLAIM_CUT_AUX + ')\\s+([^,;.!?]+?)' + TOO + END, 'gi'))) {
+            const start = m.index + m[0].length - m[0].replace(/^(?:[,;]\s*(?:(?:and|but|or|then)\s+)?|(?:and|but|or|then)\s+)/i, '').length;
+            found.push({ kind: 'lead', at: start, end: m.index + m[0].length, before: m.index, word: m[1].toLowerCase(), aux: m[2], subj: m[3].trim() });
+        }
+        // "Mary did too", "Fido is not", "evil does", "Mary did so".
+        for (const m of said.matchAll(new RegExp(B + '((?:(?!\\b(?:and|but|or|then|so|neither|nor|as)\\b)[^,;.!?])+?)\\s+(' + CLAIM_CUT_AUX + ')(\\s+(?:so|the same|likewise))?' + TOO + END, 'gi'))) {
+            const subjAt = said.indexOf(m[1], m.index);
+            found.push({ kind: 'tail', at: subjAt, end: m.index + m[0].length, before: m.index, aux: m[2], subj: m[1].trim(), so: !!m[3] });
+        }
+        // "Poe is black, which surprises Mary": "which" after a whole clause is
+        // what it says, or the thing it names last ("Bob bought a car, which
+        // is red") -- as an "it" there may be: ", and it".
+        for (const m of said.matchAll(/,\s+which\s+(?=[a-z])/gi)) {
+            const after = said.slice(m.index + m[0].length);
+            if (/^[^.;!?]*,\s+(?!and\b|but\b|or\b|so\b)\S/.test(after)) continue;               // set off: "Poe, which is a raven, is black"
+            found.push({ kind: 'which', at: m.index, end: m.index + m[0].length, before: m.index });
+        }
+        // "If so", "if not".
+        for (const m of said.matchAll(/\bif\s+(so|not)\b(?=\s*(?:[,;]|then\b|$))/gi))
+            found.push({ kind: 'if', at: m.index + m[0].length - m[1].length, end: m.index + m[0].length, before: m.index, word: m[1].toLowerCase() });
+        // "Mary thinks so", "Bob hopes not".
+        for (const m of said.matchAll(new RegExp(B + '([^,;.!?]+?)\\s+(' + CLAIM_CUT_ATTITUDE + ')\\s+(so|not)\\b' + TOO + END, 'gi'))) {
+            const verbAt = m.index + m[0].search(new RegExp('\\b' + m[2] + '\\s+' + m[3] + '\\b', 'i'));
+            found.push({ kind: 'thinks', at: verbAt, end: m.index + m[0].length, before: m.index, verb: t.slice(verbAt, verbAt + m[2].length), word: m[3].toLowerCase() });
+        }
+        if (!found.length) return null;
+        found.sort((a, b) => a.at - b.at);
+        const edits = [], said3 = [];
+        const upTo = at => { let out = '', from = 0; edits.forEach(e => { if (e.end <= at) { out += t.slice(from, e.at) + e.say; from = e.end; } }); return out + t.slice(from, at); };
+        const hedge = /\b(?:may|might|could|possibly|perhaps|probably|maybe|likely)\b/i, denied = /\b(?:not|never|no)\b|n['\u2019]t\b/i;
+        const lower = c => /^[A-Z][a-z]/.test(c) && claimSynClosed(c.split(/\s+/)[0].toLowerCase()) ? c.charAt(0).toLowerCase() + c.slice(1) : c;
+        found.forEach(f => {
+            if (edits.some(e => f.at < e.end && f.end > e.at)) return;
+            const prev = claimClauseBefore(upTo(f.before));
+            if (!prev) return;
+            let say = null;
+            if (f.kind === 'which') {
+                // A clause before it, with its verb: not "the car, which".
+                if (!claimClauseVerbPhrase(prev) || claimSynSubjectEnd(claimTokens(prev).map((x, i) => (i > 0 && /^[A-Z]/.test(x) ? '\uE000' : '') + x.toLowerCase())) <= 0) return;
+                // After a word that names no thing ("is broken", "broke"), it is
+                // what the clause says; after a noun, it may be the thing too.
+                const last = ((/([A-Za-z][A-Za-z'\u2019-]*)\W*$/.exec(prev) || [])[1] || '').toLowerCase();
+                say = last && (claimKnownAdjective(last) || !claimSynWord(last).noun) ? ', and the fact that ' + lower(prev) + ' ' : ', and it ';
+            } else if (f.kind === 'if') {
+                // "Poe may be a raven; if so": if Poe is a raven.
+                const plain = prev.replace(/\b(?:possibly|perhaps|probably|maybe),?\s+/gi, '').replace(/\b(?:may|might|could)\s+be\b/i, 'is');
+                if (hedge.test(plain) || (f.word === 'not' && denied.test(plain))) return;
+                if (plain !== prev) {
+                    const subj = claimTokens(plain.slice(0, plain.search(/\bis\b/))).map((x, i) => (i > 0 && /^[A-Z]/.test(x) ? '\uE000' : '') + x.toLowerCase());
+                    if (/\bis\b/.test(plain) && !claimSynNounPhrases(claimSynWords(subj), 0).some(o => o.end === subj.length && o.number !== 'pl' && o.number !== 'you')) return;
+                }
+                say = f.word === 'so' ? lower(plain) : 'it is not the case that ' + lower(plain);
+            } else if (f.kind === 'thinks') {
+                // What the clause before says, or what it says is thought.
+                const m = new RegExp('\\b(?:' + CLAIM_CUT_ATTITUDE + '|knows?|knew|claims?|claimed)\\s+that\\s+(.+)$', 'i').exec(prev);
+                const what = m ? m[1] : lower(prev);
+                say = f.verb + ' that ' + (f.word === 'so' ? what : 'it is not the case that ' + what);
+            } else {
+                const auxWords = f.aux.toLowerCase().replace(/\u2019/g, "'").split(/\s+/);
+                const aux = CLAIM_CUT_NOT[auxWords[0]] || auxWords[0];
+                const neg = !!CLAIM_CUT_NOT[auxWords[0]] || auxWords[1] === 'not' || f.word === 'neither' || f.word === 'nor';
+                const family = claimAuxFamily(aux), vp = claimClauseVerbPhrase(prev);
+                if (!family || !vp || (f.so && family !== 'do')) return;
+                const subj = claimTokens(f.subj), syn = subj.map((x, i) => (/^[A-Z]/.test(x) && (i > 0 || f.at > 0) ? '\uE000' : '') + x.toLowerCase());
+                if (!subj.length || !claimSynNounPhrases(claimSynWords(syn), 0).some(o => o.end === syn.length)) return;
+                if (vp.family !== family) return;
+                // In the tense of the clause before: its own words ("Mary
+                // left"); otherwise with the helping verb ("Mary does love Ann").
+                const own = family === 'do' && !neg && vp.as && ((aux === 'did' && vp.form === 'past') || (aux === 'does' && vp.form === 's') || (aux === 'do' && vp.form === 'plain'));
+                say = f.subj + ' ' + (own ? vp.as : (/^[A-Z]/.test(f.aux) ? aux.charAt(0).toUpperCase() + aux.slice(1) : aux) + (neg ? ' not' : '') + ' ' + vp.rest);
+            }
+            if (!t.slice(0, f.at).trim()) say = say.charAt(0).toUpperCase() + say.slice(1);
+            edits.push({ at: f.at, end: f.end, say });
+            said3.push('\u201c' + t.slice(f.at, f.end).replace(/^,\s*/, '').trim() + '\u201d as \u201c' + say.replace(/^,\s*/, '').trim() + '\u201d');
+            edits.sort((a, b) => a.at - b.at);
+        });
+        if (!edits.length) return null;
+        let text = '', from = 0;
+        edits.forEach(e => { text += t.slice(from, e.at) + e.say; from = e.end; });
+        text += t.slice(from);
+        return { text, edits, message: 'read with ' + said3.join(', and ') + (said3.length > 1 ? ', from the clauses before them' : ', from the clause before it') };
+    }
     function parseClaimFull(text, choice) {
         const saved = claimReadState;
         claimReadState = { notes: [], sites: 0, choice: choice || null, anyIsSome: 0, quiet: 0, memo: new Map(), reads: 0 };
@@ -12367,6 +12692,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 claimAmbiguous(typo.message, [{ label: typo.fixed, build: () => null }], true, { typo: true, texts: [typo.fixed] });
                 text = typo.fixed;
             }
+            // A clause cut short, read with the clause before it (r27.88).
+            const cut = !symbolic ? claimEllipsisReading(text) : null;
+            if (cut) { text = cut.text; claimReadState.notes.push({ kind: 'unread', message: cut.message, ellipsis: true }); }
             const raw = normalizeClaimText(text);
             if (!symbolic) { const note = claimPronounNote(text); if (note) claimUnread(note); }
             if (!symbolic) claimShorthands(markClaimSpelling(String(text == null ? '' : text).replace(/\s+/g, ' ').trim())).forEach(h => {
@@ -12392,18 +12720,34 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // a whole clause may be the thing or what the clause says
                     // (the user's choice, 2026-09-28), and an "it" that can be
                     // nothing in the box has nothing to refer to.
-                    if (!symbolic && form && !claimReadState.notes.some(n => n.pronoun || n.reference) && claimFormHasIt(read0, true) && claimPronounReadings(claimBoxRaw).itAsks) {
+                    // A phrase that points back ("that road") is read as a
+                    // pronoun is.
+                    const pointsBack = !symbolic && !!form && (claimFormHasIt(read0, true) || !!claimPronounReadings(claimBoxRaw).dem);
+                    if (pointsBack && !claimReadState.notes.some(n => n.pronoun || n.reference) && claimPronounReadings(claimBoxRaw).itAsks) {
                         claimPronounQuestion();
                         form = Object.assign({}, form, { unresolvedReference: true });
                     }
                     // Each pronoun can be one thing only: the box is read with
                     // them in (the user, 2026-09-28: the only available
                     // referent is the referent).
-                    if (!symbolic && form && !claimReadState.notes.some(n => n.pronoun) && claimFormHasIt(read0, true)) {
+                    if (pointsBack && !claimReadState.notes.some(n => n.pronoun)) {
                         const r = claimPronounReadings(claimBoxRaw);
                         // Read already -- "Ravens are black and they fly": say
                         // so, and keep the reading.
-                        if (r.auto && r.auto.text !== claimBoxRaw && !claimFormHasIt(form, true) && !r.auto.whole) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true });
+                        // Only where the two readings agree: "Poe is black, and it
+                        // surprises Mary" had been read with "it" as Poe, while
+                        // the note said it was what "Poe is black" says.
+                        const agrees = () => {
+                            const sr = claimBoxRaw, st = claimBoxText, sn = claimBoxNames;
+                            try {
+                                claimBoxRaw = r.auto.text;
+                                claimBoxText = normalizeClaimText(r.auto.text);
+                                claimBoxNames = new Set((claimBoxText.match(/\uE000[a-z][a-z'-]*/g) || []).map(n => n.slice(1)));
+                                const again = claimQuietly(() => claimLocalReferences(readClaim(claimBoxText)));
+                                return !!again && claimKey(again) === claimKey(form);
+                            } finally { claimBoxRaw = sr; claimBoxText = st; claimBoxNames = sn; }
+                        };
+                        if (r.auto && r.auto.text !== claimBoxRaw && !claimFormHasIt(form, true) && !r.auto.whole && !r.dem && agrees()) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true });
                         else if (r.auto && r.auto.text !== claimBoxRaw) claimPronounQuestion();
                     }
                     const auto = !symbolic && claimReadState.notes.find(n => n.pronoun && n.auto);
@@ -13424,10 +13768,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
         }
         if (tokens.some(t => /["“”]/.test(t))) return 'quoted words are read as one claim';
-        if (!determined && tokens.slice(0, -1).some(t => /,$/.test(t)) && !words.some(w => /^(?:and|or|nor)$/.test(w))) {
+        const between = claimAdjectiveCommas(tokens);
+        if (!determined && tokens.slice(0, -1).some((t, i) => /,$/.test(t) && !between.has(i)) && !words.some(w => /^(?:and|or|nor)$/.test(w))) {
             return 'a comma inside the subject sets off a phrase: the sentence is read as one claim';
         }
         return null;
+    }
+    // "The long, dark, windy road": the commas between the words before a
+    // noun, after its determiner, set nothing off (the user, 2026-10-06). The
+    // indices of the tokens they end.
+    function claimAdjectiveCommas(tokens) {
+        const parts = [], from = [];
+        tokens.forEach((t, i) => {
+            if (/.,$/.test(t)) { parts.push(t.slice(0, -1), ','); from.push(i, i); }
+            else { parts.push(t); from.push(i); }
+        });
+        const ws = claimSynWords(parts), out = new Set();
+        for (let d = 0; d < ws.length; d++) {
+            if (!(ws[d].det || ws[d].poss || ws[d].quant || ws[d].num)) continue;
+            for (let j = d + 2; j < ws.length && (ws[j].t === ',' || claimSynPlain(ws[j])); j++)
+                if (ws[j].t === ',' && claimSynCommaAdjectives(ws, d + 1, j)) out.add(from[j]);
+        }
+        return out;
     }
     // Quotations in a sentence, as marks the reader keeps.
     function claimHasQuotation(text) { return /["“”]/.test(text) || /(?:^|[\s(])'[^'\s][^']*'(?=$|[\s,.;:)])/.test(text); }
@@ -14316,7 +14678,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const restoreLetter = text => text.replace(/^(\(*\s*)([a-z])\b/, (_, open, letter) => open + letter.toUpperCase());
             const delimited = /^(?:"[^"]+"|'[^']+'|“[^”]+”)$/.test(subject) ||
                 /^the proposition that\s+/.test(subject) || /^[A-Za-z][0-9]*$/.test(shown) ||
-                (shown.startsWith('(') && shown.endsWith(')') && !!readSymbolicClaim(restoreLetter(shown)));
+                (shown.startsWith('(') && shown.endsWith(')') && !!claimQuietly(() => readSymbolicClaim(restoreLetter(shown))));
             if (delimited) {
                 const operand = subject.replace(/^the proposition that\s+/, '');
                 const negative = /^(?:false|untrue)$/.test(suffix[3]) !== !!suffix[2];
@@ -14391,6 +14753,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((m = s.match(/^(?:no single|not one single) (.+)$/))) return readClaim('no ' + m[1]);
         return null;
     }
+    // Two claims joined before "implies" (r27.94), as before a condition's
+    // "if": "both A and B implies that C" is "if both A and B, then C" -- the
+    // "both" (or "either", "neither") says so; "A, and B implies that C"
+    // keeps "implies" with B, as the user's comma does with two clauses; "A
+    // and B implies that C", with nothing to say which, is asked.
+    function readImpliesJunction(s) {
+        const masked = claimTopLevelMask(s), m = /\s(implies|entails)(\s+that)?\s/.exec(masked);
+        if (!m) return null;
+        const subject = s.slice(0, m.index).trim(), object = s.slice(m.index + m[0].length).trim();
+        // Not after a that-clause's verb ("Mary knows that A and B implies C") -- a denial's "that" is no such clause.
+        const bare = claimTopLevelMask(subject).replace(/\bit (?:is|isn't) (?:not )?(?:the case|true|false|untrue) that\b/g, ' ');
+        if (/\b(?:if|then|that|whether|unless)\b/.test(bare) || CLAIM_DENIAL_FRONT.test(subject) || !claimLooksLikeClause(object)) return null;
+        // With "both", "either" or "neither", its pair says where the two
+        // claims part ("either it is not the case that A or B").
+        const pair = /^(both|either|neither)\s/.exec(subject), group = pair && claimPairGroups(claimTopLevelMask(subject)).find(g => g.from === 0);
+        const junction = group ? [{ text: subject.slice(pair[0].length, group.pair).trim().replace(/,$/, '') }, { text: subject.slice(group.after).trim(), sep: subject.slice(group.pair, group.after) }]
+            : ['and|&|∧', 'or|∨'].map(w => claimQuietly(() => splitClaimOn(subject, w))).find(g => g && g.length === 2);
+        if (!junction || junction.length !== 2 || !junction.every(p => claimLooksLikeClause(p.text))) return null;
+        if (!pair && /,/.test(junction[1].sep || '')) return null;
+        const said = (subj) => subj + ' ' + m[1] + ' ' + (m[2] ? 'that ' : '') + object;
+        if (pair) {
+            const a = claimWithAnyAsSome(() => readClaim(subject)), b = readClaim(object);
+            return a && b ? makeClaimConditional([a], b) : null;
+        }
+        const word = /\bor\b|∨/.test(junction[1].sep || '') ? 'or' : 'and', items = junction.map(g => g.text);
+        return claimAmbiguous('"' + m[1] + '" may follow from all of the "' + word + '", or from its last part only', [
+            said(claimGroupWords(items, word)), items[0] + ', ' + word + ' ' + said(items[1])
+        ].map(label => ({ label, build: () => readClaim(label) })), true, { shared: true, part: s }) || claimAtom(s);
+    }
     function readClaimWords(text) {
         const s = String(text || '').trim();
         if (!s) return null;
@@ -14425,6 +14816,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimUnread('this box holds a whole inference ("so", "therefore"): give its premises and its conclusion boxes of their own');
             return claimAtom(s);
         }
+        // Two claims joined before "implies" (r27.94).
+        if ((f = readImpliesJunction(s))) return f;
         // Bracketed claims joined, and nothing else -- "(A), (B), and (C)", as a
         // numbered list is read: the brackets say where each claim is, so the
         // junction is read before anything looks inside the first of them.
@@ -14447,15 +14840,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // condition is the second clause's alone. Without the comma, not
         // after a that-clause, which may take in the rest ("Mary knows that
         // Poe flies and if it rains, Poe sings").
+        // After a condition of its own ("Poe flies if it rains, and if Mary
+        // sings, then Bob dances"), where its "then" closes the "if" after
+        // the comma: two conditionals (r27.93).
+        let afterIf = false;
         if (!/^(?:if|only if|unless|when|whenever|provided)\b/.test(s) && (m = claimMatchTop(s, /^(.+?)(,?)\s+(and|but|or)\s+(if,?\s+.+)$/)) &&
-            !/\b(?:if|then)\b/.test(m[1]) && (m[2] || !/\b(?:that|whether)\b/.test(claimTopLevelMask(m[1])))) {
+            (!/\b(?:if|then)\b/.test(m[1]) || (afterIf = !!m[2] && !/\bthen\b/.test(m[1]) && claimIfThenWhole(m[4].replace(/^if,?\s+/, '')))) &&
+            (m[2] || !/\b(?:that|whether)\b/.test(claimTopLevelMask(m[1])))) {
             const word = m[3] === 'or' ? 'or' : 'and', a = readClaim(m[1]);
             // Not where what comes first may take in the rest: a denial in
             // front ("it is not the case that Poe flies, and if it rains, Poe
             // sings"), a qualifier ("probably"), or a that-clause ("Mary knows
             // that ..."). Asked, as "it is not the case that A, and B" is --
             // the readings not listed, as the reader cannot write both.
-            const lead = a && a.kind !== 'atom' ? claimScopingLead(m[1], a) : null;
+            const lead = a && a.kind !== 'atom' && !afterIf ? claimScopingLead(m[1], a) : null;
             if (lead) {
                 claimAmbiguous('"' + lead + '" may take in what follows "' + m[3] + ' if" too, or only its own clause: give each a box of its own, or say it another way', [], true);
                 return claimAtom(s);
@@ -14506,7 +14904,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!claimSkips('biconditional', s) && (f = readBiconditional(s))) return f;
         // Conditions in front: "if", "provided that", "as long as", "whenever".
         if ((m = s.match(/^if,?\s+(.+)$/)) && (f = readConditionalFront(m[1]))) return f;
-        if ((m = s.match(new RegExp('^(?:' + CLAIM_CONDITION_MARKER + ')\\s+(.+)$'))) &&
+        if ((m = s.match(new RegExp('^(?:' + CLAIM_CONDITION_MARKER + '),?\\s+(.+)$'))) &&
             (f = readConditionalFront(m[1]))) return f;
         // "Only if P, Q" is "Q only if P".
         // "Only Bob runs": that nothing else runs, and perhaps that Bob does --
@@ -14722,10 +15120,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // One vocabulary for both positions; keep direction-changing "only if"
     // and "unless" separate from sufficient-condition markers.
     const CLAIM_CONDITION_MARKER = 'provided(?: that)?|providing(?: that)?|as long as|so long as|on (?:the )?condition that|in the event that|in the case that|on the assumption that|assuming(?: that)?|supposing(?: that)?|whenever';
-    const CLAIM_POSTPOSED = new RegExp(',?\\s+(only if|if|' + CLAIM_CONDITION_MARKER + '|unless)\\s+', 'g');
+    const CLAIM_POSTPOSED = new RegExp(',?\\s+(only if|if|' + CLAIM_CONDITION_MARKER + '|unless),?\\s+', 'g');
+    // Two conditions after a claim (r27.93): a comma before one sets it over
+    // all that comes before it, as the user's commas do elsewhere -- "C if B,
+    // if A": if A, then C if B; "C, if B if A": C if (B if A). With no comma,
+    // asked (`stacked`).
     function claimPostposedCondition(s) {
         const re = new RegExp(CLAIM_POSTPOSED.source, 'g');
         const masked = claimTopLevelMask(s);
+        const found = [];
         let m;
         while ((m = re.exec(masked))) {
             const left = s.slice(0, m.index).trim(), right = s.slice(m.index + m[0].length).trim(), marker = m[1];
@@ -14733,14 +15136,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // one before the condition -- it takes in both verbs.
             if (/^,/.test(m[0]) && claimLooksLikeClause(right)) {
                 const toks = claimTokens(left), k = claimSynSubjectEnd(toks), j = k > 0 ? claimVpPieces(toks.slice(k)) : null;
-                if (j && j.parts.length === 2 && j.commaBefore && !j.copula) return { left, right, marker, both: true, comma: true };
+                if (j && j.parts.length === 2 && j.commaBefore && !j.copula && !found.length) return { left, right, marker, both: true, comma: true };
             }
             if (/\b(?:even|as|what|only|and only|if and only|that|whether|then|and|or|but|so|nor|either|both|neither)$|,$/.test(left)) continue;
             if (/\b(?:unclear|clear|sure|certain|doubtful|wonders?|wondered|asks?|asked|knows?|knew|see|sees|saw|check|checks|checked|tell|tells|told|decides?|decided|determines?|determined|doubts?|doubted|whether)$/.test(left)) continue;
-            if (!claimLooksLikeClause(left) || !claimLooksLikeClause(right)) continue;
-            return { left, right, marker, comma: /^,/.test(m[0]) };
+            if (!claimLooksLikeClause(left) || !claimLooksLikeClause(right) || claimThenWithoutIf(right)) continue;
+            found.push({ left, right, marker, comma: /^,/.test(m[0]) });
         }
-        return null;
+        if (found.length < 2) return found[0] || null;
+        const set = found.slice(1).reverse().find(f => f.comma) || (found[0].comma ? found[0] : null);
+        return set || Object.assign({}, found[0], { stacked: found[found.length - 1] });
+    }
+    // Two conditions after a claim with no comma to say which covers what:
+    // "Mary sings if Poe flies if it rains" -- if it rains, then Mary sings if
+    // Poe flies; or if Poe flies if it rains, then Mary sings (r27.93).
+    function claimStackedConditions(s, first, last) {
+        const fronted = p => (p.marker === 'if' ? 'if ' + p.right + ', then ' : p.marker + ' ' + p.right + ', ') + p.left;
+        // "If Poe flies if it rains, then Mary sings" said "if it rains implies
+        // that Poe flies, then Mary sings" where that reads back as it (r27.94).
+        let inner = fronted(first);
+        const b = first.marker === 'if' && last.marker === 'if' && first.right.endsWith(last.right) &&
+            first.right.slice(0, first.right.length - last.right.length).replace(/,?\s+if,?\s*$/, '').trim();
+        if (b) { const said = claimIfThenWords({ cond: { cond: last.right, cons: b }, cons: first.left }); if (claimReadsAs(said, claimOnFirst(b, last.right, first.left))) inner = said; }
+        return claimAmbiguous('the last condition may cover all that comes before it, or only what comes just before it: a comma before it covers all',
+            [fronted(last), inner].map(label => ({ label, build: () => readClaim(label) })), true, { shared: true, part: s }) || claimAtom(s);
     }
     // What in front of a clause may take in what follows it too: a denial
     // ("it is not the case that"), "it has not been shown that", a qualifier
@@ -14760,6 +15179,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // in front takes in the condition: "it is not the case that Q if P" denies
     // the conditional.
     function readPostposedCondition(s, post) {
+        if (post.stacked) return claimStackedConditions(s, post, post.stacked);
         const { left, right, marker } = post;
         if (/^(?:it is not the case that|it isn't the case that|it is false that|it is not true that|it isn't true that|it is untrue that)\s/.test(left) ||
             CLAIM_UNESTABLISHED.test(left)) return null;
@@ -15076,12 +15496,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // would begin with "and".
             const sp = /\bthen\b/.test(left) ? null : splitAtClauseComma(left.replace(/^if,?\s+/, ''));
             if (!/\bthen\b/.test(left) && (!sp || /^(?:and|or|but|if)\b/.test(sp[1]))) continue;
-            const a = readClaim(left), b = readClaim(right);
+            const a = readClaim(left), mark = claimReadState.notes.length, b = readClaim(right);
             // What follows may be a chain of its own: "if A then B and if C
             // then D and if E then F" is three conditionals side by side.
             const rest = !b ? null : b.kind === 'if' ? [b]
                 : b.kind === 'and' && !b.iff && !b.grouped && b.parts.every(p => p.kind === 'if') ? b.parts : null;
             if (a && a.kind === 'if' && rest) return claimList('and', [a].concat(rest));
+            // The second asks about its own words (r27.93): the whole waits on it.
+            if (a && a.kind === 'if' && b && b.kind === 'atom' && claimReadState.notes.slice(mark).some(n => n.kind === 'ambiguous' && n.part && n.readings.length)) return claimAtom(s);
         }
         return null;
     }
@@ -15136,24 +15558,193 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         out.push(text.slice(from));
         return out;
     }
+    // The "if"s that open a condition and the "then"s that close one, in a
+    // sentence with its groups blanked out (claimTopLevelMask), in order
+    // (r27.93). An "if" opens one at the head of a clause: first, after
+    // "then", "that", "whether" or another "if", after a comma (marked: it
+    // may put a condition on what comes before it instead), or after the
+    // "or" of "either ... or" and the "and" of "both ... and". Not one after
+    // another "and" or "or", which adds a condition ("if A, and if B, then
+    // C"), nor one after a clause's words, which puts its condition on them
+    // ("C if A"). A "then" closes one, unless it says what comes next ("and
+    // then", "by then", "since then").
+    function claimIfThenMarks(masked) {
+        masked = String(masked);
+        const marks = [], pairs = claimPairGroups(masked).map(g => g.pair);
+        for (const m of masked.matchAll(/\b(if|then)\b/gi)) {
+            const before = masked.slice(0, m.index), after = masked.slice(m.index + m[0].length);
+            if (m[1].toLowerCase() === 'then') {
+                if (/\b(?:and|by|since|until|till|from|before|after|back|now|the|only|even|just)(?:\s*,?\s*|-)$/i.test(before) || /^-/.test(after)) continue;
+                marks.push({ kind: 'then', at: m.index, end: m.index + m[0].length + /^,?\s*/.exec(after)[0].length });
+                continue;
+            }
+            const joined = /\b(?:and|or|but|nor)\s*,?\s*$/i.exec(before);
+            if (joined ? !pairs.includes(joined.index + joined[0].search(/[a-z]/i)) : /\S/.test(before) && !/(?:\b(?:then|that|whether|if)|[,;:])\s*$/i.test(before)) continue;
+            marks.push({ kind: 'if', at: m.index, end: m.index + m[0].length + /^,?\s*/.exec(after)[0].length,
+                comma: !joined && /,\s*$/.test(before) && !/\b(?:then|if|that|whether)\s*,\s*$/i.test(before) });
+        }
+        return marks;
+    }
+    // The marks of what follows an "if", read with that "if" open: the "then"
+    // that closes it, how many "then"s have no "if" of their own, and how
+    // many "if"s are still open at the end.
+    function claimIfThenScan(marks) {
+        let d = 1, close = null, short = 0;
+        for (const k of marks) {
+            if (k.kind === 'if') d++;
+            else if (k.kind === 'then') {
+                if (!d) { short++; continue; }
+                if (!--d && !close) close = k;
+            }
+        }
+        return { close, short, open: d };
+    }
+    // The words after an "if" whose "then"s pair up with its "if"s, each "if"
+    // closed: one conditional.
+    const claimIfThenWhole = rest => { const sc = claimIfThenScan(claimIfThenMarks(claimTopLevelMask(rest))); return !!sc.close && !sc.short; };
+    // Whether words have a "then" with no "if" of its own: no condition after
+    // a claim ("Poe flies if Ann sings, then Bob dances" is none, r27.94).
+    function claimThenWithoutIf(t) {
+        let d = 0;
+        return claimIfThenMarks(claimTopLevelMask(t)).some(k => k.kind === 'if' ? (d++, false) : d ? (d--, false) : true);
+    }
+    // A sentence's "if"s and "then"s as a tree: { cond, cons } for "if ...,
+    // then ...", else its words (r27.94).
+    function claimIfThenTree(text) {
+        const t = String(text).trim(), m = /^if,?\s+/i.exec(t);
+        if (!m) return t;
+        const rest = t.slice(m[0].length), sc = claimIfThenScan(claimIfThenMarks(claimTopLevelMask(rest)));
+        if (!sc.close || sc.short) return t;
+        return { cond: claimIfThenTree(rest.slice(0, sc.close.at).trim().replace(/,$/, '').trim()), cons: claimIfThenTree(rest.slice(sc.close.end).trim()) };
+    }
+    // The tree in words. An "if" where a condition goes, or after "implies",
+    // is said with "implies" -- "if W implies that X implies Y, then Z", "if
+    // W, then if X implies Y, then Z" -- and with "if ..., then ..." where a
+    // claim goes (the user, 2026-10-07: "If X implies Y, then Z" rather than
+    // "If, if", "as almost no one talks like that"). Only one whose own
+    // condition is an "if" is said "it is the case that if ..." in a condition.
+    function claimIfThenWords(tree, where = 'claim') {
+        if (typeof tree === 'string') return where === 'after' && /\s/.test(tree) ? 'that ' + tree : tree;
+        const conditional = () => 'if ' + claimIfThenWords(tree.cond, 'cond') + ', then ' + claimIfThenWords(tree.cons);
+        if (where === 'claim') return conditional();
+        if (typeof tree.cond !== 'string') return (where === 'after' ? 'that ' : 'it is the case that ') + conditional();
+        // Two claims joined before "implies" take "both" or "either", which
+        // says that all of it implies (readImpliesJunction).
+        const joined = !/^(?:both|either|neither)\s/.test(tree.cond) &&
+            ['and|&|∧', 'or|∨'].map(w => claimQuietly(() => splitClaimOn(tree.cond, w))).find(g => g && g.length === 2 && !/,/.test(g[1].sep || ''));
+        const subject = joined ? (/\bor\b|∨/.test(joined[1].sep || '') ? 'either ' : 'both ') + tree.cond : tree.cond;
+        return (where === 'after' ? 'that ' : '') + subject + ' implies ' + claimIfThenWords(tree.cons, 'after');
+    }
+    // (B → A) → C from the words of A, B and C: what "if A if B, then C"
+    // says, the second "if" on the first -- for checking a wording of it.
+    function claimOnFirst(a, b, c) {
+        const [x, y, z] = claimQuietly(() => [readClaim(a), readClaim(b), readClaim(c)]);
+        return x && y && z ? makeClaimConditional([makeClaimConditional([y], x)], z) : null;
+    }
+    // Whether a wording reads as the form meant: a reading is said with
+    // "implies" only where that reads back as it.
+    function claimReadsAs(text, form) {
+        const back = form && claimQuietly(() => readClaim(text));
+        return !!back && claimKey(back) === claimKey(form);
+    }
+    // A "then" with no "if" of its own: "if W, then if X, then Y, then Z" has
+    // one more "then" than "if"s. An "if" may do for two -- "if [if] W, then
+    // ...", (W → (X → Y)) → Z (the user's reading, 2026-10-07), or "if W,
+    // then if [if] X, then Y, then Z", W → ((X → Y) → Z) -- or the last
+    // "then" may say what comes next ("..., and then Z"). Asked (r27.93),
+    // each reading written out with "implies" (r27.94): "if W implies that X
+    // implies Y, then Z", "if W, then if X implies Y, then Z".
+    function claimNestingRepairs(rest, marks, short) {
+        const full = 'if ' + rest, shift = 3;
+        const ifs = [{ at: -shift }].concat(marks.filter(k => k.kind === 'if'));
+        // An "if" said twice, at `at` in `rest`; the later one first, so that
+        // the earlier place still holds. Side by side ("if if A"), either
+        // gives the same claim, offered once.
+        const twice = (text, at) => text.slice(0, at + shift) + 'if ' + text.slice(at + shift);
+        const texts = [];
+        let sequence = null;
+        if (short === 1) {
+            ifs.forEach(k => texts.push(twice(full, k.at)));
+            // The last two "then"s as "first ... and then ...": "if W, then if
+            // X, then first Y and then Z".
+            const thens = marks.filter(k => k.kind === 'then'), last = thens[thens.length - 1], prev = thens[thens.length - 2];
+            if (prev && /,\s*$/.test(rest.slice(0, last.at)) && !marks.some(k => k.at > prev.at && k.at < last.at) &&
+                !/^if\b/.test(rest.slice(last.end)) && !/^if\b/.test(rest.slice(prev.end)))
+                texts.push(sequence = 'if ' + rest.slice(0, prev.end) + 'first ' + rest.slice(prev.end, last.at).replace(/,\s*$/, '') + ' and then ' + rest.slice(last.end));
+        } else if (short === 2) {
+            ifs.forEach((k, i) => ifs.slice(i).forEach(j => texts.push(twice(twice(full, Math.max(k.at, j.at)), Math.min(k.at, j.at)))));
+        }
+        const seen = new Set(), readings = [];
+        texts.forEach(text => {
+            if (readings.length >= 6) return;
+            const form = claimQuietly(() => readClaim(text));
+            if (!form || form.kind !== 'if') return;
+            const key = claimKey(form);
+            if (seen.has(key)) return;
+            seen.add(key);
+            // In words with "implies" where they read back as it; else an
+            // "if" twice is "if it is the case that if".
+            const said = claimIfThenWords(claimIfThenTree(text)), back = said !== text ? claimQuietly(() => readClaim(said)) : null;
+            const label = back && claimKey(back) === key ? said : text.replace(/\bif(,?) (?=if\b)/g, 'if$1 it is the case that ');
+            readings.push({ label, build: () => readClaim(label), sequence: text === sequence });
+        });
+        const message = (short === 1 ? 'a "then" has' : 'some "then"s have') + ' no "if" of ' + (short === 1 ? 'its' : 'their') + ' own';
+        if (!readings.length) {
+            claimAmbiguous(message + ': give each "then" its "if"', [], true);
+            return claimAtom(full);
+        }
+        const asSequence = readings.some(r => r.sequence);
+        return claimAmbiguous(message + ': ' + (readings.length > (asSequence ? 1 : 0) ? 'an "if" may be meant twice' + (asSequence ? ', or ' : '') : '') +
+            (asSequence ? '"then" may mean "and then"' : ''), readings, true, { shared: true, part: full }) || claimAtom(full);
+    }
+    // "If W, if X, then Y": the second "if" may add a condition (if W, then
+    // if X, then Y) or put one on the first (if X implies W, then Y) -- asked
+    // (r27.93), as "if it rains, if Poe flies, Mary sings" is.
+    function claimCommaIfReadings(first, cond, cons) {
+        const full = 'if ' + first + ', if ' + cond + ', ' + cons;
+        const on = 'if ' + first + ' if ' + cond + ', then ' + cons, said = claimIfThenWords({ cond: { cond, cons: first }, cons });
+        const labels = ['if ' + first + ', then if ' + cond + ', then ' + cons, claimReadsAs(said, claimOnFirst(first, cond, cons)) ? said : on];
+        return claimAmbiguous('the second "if" may add a condition, or put one on what comes before it', labels.map(label => ({ label, build: () => readClaim(label) })), true,
+            { shared: true, part: full }) || claimAtom(full);
+    }
     function readConditionalFront(rest) {
         let condText, consText;
         const masked = claimTopLevelMask(rest);
-        // Not the "then" of "A and then B": that one is the condition's own.
-        const at = /\bthen,?\s+/g;
-        let m;
-        while ((m = at.exec(masked)) && /\band,?\s+$/.test(masked.slice(0, m.index)));
-        if (m) {
-            condText = rest.slice(0,m.index).trim().replace(/,$/,'').trim();
-            consText = rest.slice(m.index+m[0].length).trim();
-            if (/(?:^|\bthat\s+)if\b/.test(claimTopLevelMask(condText))) {
-                claimAmbiguous('with two "if"s, use brackets or quotes to show which "then" goes with which', [], true);
+        // The "then" that closes this "if": the first after which each "if"
+        // in the condition has had its own (r27.93) -- "if, if A, then B, then
+        // C" is "if it is the case that if A, then B, then C". Not the "then"
+        // of "A and then B": that one is the condition's own.
+        const marks = claimIfThenMarks(masked), scan = claimIfThenScan(marks);
+        const thens = marks.filter(k => k.kind === 'then');
+        if (scan.short) return claimNestingRepairs(rest, marks, scan.short);
+        if (scan.close) {
+            condText = rest.slice(0, scan.close.at).trim().replace(/,$/, '').trim();
+            consText = rest.slice(scan.close.end).trim();
+        } else if (thens.length) {
+            const ifs = marks.filter(k => k.kind === 'if');
+            // "If W, if X, then Y": asked.
+            if (ifs.length === 1 && ifs[0].comma && thens.length === 1 && thens[0].at > ifs[0].at) {
+                const first = rest.slice(0, ifs[0].at).trim().replace(/,$/, '').trim(), cond = rest.slice(ifs[0].end, thens[0].at).trim().replace(/,$/, '').trim();
+                if (claimLooksLikeClause(first) && claimLooksLikeClause(cond)) return claimCommaIfReadings(first, cond, rest.slice(thens[0].end).trim());
+            }
+            // "If, if A, then B, C": each "if" inside has its "then", and a
+            // comma after the last one's clause closes this one.
+            const last = thens[thens.length - 1], split = !ifs.some(k => k.comma) && scan.open === 1 ? splitAtClauseComma(rest.slice(last.end)) : null;
+            if (split) {
+                condText = rest.slice(0, last.end) + split[0];
+                consText = split[1];
+            } else {
+                claimAmbiguous('with two "if"s, give each its own "then", or say the inner one with "implies"', [], true);
                 return Object.assign(claimAtom('if '+rest),{unresolvedReference:true});
             }
         }
         else {
             const parts = splitAtClauseComma(rest);
             if (!parts) return null;
+            // "If W, if X, Y": the second "if" may add a condition, or put one
+            // on the first -- asked, as with "then".
+            const more = /^if,?\s+/.test(parts[1]) ? splitAtClauseComma(parts[1].replace(/^if,?\s+/, '')) : null;
+            if (more && !/\bif\b/.test(claimTopLevelMask(more[0]))) return claimCommaIfReadings(parts[0], more[0], more[1]);
             // "If X, and if Y, Z": the second condition comes with the
             // consequent, as in "if X, then if Y, then Z" -- the same two.
             condText = parts[0]; consText = parts[1].replace(/^and,?\s+(?=if\b)/, '');
@@ -15195,6 +15786,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const a = claimWithAnyAsSome(() => readClaim(m[1])), b = readClaim(m[2]);
             if (a && b) return makeClaimConditional([a], b);
         }
+        // "X implies Y implies Z": either "implies" may be the main one --
+        // asked (r27.94), as "→" twice is. "X implies that Y implies Z" says it.
+        const imps = [...claimTopLevelMask(s).matchAll(/\s(implies|entails)(\s+that)?\s/g)];
+        if (imps.length === 2 && !imps[0][2]) {
+            const x = s.slice(0, imps[0].index).replace(/^that\s+/, ''), y = s.slice(imps[0].index + imps[0][0].length, imps[1].index),
+                z = s.slice(imps[1].index + imps[1][0].length), w = imps[0][1], that = t => /\s/.test(t) ? 'that ' + t : t;
+            if ([x, y, z].every(claimLooksLikeClause))
+                return claimAmbiguous('"' + w + '" twice: either may be the main one', [
+                    'if ' + x + ' ' + w + ' ' + that(y) + ', then ' + z, x + ' ' + w + ' that ' + y + ' ' + imps[1][1] + ' ' + that(z)
+                ].map(label => ({ label, build: () => readClaim(label) })), true, { shared: true, part: s }) || claimAtom(s);
+        }
         if ((m = s.match(/^(?:that\s+)?(.+?)\s+(?:implies|entails)(?:\s+that)?\s+(.+)$/)) &&
             claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[2])) {
             const a = claimWithAnyAsSome(() => readClaim(m[1])), b = readClaim(m[2]);
@@ -15206,7 +15808,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((m = claimMatchTop(s, new RegExp('^(.+?),?\\s+(?:if|' + CLAIM_CONDITION_MARKER + ')\\s+(.+)$'))) &&
             !/\b(?:unclear|clear|sure|certain|doubtful|wonders?|wondered|asks?|asked|knows?|see|check|tell|as|what)$/.test(m[1]) &&
             !/\b(?:even|only|and only|if and only|that|whether|then|and|or|but|yet|so|nor|either|both|neither)$/.test(m[1]) &&
-            claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[2])) {
+            claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[2]) && !claimThenWithoutIf(m[2])) {
             const conds = claimWithAnyAsSome(() => claimSplitTop(m[2], /,?\s+and\s+if\s+/).map(readClaim));
             const cons = readClaim(m[1]);
             if (cons && conds.every(Boolean)) return makeClaimConditional(conds, cons);
@@ -15679,6 +16281,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // adjective ("independently motivated").
                 if (y.conj && /^(?:and|or)$/.test(y.w) && j > b && ws[j - 1].adj && !ws[j - 1].noun && claimSynModifiedNounAhead(ws, j + 1)) continue;
                 if (y.adv && !y.noun && claimSynAdjectiveAhead(ws, j + 1) && j + 1 < ws.length) continue;
+                // Adjectives parted by commas that are words of their own (as
+                // the pronoun reader has them): "the long , dark , windy road".
+                if (y.t === ',' && j > b && claimSynCommaAdjectives(ws, b, j)) continue;
                 if ((y.closed && !CLAIM_SYN_ORDINALS.has(y.w)) || (y.name && !determined) || (y.poss && j > b)) break;
                 if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y));
                 if (!(y.noun || y.adj || y.num || y.participle || y.ing || proper || CLAIM_SYN_ORDINALS.has(y.w))) break;
@@ -15774,9 +16379,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return null;
     }
     // An adjective at i, past adverbs: "independently motivated".
+    // A word that may be one of a noun phrase's own: not a closed word, a
+    // name, a possessive, a pronoun or a conjunction.
+    const claimSynPlain = y => !!y && /^[a-z]/.test(y.w || '') && !y.closed && !y.name && !y.poss && !y.pro && !y.conj;
+    // Does the comma at j part adjectives before their noun, in a phrase
+    // whose words begin at b ("the long , dark , windy road")? Plain words
+    // and such commas from b to the noun, the word before each comma no noun
+    // the lists know, and two words at least after the last comma: an
+    // adjective and its noun. Not "the dog , a terrier ,", "the president ,
+    // elected yesterday ,".
+    function claimSynCommaAdjectives(ws, b, j) {
+        const comma = q => !!ws[q] && ws[q].t === ',' && claimSynPlain(ws[q - 1]) && claimSynPlain(ws[q + 1]);
+        const noun = y => y.plural || CLAIM_HE_OR_SHE_NOUNS.has(y.w) || CLAIM_HE_OR_SHE_ANIMALS.has(y.w) || CLAIM_THING_NOUNS.has(y.w) || CLAIM_CONTENT_NOUNS.has(y.w);
+        if (j <= b || !comma(j)) return false;
+        for (let q = b; q < j; q++) if (!claimSynPlain(ws[q]) && !comma(q)) return false;
+        let e = j + 1, last = j;
+        while (e < ws.length && (claimSynPlain(ws[e]) || comma(e))) { if (ws[e].t === ',') last = e; e++; }
+        for (let q = b; q <= last; q++) if (ws[q].t === ',' && noun(ws[q - 1])) return false;
+        return e - 1 - last >= 2 && !!ws[e - 1].noun;
+    }
     function claimSynAdjectiveAhead(ws, i) {
         while (ws[i] && ws[i].adv && !ws[i].noun) i++;
-        return !!ws[i] && !ws[i].closed && !ws[i].name && (ws[i].adj || ws[i].participle) && !ws[i].noun;
+        // Or in -ing, before a noun: "the long and winding road".
+        return !!ws[i] && !ws[i].closed && !ws[i].name && ((ws[i].adj || ws[i].participle) && !ws[i].noun ||
+            !!ws[i].ing && !!ws[i + 1] && !!ws[i + 1].noun && !ws[i + 1].closed && !ws[i + 1].name);
     }
     // Adjectives at i, past adverbs, and then the noun they are said of:
     // "independently motivated, premises".
@@ -16036,6 +16662,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const phrases = claimSynNounPhrases(ws, i, 0, true);
         if (!phrases.length) return -1;
         const verbed = claimSynChoose(ws, phrases);
+        // A word in its plain form that may be a verb, after words that are
+        // no noun the lists know, is the noun of the longer phrase: "the long,
+        // dark, windy road", "the old man" -- a verb so would not agree.
+        if (verbed > i) {
+            const v = ws[verbed], before = ws[verbed - 1];
+            if (v && v.noun && !v.s && !v.past && !v.ing && !v.aux && claimSynVerbStart(ws, verbed, '?') === 'weak' && before && !before.det && !before.plural &&
+                !CLAIM_INVARIANT_NOUNS.has(before.w) && !CLAIM_HE_OR_SHE_NOUNS.has(before.w) && !CLAIM_HE_OR_SHE_ANIMALS.has(before.w) &&
+                !CLAIM_THING_NOUNS.has(before.w) && !CLAIM_CONTENT_NOUNS.has(before.w) && phrases.some(o => o.end === verbed + 1)) return verbed + 1;
+        }
         return verbed > i ? verbed : phrases[phrases.length - 1].end;
     }
     // The phrases of a clause, for reading and for tests: "[the black raven] <left> ...".
@@ -16303,7 +16938,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         {
             const before = subjectTokens.slice(0, split).filter((t, i) => !(i === 0 && /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(claimWord(t))));
             const after = claimSynWords(subjectTokens.slice(split + 1));
-            if (before.length && before.every(t => claimSynWord(t).adj) && after.length > 1 && after[0].adj && after[after.length - 1].noun) return undefined;
+            // The last of them may be in -ing ("the long and winding road"),
+            // or a word the lists do not know ("the long, dark and windy road").
+            const adjective = y => y.adj || y.ing || (claimSynPlain(y) && !y.plural && !CLAIM_HE_OR_SHE_NOUNS.has(y.w) && !CLAIM_HE_OR_SHE_ANIMALS.has(y.w) &&
+                !CLAIM_THING_NOUNS.has(y.w) && !CLAIM_CONTENT_NOUNS.has(y.w));
+            if (before.length && before.every(t => claimSynWord(t).adj) && after.length > 1 && adjective(after[0]) && after[after.length - 1].noun) return undefined;
         }
         // "The man who sings and dances": the "and" of a relative clause, a
         // verb after it -- one subject.
@@ -16338,6 +16977,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const togetherSaid = () => { const said = subjectSaid + ' together ' + vp.map(claimWord).filter(w => w && w !== 'together').join(' ');
             return Object.assign(claimAtom(said), { src: said }); };
         if (/\b(?:each other|one another)\b/.test(vp.join(' '))) {
+            // "Bob and Mary love each other": each does it to the other --
+            // "Bob loves Mary, and Mary loves Bob" (the user, 2026-10-06: the
+            // anaphors). Of three or more, which pairs it says is not settled.
+            if (names.length === 2 && kind === 'and' && names.every(n => n.length)) {
+                // A name that opens the box is unmarked only because it does:
+                // as an object it is marked, as "Mary loves Bob" has it.
+                const other = n => n.length === 1 && claimOpeningName(n[0]) ? '\uE000' + n[0] : n.join(' ');
+                const toOther = i => claimTokens(vp.join(' ').replace(/\b(?:each other|one another)('s)?(?=\s|$)/,
+                    (m, poss) => other(names[1 - i]) + (poss ? "'s" : '')));
+                const forms = names.map((n, i) => { const v = toOther(i); return claimWithSubject(readVerbPhraseOf(claimSubjectTerm(n), v, s), n, v); });
+                if (forms.every(Boolean)) {
+                    claimUnread('"each other" is read as each of the two to the other');
+                    return claimList('and', forms);
+                }
+            }
             claimUnread('"each other", "one another" and "together" say something of the two at once, which is not read');
             return claimAtom(s);
         }
@@ -16389,6 +17043,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return claimAmbiguous('"' + subjectSaid + '" can be said of each, or of them together', [
             { label: 'both ' + subjectTokens.join(' ') + ' ' + vp.join(' '), build: each },
             { label: subjectTokens.join(' ') + ' together ' + vp.join(' '), build: togetherSaid }], false) || claimAtom(s);
+    }
+    // A word that opens the box with a capital and is no word the lists know
+    // as common: a name, unmarked only because the box begins with it.
+    function claimOpeningName(w) {
+        return !!claimBoxRaw && /^[a-z][a-z'-]*$/.test(w) && new RegExp('^\\W*' + w.charAt(0).toUpperCase() + w.slice(1) + '\\b').test(claimBoxRaw) &&
+            !CLAIM_NOT_A_NAME.has(w) && !CLAIM_FUNCTION_WORDS.has(w) && !CLAIM_VERB_MARKERS.has(w) && !claimKnownAdjective(w) &&
+            !CLAIM_NOUN_DETERMINERS.test(w) && !CLAIM_QUANTIFIER_START.test(w) && !claimPluralWord(w) && !CLAIM_LISTED_SINGULARS.has(w) &&
+            !CLAIM_HE_OR_SHE_NOUNS.has(w) && !CLAIM_HE_OR_SHE_ANIMALS.has(w) && !CLAIM_THING_NOUNS.has(w) && !CLAIM_CONTENT_NOUNS.has(w) && !CLAIM_INVARIANT_NOUNS.has(w);
     }
     function claimNoIndividual(form) {
         if (!form) return form;
@@ -16635,8 +17297,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (/\b[a-z]{3,}\b/.test(src.replace(/[A-Za-z][A-Za-z0-9]*\s*\([^()]*\)/g, ' '))) return null;
         const tokens = tokenizeSymbolic(src);
         if (!tokens || !tokens.length) return null;
-        const tree = parseSymbolicTokens(tokens);
+        const chains = [], tree = parseSymbolicTokens(tokens, chains);
         if (!tree) return null;
+        // "A → B → C" with no brackets: either "→" may be the main one (the
+        // user, 2026-10-07: "W → (X → Y) → Z" "is ambiguous between" W → ((X →
+        // Y) → Z) and (W → (X → Y)) → Z). Asked, each grouping with its
+        // brackets, the first "→" inside first; past four parts, not listed.
+        if (chains.length) {
+            const c = chains[0], starts = [c.first].concat(c.arrows.map(a => a + 1));
+            const ops = starts.map((from, k) => ({ from: tokens[from].at, to: tokens[k < c.arrows.length ? c.arrows[k] - 1 : c.last].end }));
+            const group = (i, j, top) => {
+                if (i === j) return [src.slice(ops[i].from, ops[i].to)];
+                const out = [];
+                for (let k = j - 1; k >= i; k--) group(i, k, false).forEach(l => group(k + 1, j, false).forEach(r => {
+                    const said = l + src.slice(ops[k].to, ops[k + 1].from) + r;
+                    out.push(top ? said : '(' + said + ')');
+                }));
+                return out;
+            };
+            const n = ops.length, labels = n <= 4 ? group(0, n - 1, true).map(said => src.slice(0, ops[0].from) + said + src.slice(ops[n - 1].to)) : [];
+            const arrow = src.slice(tokens[c.arrows[0]].at, tokens[c.arrows[0]].end);
+            return claimAmbiguous('with no brackets, either "' + arrow + '" may be the main one', labels.map(label => ({ label, build: () => claimQuietly(() => readSymbolicClaim(label)) })),
+                true, { shared: true }) || claimAtom(src);
+        }
         return Object.assign(symbolicToClaim(tree), {folTree:tree});
     }
     // Controlled English with explicitly named variables keeps quantifier order
@@ -16698,28 +17381,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         while (i < src.length) {
             if (/\s/.test(src[i])) { i++; continue; }
             const op = SYMBOL_SPELLINGS.find(([spelling]) => src.startsWith(spelling, i));
-            if (op) { out.push({ t: op[1] }); i += op[0].length; continue; }
-            if (src[i] === '=') { out.push({t:'='}); i++; continue; }
+            if (op) { out.push({ t: op[1], at: i, end: i + op[0].length }); i += op[0].length; continue; }
+            if (src[i] === '=') { out.push({ t: '=', at: i, end: i + 1 }); i++; continue; }
             // "∀xFx": the variable, then what it binds.
             const prev = out[out.length - 1];
             const bound = prev && (prev.t === 'all' || prev.t === 'some') && src.slice(i).match(/^[a-z][0-9']*(?=[A-Z])/);
-            if (bound) { out.push({ t: 'id', v: bound[0] }); i += bound[0].length; continue; }
+            if (bound) { out.push({ t: 'id', v: bound[0], at: i, end: i + bound[0].length }); i += bound[0].length; continue; }
             // A link's name keeps its joined hyphens: "-O1", "M1S1-O1"
             // (claimLinkName), not "not O1".
             const m = src.slice(i).match(/^(?:\u2060-)*[A-Za-z][A-Za-z0-9_']*(?:\u2060-[A-Za-z0-9_']+)*/);
             if (!m) return null;
-            out.push({ t: 'id', v: m[0] });
+            out.push({ t: 'id', v: m[0], at: i, end: i + m[0].length });
             i += m[0].length;
         }
         return out;
     }
-    // Precedence, loosest first: ↔, → (to the right), ∨, ∧, then ¬ and the
-    // quantifiers. A quantifier binds the formula right after it -- unless its
+    // Precedence, loosest first: ↔, → (to the right; with no brackets, a
+    // chain of them is noted in `chains`, to be asked about), ∨, ∧, then ¬
+    // and the quantifiers. A quantifier binds the formula right after it -- unless its
     // variable turns up later in the same group, as in "∀x P(x) → Q(x)", which
     // can only mean "∀x (P(x) → Q(x))". A later quantifier over the same
     // variable binds what follows it: "∀x P(x) → ∃x Q(x)" is "(∀x P(x)) →
     // (∃x Q(x))".
-    function parseSymbolicTokens(tokens) {
+    function parseSymbolicTokens(tokens, chains) {
         let pos = 0;
         const peek = (k = 0) => tokens[pos + k];
         const isVar = tk => tk && tk.t === 'id' && /^[a-z][0-9']*$/.test(tk.v);
@@ -16730,11 +17414,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return a;
         }
         function implication() {
-            const a = disjunction();
-            if (!a || !peek() || peek().t !== 'imp') return a;
-            pos++;
-            const b = implication();
-            return b ? { op: 'imp', a, b } : null;
+            const first = pos, parts = [disjunction()], arrows = [];
+            if (!parts[0]) return null;
+            while (peek() && peek().t === 'imp') { arrows.push(pos++); const next = disjunction(); if (!next) return null; parts.push(next); }
+            if (chains && parts.length > 2) chains.push({ first, arrows, last: pos - 1 });
+            return parts.reduceRight((b, a) => ({ op: 'imp', a, b }));
         }
         function disjunction() {
             let a = conjunction();
@@ -17317,6 +18001,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return Object.assign({}, f, { conds: f.conds.concat(inner.conds), cons: inner.cons });
     }
     function claimInOrder(keys) { return claimUnorderedKeys ? keys.slice().sort() : keys; }
+    // A reflexive is its subject (r27.88): "Bob praised himself" and "Bob
+    // praised Bob" say one thing of one person, and "praises himself" is said
+    // alike of anyone, as a quantifier's terms have it. Both are compared
+    // with one mark for the reflexive, or for the subject named again -- not
+    // in a clause after "that", nor of a subject that is many ("ravens love
+    // ravens" is not "ravens love themselves").
+    const CLAIM_SELF_WORDS = /(^|[\s~=¬(&|])(?:himself|herself|itself|themselves|oneself|myself|yourself|ourselves|yourselves)(?=$|[\s,;)&|])/g;
+    function claimSelfSaid(said, term) {
+        const text = String(said == null ? '' : said);
+        const cut = text.search(/\s(?:that|whether|if)\s/), head = cut < 0 ? text : text.slice(0, cut), tail = cut < 0 ? '' : text.slice(cut);
+        let out = head.replace(CLAIM_SELF_WORDS, '$1\u27F2');
+        const name = term ? claimUnmarked(String(term)).trim().toLowerCase() : '';
+        if (name && !/^(?:he|she|it|they|we|you|i|one|someone|somebody|something|everyone|everybody|everything|anyone|anybody|anything|no one|nobody|nothing)$/.test(name)) {
+            const re = new RegExp('(^|[\\s~=¬])\\uE000?' + name.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+\\uE000?') + '(?=$|[,;]|\\s(?!\\uE000))', 'gi');
+            out = out.replace(re, '$1\u27F2');
+        }
+        return out + tail;
+    }
+    // Whether a predication's subject is one thing, for claimSelfSaid.
+    const claimSelfTerm = f => !f.noIndividual && (!f.subjectNumber || f.subjectNumber === 'singular') &&
+        !claimPluralWord(claimUnmarked(String(f.term || '')).trim().split(/\s+/).pop() || '') ? f.term : null;
     function claimKeyBy(form, loose) {
         if (!form) return '?';
         const words = w => loose ? claimUnmarked(w) : w;
@@ -17328,9 +18033,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "It is possible for Poe to fly" is not "Poe is able to fly"
             // (claimPlainCan): the "can" of what is possible is its own.
             case 'pred': return 'P:' + (loose ? normalizeClaimTerm(claimUnmarked(form.term)) : form.term) +
-                (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(form.prop);
-            case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimPropCanon(form.subject)) + '|' + words(claimPropCanon(form.predicate));
-            case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimPropCanon(form.subject)) + '|' + words(claimPropCanon(form.predicate));
+                (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(claimSelfSaid(form.prop, claimSelfTerm(form)));
+            case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
+            case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
             case 'not': return 'N(' + key(form.inner) + ')';
             case 'unestablished': return (form.whether ? 'W?(' : 'W(') + (form.inner ? key(form.inner) : '*') + (form.from ? '|' + form.from.map(key).sort().join('&') : '') + ')';
             case 'unsound': case 'invalid':
@@ -17496,7 +18201,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const kept = words.filter((w, i) => i === 0 || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)));
                 const vp = CLAIM_COPULAS.has(claimWord(kept[0])) ? [kept[0]].concat(claimTokens(claimCanonicalComplement(kept.slice(1).join(' '), denied))).join(' ')
                     : claimCanonicalObjects(kept, denied).join(' ');
-                return src.slice(0,-f.vpText.length) + vp;
+                // A reflexive, or the subject named again, is one mark (r27.88).
+                return src.slice(0,-f.vpText.length) + (f.kind === 'pred' ? claimSelfSaid(vp, claimSelfTerm(f)) : vp);
             };
             // "Poe is able to fly" says what "Poe can fly" says, read as ability
             // (its "can" of what is possible is marked, and keyed, apart).
@@ -19905,7 +20611,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return ctx.style === 0 ? parts.join(' ' + kind + ' ') : (kind === 'or' ? 'either ' : 'both ') + parts.join(', ' + kind + ' ');
     }
     function claimSayConditional(condSayers, consSayer, ctx) {
-        const conds = condSayers.map(say => say(ctx)), cons = consSayer(ctx);
+        // A condition that is itself an "if", said with "implies": "if A
+        // implies that B, then C" (r27.94; "if if A, ..." reads so, but hardly).
+        const conds = condSayers.map(say => say(ctx)).map(c => {
+            if (!c || !/^if\b/i.test(c)) return c;
+            const tree = claimIfThenTree(c);
+            return typeof tree === 'string' ? 'it is the case that ' + c : claimIfThenWords(tree, 'cond');
+        }), cons = consSayer(ctx);
         return cons && conds.length && conds.every(Boolean)
             ? 'if ' + conds.join(', and if ') + (ctx.style === 0 && ctx.then === false ? ', ' : ', then ') + cons : null;
     }
@@ -19940,7 +20652,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (parts.every(Boolean)) return 'neither ' + parts.join(' nor ');
             }
         }
-        const said = claimSayForm(form, ctx);
+        // A conditional: "it is not the case that if A, then B" -- not its
+        // own words where they say "A implies that B", which a denial in
+        // front leaves open (r27.94).
+        const said = form.kind === 'if' && form.src && !/^if\b/i.test(claimClauseStart(form.src))
+            ? claimSayConditional(form.conds.map(p => c => claimSayForm(p, c)), c => claimSayForm(form.cons, c), ctx) : claimSayForm(form, ctx);
         return said ? 'it is not the case that ' + said : null;
     }
     // A quantified claim's contradictory, in its own words: "all ravens are
@@ -26501,8 +27217,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // Where the browser has no save dialog (Firefox, Safari): the formats
     // in a small menu by the Save As button, and the chosen one downloaded
-    // (on an iPhone or iPad, the share sheet). A promise of what happened.
-    function chooseSaveFormat() {
+    // (on an iPhone or iPad, the share sheet), or handed to `save`. A
+    // promise of what happened.
+    function chooseSaveFormat(save) {
         return new Promise(resolve => {
             hideContextMenu();
             let html = '<div class="ctx-label">Save as</div>';
@@ -26537,13 +27254,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 document.removeEventListener('pointerdown', outside, true);
                 document.removeEventListener('keydown', escape, true);
                 hideContextMenu();
-                saveFormatBlob(fmt).then(blob => {
+                (save ? save(fmt) : saveFormatBlob(fmt).then(blob => {
                     if (!blob) { alert('Nothing to save as ' + fmt.label + '.'); return { saved: false }; }
                     return downloadBlob(blob, exportBaseName() + fmt.exts[0]).then(saved => {
                         if (saved && fmt.id === 'json') { lastSaveTime = new Date(); manualLocalSave(true); updateSaveIndicator(); }
                         return { saved, picked: false, format: fmt.id };
                     });
-                }).then(resolve);
+                })).then(resolve);
             }));
             // Escape at once; a click outside only after the click that opened it.
             document.addEventListener('keydown', escape, true);
@@ -26685,15 +27402,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Always asks where to put the file, and in which format (SAVE_FORMATS):
     // the map itself (JSON), which is then LINKED to it, or a picture, a PDF
     // or a text outline of it, which is not. `onlyMap`: Save to File's first
-    // save, which offers the map alone.
+    // save, which offers the map alone. On a phone or tablet the save screen
+    // has no list of file types -- Android's names a file and a folder only,
+    // so the map's own type was all it could save -- so the formats come
+    // first, in the menu by the button, and then the save screen for the one
+    // chosen (r27.95).
     function saveMapAs(onlyMap) {
         onlyMap = onlyMap === true;
         if (!fileApiAvailable()) return onlyMap ? downloadMapJson() : chooseSaveFormat();
+        if (!onlyMap && saveByTouch()) return chooseSaveFormat(fmt => saveWithPicker([fmt]));
+        return saveWithPicker(onlyMap ? SAVE_FORMATS.slice(0, 1) : SAVE_FORMATS);
+    }
+    // A phone or tablet: its main pointer a finger.
+    function saveByTouch() {
+        try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; }
+    }
+    // The browser's save screen, offering `formats`: the file picked written
+    // in its format -- the one chosen, where there is one; else by its name.
+    function saveWithPicker(formats) {
         return window.showSaveFilePicker({
-            suggestedName: exportBaseName() + '.json',
-            types: (onlyMap ? SAVE_FORMATS.slice(0, 1) : SAVE_FORMATS).map(f => ({ description: f.label, accept: { [f.mime]: f.exts } }))
+            suggestedName: exportBaseName() + formats[0].exts[0],
+            types: formats.map(f => ({ description: f.label, accept: { [f.mime]: f.exts } }))
         }).then(function (handle) {
-            const fmt = saveFormatOf(handle && handle.name);
+            const fmt = formats.length === 1 ? formats[0] : saveFormatOf(handle && handle.name);
             return saveFormatBlob(fmt).then(function (blob) {
                 if (!blob) { alert('Nothing to save as ' + fmt.label + '.'); return { saved: false }; }
                 return handle.createWritable().then(function (w) {
@@ -26710,7 +27441,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
         }, function (err) {
             if (err && (err.name === 'AbortError' || err.code === 20)) return { saved: false };
-            // A picker the page may not use: the map, downloaded, as before.
+            // A picker the page may not use: the map -- or the format chosen --
+            // downloaded, as before.
+            const fmt = formats.length === 1 ? formats[0] : SAVE_FORMATS[0];
+            if (fmt.id !== 'json') return saveFormatBlob(fmt).then(blob => blob
+                ? downloadBlob(blob, exportBaseName() + fmt.exts[0]).then(saved => ({ saved, picked: false, format: fmt.id })) : { saved: false });
             downloadBlob(mapJsonBlob(), exportBaseName() + '.json');
             lastSaveTime = new Date(); updateSaveIndicator();
             return { saved: true, picked: false };
@@ -27379,8 +28114,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // Positions line: "NAME @ ±dx,±dy", a tree's offset from the first
             // main contention (see generateTextRepresentation). Without a colon
             // or ">" it can be neither a node line nor a cross-reference. A
-            // weak tree's name has a hyphen: "-O1 @ +800,-120".
-            const posMatch = line.match(/^\s*((?:-[OR]|[A-Z])\d+)[a-z]?\s*@\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$/);
+            // weak tree's name begins WO or WR ("WR1 @ +800,-120"), or, as
+            // it was written before r27.86, with a hyphen ("-R1 @ ...").
+            const posMatch = line.match(/^\s*((?:W[OR]|-[OR]|[A-Z])\d+)[a-z]?\s*@\s*([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)\s*$/);
             if (posMatch) {
                 positionLines.push({ name: posMatch[1], dx: parseFloat(posMatch[2]), dy: parseFloat(posMatch[3]) });
                 return;
@@ -27434,7 +28170,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 }
 
                 // Child of a free node: parse the suffix for type segments.
-                const segRegex = /(-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
+                const segRegex = /(W[OR]|-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
                 const segments = [];
                 let m;
                 while ((m = segRegex.exec(suffix)) !== null) {
@@ -27443,7 +28179,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!segments.length) return;
 
                 const lastSeg = segments[segments.length - 1];
-                const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q and P, the old letters for -O and -R, still read; X (briefly, untyped) reads as S
+                const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', WO: 'weak-objection', WR: 'weak-rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // -O and -R (before r27.86) and Q and P (before those) still read; X (briefly, untyped) reads as S
                 const nodeType = typeMap[lastSeg.type] || 'support';
                 const baseLabel = groupLabel(segments, freeBase);
 
@@ -27491,9 +28227,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return;
             }
 
-            // Parse label into segments: M1, S1a, O2, R1, -O1, -R1, N1, etc.
-            // "-O" and "-R" come first, so "M1-O1" is never read as M1 and O1.
-            const segRegex = /(-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
+            // Parse label into segments: M1, S1a, O2, R1, WO1, WR1, N1, etc.
+            // "WO" and "WR" (and the older "-O" and "-R") come first, so
+            // "M1WO1" is never read as M1 and O1.
+            const segRegex = /(W[OR]|-[OR]|[MORNSQPX])(\d+)([a-z]?)/g;
             const segments = [];
             let m;
             while ((m = segRegex.exec(label)) !== null) {
@@ -27518,7 +28255,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
             // Non-root node
             const lastSeg = segments[segments.length - 1];
-            const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // Q and P, the old letters for -O and -R, still read; X (briefly, untyped) reads as S
+            const typeMap = { S: 'support', O: 'objection', R: 'rebuttal', WO: 'weak-objection', WR: 'weak-rebuttal', '-O': 'weak-objection', '-R': 'weak-rebuttal', Q: 'weak-objection', P: 'weak-rebuttal', N: 'note', X: 'support' };   // -O and -R (before r27.86) and Q and P (before those) still read; X (briefly, untyped) reads as S
             const nodeType = typeMap[lastSeg.type] || 'support';
 
             // Check if this is a co-premise of an existing node (notes stand
@@ -27594,7 +28331,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Second pass: attach cross-references now that every label is
         // known. A label's trailing lowercase letter (its co-premise
         // suffix) selects the box; a bare label means box 0 — safe
-        // because the label alphabet is TYPE-letter (uppercase, "-O" and "-R"
+        // because the label alphabet is TYPE-letter (uppercase, "WO" and "WR",
+        // or the older "-O" and "-R"
         // with their hyphen) + digits + co-letter, so a trailing [a-z] is
         // always a co-premise marker. Unresolvable
         // and self-referencing lines are dropped silently, matching the
@@ -27815,6 +28553,57 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Each premise's parts in reading order, { words, cls, ctx }, and whether
     // to keep its "if" and its "then" normal.
     function icPlan(step) {
+        const plans = icPlanRead(step);
+        return plans && plans.map((plan, i) => icReadBack(plan, (step.premiseTexts || [])[i]));
+    }
+    // A premise read with a referent in a pronoun's place ("she" as "the
+    // teacher", "that road" as "the long, dark, windy road"): each part's
+    // words as the box has them, so that they are found in it.
+    function icReadBack(plan, text) {
+        if (!plan || !text) return plan;
+        // A clause cut short read whole, then pronouns read as what they are.
+        const cut = claimEllipsisReading(text), t1 = cut ? cut.text : text;
+        const r = claimPronounReadings(t1), a = r && r.auto && !r.auto.whole && r.auto.edits && r.auto.edits.length ? r.auto : null;
+        if (!cut && !a) return plan;
+        const said = (a ? a.text : t1).toLowerCase();
+        // A place in the words read, as a place in the words they were read from.
+        const through = (edits, p, isEnd) => {
+            let shift = 0;
+            for (const e of edits) {
+                const s1 = e.at + shift, e1 = s1 + e.say.length;
+                if (p < s1 || (isEnd && p === s1)) return p - shift;
+                if (p < e1 || (isEnd && p === e1)) return isEnd ? e.end : e.at;
+                shift += e.say.length - (e.end - e.at);
+            }
+            return p - shift;
+        };
+        const map = (p, isEnd) => { const q = a ? through(a.edits, p, isEnd) : p; return cut ? through(cut.edits, q, isEnd) : q; };
+        let from = 0;
+        const back = words => {
+            const w = claimUnmarked(String(words || '')).toLowerCase();
+            let i = w ? said.indexOf(w, from) : -1;
+            if (i < 0 && w) i = said.indexOf(w);
+            if (i < 0) return words;
+            from = i + w.length;
+            return text.slice(map(i, false), map(i + w.length, true));
+        };
+        const parts = plan.parts.map(p => Object.assign({}, p, { words: back(p.words) }));
+        from = 0;
+        return Object.assign({}, plan, { parts, spans: (plan.spans || []).map(back) });
+    }
+    // How many denials words say: each word or phrase that denies, and each
+    // denial symbol ("~~P" says two).
+    function icNegCount(words) {
+        const t = String(words || '');
+        let n = 0;
+        for (const m of t.matchAll(IC_NEG)) n++;
+        for (const m of t.matchAll(IC_NEG_SYM)) n += m[0].length;
+        return n;
+    }
+    // The denials a form says that its words do not show: a formula's "¬Q"
+    // has the words "q".
+    const icNegUnsaid = f => !!f && f.kind === 'not' && !f.src && !f.vpText ? 1 + icNegUnsaid(f.inner) : 0;
+    function icPlanRead(step) {
         const P = step.premises;
         if (!Array.isArray(P) || !P.length || P.some(p => !p)) return null;
         const C = step.rule ? step.conclusion : null;
@@ -27824,6 +28613,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const cClauses = C ? icClauses(C, '', []) : [];
         const colors = [];   // what each color stands for: a claim, or a key
         const colorOf = (test, item) => { let k = colors.findIndex(test); if (k < 0) { colors.push(item); k = colors.length - 1; } return k % IC_COLORS; };
+        // A clause that denies a clause of another premise, saying more
+        // denials than it: "the dog didn't bark" beside "if ..., then the dog
+        // barked" (the user, 2026-10-06: red "only ... when they're
+        // contradicting a premise that lacks the negation"); "No feather is
+        // black" beside "some feather is black" (2026-10-07: "the negation or
+        // negative word that's doing the contradicting"). How many more is
+        // how many of its denials are red, the outermost first.
+        const denials = cl => icNegCount(cl.words) + icNegUnsaid(cl.form);
+        clauses.forEach((list, i) => list.forEach(cl => {
+            const n = denials(cl);
+            cl.contra = 0;
+            if (n) clauses.forEach((other, j) => { if (j !== i) other.forEach(o => {
+                const d = n - denials(o);
+                if (d > cl.contra && claimDenies(cl.form, o.form)) cl.contra = d;
+            }); });
+        }));
         // Whole clauses: in the conclusion, or where premises meet.
         clauses.forEach(list => list.forEach(cl => {
             const inC = C && cClauses.find(x => same(cl.form, x.form));
@@ -27841,6 +28646,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             splits.forEach((list, i) => list.forEach((parts, ci) => {
                 if (!parts) return;
                 parts.forEach(sp => {
+                    // What it says, with more denials than another premise
+                    // says it with ("is not black" beside "are black").
+                    sp.contra = 0;
+                    if (sp.said) splits.forEach((other, j) => { if (j !== i) other.forEach(ps => (ps || []).forEach(x => {
+                        const d = icNegCount(sp.words) - icNegCount(x.words);
+                        if (x.key === sp.key && x.said && d > sp.contra) sp.contra = d;
+                    })); });
                     const inC = cParts.find(x => x.key === sp.key);
                     if (inC) { sp.role = 'c'; sp.denied = !!(sp.said && inC.said) && sp.neg !== inC.neg; return; }
                     if (every.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
@@ -27862,7 +28674,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // Not recognized: each part its own color.
                 else if (!C) cls = 'ic-k' + ownColor(p);
                 else cls = 'ic-u';
-                parts.push({ words: p.words, cls, ctx: cl.ctx });
+                parts.push({ words: p.words, cls, ctx: cl.ctx, contra: (whole ? cl.contra : p.contra) || 0 });
             }));
             // Valid: what goes on to the conclusion is one stretch -- a
             // compound all of whose parts go on, with the words joining them.
@@ -28054,19 +28866,43 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     });
     // A box's words painted by its part in the step. Words and colors as they
     // were are left alone; true when the box was painted anew.
+    // A part's stretch takes in the brackets and quotation marks that pair
+    // with one inside it, or (`hold`) that hold all of it: "only formal
+    // (syntactic)" keeps its ")" (the user, 2026-10-06: the right parenthesis
+    // was dimmed).
+    const IC_PAIRS = Object.assign(Object.create(null), { '(': ')', '[': ']', '{': '}', '\u201c': '\u201d' });
+    function icWiden(text, a, b, hold = true) {
+        const count = (t, ch) => t.split(ch).length - 1;
+        for (let changed = true; changed;) {
+            changed = false;
+            for (const open in IC_PAIRS) {
+                const close = IC_PAIRS[open], inside = text.slice(a, b), opens = count(inside, open), closes = count(inside, close);
+                if (opens > closes && text[b] === close) { b++; changed = true; }
+                else if (closes > opens && text[a - 1] === open) { a--; changed = true; }
+                else if (hold && opens === closes && text[a - 1] === open && text[b] === close) { a--; b++; changed = true; }
+            }
+            // A straight double quotation mark pairs by count.
+            if (count(text.slice(a, b), '"') % 2 === 1) {
+                if (text[b] === '"') { b++; changed = true; }
+                else if (text[a - 1] === '"') { a--; changed = true; }
+            }
+        }
+        return [a, b];
+    }
     function icPaint(rd, plan) {
         let c = icContent(rd);
         const cls = new Array(c.text.length).fill('ic-rest');
         const taken = new Array(c.words.length).fill(false);
-        const first = {}, end = {};
+        const first = {}, end = {}, contra = [];
         let from = 0;
         plan.parts.forEach(p => {
             const part = icTokens(p.words);
             const hit = part.length ? icAlign(c.words, part, taken, from) : null;
             if (!hit) return;
-            const a = c.words[hit[0]].a, b = c.words[hit[1]].b;
+            const [a, b] = icWiden(c.text, c.words[hit[0]].a, c.words[hit[1]].b);
             c.words.forEach((w, k) => { if (w.a >= a && w.b <= b) taken[k] = true; });
             for (let i = a; i < b; i++) cls[i] = p.cls;
+            if (p.contra) contra.push([a, b, p.contra]);
             if (p.ctx && first[p.ctx] === undefined) first[p.ctx] = a;
             if (p.ctx) end[p.ctx] = b;
             from = hit[1] + 1;
@@ -28095,7 +28931,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const part = icTokens(words);
             const hit = part.length ? icAlign(c.words, part, new Array(c.words.length).fill(false), 0) : null;
             if (!hit) return;
-            for (let i = c.words[hit[0]].a; i < c.words[hit[1]].b; i++) if (cls[i] === 'ic-rest') cls[i] = 'ic-c';
+            const [a, b] = icWiden(c.text, c.words[hit[0]].a, c.words[hit[1]].b);
+            for (let i = a; i < b; i++) if (cls[i] === 'ic-rest') cls[i] = 'ic-c';
         });
         // ... as do the symbols between two pieces of it ("P \u2192 Q" when
         // both go on), which have no words to be found by (r27.83).
@@ -28105,6 +28942,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             while (j < cls.length && cls[j] === 'ic-rest' && !/[\p{L}\p{N}]/u.test(c.text[j])) j++;
             if (i > 0 && j < cls.length && cls[i - 1].startsWith('ic-c') && cls[j].startsWith('ic-c')) for (let k = i; k < j; k++) cls[k] = 'ic-c';
             i = j - 1;
+        }
+        // ... and the brackets that pair with one inside the stretch so
+        // joined (r27.93: "W → ((X → Y) → Z)" had left the "(" of "(X → Y)"
+        // out) -- not a pair that holds all of it: what goes on is "Q ∨ S"
+        // in "(P & R) → (Q ∨ S)".
+        for (let i = 0; i < cls.length; i++) {
+            if (cls[i] !== 'ic-c') continue;
+            let j = i;
+            while (j < cls.length && cls[j] === 'ic-c') j++;
+            const [a, b] = icWiden(c.text, i, j, false);
+            for (let k = a; k < b; k++) if (cls[k] === 'ic-rest') cls[k] = 'ic-c';
+            i = Math.max(j, b) - 1;
         }
         // A denial in symbols binds the letter after it: "~Q" is one claim, as
         // "the dog didn't bark" is, so the "~" takes its part's color -- and
@@ -28117,9 +28966,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (j >= cls.length || cls[j] === 'ic-rest' || !/[\p{L}\p{N}]/u.test(c.text[j])) continue;
             for (let i = m.index; i < j; i++) if (cls[i] === 'ic-rest') cls[i] = cls[j];
         }
-        // Words that deny, wherever they stand, and their symbols.
-        for (const m of c.text.matchAll(IC_NEG)) for (let i = m.index; i < m.index + m[0].length; i++) cls[i] += ' ic-neg';
-        for (const m of c.text.matchAll(IC_NEG_SYM)) for (let i = m.index; i < m.index + m[0].length; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg';
+        // Words that deny, and their symbols: red where they deny what another
+        // premise says without them (r27.91) -- as many as the part says
+        // beyond it, the outermost first (r27.92). A word or phrase that
+        // denies is one; so is each denial symbol, which counts by the letter
+        // it binds, its part's words beginning there.
+        const units = [];
+        for (const m of c.text.matchAll(IC_NEG)) units.push({ at: m.index, end: m.index + m[0].length });
+        for (const m of c.text.matchAll(IC_NEG_SYM)) {
+            let j = m.index + m[0].length;
+            while (j < c.text.length && /\s/.test(c.text[j])) j++;
+            for (let q = 0; q < m[0].length; q++) units.push({ at: m.index + q, end: m.index + q + 1, binds: j });
+        }
+        units.sort((x, y) => x.at - y.at);
+        contra.forEach(([a, b, k]) => units.filter(u => (u.at < b && u.end > a) || (u.binds !== undefined && u.binds >= a && u.binds < b)).slice(0, k)
+            .forEach(u => { for (let i = u.at; i < u.end; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg'; }));
         const sig = c.text + '\u0001' + cls.join('|');
         if (rd.dataset.icSig === sig && rd.querySelector('span.ic')) return false;
         if (rd.querySelector('span.ic')) { icClear(rd); c = icContent(rd); }
