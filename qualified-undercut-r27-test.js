@@ -2,17 +2,22 @@
 const fs=require('fs'),assert=require('assert/strict'),{JSDOM,VirtualConsole}=require('jsdom');
 const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
 const dom=new JSDOM(fs.readFileSync(process.argv[2]||'argument-mapper-r27.html','utf8'),{runScripts:'dangerously',pretendToBeVisual:true,url:'https://localhost/qualified-undercut',virtualConsole:vc,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.ResizeObserver=class{observe(){}disconnect(){}};const ctx=new Proxy({},{get:(_,p)=>p==='measureText'?()=>({width:40}):()=>ctx});w.HTMLCanvasElement.prototype.getContext=()=>ctx;w.alert=()=>{};w.confirm=()=>true;}});
-dom.window.fixture=fs.readFileSync('zombie-verdict-diagnostic.txt','utf8');
+// The Zombie Argument Map, exported: kept on the user's computer, out of git
+// (.gitignore). Where it is not -- a fresh clone, a worktree -- its four
+// checks are skipped, and the result says so.
+const zombie=require('path').join(__dirname,'zombie-verdict-diagnostic.txt');
+dom.window.fixture=fs.existsSync(zombie)?fs.readFileSync(zombie,'utf8'):null;
 try{const result=dom.window.eval(`(()=>{
  let count=0;const check=(ok,why)=>{count++;if(!ok)throw Error(why);};
  const n=(id,type,texts,children=[])=>({id,type,texts:Array.isArray(texts)?texts:[texts],children});
  const read=trees=>{const steps=collectDeductiveSteps(trees);return {steps,v:claimMapVerdict(trees,steps)};};
- const trees=parseTextToState(fixture).trees;let r=read(trees);
+ let r;
+ if(fixture){const trees=parseTextToState(fixture).trees;r=read(trees);
  check(r.v(trees[0].id,0).status==='established','exact zombie map warranted with reference');
  check(r.steps.every(s=>s.rule),'every original inference still certified');
  check(r.steps.find(s=>s.referenceArgument)&&r.v.stepState(r.steps.find(s=>s.referenceArgument))==='active','reference support now active');
  (function walk(ns){ns.forEach(n=>{delete n.crossRefs;walk(n.children||[]);});})(trees);
- check(read(trees).v(trees[0].id,0).status==='established','reference and repeated-premise versions agree');
+ check(read(trees).v(trees[0].id,0).status==='established','reference and repeated-premise versions agree');}
  const premise=n('B','objection',['If Q, then functionalism is ruled out.','Q'],[Object.assign(n('W','weak-rebuttal',['If E, then it has not been shown that Q','E']),{targetIndex:1})]);
  const main=n('M','contention','Functionalism is not ruled out.',[premise]);r=read([main]);
  check(r.steps.every(s=>s.rule)&&r.v('M',0).status==='established','grounded undercut warrants not-ruled-out claim');
@@ -35,4 +40,5 @@ try{const result=dom.window.eval(`(()=>{
  const claim=n('CLAIM','support','Q');claim.crossRefs=[[{argumentId:'loop',kind:'support',childIds:[],premises:[{targetId:'M',targetIdx:0}]}]];
  main.crossRefs=[[{argumentId:'attack',kind:'objection',childIds:[],premises:[{targetId:'CLAIM',targetIdx:0}]}]];r=read([main,claim]);check(r.v('M',0).status!=='established','circular references cannot provide warrant');
  return {count};
-})()`);assert.deepEqual(errors,[]);console.log('PASS: '+result.count+' qualified-undercut checks, including the exact Zombie Argument Map.');}finally{dom.window.close();}
+})()`);assert.deepEqual(errors,[]);console.log('PASS: '+result.count+' qualified-undercut checks'+(dom.window.fixture?', including the exact Zombie Argument Map.'
+    :'. The four Zombie Argument Map checks were skipped: zombie-verdict-diagnostic.txt is kept out of git, and is not here.'));}finally{dom.window.close();}

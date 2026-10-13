@@ -22,6 +22,14 @@ demo-doc.json
 # Internal planning/decision notes — not part of the published work
 COLLABORATION-HANDOFF-r26.md
 
+# Kept on this computer only. The Zombie Argument Map, exported:
+# qualified-undercut-r27-test.js checks it where it is here, and skips those
+# checks where it is not (a fresh clone, a worktree).
+zombie-verdict-diagnostic.txt
+
+# Mockups of the tag colors (September 2026), kept for reference.
+design-samples/
+
 # YOUR PRIVATE WORKING NOTES. Keep this rule: a bare `git add .` would
 # otherwise publish them to the world.
 *.docx
