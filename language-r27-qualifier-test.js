@@ -241,7 +241,7 @@ try {
         const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
-        ok(!s.rule && /Worded the same way each time, this would follow by modus ponens/.test(s.why) && /“and control circuitry” is in one and not the other/.test(s.why),
+        ok(!s.rule && /Worded the same way each time, the premises would give .+ by modus ponens/.test(s.why) && /“and control circuitry” is in one and not the other/.test(s.why),
             'a step that would follow if two claims were worded alike says which words differ', s.why);
         ok(ev('var f = parseClaim("The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” is unsound."); return f.kind === "unsound" && f.from.length === 2;'),
             '"the argument with premises “A” and “B” is unsound" is about that argument');

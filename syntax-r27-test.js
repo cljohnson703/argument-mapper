@@ -545,7 +545,7 @@ console.log('\n-- "-able" words (r27.65) --');
         tag(['We can read the book.'], 'The book is readable.'), tag(['We can conceive of a zombie.'], 'Zombies are conceivable.')];
     ok(no.every(r => r && !r.rule), 'never the other way; nor from "cannot"; nor for a word whose meaning has moved ("readable"); nor from another number', J(no));
     const direct = tag(['If zombies are conceivable, then zombies are possible.', 'We can conceive of zombies.'], 'Zombies are possible.');
-    ok(direct && !direct.rule && /\u201cWe can conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with that as a box of its own, this would follow by modus ponens\./.test(direct.why),
+    ok(direct && !direct.rule && /\u201cWe can conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are possible\u201d by modus ponens\./.test(direct.why),
         'the direct route is not one step: its explanation names the box that is missing', J(direct));
     const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: {} }; setDeductiveRule('able-meaning', false);
         var trees = [{ id: 'M', type: 'contention', texts: ['Zombies are conceivable.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['We can conceive of zombies.'], collapsed: [], children: [] }] }];

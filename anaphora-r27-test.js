@@ -263,6 +263,20 @@ console.log('\n-- 11. "the former", "said road", "one" --');
     const two = read('Bob bought a red car and a bike, and Mary bought a blue one.');
     ok(two.notes.some(n => n === 'ambiguous: “one” may be “car” or “bike”'), 'a car or a bike: asked', J(two));
     ok(read('No one left.').kind === 'all', '"no one" is untouched');
+    // "One" after "is" with no word before it (r27.97): a noun from a clause
+    // before -- a quantifier's, or a predicate's.
+    ok(read('All men are mortal, and Socrates is one.').said === 'all men are mortal, and Socrates is a man' &&
+        step(['All men are mortal, and Socrates is one.'], 'Socrates is a man.').tag === '✓ conjunction elimination',
+        '"all men are mortal, and Socrates is one": a man', J(read('All men are mortal, and Socrates is one.')));
+    ok(read('Fido is a dog, and Rex is one too.').said === 'fido is a dog, and Rex is a dog too' &&
+        read('Every raven is black, and Poe is one, too.').said === 'every raven is black, and Poe is a raven',
+        '"one too": a predicate\'s noun, a quantifier\'s');
+    ok(read('Poe is a black raven, and Edgar is a white one.').said === 'poe is a black raven, and Edgar is a white raven',
+        '"a white one" after "is a black raven": a predicate\'s noun too');
+    ok(read('Fido is a dog and a cat, and Rex is one.').notes.some(n => n === 'ambiguous: “one” may be “a dog” or “a cat”'),
+        'two nouns joined: asked which');
+    ok(read('The answer is one.').said === 'the answer is one' && read('Mary said that the answer is one.').said === 'mary said that the answer is one',
+        'not the clause\'s own subject: "the answer is one" is a number');
 }
 
 console.log('\n-- 12. "himself" --');

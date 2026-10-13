@@ -917,7 +917,7 @@ try {
         // to be; the diagnosis says "would" would give the step. And a generic's
         // subject may be a noun compound, its predicate one that splits.
         const should = tagOf(['If Mary knew the facts, then Mary should not be surprised', 'Mary is surprised'], "Mary doesn't know the facts");
-        ok(should[0] === '? not recognized' && /With “would” for “should”, this would follow by modus tollens/.test(should[1]) &&
+        ok(should[0] === '? not recognized' && /With “would” for “should”, the premises would give “Mary doesn.t know the facts” by modus tollens/.test(should[1]) &&
             rule(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false') === 'modus ponens' &&
             tagOf(['Color sensations are non-physical events', 'Red is a color sensation'], 'Red is a non-physical event')[0] === '? generic',
             '"should" is not "would" (and the diagnosis says so); a generic ("color sensations are ...") is asked where its answer decides the step, not in a modus ponens that holds on every answer', J(should));

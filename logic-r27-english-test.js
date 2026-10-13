@@ -1134,7 +1134,7 @@ function reportCorpus(name, res) {
             toggleDeductiveLive();
             return { tags: tags, list: list, summary: summary };`);
         const A = map.tags && map.tags.A, B = map.tags && map.tags.B;
-        ok(A && A.text === '✗ spelled differently' && /\buncertified\b/.test(A.cls) && /Spelled the same way each time, this would follow by modus ponens, but ‘republic’ and ‘Republic’ differ in capital letters/.test(A.title),
+        ok(A && A.text === '✗ spelled differently' && /\buncertified\b/.test(A.cls) && /Spelled the same way each time, the premises would give “Caesar won” by modus ponens, but ‘republic’ and ‘Republic’ differ in capital letters/.test(A.title),
             'on the map its tag says "✗ spelled differently", and hovering it says what differs', J(A));
         ok(B && B.text === '✓ modus ponens', 'spelled alike, the same step is certified', J(B));
         ok(map.list && /near-miss/.test(map.list.cls) && map.list.mark === '≠' && /spelled differently/.test(map.list.rule) && /differ in capital letters/.test(map.list.why || '') &&

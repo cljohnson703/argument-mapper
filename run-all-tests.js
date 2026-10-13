@@ -100,6 +100,8 @@ const SUITES = [
     'anaphora-r27-test.js',
     'nesting-r27-test.js',
     'locutions-r27-test.js',
+    'hints-r27-test.js',
+    'multiselect-r27-test.js',
     'collab-r26-firebase-test.js',
 ];
 

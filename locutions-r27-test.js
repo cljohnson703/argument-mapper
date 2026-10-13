@@ -25,7 +25,8 @@
  * 5. Said around a claim: "it is a fact that", "the fact is that", a box's
  *    label ("P1:", "C:", "1."). A supposition on its own is flagged; "assume
  *    that P, then Q" is a conditional, as "suppose P, then Q" is. "Clearly",
- *    "obviously", "of course" are flagged as "therefore" is.
+ *    "obviously", "of course" are flagged as "therefore" is; so is "then" or
+ *    "therefore" after the claim ("Socrates is mortal, then", r27.99).
  * 6. Necessary and sufficient conditions between gerunds: "being a man is
  *    sufficient for being mortal", "having free will is necessary for being
  *    responsible", "being responsible requires having free will".
@@ -211,6 +212,18 @@ console.log('\n-- 5. said around a claim --');
     ok(['Mary speaks clearly.', 'The road is clearly marked.', 'Clearly written rules are useful.', 'Mary thinks that Bob is obviously wrong.',
         'It happens as a matter of course.', 'The sign is clearly visible.'].every(t => ev(`return claimInferenceFlag(${J(t)});`) === null),
         'not "clearly" of manner, nor inside what someone thinks, nor "a matter of course"');
+    // After the claim, set off by a comma (r27.99): it had been read into the
+    // predicate ("mortal then") or as a second claim ("Socrates is consequently").
+    const then = step(['All men are mortal.', 'Socrates is a man.'], 'Socrates is mortal, then.');
+    ok(then.tag === '✗ “then” in a box' && ev(`return claimInferenceFlag('Socrates is mortal, then.').message;`) ===
+        'In “Socrates is mortal, then.”, “then” says the box follows from something. What it follows from is the boxes below it, so the word says nothing the check can use — and in a premise it makes the claim sound established. Leave it out.',
+        '"Socrates is mortal, then": flagged as "Therefore, Socrates is mortal" is', J(then));
+    ok(['Socrates is mortal, then.', 'Socrates is mortal, therefore.', 'Socrates is mortal, consequently.', 'Socrates is mortal, so.', 'Socrates is mortal, as a result.',
+        'Socrates is mortal, it follows.'].every(t => read(t).said === 'socrates is mortal' && ev(`return claimInferenceFlag(${J(t)}).kind;`) === 'marker') &&
+        step(['All men are mortal, then.', 'Socrates is a man.'], 'Socrates is mortal.').tag === '✗ “then” in a box',
+        'read without it: "then", "therefore", "consequently", "so", "as a result", "it follows" -- in a premise too');
+    ok(['He was happy then.', 'I think so.', 'He will come two years hence.', 'If it rains, then.', 'Do it thus.'].every(t => ev(`return claimInferenceFlag(${J(t)});`) === null),
+        'not "then" of time, "I think so", "two years hence", nor an "if" still waiting for its claim');
     ok(!ev(`return claimInferenceFlag('We know that God exists.');`), '"we know that" is not flagged: a knowledge claim, for an epistemic extension');
     ok(refused(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.'), 'and it gives no step yet');
     ok(certifies(['P1: All men are mortal.', 'P2: Socrates is a man.'], 'C: Socrates is mortal.', 'universal modus ponens') &&
@@ -299,12 +312,12 @@ console.log('\n-- 9. "it rains" and "it is raining" --');
         var s = collectDeductiveSteps(state.trees)[0];
         return { tag: deductiveStepTagText(s), why: s.why && s.why.text, rule: s.rule ? s.rule.name : null };`);
     const mp = why(['If it rains, then the ground is wet.', 'It is raining.'], 'The ground is wet.');
-    ok(!mp.rule && mp.why === 'Worded the same way each time, this would follow by modus ponens, but ‘it is raining’ and ‘it rains’ differ: “is raining” in one where the other has “rains”.',
+    ok(!mp.rule && mp.why === 'Worded the same way each time, the premises would give “The ground is wet” by modus ponens, but ‘it is raining’ and ‘it rains’ differ: “is raining” in one where the other has “rains”.',
         'a step that would follow but for them says so -- and does not follow', J(mp));
     const mt = why(['If it rains, then the ground is wet.', 'The ground is not wet.'], 'It is not raining.');
-    ok(!mt.rule && /follow by modus tollens, but ‘it is raining’ and ‘it rains’ differ/.test(mt.why || ''), 'so a denial: modus tollens', J(mt));
+    ok(!mt.rule && /would give “It is not raining” by modus tollens, but ‘it is raining’ and ‘it rains’ differ/.test(mt.why || ''), 'so a denial: modus tollens', J(mt));
     const ds = why(['Either Poe flies or Mary sings.', 'Poe is not flying.'], 'Mary sings.');
-    ok(!ds.rule && /follow by disjunctive syllogism, but ‘poe is flying’ and ‘poe flies’ differ: “is flying” in one where the other has “flies”/.test(ds.why || ''),
+    ok(!ds.rule && /would give “Mary sings” by disjunctive syllogism, but ‘poe is flying’ and ‘poe flies’ differ: “is flying” in one where the other has “flies”/.test(ds.why || ''),
         'disjunctive syllogism', J(ds));
     ok(refused(['Poe flies.'], 'Poe is flying.') && refused(['Poe is flying.'], 'Poe flies.'), 'neither gives the other');
 }
