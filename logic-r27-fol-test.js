@@ -196,7 +196,9 @@ function shape() {
         [[id('a', 'b'), c], substSome(c, 'a', 'b')], [[id('b', 'a'), c], substSome(c, 'a', 'b')], [[id('a', 'c'), c], substSome(c, 'a', 'b')],
         [[id('a', 'b'), Q('all', x, a)], Q('all', x, substSome(a, 'a', 'b'))], [[id('a', 'b'), Q('all', x, a)], Q('all', x, substSome(a, 'x', 'b'))],
         [[Q(q, x, NOT(NOT(a)))], Q(q, x, a)], [[Q(q, x, B('imp', a, b))], Q(q, x, B('or', NOT(a), b))], [[Q(q, x, B('imp', a, b))], Q(q, x, B('imp', b, a))],
-        [[NOT(B('and', c, a)), c], NOT(a)], [[NOT(B('and', c, a)), NOT(c)], a], [[B('imp', c, a), B('imp', a, c)], B('iff', c, a)]
+        [[NOT(B('and', c, a)), c], NOT(a)], [[NOT(B('and', c, a)), NOT(c)], a], [[B('imp', c, a), B('imp', a, c)], B('iff', c, a)],
+        // Biconditional to conditional (r27.96), and its near misses.
+        [[B('iff', c, a)], B('imp', c, a)], [[B('iff', c, a)], B('imp', a, c)], [[B('iff', c, a)], B('imp', NOT(c), a)], [[B('imp', c, a)], B('iff', c, a)]
     ];
     return rng() < 0.85 ? pick(list) : [[gen(3, ['a', 'b'], [])].concat(rng() < 0.5 ? [gen(3, ['a', 'b'], [])] : []), gen(3, ['a', 'b'], [])];
 }

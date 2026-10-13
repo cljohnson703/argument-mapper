@@ -2920,7 +2920,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-08 r27.95';
+    const APP_BUILD = '2026-10-13 r27.96';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9537,8 +9537,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Words that start a sentence with a capital and are no one's name.
     const CLAIM_NOT_A_NAME = new Set(('while when if the a an in on at since because although every each all some no not it this that these those there ' +
         'and but or for we you they he she him his her hers himself herself i so then therefore thus either neither both whether after before during unless until whenever wherever ' +
-        'where given suppose assume let consider according nothing nobody someone somebody anyone anybody everyone everybody whatever whoever ' +
+        'where given suppose assume let consider according assuming supposing provided providing granted granting considering though whereas imagine nothing nobody someone somebody anyone anybody everyone everybody whatever whoever ' +
         'nowadays today yesterday tomorrow first second third finally moreover furthermore however nevertheless still yet once twice').split(' '));
+    // Nouns that only ever name people: "anyone who is a man" is every man,
+    // the "person" in "anyone" said by the noun (r27.96). Not those that may
+    // name a thing or an animal: "a speaker", "a client", "a mother" (a cat
+    // may be one), "a friend", "a patient" (at a vet), "a victim", "a king"
+    // (in chess), "a tenant" or "a defendant" (a firm), "a thief" (a magpie).
+    const CLAIM_PERSON_ONLY_NOUNS = new Set(`
+        person man woman boy girl teenager lady gentleman human
+        husband wife spouse uncle aunt niece nephew boyfriend girlfriend fiance fiancee bride groom widower
+        colleague stranger guest prince princess duke duchess heroine
+        priest priestess monk nun pope rabbi imam teacher professor instructor tutor lecturer scholar student mentor apprentice
+        historian translator thinker poet artist actor actress painter musician dancer pianist athlete sailor
+        officer captain colonel sergeant admiral sheriff judge lawyer doctor nurse surgeon physician scientist philosopher
+        mathematician logician chemist physicist biologist engineer programmer boss senator governor mayor minister president
+        citizen servant maid butler witness suspect employee politician critic chef cook farmer
+        spy detective expert specialist prophet
+    `.trim().split(/\s+/));
+    // "Is a man", "are philosophers", "is a wise man": a clause that says a
+    // noun of people.
+    function claimPersonOnly(clause) {
+        const w = clause.map(claimWord);
+        if (w[0] === 'are' && w.length === 2) return CLAIM_PERSON_ONLY_NOUNS.has(claimSingularNoun(w[1]));
+        return w[0] === 'is' && /^(?:a|an)$/.test(w[1] || '') && w.length >= 3 && CLAIM_PERSON_ONLY_NOUNS.has(w[w.length - 1]) &&
+            w.slice(2, -1).every(x => claimKnownAdjective(x));
+    }
     // Nouns a "he" or "she" may go back to -- people, by kind, kin, rank or
     // role, and animals -- and so what may compete with a name for one: "the
     // teacher", "Mary's mother", "a raven". Not "the storm", not "the room".
@@ -11025,6 +11049,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return claimSynClause(tokens);
     }
     const CLAIM_IRREGULAR_PLURALS = new Set(Object.keys(CLAIM_PLURAL_NOUNS));
+    // Function words that also stand as predicates: "is even", "is off" (r27.96).
+    const CLAIM_PREDICATE_FUNCTION_WORDS = new Set(['even', 'off', 'over', 'out', 'past', 'inside', 'outside', 'near']);
     const CLAIM_FUNCTION_WORDS = new Set(['and', 'or', 'but', 'nor', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'to', 'under', 'through',
         'the', 'a', 'an', 'that', 'which', 'who', 'whom', 'whose', 'where', 'not', 'as', 'than', 'so', 'if', 'then', 'very', 'too', 'also',
         'only', 'just', 'all', 'some', 'no', 'any', 'each', 'every', 'this', 'these', 'those', 'its', 'their', 'his', 'her', 'our', 'my', 'your',
@@ -11343,6 +11369,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!a || !b) return false;
         if (claimDeniesBy(claimKey, false, a, b)) return true;
         if (claimNearMisses && claimDeniesBy(claimLooseKey, true, a, b)) { claimNearMisses.push({ a, b }); return true; }
+        // Worded nearly alike, for what the check says of a failed step: "it is
+        // not raining" against "it rains" (r27.96) -- the denial's claim in its
+        // own words, "it is raining".
+        if (claimNearMisses && claimWorded) {
+            const said = d => {
+                const vp = d.kind === 'not' && d.inner && d.subjectText && d.vpText ? claimAffirmedVerbPhrase(d.vpText) : null;
+                return vp ? Object.assign({}, d.inner, { subjectText: d.subjectText, vpText: vp, src: d.subjectText + ' ' + vp }) : null;
+            };
+            const x = said(a), y = said(b);
+            if (x && claimWordingClose(x, b)) { claimNearMisses.push({ a: x, b, worded: true }); return true; }
+            if (y && claimWordingClose(y, a)) { claimNearMisses.push({ a: y, b: a, worded: true }); return true; }
+        }
         return false;
     }
     function claimDeniesBy(key, loose, a, b) {
@@ -11646,7 +11684,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const q = p.map(claimWord), k = q[0] === 'not' ? 1 : 0;
                 if (!p.length || p.length > k + 4 || !/^[a-z]/.test(q[k] || '')) return false;
                 if (/^(?:a|an)$/.test(q[k])) return p.length > k + 1 && q.slice(k + 1).every(w => /^[a-z][a-z'-]*$/.test(w) && !CLAIM_FUNCTION_WORDS.has(w) && !CLAIM_VERB_MARKERS.has(w));
-                return p.length === k + 1 && /^[a-z][a-z'-]*$/.test(q[k]) && !CLAIM_FUNCTION_WORDS.has(q[k]) && !CLAIM_VERB_MARKERS.has(q[k]) && !claimEndsInS(p[k]);
+                return p.length === k + 1 && /^[a-z][a-z'-]*$/.test(q[k]) && (!CLAIM_FUNCTION_WORDS.has(q[k]) || CLAIM_PREDICATE_FUNCTION_WORDS.has(q[k])) &&
+                    !CLAIM_VERB_MARKERS.has(q[k]) && !claimEndsInS(p[k]);
             };
             if (!pieces.length || !pieces.every(plain) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
             const parts = [];
@@ -12673,7 +12712,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         text += t.slice(from);
         return { text, edits, message: 'read with ' + said3.join(', and ') + (said3.length > 1 ? ', from the clauses before them' : ', from the clause before it') };
     }
+    // A box's own label -- "P1:", "Premise 2:", "C:", "Conclusion:", "1." --
+    // names it and says nothing (r27.96). Not a numbered list's "(1)".
+    function claimWithoutLabel(t) {
+        t = String(t == null ? '' : t);
+        const m = /^\s*(?:(?:premise|conclusion|lemma)(?:\s+\d{1,2})?\s*[:.]|[pc]\d{1,2}\s*[:.)]|c\s*:|\(?\d{1,2}[.)])\s+(?=\S)/i.exec(t);
+        if (!m || (/^\s*\(?\d/.test(m[0]) && /\(\s*\d{1,2}\s*\)/.test(t.slice(m[0].length)))) return t;
+        return t.slice(m[0].length);
+    }
     function parseClaimFull(text, choice) {
+        text = claimWithoutLabel(text);
         const saved = claimReadState;
         claimReadState = { notes: [], sites: 0, choice: choice || null, anyIsSome: 0, quiet: 0, memo: new Map(), reads: 0 };
         try {
@@ -12722,7 +12770,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // nothing in the box has nothing to refer to.
                     // A phrase that points back ("that road") is read as a
                     // pronoun is.
-                    const pointsBack = !symbolic && !!form && (claimFormHasIt(read0, true) || !!claimPronounReadings(claimBoxRaw).dem);
+                    const pointsBack = !symbolic && !!form && !(read0 && read0.boundPronoun) && (claimFormHasIt(read0, true) || !!claimPronounReadings(claimBoxRaw).dem);
                     if (pointsBack && !claimReadState.notes.some(n => n.pronoun || n.reference) && claimPronounReadings(claimBoxRaw).itAsks) {
                         claimPronounQuestion();
                         form = Object.assign({}, form, { unresolvedReference: true });
@@ -14626,6 +14674,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const tail = boundTail();
         if (tail) return tail;
+        // So "if someone is a man, then he is mortal" says what "everyone who
+        // is a man is mortal" says (r27.96): "he", "she", "they" or "that
+        // person" is the someone.
+        const one = form.conds[0], then = form.cons, said0 = claimPredicationOf(then && then.kind === 'not' ? then.inner : then);
+        const who = said0 ? claimClauseStart(String(said0.term)) : '';
+        if (form.conds.length === 1 && !form.counterfactual && one && one.kind === 'some' && one.subject === CLAIM_PERSON && one.vp &&
+            /^(?:he|she|they|that person|this person|the person)$/.test(who) && !claimTokens(said0.prop.slice(1)).some(w => pronoun.test(claimWord(w)))) {
+            const vp = String(then.vpText || ''), said = who === 'they' ? (/^(?:are|were)\s/.test(vp) ? vp.replace(/^are/, 'is').replace(/^were/, 'was') : null) : vp;
+            const every = said && claimQuietly(() => readClaim('everyone who ' + one.vp + ' ' + said));
+            if (every && every.kind === 'all') {
+                claimUnread('"' + who + '" is read as the "' + (one.pronoun || 'someone') + '" in the condition, so this says what "everyone who ' +
+                    claimShowWords(one.vp) + ' ' + claimShowWords(said) + '" says');
+                return Object.assign(every, { boundPronoun: true });
+            }
+        }
         if (!form.conds.some(indefinite) || !mentions(form.cons)) return null;
         const c = form.conds[0], cons = form.cons, leaf = claimPredicationOf(cons.kind === 'not' ? cons.inner : cons);
         if (form.conds.length === 1 && c.kind === 'some' && c.subject === CLAIM_ANY && leaf && claimWord(leaf.term) === 'it' &&
@@ -14693,6 +14756,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const proposition = '(?:["“][^"”]+["”]|\x27[^\x27]+\x27|[\\uE000]?[a-z][0-9]*)';
         const operand = '(' + proposition + ')';
         const relation = '(necessary and sufficient|sufficient and necessary|necessary|sufficient)';
+        // Gerunds said of nothing in particular: "being a man is sufficient for
+        // being mortal" says that everything that is a man is mortal; "being
+        // a man is necessary for being mortal", that everything mortal is a
+        // man; "being responsible requires having free will", that everything
+        // responsible has free will (r27.96).
+        const doing = t => { const g = /^(not )?(being|having) (.+)$/.exec(t); return !g ? null : g[2] === 'being' ? 'is ' + (g[1] || '') + g[3] : (g[1] ? 'does not have ' : 'has ') + g[3]; };
+        const everything = (x, y) => readClaim('everything that ' + x + ' ' + y);
+        let gm = s.match(/^((?:not )?(?:being|having) .+?) is (?:a |an )?(necessary and sufficient|sufficient and necessary|necessary|sufficient|required|needed|enough)(?: condition)? for ((?:not )?(?:being|having) .+)$/);
+        if (gm && doing(gm[1]) && doing(gm[3])) {
+            const x = doing(gm[1]), y = doing(gm[3]);
+            if (/ and /.test(gm[2])) { const one = everything(x, y), two = everything(y, x); return one && two ? claimList('and', [one, two]) : null; }
+            return /^(?:sufficient|enough)$/.test(gm[2]) ? everything(x, y) : everything(y, x);
+        }
+        if ((gm = s.match(/^((?:not )?(?:being|having) .+?) (?:requires|implies|entails|guarantees|ensures) ((?:not )?(?:being|having) .+)$/)) && doing(gm[1]) && doing(gm[2])) {
+            return everything(doing(gm[1]), doing(gm[2]));
+        }
         let m = s.match(new RegExp('^' + operand + ' is (?:a )?' + relation + '(?: condition)? for ' + operand + '$'));
         let a, b, kind;
         if (m) { a = m[1]; kind = m[2]; b = m[3]; }
@@ -14729,7 +14808,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             b = claimWithAnyAsSome(() => readClaim(claimUnquoted(m[2])));
             if (a && b) return claimList('and',[negateClaim(a),negateClaim(b)]);
         }
-        if ((m = s.match(/^(?:it is (?:indeed )?the case that|it is (?:true|not false) that) (.+)$/)) ||
+        if ((m = s.match(/^(?:it is (?:indeed )?the case that|it is (?:true|not false|a fact) that|the (?:fact|truth) is(?: that|,)) (.+)$/)) ||
             (m = s.match(/^the proposition that (.+) is true$/)) ||
             (m = s.match(new RegExp('^' + quoted + ' is true$')))) return readClaim(claimUnquoted(m[1]));
         if ((m = s.match(new RegExp('^at least one of ' + quoted + ' and ' + quoted + ' is true$')))) {
@@ -14782,6 +14861,49 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             said(claimGroupWords(items, word)), items[0] + ', ' + word + ' ' + said(items[1])
         ].map(label => ({ label, build: () => readClaim(label) })), true, { shared: true, part: s }) || claimAtom(s);
     }
+    // "Will" as a noun -- "free will", "the will", "God's will" -- ends no
+    // clause cut short (r27.96: "we have free will" had been "we have free
+    // ... will").
+    const CLAIM_WILL_NOUN = /(?:^|\s)\uE000?(?:free|good|ill|own|the|a|his|her|their|our|my|your|its|one's|god's|divine|human|general|political|strong|weak|last|rational|individual|collective|popular|whose)\s+will$/;
+    // "For any x, if x is a man, then x is mortal": everything that is a man
+    // is mortal, said with a variable; "for some x, x is wise", "there is an
+    // x such that x is wise": something is (r27.96). Only where the variable
+    // is each clause's subject; else null.
+    function readVariableQuantifier(s) {
+        let m = /^for (?:any|all|every|each) ([a-z])\s*,?\s+(.+)$/.exec(s), some = false;
+        if (!m && (m = /^(?:for some|there (?:is|exists) (?:an?|some)) ([a-z])(?: such that)?\s*,?\s+(.+)$/.exec(s))) some = true;
+        // "If x is a man, then x is mortal", with no "for any x": any x, as in
+        // a rule, or one thing called x -- asked where a step turns on it.
+        if (!m && (m = /^if ([xyz]) \S/.exec(s))) {
+            const general = 'for any ' + m[1] + ', ' + s;
+            if (!claimQuietly(() => readVariableQuantifier(general))) return null;
+            return claimAmbiguous('"' + m[1] + '" may stand for anything ("for any ' + m[1] + '") or name one thing', [
+                { label: general, build: () => readVariableQuantifier(general) },
+                { label: '"' + m[1] + '" names one thing: ' + s, build: () => null }], false);
+        }
+        if (!m) return null;
+        const v = m[1], at = new RegExp('(?:^|[^a-z\\uE000\'-])' + v + '(?![a-z\'-])');
+        // A clause of which the variable is the subject, its verb phrase -- the
+        // variable again after "and" or "or" going ("x is a man and x is Greek").
+        const vp = clause => {
+            const c = String(clause).trim();
+            if (!c.startsWith(v + ' ')) return null;
+            const rest = c.slice(v.length + 1).replace(new RegExp('\\b(and|or) ' + v + ' ', 'g'), '$1 ');
+            return at.test(' ' + rest) ? null : rest;
+        };
+        const tree = !some && /^if\b/.test(m[2]) ? claimIfThenTree(m[2]) : null;
+        let said = null;
+        if (tree && typeof tree === 'object' && typeof tree.cond === 'string' && typeof tree.cons === 'string') {
+            const a = vp(tree.cond), b = vp(tree.cons);
+            if (a && b) said = 'everything that ' + a + ' ' + b;
+        } else if (!/^if\b/.test(m[2])) {
+            const a = vp(m[2]);
+            if (a) said = (some ? 'something ' : 'everything ') + a;
+        }
+        return said ? readClaim(said) : null;
+    }
+    // An imperative that sets out a supposition, and what it supposes.
+    const CLAIM_SUPPOSE_FRONT = /^(?:suppose|assume|imagine|let us (?:suppose|assume|imagine)|let's (?:suppose|assume|imagine))(?:,? for the sake of (?:the )?argument,?)?(?: that)?,?\s+(.+)$/;
     function readClaimWords(text) {
         const s = String(text || '').trim();
         if (!s) return null;
@@ -14790,6 +14912,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const embeddedSymbolic = readEmbeddedSymbolicClaim(s);
         if (embeddedSymbolic) return embeddedSymbolic;
         let m, f;
+        if ((f = readVariableQuantifier(s))) return f;
+        // "Hesperus is one and the same as Phosphorus": an identity, whose "and"
+        // joins nothing (r27.96).
+        if (/\bone and the (?:very )?same\b/.test(s) && (f = readIdentityClaim(s))) return f;
+        // "Poe is not not black": it is not the case that Poe is not black (r27.96).
+        if ((m = /^(.+?) (is|are|am|was|were) not not (\S.*)$/.exec(s)) && !/\b(?:that|whether|if)\b/.test(m[1])) {
+            const twice = readClaim('it is not the case that ' + m[1] + ' ' + m[2] + ' not ' + m[3]);
+            if (twice && twice.kind === 'not' && twice.inner && twice.inner.kind === 'not') return twice;
+        }
         if (/^(?:for every individual|there (?:is|exists) an individual)\b/.test(s)) {
             const tree=readNaturalFirstOrderTree(s);
             if(tree) return {kind:'atom',text:'#fol:'+symbolicText(tree,{}),folTree:tree};
@@ -14829,7 +14960,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Fido", "and Fido is not", "as does Fido" -- says what it says only
         // with the clause before it.
         if (!/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /(?:^|(?:,|\s(?:and|or|but))\s+)(?:so|neither|nor|as)\s+(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)\s+\S+(?:\s+\S+)?$/.test(s) ||
-            !/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /\s(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)(?:\s+not)?(?:\s+(?:too|also|either))?$/.test(s)) {
+            !/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /\s(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)(?:\s+not)?(?:\s+(?:too|also|either))?$/.test(s) &&
+            !CLAIM_WILL_NOUN.test(s)) {
             claimUnread('a clause cut short ("so is ...", "... is not", "... does too") is not read');
             return claimAtom(s);
         }
@@ -14938,8 +15070,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (fc && fm) return makeClaimConditional([fm], fc);
             }
         }
-        // "Suppose P, then Q": the condition an imperative supposes.
-        if ((m = s.match(/^suppose(?: that)?,?\s+(.+)$/)) && (f = readConditionalFront(m[1]))) return f;
+        // "Suppose P, then Q": the condition an imperative supposes; so "assume
+        // that P, then Q", "let us suppose, for the sake of argument, that P;
+        // then Q" (r27.96). On its own a supposition is no claim: the box is
+        // flagged (claimInferenceFlag).
+        if ((m = s.match(CLAIM_SUPPOSE_FRONT)) && (f = readConditionalFront(m[1]))) return f;
         // "P, otherwise Q": P, or else Q.
         if ((m = claimMatchTop(s, /^(.+?),?\s+(?:or\s+)?otherwise,?\s+(.+)$/)) && !/^if\b/.test(s) && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[2])) {
             const a = readClaim(m[1]), b = readClaim(m[2]);
@@ -15085,15 +15220,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // Explicit numerical identity between simple names. Bare "A is B" can
     // express predication and is deliberately not promoted to identity.
+    // "The same as", "one and the same as", "identical with", "the same
+    // planet as" say it too (r27.96) -- not "the same color as", a likeness.
+    const CLAIM_IDENTICAL = '(?:identical (?:to|with)|(?:one and )?the (?:very )?same (?:(?:individual|person|object|entity|thing|planet|star|city|place|man|woman|being|one) )?as)';
     function readIdentityClaim(s) {
         let m = s.match(/^([\uE000a-z][\uE000a-z0-9'-]*) is (not )?(?:identical to|the same (?:individual|person|object|entity) as) ([\uE000a-z][\uE000a-z0-9'-]*)$/);
         if (!m) {
             // Names of more than one word: "Mark Twain is the same person as Samuel Clemens".
-            const w = s.match(/^(.+?) is (not )?(?:identical to|the same (?:individual|person|object|entity) as) (.+)$/);
+            const w = s.match(new RegExp('^(.+?) is (not )?' + CLAIM_IDENTICAL + ' (.+)$'));
             if (!w) return null;
             const L = claimTokens(w[1]), R = claimTokens(w[3]);
             const side = t => t.length === 1 ? /^[\uE000a-z][\uE000a-z0-9'-]*$/.test(t[0]) : claimNamePhraseEnd(t) === t.length;
             if (!side(L) || !side(R)) return null;
+            if ([L, R].some(t => t.length === 1 && /^(?:it|he|she|they|we|you|i|one|someone|somebody|something|everyone|everything|nobody|nothing|this|that)$/.test(claimWord(t[0])))) {
+                claimAmbiguous('an identity needs a name on each side, not a pronoun or "a …"', [], true);
+                return Object.assign(claimAtom(s), {unresolvedReference:true});
+            }
             const f = {kind:'identity', left:claimSubjectTerm(L), right:claimSubjectTerm(R)};
             return w[2] ? negateClaim(f) : f;
         }
@@ -16006,7 +16148,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Everything that Mary said": what Mary said, not what says "Mary".
             const rel = downward(() => claimObjectRelativeProp(clause) || verbPhraseProp(clause));
             // "Everyone who sings", "whoever sings": a person who sings, not whatever sings.
-            subject = subject === CLAIM_PERSON && rel ? '=person that ' + clause.join(' ') : rel;
+            const people = subject === CLAIM_PERSON && !!rel && claimPersonOnly(clause);
+            subject = subject === CLAIM_PERSON && rel ? (people ? rel : '=person that ' + clause.join(' ')) : rel;
+            // Said, not done silently (the user, 2026-10-13).
+            if (people) {
+                const w = clause.map(claimWord), noun = w[0] === 'are' ? claimSingularNoun(w[1]) : w[w.length - 1];
+                claimUnread('"' + claimShowWords(head.join(' ') + (head[0] === 'whoever' ? ' ' : ' who ') + clause.join(' ')) + '" is read as ' +
+                    (quant === 'no' ? 'no ' : quant === 'some' ? 'some ' : 'every ') + noun + ': ' + (/^[aeiou]/.test(noun) ? 'an ' : 'a ') + noun + ' is a person');
+            }
             restrictorVp = clause.join(' ');
             vp = rest.slice(k);
         } else if (pronoun) {
@@ -16216,6 +16365,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     const claimSynCache = new Map();
+    // The box's first word, in -s, with its capital, and no plural the reader
+    // knows: it may be a name.
+    function claimBoxInitialName(y) {
+        if (!y || !y.s || y.name || y.closed || claimKnownPlural(y.w) || !claimBoxRaw) return false;
+        const w = y.w.replace(/[^a-z'-]/g, '');
+        return !!w && new RegExp('^[^A-Za-z]*' + w + '\\b', 'i').test(claimBoxRaw) && /^[^A-Za-z]*[A-Z]/.test(claimBoxRaw);
+    }
     function claimSynWords(tokens) {
         const key = tokens.join(' ');
         if (claimSynCache.has(key)) return claimSynCache.get(key);
@@ -16270,7 +16426,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Adjectives and nouns, to a head: every noun on the way may be it, and
         // an adjective may be ("the rich", "American is tall"); after a
         // determiner, a name is a noun ("the Senate", "the Turing test").
-        const numberOf = y => y.plural ? 'pl' : y.s || CLAIM_INVARIANT_NOUNS.has(y.w) ? '?' : /^(?:qualia|data|media|criteria|phenomena)$/.test(y.w) ? 'pl' : y.noun && !y.adj && !y.past ? '?' : 'sg';
+        // A word in -s that opens the box with its capital, and is no plural
+        // the reader knows ("Socrates", "Descartes", "Rawls"): a name or a
+        // plural, its verb says which ("Socrates loves", "zombies lack"; r27.96).
+        const numberOf = (y, j) => j === 0 && i === 0 && !depth && claimBoxInitialName(y) ? '?' :
+            y.plural ? 'pl' : y.s || CLAIM_INVARIANT_NOUNS.has(y.w) ? '?' : /^(?:qualia|data|media|criteria|phenomena)$/.test(y.w) ? 'pl' : y.noun && !y.adj && !y.past ? '?' : 'sg';
         bodies.forEach(([b, determined]) => {
             let j = b;
             while (j < ws.length && ws[j].adv && /ly$/.test(ws[j].w) && ws[j + 1] && ws[j + 1].adj) j++;     // "truly good"
@@ -16285,7 +16445,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // the pronoun reader has them): "the long , dark , windy road".
                 if (y.t === ',' && j > b && claimSynCommaAdjectives(ws, b, j)) continue;
                 if ((y.closed && !CLAIM_SYN_ORDINALS.has(y.w)) || (y.name && !determined) || (y.poss && j > b)) break;
-                if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y));
+                if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y, j));
                 if (!(y.noun || y.adj || y.num || y.participle || y.ing || proper || CLAIM_SYN_ORDINALS.has(y.w))) break;
             }
         });
@@ -16582,6 +16742,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // with an object after it.
         if (y.past) { const z = ws[i + 1]; return !claimKnownAdjective(y.t) || (z && (z.det || z.name || z.poss || z.quant || z.num || z.pro === 'obj')) ? 'strong' : 'weak'; }
         if (y.s && number !== 'pl' && number !== 'you') return y.knownVerb ? 'strong' : 'weak';
+        // "Every student read the book": after one, "read" is no present (r27.96).
+        if (number === 'sg' && CLAIM_PAST_UNCHANGED.has(y.w)) return 'strong';
         if (!y.s && y.verb && (number === 'pl' || number === 'you' || number === '?')) return y.knownVerb ? 'strong' : 'weak';
         return null;
     }
@@ -17628,7 +17790,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const q = p.map(claimWord), k = q[0] === 'not' ? 1 : 0;
             if (!p.length || p.length > k + 4 || !/^[a-z]/.test(q[k] || '')) return false;
             if (/^(?:a|an)$/.test(q[k])) return p.length > k + 1 && q.slice(k + 1).every(w => /^[a-z][a-z'-]*$/.test(w) && !CLAIM_FUNCTION_WORDS.has(w) && !CLAIM_VERB_MARKERS.has(w));
-            return p.length === k + 1 && /^[a-z][a-z'-]*$/.test(q[k]) && !CLAIM_FUNCTION_WORDS.has(q[k]) && !CLAIM_VERB_MARKERS.has(q[k]) && !claimEndsInS(p[k]);
+            return p.length === k + 1 && /^[a-z][a-z'-]*$/.test(q[k]) && (!CLAIM_FUNCTION_WORDS.has(q[k]) || CLAIM_PREDICATE_FUNCTION_WORDS.has(q[k])) &&
+                !CLAIM_VERB_MARKERS.has(q[k]) && !claimEndsInS(p[k]);
         };
         // A part with a phrase of its own: an adjective or a noun of relation
         // and its phrase ("afraid of the dark", "kind to Bob", "an admirer of
@@ -18140,6 +18303,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!leaf(a) || !leaf(b)) return false;
         const x = claimWordsOf(a), y = claimWordsOf(b);
         if (!x.length || !y.length) return false;
+        // "It rains" and "it is raining": what happens, and what is happening
+        // (r27.96) -- told apart, never matched.
+        const d0 = claimWordDiff(x, y);
+        const aspect = (p, q) => p.length === 1 && q.length === 2 && /^(?:is|are|am|was|were)$/.test(q[0]) && /[a-z]{2}ing$/.test(q[1]) &&
+            claimVerbBases(q[1]).some(v => claimVerbBases(p[0]).includes(v));
+        if (d0.common >= 1 && (aspect(d0.onlyX, d0.onlyY) || aspect(d0.onlyY, d0.onlyX))) return true;
         // Lengths too far apart, or too few words shared, cannot be close.
         const longer = Math.max(x.length, y.length), shorter = Math.min(x.length, y.length);
         if (longer - shorter > Math.max(3, Math.ceil(0.35 * longer)) || shorter < 3) return false;
@@ -19267,7 +19436,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DEDUCTIVE_EXTENSIONS = [
         { id: 'core', label: 'Intro and elimination steps', on: true, rules: DEDUCTIVE_CORE.concat(['rule-instance-conditionals']) },
         { id: 'familiar', label: 'Familiar steps', on: true, rules: ['modus-ponens-together', 'modus-tollens', 'disjunctive-syllogism', 'conjunctive-syllogism',
-            'constructive-dilemma', 'destructive-dilemma', 'resolution', 'absorption', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
+            'constructive-dilemma', 'destructive-dilemma', 'resolution', 'absorption', 'biconditional-to-conditional', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
             'universal-modus-ponens', 'universal-modus-tollens', 'universal-syllogism', 'existential-syllogism', 'subalternation',
             'categorical-syllogism', 'identity-symmetry', 'identity-transitivity', 'predicate-congruence',
             'equivalent-substitution'] },
@@ -20016,6 +20185,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'a claim that implies its own denial is false: "if A, then not A" gives "not A"',
           test: (P, C) => P.length === 1 && claimConditionalViews(P[0]).some(v => v.cons.kind !== 'bottom' &&
               claimDenies(v.cons, v.conds[0]) && claimDenies(C, v.conds[0])) },
+        // One step, not material equivalence and then conjunction elimination
+        // (the user, 2026-10-13).
+        { id: 'biconditional-to-conditional', name: 'biconditional to conditional',
+          gloss: '"A if and only if B" gives "if A, then B", and "if B, then A"',
+          test: (P, C) => P.length === 1 && C.kind === 'if' && (() => {
+              const sides = claimBiconditionalSides(P[0]);
+              return !!sides && [0, 1].some(i => claimSame(C, makeClaimConditional([sides[i]], sides[1 - i])));
+          })() },
         { id: 'absorption', name: 'absorption',
           gloss: '"if A, then B" gives "if A, then A and B"',
           // A first, then B as it is.
@@ -21246,6 +21423,46 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const head = String(phrase).toLowerCase().replace(/\s+that$/, '');
         return !!denials && claimHeadDenials(head).some(d => { const u = (d + ' that x').match(CLAIM_UNESTABLISHED); return !!u && denials.has(claimWarrantWords(u[1])); });
     }
+    // A supposition on its own -- "Suppose that God exists" -- is no claim:
+    // what it leads to goes in the same box, "If God exists, then ..." (r27.96;
+    // the user: "We can't have lone supposition nodes"). Not a box read as a
+    // conditional ("Suppose that P, then Q").
+    function claimSupposedFlag(raw, masked) {
+        const m = /^((?:suppose|assume|imagine|let us (?:suppose|assume|imagine)|let['\u2019]s (?:suppose|assume|imagine))(?:,? for the sake of (?:the )?argument,?)?(?:\s+that)?)[\s,]+(\S.*)$/i.exec(masked);
+        if (!m) return null;
+        const said = raw.slice(raw.length - m[2].length).replace(/[.!?]+$/, '').trim();
+        if (!said || !claimLooksLikeClause(normalizeClaimText(said))) return null;
+        const form = parseClaimFull(raw).form;
+        if (form && form.kind === 'if') return null;
+        const word = m[1].replace(/,$/, '').toLowerCase();
+        return { word, kind: 'supposition', text: raw,
+            message: 'In \u201c' + raw + '\u201d, \u201c' + word + '\u201d sets out a supposition, not a claim. Say what it leads to in the same box: \u201cIf ' + said + ', then \u2026\u201d.' };
+    }
+    // "Clearly", "obviously", "of course", "it is clear that": how sure the
+    // writer is, which the check cannot use, and which in a premise makes the
+    // claim sound established -- flagged as "therefore" is (r27.96, the
+    // user's choice). Not inside a that-clause ("Mary thinks that he is
+    // obviously wrong"), nor "clearly" of manner ("speaks clearly", "is
+    // clearly marked", "clearly written rules").
+    function claimSureFlag(raw, masked) {
+        const that = masked.search(/\s(?:that|whether)\s/i);
+        const before = i => that < 0 || i < that;
+        const opensClause = rest => {
+            const w = (/^\S+/.exec(rest) || [''])[0];
+            return /^[A-Z]/.test(w) || /^(?:the|a|an|this|that|these|those|it|he|she|they|we|i|you|there|some|all|every|no|each|any|not|nothing|nobody|everyone|someone|everything|something)$/.test(w.replace(/[^A-Za-z']/g, '').toLowerCase());
+        };
+        let word = null, m;
+        if ((m = /^(it is (?:clear|obvious) that|it['\u2019]s (?:clear|obvious) that)\s+\S/i.exec(masked))) word = m[1];
+        else if ((m = /^(clearly|obviously|of course)(\s*,)?\s+/i.exec(masked)) && (m[2] || opensClause(raw.slice(m[0].length)))) word = m[1];
+        else if ((m = /,\s*(clearly|obviously|of course)\s*,/i.exec(masked)) && before(m.index)) word = m[1];
+        else if ((m = /\s(obviously)\s+[a-z]/i.exec(masked)) && before(m.index)) word = m[1];
+        else if ((m = /\s(?:is|are|was|were|am)\s+(clearly)\s+(\S+)/i.exec(masked)) && before(m.index) && !/(?:ed|en|ble)$/i.test(m[2].replace(/[^A-Za-z]/g, ''))) word = m[1];
+        else if ((m = /(?:^|\s)(?<!matter\s)(of course)\s/i.exec(masked)) && before(m.index)) word = m[1];
+        if (!word) return null;
+        word = word.toLowerCase().replace(/\u2019/g, "'");
+        return { word, kind: 'sure', text: raw,
+            message: 'In \u201c' + raw + '\u201d, \u201c' + word + '\u201d says how sure the writer is: the check cannot use it, and in a premise it makes the claim sound established. Leave it out.' };
+    }
     // `denials`: the step's (claimDenialHeads).
     function claimInferenceFlag(text, denials) {
         const raw = String(text == null ? '' : text).replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '')
@@ -21264,6 +21481,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             do { y = x; x = x.replace(/^(?:[,;:]|and\b|but\b)\s*/i, '').replace(/\s*(?:[,;:.!?]|\band|\bbut)$/i, '').trim(); } while (x !== y);
             return x; };
         const clause = t => !!t && claimLooksLikeClause(normalizeClaimText(t));
+        // Without its "that", at the start, where a claim follows (r27.96):
+        // "which means Socrates is mortal" -- not "this means war".
+        const bare = /^((?:which|this) (?:means|shows|proves|implies))\s+(?!that\b)(\S.*)$/i.exec(masked);
+        if (bare && !hits.some(h => h.at === 0) && clause(raw.slice(bare[1].length))) hits.push({ at: 0, word: bare[1], kind: 'conclusion' });
         let flag = null;
         for (const h of hits.sort((a, b) => a.at - b.at)) {
             const word = raw.slice(h.at, h.at + h.word.length), before = raw.slice(0, h.at), after = raw.slice(h.at + h.word.length);
@@ -21292,6 +21513,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             break;
         }
+        if (!flag) flag = claimSupposedFlag(raw, masked) || claimSureFlag(raw, masked);
         if (claimInferenceCache.size > 5000) claimInferenceCache.clear();
         claimInferenceCache.set(cached, flag);
         return flag;

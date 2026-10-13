@@ -99,6 +99,7 @@ const SUITES = [
     'navkeys-r27-panel-test.js',
     'anaphora-r27-test.js',
     'nesting-r27-test.js',
+    'locutions-r27-test.js',
     'collab-r26-firebase-test.js',
 ];
 

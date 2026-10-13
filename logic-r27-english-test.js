@@ -301,7 +301,7 @@ const CORPUS = {
         [null, ['If it rains, then the ground is wet, and if the ground is wet, then it rains', 'It rains'], 'The ground is wet', 'two conditionals written out are two claims, not a biconditional'],
         ['modus tollens', ['If any raven is white, then the theory is false', 'The theory is not false'], 'No raven is white', 'MT, any in a condition'],
         ['disjunctive syllogism', ['Either no raven is white or the survey erred', 'Some raven is white'], 'The survey erred', 'DS, no denied by some'],
-        [null, ['It rains if and only if the ground is wet'], 'If the ground is wet, then it rains', 'a biconditional is not a conjunction: material equivalence, then conjunction elimination'],
+        ['biconditional to conditional', ['It rains if and only if the ground is wet'], 'If the ground is wet, then it rains', 'one step, a familiar one (r27.96), not material equivalence and then conjunction elimination'],
         ['material equivalence', ['It rains if and only if the ground is wet'], 'If it rains, then the ground is wet, and if the ground is wet, then it rains', 'material equivalence writes a biconditional out'],
         [null, ['All ravens are not white'], 'If Poe is a raven, then Poe is not white', 'ambiguous: all ... not'],
         [null, ['Ravens are black'], 'If Poe is a raven, then Poe is black', 'a generic is not all'],

@@ -387,7 +387,7 @@ const MAP = [
             'existential introduction', 'existential elimination', 'universal elimination', 'universal modus ponens',
             'universal modus tollens', 'universal syllogism', 'existential syllogism', 'categorical syllogism',
             'reductio', 'rule instances', 'negation introduction', 'indirect proof',
-            'consequentia mirabilis', 'absorption', 'change of bound variable', 'Quantifier Commutation',
+            'consequentia mirabilis', 'biconditional to conditional', 'absorption', 'change of bound variable', 'Quantifier Commutation',
             'vacuous quantifier', 'vacuous quantifier, anywhere', 'rules of passage', 'quantifier distribution',
             'quantifier distribution, anywhere', 'quantifier negation', 'conversion', 'contraposition',
             'De Morgan’s laws', 'transposition', 'Negated Conditional', 'Negated Biconditional',

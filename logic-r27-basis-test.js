@@ -802,12 +802,12 @@ try {
         ok(mt() === 'modus tollens', 'a modus tollens step, certified by default');
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         const off = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, n: Object.keys(state.logic.rules).length, stamped: !!state._logicVersion };');
-        ok(mt() === null && !off.checked && !off.ind && off.n === 21 && off.stamped, 'Familiar steps switched off: its twenty-one rules off, stamped, and the step no longer certified', J(off));
+        ok(mt() === null && !off.checked && !off.ind && off.n === 22 && off.stamped, 'Familiar steps switched off: its twenty-two rules off, stamped, and the step no longer certified', J(off));
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         ok(mt() === 'modus tollens' && J(ev('return state.logic.rules;')) === '{}', 'and on again');
         ev('document.querySelector("[data-rule=\\"modus-tollens\\"]").click(); return 1;');
         const part = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, count: document.querySelector("[data-count=\\"familiar\\"]").textContent };');
-        ok(mt() === null && !part.checked && part.ind && part.count === '20 of 21', 'one rule of a group off: the group half on, "20 of 21"', J(part));
+        ok(mt() === null && !part.checked && part.ind && part.count === '21 of 22', 'one rule of a group off: the group half on, "21 of 22"', J(part));
         // Undo leaves the settings alone; the map's edits it undoes.
         ev('pushHistory(); state.trees[0].texts = ["It does not rain at all"]; render(); undo(); return 1;');
         const undone = ev('return { text: state.trees[0].texts[0], rules: state.logic.rules, inSnapshot: /modus-tollens/.test(historySnapshot()) };');
