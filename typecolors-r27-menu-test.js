@@ -232,6 +232,12 @@ const IDS = ['S1', 'O1', 'R1', 'RS', 'B1', 'BS', 'NT', 'FS'];
         ok(/#btn-implicit\s*\{\s*--look-bg:\s*transparent;\s*--look-text:\s*var\(--implicit-button-text\);\s*--look-edge:\s*var\(--line-faded\);\s*position:\s*relative/.test(CSS) &&
            /#btn-given\s*\{\s*--look-bg:\s*var\(--color-given-bg\)/.test(CSS) && !/--btn-given-bg/.test(HTML),
             'Implicit is see-through with a faded border; Given wears the canvas tint');
+        // r27.103 (the user, 2026-10-14: the button "seems darker than on the
+        // canvas"): on the dark panel, as light as the tint itself, a lighter
+        // green, standing out from the panel as much as a given box does from
+        // the darker canvas; the light theme keeps the tint.
+        ok(/body:not\(\.nodes-light\) #btn-given\s*\{\s*--look-bg:\s*#335642;\s*\}/.test(CSS),
+            'in the dark theme the Given button\'s green is lighter than the tint, so it looks as a given box does on the canvas');
         const tag = CSS.match(/#btn-implicit::after\s*\{([^}]*)\}/);
         ok(!!tag && /content:\s*'Implicit'/.test(tag[1]) && /text-transform:\s*uppercase/.test(tag[1]) && /top:\s*0/.test(tag[1]) &&
            /border:\s*1px solid var\(--implicit-tag-border\)/.test(tag[1]) && /color:\s*var\(--implicit-tag-text\)/.test(tag[1]) &&

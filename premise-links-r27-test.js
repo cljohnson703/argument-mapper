@@ -393,6 +393,24 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             const st = collectDeductiveSteps(state.trees).find(s => s.childId === 'pppppppp');
             return st ? deductiveStepTagText(st) : null;`);
         ok(typed === '✓ modus ponens', 'so is a clause typed in brackets: "If (Computers think), ..."', typed);
+        // r27.105 (the user, 2026-10-14: "We should probably give the same
+        // treatment to all the negation locutions ("it's not the case that",
+        // "is not the case", "is false", "is false that", etc.)"): a link is
+        // denied after it as a letter or a quotation is.
+        const denied = T(W, `
+            const run = second => {
+                state.trees = [{ id: 'mmmmmmmm', type: 'contention', texts: ['The machine can think.'], collapsed: [], children: [
+                    { id: 's1s1s1s1', type: 'support', texts: ['If the computer fools the investigator, then the machine can think.'], collapsed: [], children: [
+                        { id: 'oooooooo', type: 'objection', texts: ["Computers can't be minds.", second], collapsed: [], children: [] } ] } ] }];
+                ensureCollabFields(state); render();
+                const st = collectDeductiveSteps(state.trees).find(s => s.childId === 'oooooooo');
+                return st ? deductiveStepTagText(st) : null;
+            };
+            return ['[S1](#box:s1s1s1s1) is false', '[S1](#box:s1s1s1s1) is not the case', '[S1](#box:s1s1s1s1) is untrue', '[S1](#box:s1s1s1s1) is not true',
+                "[S1](#box:s1s1s1s1) isn't the case", "it's not the case that [S1](#box:s1s1s1s1)", 'it is false that [S1](#box:s1s1s1s1)', 'not [S1](#box:s1s1s1s1)']
+                .map(d => run("If computers can't be minds, then " + d + '.'));`);
+        ok(denied.every(t => t === '✓ modus ponens'),
+            'a link denied after it -- "S1 is false", "is not the case", "is untrue", "is not true" -- as before it: modus ponens against its box (r27.105)', JSON.stringify(denied));
     }
 
     console.log('\n-- (5) Editing: One click --');

@@ -303,6 +303,34 @@ console.log('\n-- 13. the colors, for a clause cut short --');
     ok(painted === 'Mary did too', 'the colors find "Mary did too", read as "Mary left"', J(painted));
 }
 
+console.log('\n-- 14. who does what a gerund says --');
+{
+    // r27.105: in "fool the investigator into identifying it", the
+    // investigator identifies, so "it" is not the investigator -- it had been
+    // read as "the investigator", the box's subject left out instead.
+    const fool = read('If the computer is able to fool the investigator into identifying it as human, then the machine can think.');
+    ok(/identifying the computer as human/.test(fool.said) && fool.notes.some(n => /“it” as “the computer”/.test(n)),
+        '"fool the investigator into identifying it": "it" is the computer -- not the investigator, who identifies', J(fool));
+    const hire = read('John talked the boss into hiring him.');
+    ok(/hiring john\b/i.test(hire.said), '"talked the boss into hiring him": "him" is John', J(hire));
+    const guard = read('The guard stopped the dog from eating it.');
+    ok(!/eating the (?:dog|guard)/i.test(guard.said), '"stopped the dog from eating it": "it" is not the dog, nor the guard, a person', J(guard));
+}
+
+console.log('\n-- 15. a linked box\'s pronouns, as the box reads alone --');
+{
+    // r27.107 (the user, 2026-10-15: in "If [O1], then not [M1]." the "not"
+    // is not red and the step not certified): read with the links' words,
+    // "her" in M1's had been offered "Computers", a capital after a bracket
+    // taken for a name.
+    const linked = read("If (Computers can't be minds), then not (If the computer is able to fool the investigator into identifying it as human approximately as often as the woman was able to fool the investigator into identifying her as a man, then we should conclude that the machine can think).");
+    ok(/identifying the woman as a man/.test(linked.said) && !linked.notes.some(n => /^ambiguous/.test(n)),
+        'inside brackets a pronoun goes back to what they hold: "her" is "the woman", not "Computers" before them', J(linked));
+    const out = read('If (Mary is tall), then she is happy.'), back = read('Bob left (and he cried).');
+    ok(/then mary is happy/i.test(out.said) && /and bob cried/i.test(back.said),
+        'a pronoun outside them still goes back into them; one inside them with nothing there to be, outside them', J([out, back]));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

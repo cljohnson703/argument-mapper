@@ -32,7 +32,8 @@ try {
   check(!rule(['~'.repeat(n)+'P'],'~'.repeat(n-1)+'P'),'cannot remove odd count '+n);
   check(call(s=>!renderRichText(s).includes('<del>') && stripClaimMarkup(s)===s,'~'.repeat(n)+'P'),'preserve tildes '+n);
  }
- check(call(()=>!richTextEnabled&&!document.getElementById('richtext-toggle').checked),'Rich Text starts off');
+ // r27.104 (the user, 2026-10-14: "Default to rich text on").
+ check(call(()=>richTextEnabled&&document.getElementById('richtext-toggle').checked),'Rich Text starts on');
  check(call(()=>renderRichText('~~old~~').includes('<del>old</del>')),'strikethrough still works');
  check(rule(['P ∨ Q','P → R','Q → R'],'R')==='proof-by-cases','shared consequent cases');
  check(rule(['P ∨ Q','P → R','Q → S'],'R ∨ S')==='constructive-dilemma','general dilemma');

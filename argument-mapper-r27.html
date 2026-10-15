@@ -402,12 +402,17 @@
        and bold (r27.91); the rest dimmed. */
     .rendered-text .ic-rest, .rendered-text .ic-u { opacity: .45; }
     .rendered-text .ic-cn { text-decoration-line: underline; text-decoration-style: dashed; text-decoration-color: #ff7b72; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-    .rendered-text .ic-k0 { color: #5fd3e8; }
-    .rendered-text .ic-k1 { color: #f59bc4; }
-    .rendered-text .ic-k2 { color: #c3b1ff; }
-    .rendered-text .ic-k3 { color: #ffd479; }
-    .rendered-text .ic-k4 { color: #ffb38a; }
-    .rendered-text .ic-k5 { color: #8fd0ff; }
+    /* On dark boxes too, a tint of each color behind its part, so that a
+       premise link, blue, shows its part (r27.107; the user: "In dark mode,
+       only the text is colored, so, they're more difficult to associate with
+       the correct colors"): the light boxes' hues, stronger on a dark ground
+       ("the tints are a little difficult to distinguish between"). */
+    .rendered-text .ic-k0 { color: #5fd3e8; background: rgba(0,170,205,.3); padding: 1px 0; }
+    .rendered-text .ic-k1 { color: #f59bc4; background: rgba(225,60,140,.3); padding: 1px 0; }
+    .rendered-text .ic-k2 { color: #c3b1ff; background: rgba(110,80,230,.34); padding: 1px 0; }
+    .rendered-text .ic-k3 { color: #ffd479; background: rgba(230,170,0,.26); padding: 1px 0; }
+    .rendered-text .ic-k4 { color: #ffb38a; background: rgba(240,120,60,.28); padding: 1px 0; }
+    .rendered-text .ic-k5 { color: #8fd0ff; background: rgba(40,130,230,.32); padding: 1px 0; }
     body.nodes-light .rendered-text .ic-k0 { color: #006b80; background: rgba(0,170,205,.17); padding: 1px 0; }
     body.nodes-light .rendered-text .ic-k1 { color: #a8235f; background: rgba(225,60,140,.14); padding: 1px 0; }
     body.nodes-light .rendered-text .ic-k2 { color: #5536b8; background: rgba(110,80,230,.14); padding: 1px 0; }
@@ -419,7 +424,10 @@
     body.ic-v2 .rendered-text .ic-rest, body.ic-v2 .rendered-text .ic-u { opacity: 1; }
     /* ... and underlined, the whole stretch, in its green (r27.82); a part
        the conclusion denies keeps its red dashes. */
-    body.ic-v2 .rendered-text .ic-c { color: #6fbf8b; text-decoration-line: underline; text-decoration-style: solid; text-decoration-color: #6fbf8b; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    /* On dark boxes a yellow green, apart from teal behind a link's short
+       label (r27.107; the user: "hard to tell the blue and green highlights
+       apart in dark mode when using premise links"). */
+    body.ic-v2 .rendered-text .ic-c { color: #7fcf97; background: rgba(120,190,40,.22); padding: 1px 0; text-decoration-line: underline; text-decoration-style: solid; text-decoration-color: #7fcf97; text-decoration-thickness: 1px; text-underline-offset: 3px; }
     body.ic-v2.nodes-light .rendered-text .ic-c { color: #17803a; background: rgba(23,128,58,.12); padding: 1px 0; text-decoration-color: #17803a; }
     body.ic-v2 .rendered-text .ic-c.ic-cn { text-decoration-style: dashed; text-decoration-color: #ff7b72; }
     body.ic-v2.nodes-light .rendered-text .ic-c.ic-cn { text-decoration-color: #c62828; }
@@ -428,13 +436,19 @@
        a pixel into a neighbor it goes on into: an underline under each
        symbol shows a faint seam where two meet. */
     body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn) { text-decoration-line: none; position: relative; }
-    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn)::after { content: ''; position: absolute; left: 0; right: 0; top: calc(var(--ic-base) + 3px); height: 1px; background: #6fbf8b; pointer-events: none; }
+    body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn)::after { content: ''; position: absolute; left: 0; right: 0; top: calc(var(--ic-base) + 3px); height: 1px; background: #7fcf97; pointer-events: none; }
     body.ic-v2.nodes-light .rendered-text span.ic.ic-c[data-ic-fit]:not(.ic-cn)::after { background: #17803a; }
     body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit][data-ic-jl]:not(.ic-cn)::after { left: -.5px; }
     body.ic-v2 .rendered-text span.ic.ic-c[data-ic-fit][data-ic-jr]:not(.ic-cn)::after { right: -.5px; }
     /* Words that deny, in either: red and bold, never dimmed, over any color. */
     body .rendered-text span.ic.ic-neg { opacity: 1; color: #ff7b72; font-weight: 600; }
     body.nodes-light .rendered-text span.ic.ic-neg { color: #c62828; }
+    /* A link keeps its blue and its underline where links have it, and so do
+       words underlined: a part's line runs below them, where the red dashes
+       run (r27.104; the user: "Keep blue lines underneath links ... lower
+       green underlines to the same position as red dash underlines"). The
+       offset a part sets is inherited, so it is set back for them. */
+    .rendered-text span.ic a.node-link, .rendered-text span.ic u { text-underline-offset: auto; }
     /* Keep whole words inside their buttons when Advanced adds a scrollbar. */
     body.toolbar-left #group-file { display: grid; grid-template-columns: repeat(3,minmax(min-content,1fr)); }
     body.toolbar-left #group-file .toolbar-group-label { grid-column: 1 / -1; }
@@ -514,6 +528,10 @@
     }
     body.bg-light #btn-implicit::after { background: #f0f0f0; }
     #btn-given { --look-bg: var(--color-given-bg); }
+    /* On the dark panel, as light as the given green itself, the button read
+       darker than a given box on the darker canvas (the user, 2026-10-14): its
+       green is lighter by as much as the canvas is darker than the panel. */
+    body:not(.nodes-light) #btn-given { --look-bg: #335642; }
     /* Change Type in the side toolbar: [Support|Objection] [Weak
        Objection|Implicit] [Main|Given|Note] (the user, 2026-09-30: Implicit
        where Note was, and Main, Given and Note on the last row together, in
@@ -1082,6 +1100,17 @@
     .logic-rules[hidden] { display: none; }
     body.bg-light .logic-rules { color: #444; }
     .logic-rules label { display: flex; gap: 5px; align-items: center; cursor: pointer; line-height: 1.25; }
+    /* Modal logic (r27.101): a kind of necessity's axioms and its system. */
+    .logic-modal { padding: 0 0 7px 21px; font-size: 11px; color: #d6cabb; }
+    .logic-modal[hidden] { display: none; }
+    body.bg-light .logic-modal { color: #444; }
+    .logic-modal-row { display: flex; align-items: center; flex-wrap: wrap; gap: 3px 7px; line-height: 1.5; }
+    .logic-modal-row > span:first-child { width: 40px; color: #b5a895; }
+    body.bg-light .logic-modal-row > span:first-child { color: var(--label-text); }
+    .logic-modal label { display: inline-flex; gap: 3px; align-items: center; cursor: pointer; }
+    .logic-modal label.implied { opacity: 0.55; cursor: default; }
+    .logic-modal-name { font-family: ui-monospace, Consolas, monospace; color: #ffffff; }
+    body.bg-light .logic-modal-name { color: #222; }
     #eval-logic.read-only label, #eval-logic.read-only .logic-group-row label { cursor: default; }
     .eval-row {
         display: flex; flex-direction: column; gap: 6px; padding: 10px 6px;
@@ -2351,7 +2380,7 @@
             </label>
             <button onclick="openStringMode()">String Mode</button>
             <label class="autosave-label"><input type="checkbox" id="autosave-toggle"> Autosave</label>
-            <label class="autosave-label"><input type="checkbox" id="richtext-toggle"> Rich text</label>
+            <label class="autosave-label"><input type="checkbox" id="richtext-toggle" checked> Rich text</label>
         </div>
         <div class="toolbar-group">
             <span class="toolbar-group-label">Clipboard</span>
@@ -2522,6 +2551,7 @@
         <p>The colors button after Deductive (<kbd>Shift+C</kbd>) colors each premise by its part in the step: where premises meet, a color; words that deny what another premise says, red; a part the conclusion denies, underlined in red dashes. Once a step is valid, what goes on to the conclusion is one stretch: plain in colors 1, which dims the rest; green and underlined in colors 2, which dims nothing. Until then each part has its own color. Each press moves on: off, 1, 2, off.</p>
         <p>Commas can settle what you mean: <em>Mary sang, and danced, in the hall</em> (both in the hall); <em>Mary sang, and she danced in the hall</em> (only the dancing). So can <em>both … and</em>, <em>either … or</em>, <em>implies</em> (<em>If A implies B, then C</em>) and brackets. Symbols work too: <code>~ &amp; ∨ → ↔ ∀ ∃</code>.</p>
         <p><strong>✓ Warranted</strong> means the main contention is established by the argument as it stands; <strong>✗ Unwarranted</strong> means it isn't yet, not that it's false. The <strong>Logic</strong> panel lists the rules the checker uses.</p>
+        <p>For modal logic, switch on <strong>Metaphysical necessity</strong> in the Logic panel and choose its axioms (S5 to start). Boxes can then say <em>it is metaphysically necessary that …</em>, <em>it is metaphysically possible that …</em>, or use □ and ◇.</p>
         <h3>Reuse premises</h3>
         <p>To use a premise again in another argument, choose <strong>Add Cross-Reference</strong> from a box's menu, then click the original; <strong>Reference Arguments</strong> (or the box's ↗ badge) groups such premises into arguments for or against the box, each checked as a step. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise</strong> from the right-click menu while editing.</p>
         <h3>Arrange and annotate</h3>
@@ -2547,6 +2577,7 @@
                     <tr><td>Fit the map / center it</td><td><kbd>Z</kbd> / <kbd>C</kbd></td></tr>
                     <tr><td>Deductive check / check one step</td><td><kbd>K</kbd> / <kbd>Shift+K</kbd></td></tr>
                     <tr><td>Edit with one click / place freely</td><td><kbd>Shift+E</kbd> / <kbd>Shift+F</kbd></td></tr>
+                    <tr><td>Link a premise / cross-reference the box</td><td><kbd>Ctrl+K</kbd> / <kbd>Shift+R</kbd></td></tr>
                     <tr><td>Help / stop editing</td><td><kbd>/</kbd> / <kbd>Esc</kbd></td></tr>
                 </tbody>
             </table>
@@ -2805,7 +2836,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             <select id="eval-logic-base" onchange="onLogicBaseChange(this.value)" title="The logic the deductive check uses">
                 <option value="standard">Standard</option>
                 <option value="intuitionistic" disabled>Intuitionistic (later)</option>
-                <option value="modal" disabled>Modal (later)</option>
             </select>
         </div>
         <div id="eval-logic-body"></div>
@@ -2921,7 +2951,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-13 r27.100';
+    const APP_BUILD = '2026-10-15 r27.107';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5226,7 +5256,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Ctrl+Z after typing already lands on the raw text (rendering isn't a
     // history step), and a second reverts the text. renderField is the
     // per-field gate all node render sites share.
-    let richTextEnabled = false;
+    // On to start with (r27.104, the user: "Default to rich text on").
+    let richTextEnabled = true;
     window.addEventListener('DOMContentLoaded', () => {
         const cb = document.getElementById('richtext-toggle');
         if (cb) {
@@ -5400,7 +5431,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return c && c.text === t ? { start: c.start, end: c.end } : { start: t.length, end: t.length };
     }
     // From a box's menu -- a touch screen gives a text field no menu of the
-    // page's own: a link to a premise, at the caret last left in the box.
+    // page's own -- or Ctrl+K (r27.104): a link to a premise, at the caret
+    // last left in the box.
     function linkPremiseInto(nodeId, idx) {
         const c = boxCaretFor(nodeId, idx);
         startBoxLinkPicking(nodeId, idx, c.start, c.end);
@@ -6872,9 +6904,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         quantifier: 'Rewrite claims with "every", "some" or "no".',
         inside: 'Rules used inside "every" or "some": "every raven is black and old" gives "every raven is black".',
         able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse.',
+        opposites: 'Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse (contraries); "lack" and "have" deny each other both ways (contradictories).',
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
         catchall: 'Anything truth tables show, including swapping a part for an equivalent one.' };
+    const LOGIC_MODAL_GLOSS = 'Reads "it is metaphysically necessary that …", "it is metaphysically possible that …", □ and ◇, and takes steps by the axioms switched on.';
+    const LOGIC_MODAL_AXIOMS = {
+        D: 'D: □A → ◇A. What is necessary is possible.',
+        T: 'T: □A → A. What is necessary is so, and what is so is possible.',
+        4: '4: □A → □□A. What is necessary is necessarily necessary.',
+        B: 'B: A → □◇A. What is so is necessarily possible.',
+        5: '5: ◇A → □◇A. What is possible is necessarily possible.' };
     let logicPanelFolded = false;
     try { logicPanelFolded = localStorage.getItem('argmap-logic-folded') === '1'; } catch (e) {}
     const logicOpenGroups = new Set();
@@ -6956,6 +6996,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
             body.appendChild(list);
         });
+        // Modal logic (r27.101): a kind of necessity switched on, its axioms
+        // -- those chosen, and those they imply -- and its system's name.
+        body.appendChild(el('div', 'logic-ext-label', 'Modal logic'));
+        const mrow = el('div', 'logic-group-row'), mbox = el('input');
+        mbox.type = 'checkbox'; mbox.id = 'logic-modal-meta'; mbox.dataset.modal = 'meta';
+        mbox.addEventListener('change', () => switchLogicRules(['modal-meta'], mbox.checked));
+        const mlabel = el('label', null, 'Metaphysical necessity');
+        mlabel.htmlFor = mbox.id;
+        mlabel.title = LOGIC_MODAL_GLOSS;
+        mrow.appendChild(mbox); mrow.appendChild(mlabel);
+        body.appendChild(mrow);
+        const mbody = el('div', 'logic-modal'), axioms = el('div', 'logic-modal-row'), system = el('div', 'logic-modal-row');
+        mbody.id = 'logic-modal-meta-body';
+        axioms.appendChild(el('span', null, 'Axioms'));
+        CLAIM_MODAL_AXIOMS.forEach(a => {
+            const item = el('label'), cb = el('input');
+            cb.type = 'checkbox'; cb.dataset.axiom = a;
+            cb.addEventListener('change', () => switchLogicRules(['modal-meta-' + a], cb.checked));
+            item.appendChild(cb); item.appendChild(document.createTextNode(a));
+            axioms.appendChild(item);
+        });
+        system.appendChild(el('span', null, 'System'));
+        const name = el('span', 'logic-modal-name'); name.dataset.modalName = 'meta';
+        system.appendChild(name);
+        mbody.appendChild(axioms); mbody.appendChild(system);
+        body.appendChild(mbody);
     }
     // Draw the panel from the map's settings: built once, then kept in step.
     function renderLogicPanel() {
@@ -6990,6 +7056,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             list.hidden = !open;
             list.querySelectorAll('input[data-rule]').forEach(cb => { cb.checked = logicSettingOn(cb.dataset.rule); cb.disabled = ro; });
         });
+        // Modal logic: an axiom the chosen ones imply, ticked and grayed.
+        const mbox = body.querySelector('[data-modal="meta"]');
+        if (mbox) {
+            const on = claimModalSwitch('modal-meta'), chosen = claimModalChosen(), has = claimModalClosure(chosen);
+            mbox.checked = on; mbox.disabled = ro;
+            document.getElementById('logic-modal-meta-body').hidden = !on;
+            body.querySelectorAll('input[data-axiom]').forEach(cb => {
+                const a = cb.dataset.axiom, implied = has.has(a) && !chosen.includes(a);
+                cb.checked = has.has(a); cb.disabled = ro || implied;
+                cb.parentElement.classList.toggle('implied', implied);
+                cb.parentElement.title = LOGIC_MODAL_AXIOMS[a] + (implied ? ' Implied by the axioms switched on.' : '');
+            });
+            body.querySelector('[data-modal-name="meta"]').textContent = claimModalSystem(has);
+        }
     }
     function renderEvalOverview() {
         renderLogicPanel();
@@ -9593,6 +9673,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         engineer programmer manager boss chief leader ruler president senator governor mayor minister citizen servant maid butler
         witness victim suspect defendant plaintiff client customer tenant landlord landlady owner worker employee employer investor
         critic politician chef cook farmer merchant thief liar spy agent guide detective
+        investigator interrogator examiner experimenter observer interviewer researcher guard referee umpire juror
     `.trim().split(/\s+/));
     // Animals, too, may be "he" or "she", and so compete with a name for one:
     // in "Mary's dog barked and she ran", "she" may be the dog.
@@ -9887,6 +9968,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             const k = toks.findIndex(x => x.at === m.index);
             if (k < 0) continue;
+            // "The butler did it": "do it", with nothing before it in the box
+            // that it can be, says the deed the box is about, as written: it
+            // had asked for a referent, and the textbook's modus ponens on it
+            // went unread (r27.106).
+            if (w === 'it' && k > 0 && /^(?:do|does|did|done|doing)$/.test(toks[k - 1].l) &&
+                !cands.some(c => c.at < m.index && (c.kind === 'thing' || c.kind === 'animal' || c.thingToo))) continue;
             // Bound in its own clause by a quantifier, or "a ...", before it:
             // "every teacher loves her job", "a teacher loves her job".
             const own = innerOf(k), kindOf = CLAIM_PRONOUN_KIND[w];
@@ -10043,6 +10130,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // with its verb ("and dropped it") -- the one before's.
         // The one before an object's verb: "he loves her" -- "that" or no "that".
         const nearSubject = p => {
+            // "fool the investigator into identifying it": who identifies is
+            // the investigator, so "it" is not (r27.105).
+            if (p.k > 2 && /ing$/.test(toks[p.k - 1].l) && /^(?:into|from)$/.test(toks[p.k - 2].l)) {
+                const cand = cands.find(c => c.k1 === p.k - 3);
+                if (cand) return { cand };
+            }
             if (p.k > 0 && (CLAIM_PREPOSITIONS.has(toks[p.k - 1].l) || CLAIM_OBJECT_PREPOSITIONS.has(toks[p.k - 1].l) || /^(?:about|of|for|with|to|at|on|in)$/.test(toks[p.k - 1].l))) return null;
             let j = p.k - 2;
             while (j >= 0 && (CLAIM_VERB_MARKERS.has(toks[j].l) || /^(?:not|never|also|then|still|really|just|always|often|already|again)$/.test(toks[j].l) || /^[a-z]{3,}ly$/.test(toks[j].l))) j--;
@@ -10080,12 +10173,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         });
         if (slots.length > 4) return none;
         const fits = { m: ['person', 'animal'], f: ['person', 'animal'], n: ['thing', 'animal'], q: ['thing', 'animal'], p: ['many', 'person'] };
+        // The bracket a place is inside, the innermost: where it opens, or -1.
+        const bracketOpen = at => {
+            const st = [];
+            for (let i = 0; i < at; i++) { if (said[i] === '(') st.push(i); else if (said[i] === ')') st.pop(); }
+            return st.length ? st[st.length - 1] : -1;
+        };
         const choices = slots.map(x => {
             const first = x.members[0];
             // A phrase that points back: what it may point back to.
             if (first.dem) return first.dem.filter((c, i) => c.indef || first.dem.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
             let list = cands.filter(c => c.at < first.at && (c.at >= frameEnd || c.name) && (fits[x.kind].includes(c.kind) || ((x.kind === 'n' || x.kind === 'q') && c.thingToo)) &&
                 !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase()));
+            // Inside brackets -- a linked box's words, read as the box is
+            // alone (r27.89) -- a pronoun goes back to what they hold, where
+            // they hold something it can be: "If (Computers can't be minds),
+            // then not (... the woman ... her ...)" had offered "Computers"
+            // for "her" (r27.107).
+            const held = bracketOpen(first.at);
+            if (held >= 0 && list.some(c => c.at > held)) list = list.filter(c => c.at > held);
             // A name, or "the raven", said twice is one thing (it had offered
             // "the raven" or "the raven"); "a raven" twice may be two.
             list = list.filter((c, i) => c.indef || list.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
@@ -10525,7 +10631,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // affirmation says no more than the plain verb in its tense (the
             // key read it so already; now the words do too). "Do" with an
             // object is the verb "do": "does the dishes", "did well", "do so".
-            .replace(/(^|[\s,;:(])(do|does|did) (?!not\b)([a-z][a-z-]*)(?=$|[\s,.;:!?)])/g, (m, pre, aux, verb) => {
+            // "Really", "truly" or "indeed" after it stress it too: "God does
+            // really exist" (r27.106).
+            .replace(/(^|[\s,;:(])(do|does|did) (?:(?:really|truly|indeed) )?(?!not\b)([a-z][a-z-]*)(?=$|[\s,.;:!?)])/g, (m, pre, aux, verb) => {
                 if (CLAIM_DO_OBJECT.test(verb) || CLAIM_FUNCTION_WORDS.has(verb) || CLAIM_VERB_MARKERS.has(verb) || /ly$/.test(verb) || claimEndsInS(verb) ||
                     /^(?:so|too|likewise|otherwise|better|best|worse|worst|enough|fine|ok|okay|alright|nothing|little|less|i|we|you|they|he|she|it|there|one|people)$/.test(verb)) return m;
                 const said = aux === 'do' ? verb : aux === 'does' ? claimThirdPerson(verb) : claimPastTense(verb);
@@ -10535,6 +10643,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     Object.values(CLAIM_AUXILIARY_PAST).includes(said) || /^(?:lay|found|saw|left|lit|felt|fell)$/.test(said))) return m;
                 return said ? pre + said : m;
             })
+            // "Poe fails to fly" says Poe does not fly; "failed to", did not
+            // (r27.106). Not "has failed to", "will fail to", "to fail to";
+            // nor "fails to be", which is "is not".
+            .replace(/(?<!\b(?:has|have|had|will|would|can|could|may|might|must|shall|should|to|do|does|did|not|never|cannot)\s)\b(fails|failed|fail) to (?!be\b)([a-z][a-z-]*)(?=$|[\s,.;:!?)])/g,
+                (m, f, verb) => CLAIM_FUNCTION_WORDS.has(verb) ? m : (f === 'fails' ? 'does' : f === 'failed' ? 'did' : 'do') + ' not ' + verb)
             // "Not at all surprised", "if she is at all surprised": "at all"
             // only stresses the claim (to any degree) -- not "at all times",
             // "at all costs", where it says "every".
@@ -11391,8 +11504,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // written, "¬∀x ...": its dual is quantifier negation's to give.
     function negateClaim(form) {
         if ((form.kind === 'all' || form.kind === 'some') && !form.v) return claimDual(form);
+        // "Not necessarily P" is "possibly not P", and "not possibly P" is
+        // "necessarily not P" (r27.101): a modal claim's denial is its dual.
+        // How it was written goes with it: "it is not the case that it is
+        // metaphysically possible that P" is written "not possible".
+        if (form.kind === 'modal') return Object.assign(claimModal(form.op === 'nec' ? 'poss' : 'nec', form.inner.kind === 'not' ? form.inner.inner : negateClaim(form.inner), form.mod),
+            { written: 'not-' + (form.written || form.op) });
         return { kind: 'not', inner: form };
     }
+    // A claim of necessity or possibility (r27.101): "it is metaphysically
+    // necessary that P", "□P". `mod` is the kind of necessity -- metaphysical,
+    // the only one yet, its own group in the Logic panel.
+    function claimModal(op, inner, mod) { return { kind: 'modal', op, mod: mod || 'meta', inner }; }
+    // Its words: "metaphysically necessary", "metaphysically possible".
+    const claimModalWord = f => 'metaphysically ' + (f.op === 'nec' ? 'necessary' : 'possible');
     // The dual of a quantified claim: "some F is not G" of "all F are G".
     function claimDual(form) {
         if (form.kind === 'all') return claimBoundAs(form, { kind: 'some', subject: form.subject, predicate: negateClaimProp(form.predicate) });
@@ -13817,18 +13942,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         CLAIM_SPEAKER_WORDS.has(w) ? 'speaker' : null;
     // A qualifying word inside the claim: in its subject ("Poe probably is
     // black"), or just after its auxiliary ("Poe is probably black") -- not in
-    // a relative clause or past a connective.
+    // a relative clause or past a connective. "Really" and "truly" just
+    // before the verb stress the claim, as "indeed" does: "God really
+    // exists", "Socrates truly is wise", "Computers can really think"
+    // (r27.106) -- not after "is" ("is really tall" may be "is very tall"),
+    // nor after "not" ("not really" may hedge).
     function claimQualifierAt(tokens) {
         const words = tokens.map(claimWord);
         const k = claimClauseVerbIndex(tokens), end = k > 0 ? k : tokens.length;
+        const stress = w => w === 'really' || w === 'truly';
         for (let i = 1; i < end; i++) {
             if (CLAIM_RELATIVES.has(words[i]) || /^(?:and|or|nor|if|then|unless|because|since|but)$/.test(words[i])) break;
             if (claimQualifierKind(words[i])) return { i, word: words[i] };
+            if (stress(words[i]) && (k > 0 ? i === end - 1 : i < tokens.length - 1 && claimSynWord(words[i + 1]).knownVerb)) return { i, word: words[i], kind: 'empty' };
         }
         if (k > 0 && CLAIM_VERB_MARKERS.has(words[k])) {
             let i = k + 1;
             if (words[i] === 'not') i++;
             if (i < tokens.length - 1 && claimQualifierKind(words[i])) return { i, word: words[i] };
+            if (i === k + 1 && i < tokens.length - 1 && stress(words[i]) && /^(?:do|does|did|can|could|will|would|shall|should|may|might|must)$/.test(words[k]) &&
+                claimSynWord(words[i + 1]).knownVerb) return { i, word: words[i], kind: 'empty' };
         }
         return null;
     }
@@ -13907,6 +14040,44 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // CLAIM_SPEAKER_WORDS): as not established, flagged, or as one claim --
     // or, for a verb that takes a claim, as said of who thinks it. Null for a
     // sentence with no such word.
+    // Metaphysical necessity and possibility, said so (r27.101). What follows
+    // the "that" runs to the end of the sentence, as it does after "it is
+    // necessary that" -- unless a comma before "and", "or" or "but" ends it
+    // there, and the junction is read first. The claim keeps the sentence's
+    // words, for what tells "not possibly" from "necessarily not".
+    function readModalClaim(s) {
+        let m, op, negative = false, rest;
+        if ((m = /^it is (not )?metaphysically (necessary|possible|impossible) that (.+)$/.exec(s))) {
+            rest = m[3]; op = m[2] === 'necessary' ? 'nec' : 'poss'; negative = !!m[1] !== (m[2] === 'impossible');
+        } else if ((m = /^in (?:every|each|all|any) metaphysically possible worlds?,? (.+)$/.exec(s))) { rest = m[1]; op = 'nec'; }
+        else if ((m = /^(?:in (?:some|a|at least one) metaphysically possible world|there (?:is|exists) (?:a|some|at least one) metaphysically possible world (?:in which|where|such that)),? (.+)$/.exec(s))) { rest = m[1]; op = 'poss'; }
+        else return null;
+        if (/,\s+(?:and|or|but)\s/.test(claimTopLevelMask(rest))) return null;
+        const inner = readClaim(rest);
+        if (!inner) return null;
+        const form = claimModal(op, inner);
+        return Object.assign(negative ? negateClaim(form) : form, { src: s });
+    }
+    // "Necessarily, P", "it is necessary that P", "it is impossible that P",
+    // "in every possible world, P": which kind of necessity is meant? Asked
+    // where the map has one switched on (r27.101; the user, 2026-10-13: no one
+    // broad necessity), the reading written into the box. Unanswered, the box
+    // is read as before.
+    function readUnqualifiedModal(s) {
+        let m, word, label;
+        if ((m = /^it is (not )?(necessary|impossible) that (.+)$/.exec(s))) { word = (m[1] || '') + m[2]; label = 'it is ' + (m[1] || '') + 'metaphysically ' + m[2] + ' that ' + m[3]; }
+        else if ((m = /^(not )?necessarily,? (.+)$/.exec(s))) { word = (m[1] || '') + 'necessarily'; label = 'it is ' + (m[1] || '') + 'metaphysically necessary that ' + m[2]; }
+        else if ((m = /^in (every|each|all|any) possible worlds?,? (.+)$/.exec(s))) { word = 'in ' + m[1] + ' possible world'; label = 'in every metaphysically possible world, ' + m[2]; }
+        else if ((m = /^(?:in (?:some|a|at least one) possible world|there (?:is|exists) (?:a|some|at least one) possible world (?:in which|where|such that)),? (.+)$/.exec(s))) {
+            word = 'possible world'; label = 'in some metaphysically possible world, ' + m[1];
+        }
+        else return null;
+        const why = '"' + word + '" does not say which kind of necessity is meant: metaphysical, logical, physical, or what is known';
+        const chosen = claimAmbiguous(why, [{ label, build: () => readClaim(label) }], false);
+        if (chosen) return chosen;
+        claimUnread(why + ': the sentence is read as one claim');
+        return Object.assign(claimAtom(s), { src: s });
+    }
     function readQualifiedClaim(s) {
         let m;
         // "Perhaps P", "for all we know, P": read as not established, below.
@@ -13943,10 +14114,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return inner ? claimUnestablished(inner, false, claimHedgeWord(words)) : null;
         };
         const possible = (text, words) => claimLooksLikeClause(text) ? (claimAmbiguous('"' + words + '" can say that it has not been ruled out, or that it could be so', [
-                { label: 'for all we know, ' + text, build: () => likely(text, words) }], false) ||
+                { label: 'for all we know, ' + text, build: () => likely(text, words) }].concat(claimModalOn() && /^(?:possibly|it is (?:quite |entirely |perfectly )?possible(?: that)?)$/.test(words)
+                ? [{ label: 'it is metaphysically possible that ' + text, build: () => readClaim('it is metaphysically possible that ' + text) }] : []), false) ||
             opaque('"' + words + '" can say that it has not been ruled out, or that it could be so: the sentence is read as one claim', claimHedgeWord(words), text)) : null;
         // What reads as "not established" is that ("according to what we know, ...").
         const settled = () => readNotEstablished(s);
+        // Necessity said without its kind (r27.101): which is meant, asked
+        // where the map has one switched on.
+        const asked = claimModalOn() ? readUnqualifiedModal(s) : null;
+        if (asked) return asked;
         // 0. "It is necessary that X", "it is possible that X": "necessarily, X"
         //    and "possibly, X", the that-clause running to the end of the sentence.
         if ((m = s.match(/^it is (necessary|possible) that (.+)$/)))
@@ -14070,7 +14246,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const q = !claimQuietly(() => splitClaimOn(s, 'and|or')) && claimQualifierAt(tokens);
         if (q) {
             const text = tokens.filter((_, j) => j !== q.i).join(' ');
-            const kind = claimQualifierKind(q.word);
+            const kind = q.kind || claimQualifierKind(q.word);
             if (kind === 'empty') return readClaim(text);
             if (kind === 'likely') { if ((f = likely(text, q.word))) return f; }
             else if (kind === 'possibly') { if ((f = possible(text, q.word))) return f; }
@@ -14575,8 +14751,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 claimUnread('"would" makes this a what-if claim: only modus ponens and modus tollens apply to it');
             }
         }
-        // "Poe can fly": which "can" (claimPlainCan).
-        if (!would && form && form.kind === 'pred' && !form.possible && /^~can /.test(form.prop)) form = claimPlainCan(String(text || '').trim(), form) || form;
+        // "Poe can fly": which "can" (claimPlainCan) -- once: a claim read
+        // again without a word that qualifies it ("Computers also can think")
+        // had asked it twice, once of "Computers also" (r27.106).
+        if (!would && form && form.kind === 'pred' && !form.possible && /^~can /.test(form.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.canPlain))) form = claimPlainCan(String(text || '').trim(), form) || form;
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
         return form;
@@ -14786,7 +14965,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const restoreLetter = text => text.replace(/^(\(*\s*)([a-z])\b/, (_, open, letter) => open + letter.toUpperCase());
             const delimited = /^(?:"[^"]+"|'[^']+'|“[^”]+”)$/.test(subject) ||
                 /^the proposition that\s+/.test(subject) || /^[A-Za-z][0-9]*$/.test(shown) ||
-                (shown.startsWith('(') && shown.endsWith(')') && !!claimQuietly(() => readSymbolicClaim(restoreLetter(shown))));
+                (shown.startsWith('(') && shown.endsWith(')') && !!claimQuietly(() => readSymbolicClaim(restoreLetter(shown)))) ||
+                // A premise link, read as its box's words in brackets: "S1 is
+                // false" (r27.105).
+                (claimBracketed(shown) && !!claimQuietly(() => readClaim(shown.slice(1, -1).trim())));
             if (delimited) {
                 const operand = subject.replace(/^the proposition that\s+/, '');
                 const negative = /^(?:false|untrue)$/.test(suffix[3]) !== !!suffix[2];
@@ -14957,6 +15139,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const embeddedSymbolic = readEmbeddedSymbolicClaim(s);
         if (embeddedSymbolic) return embeddedSymbolic;
         let m, f;
+        // "It is metaphysically necessary that P" (r27.101).
+        if ((f = readModalClaim(s))) return f;
         if ((f = readVariableQuantifier(s))) return f;
         // "Hesperus is one and the same as Phosphorus": an identity, whose "and"
         // joins nothing (r27.96).
@@ -16389,7 +16573,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // An open word: a noun, a verb, an adjective -- what the lists and its
         // ending allow.
         const past = claimPastStem(w) !== null, participle = CLAIM_PARTICIPLE_SET.has(w) || /[a-z]{2}ed$/.test(w);
-        const adj = claimKnownAdjective(t) || /(?:ous|ful|less|ive|able|ible|ical|ish|ary|ent|ant)$/.test(w) && w.length > 5;
+        // A hyphenated adjective -- "pre-linguistic", "post-modern": its last
+        // part one, or a prefix on a word that ends as one (r27.102).
+        const hyphened = /^[a-z]+-[a-z]+$/.test(w) && (claimKnownAdjective(w.split('-').pop()) ||
+            /^(?:pre|post|non|anti|pro|semi|quasi|neo|proto|self|sub|super|inter|intra|extra|ultra|multi|counter)-[a-z]{3,}(?:ic|al|ous|ful|less|ive|able|ible|ary|ory|ent|ant)$/.test(w));
+        const adj = claimKnownAdjective(t) || hyphened || /(?:ous|ful|less|ive|able|ible|ical|ish|ary|ent|ant)$/.test(w) && w.length > 5;
         const pluralNoun = CLAIM_IRREGULAR_PLURALS.has(w) || claimKnownPlural(w);
         const sEnding = claimEndsInS(t) && !CLAIM_S_NOUNS.has(w) && !CLAIM_SINGULAR_IN_S.has(w);
         const knownNoun = CLAIM_HE_OR_SHE_NOUNS.has(w) || CLAIM_HE_OR_SHE_ANIMALS.has(w) || CLAIM_THING_NOUNS.has(w) || CLAIM_CONTENT_NOUNS.has(w) ||
@@ -16421,6 +16609,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const key = tokens.join(' ');
         if (claimSynCache.has(key)) return claimSynCache.get(key);
         const out = tokens.map(claimSynWord);
+        // "Free will exists", "might makes right", "the can is empty": a
+        // helping verb is followed by a verb's plain form ("will exist"),
+        // never a finite one ("will exists", "will is"); before one, the word
+        // is a noun (r27.102).
+        out.forEach((x, i) => {
+            if (!x.aux || !/^(?:will|can|may|might|must)$/.test(x.w)) return;
+            let k = i + 1;
+            while (out[k] && out[k].adv && !out[k].noun) k++;
+            const z = out[k];
+            if (z && (/^(?:is|are|was|were|am|has|does)$/.test(z.w) || (z.s && z.knownVerb && !z.aux)))
+                out[i] = { t: x.t, w: x.w, noun: true };
+        });
         if (claimSynCache.size > 20000) claimSynCache.clear();
         claimSynCache.set(key, out);
         return out;
@@ -16827,6 +17027,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const y = next && ws[v];
         if (next && y && ws[best.end].s && ws[best.end].noun && (y.aux || (y.past && !CLAIM_PAST_UNCHANGED.has(y.w)) || CLAIM_SYN_BARE_VERBS.has(y.w)) &&
             claimSynVerbTail(ws, next.end)) best = next;
+        // "Conscious humans lack minds", "the conscious humans ...", "interesting
+        // results follow": an adjective is no subject of its own, so an -s word
+        // after adjectives alone (a "the" or "all" before them) -- one no list
+        // knows as a verb -- is the plural noun they go with, where a verb
+        // follows it (r27.102; "humans" had been the verb).
+        else if (next && best.verb === 'weak' && best.end > 0 && ws[best.end].s && ws[best.end].noun && !ws[best.end].knownVerb &&
+            ws.slice(0, best.end).every((x, i) => !x.name && !x.closed && (x.adj || x.ing || x.participle) || i === 0 && best.end > 1 && (x.det || x.quant || x.poss))) best = next;
         return best.end;
     }
     // "The dog bites hurt" (the user, 2026-09-29): an -s word that may be a
@@ -17477,11 +17684,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         ['&&', 'and'], ['/\\', 'and'], ['∧', 'and'], ['&', 'and'], ['^', 'and'], ['·', 'and'], ['•', 'and'],
         ['||', 'or'], ['\\/', 'or'], ['∨', 'or'], ['|', 'or'],
         ['¬', 'not'], ['~', 'not'], ['∼', 'not'], ['!', 'not'], ['−', 'not'], ['-', 'not'], ['⊥', 'bottom'],
+        ['□', 'nec'], ['◻', 'nec'], ['◇', 'poss'], ['◊', 'poss'], ['⋄', 'poss'], ['♢', 'poss'],
         ['∀', 'all'], ['∃', 'some'],
         ['(', '('], [')', ')'], ['[', '('], [']', ')'], ['{', '('], ['}', ')'], [',', ','], ['.', '.'], [':', '.']
     ].sort((a, b) => b[0].length - a[0].length);
     const SYMBOL_LATEX = Object.assign(Object.create(null), { bot: '⊥', forall: '∀', exists: '∃', neg: '¬', lnot: '¬', land: '∧', wedge: '∧', lor: '∨', vee: '∨',
-        to: '→', rightarrow: '→', Rightarrow: '→', supset: '→', implies: '→', leftrightarrow: '↔', Leftrightarrow: '↔', iff: '↔', equiv: '↔' });
+        to: '→', rightarrow: '→', Rightarrow: '→', supset: '→', implies: '→', leftrightarrow: '↔', Leftrightarrow: '↔', iff: '↔', equiv: '↔',
+        Box: '□', Diamond: '◇', lozenge: '◊' });
     function readEmbeddedSymbolicClaim(text) {
         // Bare names such as Poe are nouns in English, not compact P(o,e).
         // A symbolic operator or explicit grouping must signal a formula.
@@ -17496,7 +17705,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             .replace(/\\[,;:!](?![/\\])/g, ' ')
             .trim();
         if (!src) return null;
-        const marked = /[⊥∀∃¬∧∨→↔⊃≡⇒⇔⟶⟷∼·•~&|!^]|->|=>|\/\\|\\\/|[A-Z][A-Za-z0-9]*\s*\(|(?:^|\s)[-−]\s?[A-Z(]|\b[A-Z][a-z]{0,3}\s+v\s+[A-Z(~¬∼-]|^\(?[A-Z]\)?$|^\(\s*[a-z]\s*\)\s*[A-Z([]/.test(src) ||
+        const marked = /[⊥∀∃¬∧∨→↔⊃≡⇒⇔⟶⟷∼·•~&|!^□◻◇◊⋄♢]|->|=>|\/\\|\\\/|[A-Z][A-Za-z0-9]*\s*\(|(?:^|\s)[-−]\s?[A-Z(]|\b[A-Z][a-z]{0,3}\s+v\s+[A-Z(~¬∼-]|^\(?[A-Z]\)?$|^\(\s*[a-z]\s*\)\s*[A-Z([]/.test(src) ||
             (/^[A-Z][a-w]{1,2}$/.test(src) && !/^(?:It|Is|As|At|Be|By|Do|Go|He|If|In|Me|My|No|Of|Oh|On|Or|So|To|Up|Us|We|Am|An|Ah|Ok|Hi|Yes|Now|Not|And|But|The|For|Why|Who|How|Yet|Too)$/.test(src));
         if (!marked && !/^[a-z][0-9']*\s*=\s*[a-z][0-9']*$/.test(src)) return null;
         // English words mean English: three lower-case letters in a row, outside
@@ -17527,7 +17736,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return claimAmbiguous('with no brackets, either "' + arrow + '" may be the main one', labels.map(label => ({ label, build: () => claimQuietly(() => readSymbolicClaim(label)) })),
                 true, { shared: true }) || claimAtom(src);
         }
-        return Object.assign(symbolicToClaim(tree), {folTree:tree});
+        return Object.assign(symbolicToClaim(tree), {folTree:claimFolSafe(tree)});
     }
     // Controlled English with explicitly named variables keeps quantifier order
     // visible. Ordinary English is still read by the existing parser; metadata
@@ -17668,6 +17877,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!tk) return null;
             if (tk.t === 'bottom') { pos++; return {op:'bottom'}; }
             if (tk.t === 'not') { pos++; const a = unary(); return a ? { op: 'not', a } : null; }
+            if (tk.t === 'nec' || tk.t === 'poss') { pos++; const a = unary(); return a ? { op: tk.t, a } : null; }
             if ((tk.t === 'all' || tk.t === 'some') && isVar(peek(1))) { pos += 2; return quantified(tk.t, tokens[pos - 1].v); }
             if (tk.t === '(') {
                 if (isVar(peek(1)) && peek(2) && peek(2).t === ')' && peek(3) && peek(3).t !== 'imp') { pos += 3; return quantified('all', tokens[pos - 2].v); }   // (x)
@@ -17707,8 +17917,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "∀x (P(x) → Q(x))", "∃x (P(x) ∧ ¬Q(x))" -- become the forms of "all",
     // "no" and "some"; any other formula matches itself (up to the names of its
     // bound variables) and is otherwise not looked into.
+    // A formula's tree for the first-order rules, with each modal part --
+    // "□P", "◇(P ∧ Q)" -- one letter, named by its claim (r27.101).
+    function claimFolSafe(node) {
+        const modal = n => !!n && typeof n === 'object' && (n.op === 'nec' || n.op === 'poss' || ['a', 'b', 'body'].some(k => modal(n[k])));
+        if (!modal(node)) return node;
+        if (node.op === 'nec' || node.op === 'poss') return { op: 'letter', name: 'M:' + claimKey(symbolicToClaimForm(node)) };
+        const out = Object.assign({}, node);
+        ['a', 'b', 'body'].forEach(k => { if (node[k]) out[k] = claimFolSafe(node[k]); });
+        return out;
+    }
     function symbolicToClaim(node) {
-        return Object.assign(symbolicToClaimForm(node), {folTree:node});
+        return Object.assign(symbolicToClaimForm(node), {folTree:claimFolSafe(node)});
     }
     function symbolicToClaimForm(node) {
         const sub = symbolicToClaim;
@@ -17724,6 +17944,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // A denial as written: "¬∀x F(x)" is not "∃x ¬F(x)" -- quantifier
             // negation makes the one the other.
             case 'not': return { kind: 'not', inner: sub(node.a) };
+            // "□P", "◇(P → Q)": necessity and possibility (r27.101).
+            case 'nec': case 'poss': return claimModal(node.op, sub(node.a));
             // A chain ("P ∧ Q ∧ R") is one list; a bracketed part of the same
             // kind ("(P ∧ Q) ∧ R", "P ∧ (Q ∧ R)") is a group within it.
             case 'and': case 'or': return makeClaimJunction(node.op, [node.a.op === node.op && node.a.paren ? claimGroupedIn(node.op, sub(node.a)) : sub(node.a),
@@ -17756,6 +17978,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'letter': return node.name.toLowerCase();
             case 'pred': return node.name.toLowerCase() + '(' + node.args.map(a => env[a] || a.toLowerCase()).join(',') + ')';
             case 'not': return '¬' + t(node.a);
+            case 'nec': return '□' + t(node.a);
+            case 'poss': return '◇' + t(node.a);
             // In order: a chain as one list, a bracketed part as a group.
             case 'and': case 'or': {
                 const parts = [];
@@ -17912,6 +18136,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (f.noIndividual || f.subjectNumber || f.counterfactual || typeof f.term !== 'string' || !f.term || CLAIM_NO_INDIVIDUAL.test(f.term) || /^(?:a|an|some|any|every|each|all|no)\s/.test(f.term)) return null;
                 return claimPropFol(f.prop, f.term);
             case 'not': { const a = claimToFol(f.inner); return a && { op: 'not', a }; }
+            case 'modal': return { op: 'letter', name: 'M:' + claimKey(f) };
             case 'and': case 'or': {
                 if (f.iff) {
                     const sides = claimBiconditionalSides(f);
@@ -18245,6 +18470,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
             case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
             case 'not': return 'N(' + key(form.inner) + ')';
+            case 'modal': return (form.op === 'nec' ? '□' : '◇') + form.mod + '(' + key(form.inner) + ')';
             case 'unestablished': return (form.whether ? 'W?(' : 'W(') + (form.inner ? key(form.inner) : '*') + (form.from ? '|' + form.from.map(key).sort().join('&') : '') + ')';
             case 'unsound': case 'invalid':
                 return (form.kind === 'unsound' ? 'US(' : 'IV(') + (form.inner ? key(form.inner) : '*') + '|' + form.from.map(key).sort().join('&') + ')';
@@ -18309,6 +18535,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // A denial quoted as denied: "can't produce", not "can produce".
             case 'not': if (claimWordingClose(a.inner, b.inner)) { claimNearMisses.push({ a, b, worded: true }); return true; }
                 return claimWordingDeep(a.inner, b.inner);
+            case 'modal': return a.op === b.op && a.mod === b.mod && claimWordingDeep(a.inner, b.inner);
             case 'and': case 'or': return !!a.iff === !!b.iff && a.parts.length === b.parts.length && a.parts.every((p, i) => claimWordingDeep(p, b.parts[i]));
             case 'then': return a.parts.length === b.parts.length && a.parts.every((p, i) => claimWordingDeep(p, b.parts[i]));
             case 'if': return !!a.counterfactual === !!b.counterfactual && claimWordingDeep(a.cons, b.cons) && a.conds.length === b.conds.length &&
@@ -18394,6 +18621,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // The negation is a connective, not part of the operand's wording:
         // "P is false" and "it is not the case that P" deny the same P.
         if (a.kind === 'not' && b.kind === 'not') return claimSameWords(a.inner, b.inner);
+        // "It is metaphysically necessary that P", "in every metaphysically
+        // possible world, P", "□P": the claim inside in the same words.
+        if (a.kind === 'modal' && b.kind === 'modal') return a.op === b.op && a.mod === b.mod && claimSame(a.inner, b.inner);
         // A quantifier's words are logic, as a connective's are: "all ravens
         // are black" and "every raven is black" are one claim. Its terms are
         // compared by the key, which keeps their spelling and capitals.
@@ -19066,6 +19296,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return { at: [0], says: 'what holds of some need not hold of all', tag: 'some to all' };
         return null;
     }
+    // Whether a form holds a modal claim anywhere.
+    const claimHasModal = f => !!f && typeof f === 'object' && (f.kind === 'modal' || [f.inner, f.cons].concat(f.parts || [], f.conds || []).some(claimHasModal));
+    // A modal step the map's system does not take, and what would take it:
+    // its rule with every axiom on, and the axiom it needs -- or null.
+    function claimModalWould(forms, attack, weak) {
+        const saved = claimModalOverride;
+        claimModalOverride = { axioms: new Set(CLAIM_MODAL_AXIOMS) };
+        let rule = null;
+        try { rule = certifyStep(forms.slice(0, -1), claimStepConclusions(forms[forms.length - 1], attack, weak), attack); }
+        finally { claimModalOverride = saved; }
+        if (!rule || !Object.prototype.hasOwnProperty.call(CLAIM_MODAL_RULE_AXIOM, rule.id)) return null;
+        return { rule, axiom: CLAIM_MODAL_RULE_AXIOM[rule.id] };
+    }
     // Two rules in one step, each a step of its own: the claim between them,
     // in the premises' words and read back, and both steps checked -- or null.
     // "Poe is a raven" and "Poe is black" give "Poe is a raven and Poe is
@@ -19514,6 +19757,157 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const what = claimUnmarked(a.what).trim(), last = claimTokens(what).pop() || '';
         return what + (claimPluralWord(last) && !/^(?:a|an|the)\s/.test(what) ? ' are ' : ' is ') + word;
     }
+    // Words of opposite meaning (r27.103; the user, 2026-10-14, agreeing to
+    // a short curated list, each pair contradictory or contrary). Of a
+    // contradictory pair, one or the other is true of whatever both can be
+    // said of ("lack" and "have"): each gives the other's denial, and each's
+    // denial gives the other. Of a contrary pair, both cannot be true but both
+    // can be false ("unhappy" and "happy": one can be neither): each gives the
+    // other's denial, and nothing more. An adjective's or a noun's is said with
+    // "is", "was", "will be"; a verb's in any tense ("lacks", "lacked", "will
+    // lack"). Not here: what "im-", "in-" and "non-" deny, read as denials
+    // already (CLAIM_EXACT_DENIALS); words of more than one meaning ("light",
+    // "hard", "short"); and pairs whose opposition is a thesis, not a meaning
+    // ("free" and "determined", "mental" and "physical"), for a map to state
+    // as a premise.
+    const CLAIM_OPPOSITES = [
+        ['contradictory', 'verb', 'lack/have lack/possess'],
+        ['contradictory', 'word', 'absent/present guilty/innocent married/unmarried distinct_from/identical_to distinct_from/identical_with different_from/same_as'],
+        ['contrary', 'word', 'unhappy/happy immoral/moral unjust/just unfair/fair dishonest/honest irrational/rational illogical/logical unreasonable/reasonable ' +
+            'unwise/wise unethical/ethical unkind/kind unpleasant/pleasant unhealthy/healthy unwilling/willing unfriendly/friendly unimportant/important ' +
+            'disloyal/loyal impolite/polite unpopular/popular sad/happy bad/good evil/good wrong/right cold/hot cold/warm poor/rich small/large small/big ' +
+            'young/old new/old weak/strong dry/wet empty/full difficult/easy dangerous/safe ugly/beautiful foolish/wise dirty/clean low/high late/early ' +
+            'slow/fast expensive/cheap closed/open asleep/awake dead/alive dead/living odd/even contingent/necessary enemy_of/friend_of'],
+        ['contrary', 'verb', 'reject/accept disagree/agree disbelieve/believe lose/win fail/pass fail/succeed forget/remember disobey/obey forbid/allow ' +
+            'forbid/permit prohibit/allow prohibit/permit decrease/increase fall/rise exclude/include']
+    ].flatMap(([kind, pos, list]) => list.split(' ').map(p => {
+        const [a, b] = p.split('/').map(w => w.replace(/_/g, ' '));
+        return { a, b, both: kind === 'contradictory', verb: pos === 'verb' };
+    }));
+    // Where a predicate opens with a listed word: for each, { pair, side,
+    // copula, lead, past, rest } -- "~will be dead" is "will be", "dead",
+    // and nothing after it; "~did lacked minds" is the past of "lack", and
+    // "minds".
+    function claimOppositeSlots(prop) {
+        const m = /^([=~])(.*)$/.exec(String(prop || ''));
+        if (!m) return [];
+        const words = m[2].split(' '), lead = [];
+        let copula = m[1] === '=', did = false;
+        if (!copula) {
+            if (/^(?:will|would|can|could|may|might|shall|should|must)$/.test(words[0])) lead.push(words.shift());
+            if (/^(?:was|were)$/.test(words[0]) && !lead.length || words[0] === 'be' && lead.length) { lead.push(words.shift()); copula = true; }
+            else if (words[0] === 'did') { did = true; words.shift(); }
+        }
+        const out = [];
+        CLAIM_OPPOSITES.forEach((e, pair) => {
+            if (e.verb === copula) return;
+            [e.a, e.b].forEach((w, side) => {
+                const forms = copula ? [[w, false]] : did ? [[claimPastForm(w), true]] : [[w, false], [claimPastForm(w), true]];
+                forms.forEach(([form, past]) => {
+                    const n = form.split(' ').length;
+                    if (words.slice(0, n).join(' ') === form) out.push({ pair, side, copula, lead: lead.join(' '), past, rest: words.slice(n).join(' ') });
+                });
+            });
+        });
+        return out;
+    }
+    // What a claim says of what, for opposites: { of, props, denied } for a
+    // predication, its denial, "all" or "some" of a kind, and an identity
+    // ("Kim is the same as Lee": "same as Lee", "identical to Lee") -- or null.
+    function claimOppositeSaid(f) {
+        if (!f) return null;
+        const inner = f.kind === 'not' ? f.inner : f, denied = f.kind === 'not';
+        if (!inner) return null;
+        if (inner.kind === 'pred') return { of: claimKey(Object.assign({}, inner, { prop: '=' })), props: [inner.prop], denied };
+        if (inner.kind === 'identity') {
+            // Named as written first: "identical with", "the same as".
+            const src = String(f.src || inner.src || ''), ways = ['identical to', 'identical with', 'same as'];
+            return { of: claimKey({ kind: 'pred', term: inner.left, prop: '=' }), denied,
+                props: ways.filter(w => src.indexOf(w) >= 0).concat(ways.filter(w => src.indexOf(w) < 0)).map(w => '=' + w + ' ' + inner.right) };
+        }
+        if (!denied && (f.kind === 'all' || f.kind === 'some') && typeof f.predicate === 'string' && f.subject !== CLAIM_ANY)
+            return { of: claimKey(Object.assign({}, f, { predicate: '=' })), props: [f.predicate.replace(/^¬/, '')], denied: /^¬/.test(f.predicate) };
+        return null;
+    }
+    // One step of opposites (r27.103): "Mary is unhappy" gives "Mary is not
+    // happy"; "Pre-linguistic humans do not lack minds" gives "Pre-linguistic
+    // humans have minds" (contradictories alone); likewise of all or some of
+    // a kind ("all zombies are dead": "no zombie is alive"). { from, to, both }
+    // -- the words, and whether they are contradictories -- or null. With
+    // `reversed`, also the step that takes contraries for contradictories
+    // ("Mary is not happy", so "Mary is unhappy"), marked so.
+    function claimOppositeStep(p, c, reversed) {
+        const a = claimOppositeSaid(p), b = claimOppositeSaid(c);
+        if (!a || !b || a.of !== b.of || a.denied === b.denied) return null;
+        const rest = r => claimUnmarked(r).toLowerCase();
+        for (const pa of a.props) for (const pb of b.props) for (const x of claimOppositeSlots(pa)) for (const y of claimOppositeSlots(pb)) {
+            if (x.pair !== y.pair || x.side === y.side || x.copula !== y.copula || x.lead !== y.lead || x.past !== y.past || rest(x.rest) !== rest(y.rest)) continue;
+            const e = CLAIM_OPPOSITES[x.pair], step = { from: x.side ? e.b : e.a, to: y.side ? e.b : e.a, both: e.both };
+            if (!a.denied) return step;
+            if (e.both) return step;
+            if (reversed) return Object.assign(step, { reversed: true });
+        }
+        return null;
+    }
+    // A step of opposites as its rule: named by its pair, as the words come.
+    const CLAIM_OPPOSITE_RULES = new Map();
+    function claimOppositeRule(step) {
+        const name = (step.both ? 'contradictories' : 'contraries') + ' \u2018' + step.from + '\u2019 and \u2018' + step.to + '\u2019';
+        if (!CLAIM_OPPOSITE_RULES.has(name)) CLAIM_OPPOSITE_RULES.set(name, Object.assign({}, DEDUCTIVE_OPTIONAL_RULES.find(r => r.id === 'opposites'), { name }));
+        return CLAIM_OPPOSITE_RULES.get(name);
+    }
+    // What a predication gives by opposites, in its own words, for the step
+    // between two rules: "Pre-linguistic humans have minds" gives
+    // "Pre-linguistic humans do not lack minds" -- and, where that does not
+    // read so ("Mary does not lack a mind"), "it is not the case that Mary
+    // lacks a mind" (r27.103).
+    function claimOppositeGivens(f) {
+        const a = claimOppositeSaid(f);
+        const base = f && (f.kind === 'pred' ? f : f.kind === 'not' && f.inner && f.inner.kind === 'pred' ? f.inner : null);
+        const subject = f && (f.subjectText || (base && base.subjectText)), vp = f && (f.vpText || (base && base.vpText));
+        if (!a || !base || !subject || !vp) return [];
+        const out = [];
+        claimOppositeSlots(a.props[0]).forEach(x => {
+            const e = CLAIM_OPPOSITES[x.pair], from = x.side ? e.b : e.a, to = x.side ? e.a : e.b;
+            if (a.denied && !e.both) return;
+            const said = claimOppositeVp(vp, x.copula, from, to, a.denied, false);
+            if (said) out.push(subject + ' ' + said);
+            const swapped = !a.denied && claimOppositeVp(vp, x.copula, from, to, false, true);
+            if (swapped) out.push('it is not the case that ' + subject + ' ' + swapped);
+        });
+        return out;
+    }
+    // A verb phrase with one word of a pair put for the other: denied ("have
+    // minds": "do not lack minds"), or, where it was denied (`denied`),
+    // affirmed ("did not have minds": "lacked minds"; "is not absent": "is
+    // present"); with `same`, neither ("has a mind": "lacks a mind"). Null
+    // where its shape is not one of these.
+    function claimOppositeVp(vp, copula, from, to, denied, same) {
+        const W = [];
+        String(vp).trim().split(/\s+/).forEach(t => {
+            const w = claimWord(t), m = /^(is|are|was|were|does|do|did|could|would|should|must|might)n't$/.exec(w);
+            if (m) W.push(m[1], 'not');
+            else if (w === "won't") W.push('will', 'not');
+            else if (w === "can't" || w === 'cannot') W.push('can', 'not');
+            else W.push(w);
+        });
+        const n = from.split(' ').length, opens = i => W.slice(i, i + n).join(' ') === from;
+        const say = (...parts) => [].concat(...parts).filter(Boolean).join(' ');
+        const not = denied || same ? [] : 'not';
+        const modal = /^(?:will|would|can|could|may|might|shall|should|must)$/.test(W[0]);
+        const k = W[1] === 'not' ? 2 : 1;
+        if (copula) {
+            if (/^(?:is|are|am|was|were)$/.test(W[0]) && (k === 2) === denied && opens(k)) return say(W[0], not, to, W.slice(k + n));
+            if (modal && (k === 2) === denied && W[k] === 'be' && opens(k + 1)) return say(W[0], not, 'be', to, W.slice(k + 1 + n));
+            return null;
+        }
+        if (modal) return (k === 2) === denied && opens(k) ? say(W[0], not, to, W.slice(k + n)) : null;
+        if (/^(?:do|does|did)$/.test(W[0]) && W[1] === 'not')
+            return denied && opens(2) ? say(W[0] === 'do' ? to : W[0] === 'does' ? claimThirdPerson(to) : claimPastForm(to), W.slice(2 + n)) : null;
+        if (denied || n !== 1) return null;
+        const hit = [[from, 'do', to], [claimThirdPerson(from), 'does', claimThirdPerson(to)], [claimPastForm(from), 'did', claimPastForm(to)]].find(([form]) => form === W[0]);
+        return !hit ? null : same ? say(hit[2], W.slice(1)) : say(hit[1], 'not', to, W.slice(1));
+    }
     const DEDUCTIVE_OPTIONAL_RULES = [
         // A rule of word meaning, not of logic (the user, 2026-09-30, of "We can
         // conceive of X" and "X is conceivable": the one-way rule, its own step).
@@ -19527,6 +19921,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'what is, can be: "we conclude that X" gives "it is possible for us to conclude that X"',
           test: (P, C) => P.length === 1 && C.kind === 'pred' && !!C.possible && P[0].kind === 'pred' && !P[0].possible &&
               P[0].term === C.term && C.prop === '~can ' + String(P[0].prop).slice(1) },
+        // Contraries and contradictories, a list of pairs (r27.103): a rule of
+        // word meaning, its own step, named by its pair.
+        { id: 'opposites', name: 'contraries and contradictories', optional: true,
+          gloss: 'a list of 72 pairs: contraries such as "sad" and "happy", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
+          test: (P, C) => P.length === 1 && !!claimOppositeStep(P[0], C) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
           test: (P, C) => claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C) },
@@ -19743,6 +20142,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             'quantifier-distribution-anywhere', 'null-quantification-anywhere'] },
         { id: 'inside', label: 'Rules inside quantifiers', on: true, rules: ['under-quantifier'] },
         { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
+        { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },
@@ -19752,6 +20152,44 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // While a rule instance is checked, only the basis.
     let claimBasisOnly = false;
     function claimRuleSettings() { return typeof state !== 'undefined' && state && state.logic && state.logic.rules || null; }
+    // Modal logic (r27.101; the user, 2026-10-13): one kind of necessity at a
+    // time, each its own group, its system from the cube of K and the axioms
+    // D, T, 4, B and 5, chosen by switching the axioms on. Metaphysical
+    // necessity is the one kind yet: off until a map switches it on; then S5,
+    // T and 5 chosen, and D, 4 and B with them.
+    const CLAIM_MODAL_DEFAULTS = Object.assign(Object.create(null), { 'modal-meta': false, 'modal-meta-D': false, 'modal-meta-T': true, 'modal-meta-4': false, 'modal-meta-B': false, 'modal-meta-5': true });
+    const CLAIM_MODAL_AXIOMS = ['D', 'T', '4', 'B', '5'];
+    // Each modal rule, and the axiom it takes ('' for none: K's own).
+    const CLAIM_MODAL_RULE_AXIOM = Object.assign(Object.create(null), { 'modal-duality': '', 'modal-k': '', 'modal-d': 'D', 'modal-t': 'T', 'modal-4': '4', 'modal-b': 'B', 'modal-5': '5' });
+    // While the check asks what a stronger system would give: { axioms }.
+    let claimModalOverride = null;
+    function claimModalSwitch(id) {
+        if (claimModalOverride) return id === 'modal-meta' || claimModalOverride.axioms.has(id.slice('modal-meta-'.length));
+        const set = claimRuleSettings();
+        return set && Object.prototype.hasOwnProperty.call(set, id) ? !!set[id] : !!CLAIM_MODAL_DEFAULTS[id];
+    }
+    const claimModalOn = () => claimModalSwitch('modal-meta');
+    // The axioms a choice gives: those chosen and those they imply, as the
+    // cube's equalities say -- T gives D; 4 and B give 5; B and 5 give 4; T
+    // and 5 give B and 4; D, 4 and B give T.
+    function claimModalClosure(chosen) {
+        const has = new Set(chosen);
+        for (let size = -1; size !== has.size; ) {
+            size = has.size;
+            if (has.has('T')) has.add('D');
+            if (has.has('4') && has.has('B')) has.add('5');
+            if (has.has('B') && has.has('5')) has.add('4');
+            if (has.has('T') && has.has('5')) { has.add('B'); has.add('4'); }
+            if (has.has('D') && has.has('4') && has.has('B')) has.add('T');
+        }
+        return has;
+    }
+    function claimModalChosen() { return CLAIM_MODAL_AXIOMS.filter(a => claimModalSwitch('modal-meta-' + a)); }
+    function claimModalAxioms() { return claimModalOverride ? claimModalOverride.axioms : claimModalClosure(claimModalChosen()); }
+    // The system's name: the cube's fifteen.
+    const CLAIM_MODAL_SYSTEMS = Object.assign(Object.create(null), { '': 'K', 'D': 'D', 'DT': 'T', '4': 'K4', '4D': 'D4', '4DT': 'S4', '5': 'K5', '5D': 'D5', '45': 'K45', '45D': 'D45',
+        'B': 'KB', 'BD': 'DB', 'BDT': 'B', '45B': 'KB5', '45BDT': 'S5' });
+    const claimModalSystem = axioms => CLAIM_MODAL_SYSTEMS[[...axioms].sort().join('')] || 'K';
     function claimRuleOn(id) {
         if (DEDUCTIVE_BASIS.has(id)) return true;
         // A rule a check asked for by name counts as on, basis-only or not:
@@ -19762,6 +20200,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // What the map says about a rule, whatever else is switched off for a check.
     function claimRuleSwitched(id) {
+        // Modal logic: its switches, and its rules -- on with their kind of
+        // necessity, each with its axiom (r27.101).
+        if (Object.prototype.hasOwnProperty.call(CLAIM_MODAL_DEFAULTS, id)) return claimModalSwitch(id);
+        if (Object.prototype.hasOwnProperty.call(CLAIM_MODAL_RULE_AXIOM, id))
+            return claimModalOn() && (!CLAIM_MODAL_RULE_AXIOM[id] || claimModalAxioms().has(CLAIM_MODAL_RULE_AXIOM[id]));
         const set = claimRuleSettings();
         if (set && Object.prototype.hasOwnProperty.call(set, id)) return !!set[id];
         const group = DEDUCTIVE_EXTENSIONS.find(g => g.rules.includes(id));
@@ -19770,14 +20213,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Which rules are on, as a string: part of what a cached check depends on.
     function claimRulesSignature() {
         const set = claimRuleSettings() || {};
-        return (claimBasisOnly ? 'B' : '') + Object.keys(set).sort().map(k => k + (set[k] ? '+' : '-')).join(',') + '|' + [...claimOptionalInferences].sort().join(',');
+        return (claimBasisOnly ? 'B' : '') + Object.keys(set).sort().map(k => k + (set[k] ? '+' : '-')).join(',') + '|' + [...claimOptionalInferences].sort().join(',') +
+            (claimModalOverride ? '|M' + [...claimModalOverride.axioms].sort().join('') : '');
     }
     // The rules in force, in order, the rule under a quantifier last.
     let claimRulesCache = null;
     function claimRulesInForce() {
         const sig = claimRulesSignature();
         if (!claimRulesCache || claimRulesCache.sig !== sig) claimRulesCache = { sig, list: DEDUCTIVE_RULES.slice(0, -1)
-            .concat(DEDUCTIVE_OPTIONAL_RULES.filter(r => !r.instance), DEDUCTIVE_RULES.slice(-1)).filter(r => claimRuleOn(r.id)) };
+            .concat(DEDUCTIVE_MODAL_RULES, DEDUCTIVE_OPTIONAL_RULES.filter(r => !r.instance), DEDUCTIVE_RULES.slice(-1)).filter(r => claimRuleOn(r.id)) };
         return claimRulesCache.list;
     }
     // Switch one rule, or a group, on or off for this map.
@@ -19931,15 +20375,47 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // One claim in other logical words -- read alike, written otherwise: by
     // quantifier negation ("not all F are G" and "some F are not G") or by
     // double negation ("not impossible" and "possible").
+    // A claim of necessity ("nec") or possibility ("poss") of one kind.
+    const claimModalIs = (f, op, mod) => !!f && f.kind === 'modal' && f.op === op && (!mod || f.mod === mod);
+    // How a modal claim is written: its word -- "necessary" or "possible" --
+    // and whether it is denied ("not-poss" for "not possibly A", "it is
+    // impossible that A", "¬◇A"), whatever the reading made of it.
+    function claimModalWritten(f) {
+        if (f && f.kind === 'not' && f.inner && f.inner.kind === 'modal') return 'not-' + claimModalWritten(f.inner);
+        return f && f.kind === 'modal' ? f.written || f.op : '';
+    }
+    // A modal claim's claim, past its "not"s and its "necessarily"s.
+    const claimModalCore = f => f && (f.kind === 'not' || f.kind === 'modal') && f.inner ? claimModalCore(f.inner) : f;
+    // Two claims one modal duality apart: the denial moved through
+    // "necessarily" or "possibly" -- "¬◇A" and "□¬A", "not necessarily A" and
+    // "possibly not A" -- the claim inside in the same words.
+    function claimModalDual(p, c) {
+        const modal = f => !!f && (f.kind === 'modal' || (f.kind === 'not' && !!f.inner && f.inner.kind === 'modal'));
+        // The denial moved inside: its "not" taken off the claim there, or --
+        // as the schema has it, "¬◇¬A" to "□¬¬A" -- put on.
+        const moved = (f, strip) => f && f.kind === 'not' && f.inner && f.inner.kind === 'modal'
+            ? moved(claimModal(f.inner.op === 'nec' ? 'poss' : 'nec', strip && f.inner.inner.kind === 'not' ? f.inner.inner.inner : { kind: 'not', inner: f.inner.inner }, f.inner.mod), strip)
+            : f && f.kind === 'modal' ? Object.assign({}, f, { inner: moved(f.inner, strip) }) : f;
+        return modal(p) && modal(c) && claimModalWritten(p) !== claimModalWritten(c) &&
+            [true, false].some(strip => { const key = f => claimKey(strip ? claimWithoutNegationPairs(moved(f, true)) : moved(f, false)); return key(p) === key(c); }) &&
+            claimSame(claimModalCore(p), claimModalCore(c));
+    }
     function claimRestated(P, C) {
         if (P.length !== 1 || (P[0].src === undefined) !== (C.src === undefined) || P[0].kind === 'unestablished' ||
             claimKey(P[0]) !== claimKey(C) || claimClauseStart(P[0].src || '') === claimClauseStart(C.src || '') ||
-            (claimSame(P[0], C) && C.kind !== 'all' && C.kind !== 'some')) return null;
+            (claimSame(P[0], C) && C.kind !== 'all' && C.kind !== 'some' && C.kind !== 'modal')) return null;
         const words = f => claimTokens(f.src || '').map(claimWord);
         const denials = f => words(f).filter(w => /^(?:not|no|none|nothing|nobody|neither|nor)$/.test(w)).length;
         const lexical = f => words(f).filter(w => CLAIM_EXACT_DENIALS[w] || /^non-?[a-z]{3,}$/.test(w)).length;
         const quantified = f => f.kind === 'all' || f.kind === 'some';
         if (quantified(C) && (denials(P[0]) || denials(C))) return 'quantifier-negation';
+        // A modal claim in two wordings: its word changed ("not possible",
+        // "necessary ... not") is modal duality; only a denial denied, double
+        // negation; the same word, one claim said twice.
+        if (C.kind === 'modal' && P[0].kind === 'modal') {
+            const wp = claimModalWritten(P[0]), wc = claimModalWritten(C), bare = w => w.replace(/^(?:not-not-)+/, '');
+            return wp === wc ? null : bare(wp) === bare(wc) ? 'double-negation' : 'modal-duality';
+        }
         if (!quantified(C) && Math.abs(denials(P[0]) + lexical(P[0]) - denials(C) - lexical(C)) === 2) return 'double-negation';
         return null;
     }
@@ -20591,6 +21067,41 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'a rule used inside "every" or "some": "every raven is black and old" gives "every raven is black"',
           test: (P, C) => !!claimLiftedStep(P, C) || !!claimObjectLiftedStep(P, C) }
     ];
+    // Metaphysical necessity (r27.101): a step by each axiom of the system
+    // the map has switched on -- no rule of Standard's.
+    const DEDUCTIVE_MODAL_RULES = [
+        { id: 'modal-duality', name: 'modal duality',
+          gloss: '"not possibly A" is "necessarily not A", and "not necessarily A" is "possibly not A"',
+          test: (P, C) => P.length === 1 && claimModalDual(P[0], C) },
+        { id: 'modal-k', name: 'axiom K',
+          gloss: '"necessarily, if A, then B" and "necessarily A" give "necessarily B"; with "possibly A", they give "possibly B"',
+          test: (P, C) => P.length === 2 && C.kind === 'modal' && [0, 1].some(i => {
+              const k = P[i], x = P[1 - i];
+              return claimModalIs(k, 'nec', C.mod) && claimModalIs(x, C.op, C.mod) &&
+                  claimConditionalViews(k.inner).some(v => v.conds.length === 1 && claimSame(v.conds[0], x.inner) && claimSame(v.cons, C.inner));
+          }) },
+        { id: 'modal-d', name: 'axiom D',
+          gloss: '"necessarily A" gives "possibly A"',
+          test: (P, C) => P.length === 1 && claimModalIs(P[0], 'nec') && claimModalIs(C, 'poss', P[0].mod) && claimSame(P[0].inner, C.inner) },
+        { id: 'modal-t', name: 'axiom T',
+          gloss: '"necessarily A" gives A, and A gives "possibly A"',
+          test: (P, C) => P.length === 1 && ((claimModalIs(P[0], 'nec') && claimSame(P[0].inner, C)) || (claimModalIs(C, 'poss') && claimSame(P[0], C.inner))) },
+        { id: 'modal-4', name: 'axiom 4',
+          gloss: '"necessarily A" gives "necessarily necessarily A", and "possibly possibly A" gives "possibly A"',
+          test: (P, C) => P.length === 1 && (
+              (claimModalIs(P[0], 'nec') && claimModalIs(C, 'nec', P[0].mod) && claimModalIs(C.inner, 'nec', P[0].mod) && claimSame(P[0].inner, C.inner.inner)) ||
+              (claimModalIs(P[0], 'poss') && claimModalIs(P[0].inner, 'poss', P[0].mod) && claimModalIs(C, 'poss', P[0].mod) && claimSame(P[0].inner.inner, C.inner))) },
+        { id: 'modal-b', name: 'axiom B',
+          gloss: 'A gives "necessarily possibly A", and "possibly necessarily A" gives A',
+          test: (P, C) => P.length === 1 && (
+              (claimModalIs(C, 'nec') && claimModalIs(C.inner, 'poss', C.mod) && claimSame(P[0], C.inner.inner)) ||
+              (claimModalIs(P[0], 'poss') && claimModalIs(P[0].inner, 'nec', P[0].mod) && claimSame(P[0].inner.inner, C))) },
+        { id: 'modal-5', name: 'axiom 5',
+          gloss: '"possibly A" gives "necessarily possibly A", and "possibly necessarily A" gives "necessarily A"',
+          test: (P, C) => P.length === 1 && claimModalIs(P[0], 'poss') && (
+              (claimModalIs(C, 'nec', P[0].mod) && claimModalIs(C.inner, 'poss', P[0].mod) && claimSame(P[0].inner, C.inner.inner)) ||
+              (claimModalIs(P[0].inner, 'nec', P[0].mod) && claimModalIs(C, 'nec', P[0].mod) && claimSame(P[0].inner.inner, C.inner))) }
+    ];
     // "It has not been shown that P" of this claim, or "it is unclear whether"
     // it or its denial -- not established outright, not only from some premises.
     function claimUnestablishedOf(p, claim) {
@@ -20615,7 +21126,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!premises || premises.length !== 1 || !premises[0]) return false;
         const same = (conclusions || []).filter(Boolean).find(claimIs(premises[0]));
         if (!same || same.kind === 'unestablished') return false;
-        const restated = (same.kind === 'all' || same.kind === 'some') ? claimRestated(premises, same) : null;
+        const restated = (same.kind === 'all' || same.kind === 'some' || same.kind === 'modal') ? claimRestated(premises, same) : null;
         return !restated && !claimAlphabeticVariants(premises[0], same);
     }
     // A near-miss search's certifier: a restatement counts, so that the hint
@@ -20650,10 +21161,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (same.kind === 'unestablished' || attack) return null;
                 // "Not all ravens are black" and "some raven is not black": one
                 // claim, said by quantifier negation.
-                const restated = (same.kind === 'all' || same.kind === 'some') ? claimRestated(premises, same) : null;
+                const restated = (same.kind === 'all' || same.kind === 'some' || same.kind === 'modal') ? claimRestated(premises, same) : null;
                 if (restated && !claimRuleOn(restated)) return null;
                 if (!restated && claimAlphabeticVariants(premises[0], same)) return DEDUCTIVE_RULES.find(r => r.id === 'bound-variable-change');
-                return restated ? DEDUCTIVE_RULES.find(r => r.id === restated) : null;
+                // A modal claim's denial denied is double-negation elimination (r27.101).
+                return restated ? DEDUCTIVE_RULES.concat(DEDUCTIVE_MODAL_RULES).find(r => r.id === (restated === 'double-negation' ? 'negation-elimination' : restated)) : null;
             }
         }
         // The rules in force: the basis, and the extensions this map has on.
@@ -20664,6 +21176,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (rule && rule.id === 'categorical-syllogism') {
             const C = conclusions.find(c => claimCategoricalValid(premises, c));
             return claimSyllogismRule(C && claimSyllogismMood(premises, C));
+        }
+        // Contraries and contradictories: named by the pair (r27.103).
+        if (rule && rule.id === 'opposites') {
+            for (const C of conclusions) { const step = claimOppositeStep(premises[0], C); if (step) return claimOppositeRule(step); }
         }
         return rule;
     }
@@ -20787,6 +21303,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const inner = claimWithoutNegationPairs(form.inner);
             return inner === form.inner ? form : { kind: 'not', inner };
         }
+        if (form.kind === 'modal') {
+            const inner = claimWithoutNegationPairs(form.inner);
+            return inner === form.inner ? form : Object.assign({}, form, { inner });
+        }
         if (form.parts) {
             const parts = form.parts.map(claimWithoutNegationPairs);
             return parts.every((p, i) => p === form.parts[i]) ? form : Object.assign({}, form, { parts });
@@ -20896,7 +21416,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DERIVE_SKIPS = new Set(['explosion', 'and-intro', 'and-elim', 'or-intro', 'existential-introduction', 'universal-elimination',
         'absorption', 'quantifier-commutation', 'quantifier-negation', 'double-negation', 'de-morgan', 'transposition', 'material-implication',
         'material-equivalence', 'exportation', 'distribution', 'conversion', 'contraposition', 'commutation', 'association', 'idempotence',
-        'premise-not-established', 'false-premise', 'conclusion-not-established', 'unsound-argument',
+        'premise-not-established', 'false-premise', 'conclusion-not-established', 'unsound-argument', 'opposites',
         DEDUCTIVE_SAME_CLAIM.id]);
     function deriveConclusion(texts) {
         const reads = texts.map(t => parseClaimFull(t));
@@ -21062,6 +21582,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             add('negation-elimination', reduced, sayDenial(lastPair.inner));
         }
+        // Contraries and contradictories (r27.103): "Pre-linguistic humans
+        // have minds" gives "Pre-linguistic humans do not lack minds".
+        if (P.length === 1 && claimRuleOn('opposites')) claimOppositeGivens(P[0]).forEach(text => { const f = parseClaim(text); if (f) add('opposites', f, () => text); });
         return out;
     }
 
@@ -21081,6 +21604,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (form.kind === 'and' || form.kind === 'or') return claimSayJunction(form.kind, form.parts.map(p => c => claimSayForm(p, c)), ctx);
         if (form.kind === 'then') { const parts = form.parts.map(p => claimSayForm(p, ctx)); return parts.every(Boolean) ? parts.join(' and then ') : null; }
         if (form.kind === 'if') return claimSayConditional(form.conds.map(p => c => claimSayForm(p, c)), c => claimSayForm(form.cons, c), ctx);
+        if (form.kind === 'modal') { const t = claimSayForm(form.inner, ctx); return t ? 'it is ' + claimModalWord(form) + ' that ' + t : null; }
         return null;
     }
     function claimSayJunction(kind, sayers, ctx) {
@@ -21445,6 +21969,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'pred': return prop(form.prop, form.term);
             case 'identity': return form.left + ' = ' + form.right;
             case 'not': { const t = wrap(form.inner); return t ? style.not + t : null; }
+            case 'modal': { const t = wrap(form.inner); return t ? (form.op === 'nec' ? '□' : '◇') + t : null; }
             case 'and': case 'or': {
                 const parts = form.parts.map(wrap);
                 return parts.every(Boolean) ? parts.join(' ' + style[form.kind] + ' ') : null;
@@ -21521,6 +22046,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'atom': return claimShowWords(form.text);
             case 'pred': return claimShowWords(form.term) + ' ' + claimShowProp(form.prop);
             case 'not': return 'not ' + claimShowForm(form.inner);
+            case 'modal': return 'it is ' + claimModalWord(form) + ' that ' + claimShowForm(form.inner);
             case 'unestablished':
                 if (form.from) return 'not established from ' + form.from.map(claimShowForm).join('; ') + (form.inner ? ': ' + claimShowForm(form.inner) : '');
                 return (form.whether ? 'not established either way: ' : 'not established: ') + claimShowForm(form.inner);
@@ -21599,6 +22125,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 generic: !!note.generic, anyScope: !!note.anyScope, canScope: !!note.canScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 typo: !!note.typo, missing: !!note.missing, single: !!note.single });
         }));
+        // A modal step the map's system does not take (r27.101): with every
+        // axiom, would it follow? Then say what takes it -- the group switched
+        // on, or the axiom.
+        if (reads.every(r => r.form) && reads.some(r => claimHasModal(r.form))) {
+            const would = claimModalWould(reads.map(r => r.form), attack, weak);
+            if (would) {
+                const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
+                const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
+                return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, modal: would,
+                    text: !claimModalOn() ? 'With Metaphysical necessity switched on in the Logic panel, the premises would give ' + target + ' by ' + would.rule.name + '.'
+                        : 'The premises would give ' + target + ' by ' + would.rule.name + ', which this map\'s system, ' + claimModalSystem(claimModalAxioms()) +
+                            ', does not have: switch on ' + would.axiom + ' in the Logic panel.' };
+            }
+        }
+        // A step of contraries or contradictories (r27.103): with them switched
+        // off, would it follow with them on? And "Mary is not happy", so "Mary
+        // is unhappy": contraries are not contradictories.
+        if (reads.every(r => r.form) && premiseTexts.length === 1) {
+            const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
+            const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
+            const P = [reads[0].form], C = claimStepConclusions(reads[1].form, attack, weak);
+            const none = { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null };
+            if (!claimRuleOn('opposites')) {
+                let rule = null;
+                claimOptionalInferences.add('opposites');
+                try { rule = certifyStep(P, C, attack); } finally { claimOptionalInferences.delete('opposites'); }
+                if (rule && rule.id === 'opposites') return Object.assign(none, { opposites: rule,
+                    text: 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give ' + target + ' by ' + rule.name + '.' });
+            } else {
+                const step = C.map(c => claimOppositeStep(P[0], c, true)).find(x => x && x.reversed);
+                if (step) return Object.assign(none, { contraries: step,
+                    text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
+            }
+        }
         // Worded alike, would it follow? Then say which words differ.
         let worded = null;
         const affordable = claimHintsAffordable(texts) && !texts.some(claimAsksUser);
@@ -22138,6 +22698,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         const diagnosticText = warrantTarget ? claimAsWritten(claimShowWords(parent.inner.src || claimShowForm(parent.inner)), conclusionText) : conclusionText || '';
                         const diagnosticAttack = warrantTarget ? false : attack;
                         found = { premises, warrantTarget, conclusion: conclusions[0] || null, rule: asks ? null : certifyStep(premises, conclusions, warrantTarget ? false : attack) };
+                        // The conclusion the step gives, of those tried -- an
+                        // objection's, the denial of its box it matched -- for
+                        // the colors (r27.102).
+                        if (found.rule && conclusions.length > 1) {
+                            const gives = conclusions.map(c => [c, certifyStep(premises, [c], warrantTarget ? false : attack)]).filter(([, r]) => r);
+                            found.conclusion = ((gives.find(([, r]) => r.id === found.rule.id) || gives[0] || [])[0]) || found.conclusion;
+                        }
                         // "Mary sings and loves Bob", so "Mary loves Bob": it
                         // follows however the object is read, and none is chosen.
                         if (!found.rule && !asks && !warrantTarget) {
@@ -23355,7 +23922,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // shown by that box's label, and following it wherever it goes.
                 const boxBtn = document.createElement('button');
                 boxBtn.textContent = 'Link a premise';
-                boxBtn.title = 'Click a box to link to it here';
+                boxBtn.title = 'Click a box to link to it here (Ctrl+K)';
                 boxBtn.onmousedown = (ev) => ev.preventDefault();
                 boxBtn.onclick = (ev) => { ev.stopPropagation(); menu.remove(); startBoxLinkPicking(node.id, index, a, b); };
                 menu.appendChild(boxBtn);
@@ -27478,7 +28045,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function getExportTheme() {
         const isLight = document.body.classList.contains('bg-light');
         const border = isLight
-            ? { contention: '#333', support: '#333', objection: '#c62828', rebuttal: '#ff9800', note: '#b5a23d' }
+            ? { contention: '#333', support: '#333', objection: '#f44336', rebuttal: '#ff9800', note: '#b5a23d' }
             : { contention: '#ffffff', support: '#ffffff', objection: '#ff6250', rebuttal: '#ffb780', note: '#f0e28c' };
         return {
             bg: isLight ? '#f0f0f0' : '#232426',
@@ -27500,6 +28067,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             implicitTagBorder: isLight ? '#9aa1a6' : '#717b80',
             text: isLight ? '#1a1a1a' : '#ffffff',
             noteText: isLight ? '#1a1a1a' : '#f2e6a8',
+            // A box's label, and the "See S3" of its cross-references: the
+            // labels' gray, which goes with the boxes' theme (.node-label).
+            labelText: document.body.classList.contains('nodes-light') ? '#555' : '#ccc',
             border,
             font: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
             noteFont: "Comic Sans MS, Chalkboard SE, sans-serif",
@@ -27530,8 +28100,281 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return out;
     }
-    function buildExportSVG() {
+    // A color as SVG takes it: "#rrggbb", and its opacity apart (rgba() is
+    // not every reader's). Null for what is not a color.
+    function exportPaint(css) {
+        const v = String(css || '').trim();
+        let m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(v);
+        if (m) {
+            const h = m[1].length === 3 ? m[1].replace(/./g, c => c + c) : m[1];
+            return { color: '#' + h.toLowerCase(), a: 1 };
+        }
+        m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+)(%?))?\s*\)$/.exec(v);
+        if (!m) return null;
+        const hex = [m[1], m[2], m[3]].map(c => ('0' + Math.max(0, Math.min(255, Math.round(+c))).toString(16)).slice(-2)).join('');
+        return { color: '#' + hex, a: m[4] === undefined ? 1 : m[5] ? +m[4] / 100 : +m[4] };
+    }
+    // Part of a box -- its words, or its label -- as the canvas lays it out
+    // (r27.102): each run of text where it stands, in its own font, size,
+    // color, weight and slant; the tints behind words, their borders and
+    // underlines, and the math's rules and symbols. What the inference
+    // colors, bold, links and formulas look like, the picture shows. `X` and
+    // `Y` take a point on the screen to the map; `zoom` is the canvas's.
+    // `faces` gathers the math's fonts. Null where nothing is laid out.
+    function exportLaidOut(root, X, Y, zoom, faces) {
+        if (!root || !root.getClientRects || !root.getClientRects().length) return null;
+        const f2 = v => +(+v).toFixed(2);
+        const back = [], under = [], words = [], over = [];
+        const range = document.createRange();
+        const hidden = el => !!el.closest('.katex-mathml');   // the screen readers' copy of a formula
+        const opacity = new Map([[root, 1]]);
+        const opOf = el => {
+            if (opacity.has(el)) return opacity.get(el);
+            const own = parseFloat(getComputedStyle(el).opacity);
+            const v = (isNaN(own) ? 1 : own) * (el.parentElement ? opOf(el.parentElement) : 1);
+            opacity.set(el, v);
+            return v;
+        };
+        const paint = (attr, p, op) => ` ${attr}="${p.color}"` + (p.a * op < 0.999 ? ` ${attr}-opacity="${f2(p.a * op)}"` : '');
+        for (const el of [root].concat(Array.from(root.querySelectorAll('*')))) {
+            if (el.ownerSVGElement || hidden(el)) continue;
+            const cs = getComputedStyle(el);
+            if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+            const rects = Array.from(el.getClientRects()).filter(r => r.width > 0 || r.height > 0);
+            const op = opOf(el);
+            if (!rects.length || op <= 0) continue;
+            // A tint behind words.
+            const bg = el === root ? null : exportPaint(cs.backgroundColor);
+            if (bg && bg.a > 0) {
+                const rx = parseFloat(cs.borderTopLeftRadius) || 0;
+                rects.forEach(r => back.push(`<rect x="${f2(X(r.left))}" y="${f2(Y(r.top))}" width="${f2(r.width / zoom)}" height="${f2(r.height / zoom)}"` +
+                    (rx ? ` rx="${f2(rx)}"` : '') + paint('fill', bg, op) + '/>'));
+            }
+            // A border: a fraction's rule, a code block's edge.
+            if (el !== root) ['Top', 'Right', 'Bottom', 'Left'].forEach(side => {
+                const w = parseFloat(cs['border' + side + 'Width']) || 0, st = cs['border' + side + 'Style'], p = exportPaint(cs['border' + side + 'Color']);
+                if (!(w > 0) || !p || !(p.a > 0) || st === 'none' || st === 'hidden') return;
+                rects.forEach(r => {
+                    const x0 = X(r.left), y0 = Y(r.top), wd = r.width / zoom, ht = r.height / zoom;
+                    const [bx, by, bw, bh] = side === 'Top' ? [x0, y0, wd, w] : side === 'Bottom' ? [x0, y0 + ht - w, wd, w] : side === 'Left' ? [x0, y0, w, ht] : [x0 + wd - w, y0, w, ht];
+                    back.push(`<rect x="${f2(bx)}" y="${f2(by)}" width="${f2(bw)}" height="${f2(bh)}"` + paint('fill', p, op) + '/>');
+                });
+            });
+            // A symbol the math draws (a root sign, a long arrow): as it
+            // shows, inside whatever holds it and hides what overflows.
+            if (el.tagName.toLowerCase() === 'svg') {
+                const r = rects[0];
+                let l = r.left, t = r.top, rr = r.right, b = r.bottom;
+                for (let a = el.parentElement; a && a !== root.parentElement; a = a.parentElement) {
+                    const acs = getComputedStyle(a);
+                    if (acs.overflowX === 'visible' && acs.overflowY === 'visible') continue;
+                    const ar = a.getBoundingClientRect();
+                    l = Math.max(l, ar.left); t = Math.max(t, ar.top); rr = Math.min(rr, ar.right); b = Math.min(b, ar.bottom);
+                }
+                const p = exportPaint(cs.color);
+                if (rr <= l || b <= t || !p) continue;
+                const copy = el.cloneNode(true);
+                copy.removeAttribute('style'); copy.removeAttribute('class');
+                copy.setAttribute('x', f2((r.left - l) / zoom)); copy.setAttribute('y', f2((r.top - t) / zoom));
+                copy.setAttribute('width', f2(r.width / zoom)); copy.setAttribute('height', f2(r.height / zoom));
+                copy.setAttribute('fill', p.color); copy.setAttribute('stroke', p.color);
+                over.push(`<svg x="${f2(X(l))}" y="${f2(Y(t))}" width="${f2((rr - l) / zoom)}" height="${f2((b - t) / zoom)}" overflow="hidden"` +
+                    (p.a * op < 0.999 ? ` opacity="${f2(p.a * op)}"` : '') + '>' + new XMLSerializer().serializeToString(copy) + '</svg>');
+                continue;
+            }
+            // The line under a stretch of math in colors 2 (r27.83), drawn
+            // after it.
+            if (el.matches('span.ic[data-ic-fit]')) {
+                const ps = getComputedStyle(el, '::after'), p = exportPaint(ps.backgroundColor);
+                if (p && p.a > 0 && ps.content && ps.content !== 'none' && ps.content !== 'normal' && ps.display !== 'none') {
+                    const r = rects[0];
+                    let top = parseFloat(ps.top);
+                    if (isNaN(top)) top = (parseFloat(el.style.getPropertyValue('--ic-base')) || 0) + 3;
+                    const l = parseFloat(ps.left) || 0, rt = parseFloat(ps.right) || 0;
+                    over.push(`<rect x="${f2(X(r.left) + l)}" y="${f2(Y(r.top) + top)}" width="${f2(Math.max(0, r.width / zoom - l - rt))}" height="${f2(parseFloat(ps.height) || 1)}"` + paint('fill', p, op) + '/>');
+                }
+            }
+            // An underline (a link, the conclusion's stretch in colors 2, the
+            // red dashes of a part the conclusion denies), or a line through.
+            const deco = cs.textDecorationLine;
+            if (deco && deco !== 'none' && cs.display === 'inline' && /\S/.test(el.textContent)) {
+                const p = exportPaint(cs.textDecorationColor) || exportPaint(cs.color);
+                if (p && p.a > 0) {
+                    const fs = parseFloat(cs.fontSize) || 14, fb = icFontBox(cs);
+                    const th = parseFloat(cs.textDecorationThickness) || Math.max(1, Math.round(fs / 14));
+                    const off = parseFloat(cs.textUnderlineOffset), st = cs.textDecorationStyle;
+                    const dash = st === 'dashed' ? ` stroke-dasharray="${f2(3 * th)} ${f2(3 * th)}"` : st === 'dotted' ? ` stroke-dasharray="${f2(th)} ${f2(th)}"` : '';
+                    const pt = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.borderTopWidth) || 0);
+                    const pl = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0);
+                    const pr = (parseFloat(cs.paddingRight) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+                    rects.forEach((r, i) => {
+                        const base = Y(r.top) + pt + fb.a;
+                        const x1 = X(r.left) + (i === 0 ? pl : 0), x2 = X(r.right) - (i === rects.length - 1 ? pr : 0);
+                        if (x2 <= x1) return;
+                        const line = (yy, to) => to.push(`<line x1="${f2(x1)}" y1="${f2(yy)}" x2="${f2(x2)}" y2="${f2(yy)}" stroke-width="${f2(th)}"` + paint('stroke', p, op) + dash + '/>');
+                        if (/underline/.test(deco)) line(base + (isNaN(off) ? Math.max(1, fs * 0.1) : off) + th / 2, under);
+                        if (/overline/.test(deco)) line(base - fb.a + th / 2, under);
+                        // A line through, two thirds of the way down to the
+                        // baseline, as the browser draws it.
+                        if (/line-through/.test(deco)) line(base - fb.a / 3 + th / 2, over);
+                    });
+                }
+            }
+        }
+        // The words: each text's run on each line, from its first printed
+        // character to its last, set on the baseline where it stands.
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+            const pe = n.parentElement, d = n.data;
+            if (!pe || !/\S/.test(d) || hidden(pe) || pe.closest('svg')) continue;
+            const cs = getComputedStyle(pe), p = exportPaint(cs.color), op = opOf(pe);
+            if (cs.visibility === 'hidden' || !p || !(p.a > 0) || op <= 0) continue;
+            range.selectNodeContents(n);
+            const all = Array.from(range.getClientRects()).filter(r => r.width > 0 && r.height > 0);
+            if (!all.length) continue;
+            const size = i => { const c = d.charCodeAt(i); return c >= 0xd800 && c <= 0xdbff && i + 1 < d.length ? 2 : 1; };
+            const at = i => { range.setStart(n, i); range.setEnd(n, i + size(i)); return Array.from(range.getClientRects()).find(r => r.width > 0 || r.height > 0) || null; };
+            const pieces = [];
+            if (all.every(r => Math.abs(r.top - all[0].top) < 0.5)) {
+                let b = d.length;
+                while (b > 0 && /\s/.test(d[b - 1])) b--;
+                pieces.push([d.search(/\S/), b]);
+            } else {
+                let cur = null, top = 0;
+                for (let i = 0; i < d.length; i += size(i)) {
+                    if (/\s/.test(d[i])) continue;
+                    const r = at(i);
+                    if (!r) continue;
+                    if (cur && Math.abs(r.top - top) < r.height / 2) cur[1] = i + size(i);
+                    else { cur = [i, i + size(i)]; top = r.top; pieces.push(cur); }
+                }
+            }
+            const fb = icFontBox(cs), pre = /^(?:pre|pre-wrap|break-spaces)$/.test(cs.whiteSpace);
+            const weight = parseInt(cs.fontWeight, 10) || 400, slant = /italic|oblique/.test(cs.fontStyle), spacing = parseFloat(cs.letterSpacing) || 0;
+            const family = cs.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+            if (faces && /^KaTeX_/.test(family)) faces.add(family + '|' + (((weight >= 600 ? 'Bold' : '') + (slant ? 'Italic' : '')) || 'Regular'));
+            pieces.forEach(([a, b]) => {
+                const r = at(a);
+                if (!r || b <= a) return;
+                let text = d.slice(a, b);
+                if (!pre) text = text.replace(/[ \t\n\r\f]+/g, ' ');
+                if (cs.textTransform === 'uppercase') text = text.toUpperCase();
+                else if (cs.textTransform === 'lowercase') text = text.toLowerCase();
+                words.push(`<text x="${f2(X(r.left))}" y="${f2(Y(r.top) + fb.a)}" font-family="${xmlEsc(cs.fontFamily)}" font-size="${f2(parseFloat(cs.fontSize) || 14)}"` +
+                    (weight !== 400 ? ` font-weight="${weight}"` : '') + (slant ? ' font-style="italic"' : '') + (spacing ? ` letter-spacing="${f2(spacing)}"` : '') +
+                    paint('fill', p, op) + (pre && /\s\s|\t/.test(text) ? ' xml:space="preserve"' : '') + `>${xmlEsc(text)}</text>`);
+            });
+        }
+        return back.join('') + under.join('') + words.join('') + over.join('');
+    }
+    // What a box's cross-references point to, by their boxes' labels: the
+    // picture's "See S3, O2" where the canvas has the button (r27.102). An
+    // argument's premises elsewhere are among them; its premises below the
+    // box are in the picture already.
+    function exportCrossRefText(node, idx) {
+        const names = [];
+        const add = ref => {
+            const ctx = ref && findNodeContext(state.trees, ref.targetId);
+            if (!ctx || typeof ctx.node.texts[ref.targetIdx] !== 'string') return;
+            const name = boxLinkLabel(ctx.node.id, ref.targetIdx);
+            if (name && name !== '?' && !names.includes(name)) names.push(name);
+        };
+        (((node && node.crossRefs) || [])[idx] || []).forEach(ref => isReferenceArgument(ref) ? (ref.premises || []).forEach(add) : add(ref));
+        return names.length ? 'See ' + names.join(', ') : '';
+    }
+    // The math's fonts carried in the picture: an SVG drawn as an image, or
+    // opened elsewhere, may load nothing, and without them its symbols are
+    // the reader's own. The public build has them in its stylesheet, as data;
+    // the source file has KaTeX from the CDN, and they are fetched once from
+    // there. A font that cannot be had is left to the reader.
+    const exportFontRules = new Map();
+    let exportPageFonts = null;
+    function exportOwnFonts() {
+        if (exportPageFonts) return exportPageFonts;
+        exportPageFonts = new Map();
+        for (const sheet of Array.from(document.styleSheets || [])) {
+            let rules;
+            try { rules = sheet.cssRules; } catch (e) { continue; }   // another site's: not to be read
+            for (const r of Array.from(rules || [])) {
+                if (r.type !== 5 || !r.style) continue;   // CSSRule.FONT_FACE_RULE
+                const family = r.style.getPropertyValue('font-family').replace(/["']/g, '').trim();
+                const data = /url\(\s*["']?(data:font\/woff2;base64,[^"')\s]+)/.exec(r.style.getPropertyValue('src'));
+                if (!/^KaTeX_/.test(family) || !data) continue;
+                const bold = /bold|[6-9]00/.test(r.style.getPropertyValue('font-weight')), slant = /italic|oblique/.test(r.style.getPropertyValue('font-style'));
+                exportPageFonts.set(family + '|' + (((bold ? 'Bold' : '') + (slant ? 'Italic' : '')) || 'Regular'), data[1]);
+            }
+        }
+        return exportPageFonts;
+    }
+    function exportWithFonts(svg, faces) {
+        if (!svg || !faces || !faces.size) return Promise.resolve(svg);
+        const link = document.querySelector('link[rel="stylesheet"][href*="katex"]');
+        const base = link ? link.href.replace(/[^/]*$/, '') + 'fonts/' : null;
+        const ruleFor = (family, variant, url) => `@font-face{font-family:${family};src:url(${url}) format("woff2");` +
+            `font-weight:${/Bold/.test(variant) ? 700 : 400};font-style:${/Italic/.test(variant) ? 'italic' : 'normal'}}`;
+        const rule = face => {
+            const [family, variant] = face.split('|'), own = exportOwnFonts().get(face);
+            if (own) return Promise.resolve(ruleFor(family, variant, own));
+            if (!base || typeof fetch !== 'function') return Promise.resolve(null);
+            if (!exportFontRules.has(face)) {
+                exportFontRules.set(face, fetch(base + family + '-' + variant + '.woff2').then(r => r.ok ? r.arrayBuffer() : null).then(buf => {
+                    if (!buf) return null;
+                    const u8 = new Uint8Array(buf);
+                    let bin = '';
+                    for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+                    return ruleFor(family, variant, 'data:font/woff2;base64,' + btoa(bin));
+                }).catch(() => null).then(css => { if (!css) exportFontRules.delete(face); return css; }));
+            }
+            return exportFontRules.get(face);
+        };
+        const enough = new Promise(resolve => setTimeout(() => resolve([]), 6000));
+        return Promise.race([Promise.all([...faces].map(rule)), enough]).then(rules => {
+            const css = (rules || []).filter(Boolean).join('');
+            return css ? svg.replace(/^<svg[^>]*>/, m => m + '<defs><style>' + css + '</style></defs>') : svg;
+        });
+    }
+    // A box's shadows, as the canvas has them (r27.102): each blurred, under
+    // the box and, as on the canvas, never inside it (a see-through box shows
+    // none through it). `blurs` gathers the blurs, for their filters. A
+    // shadow with no blur is the main contention's ring, drawn as before.
+    let exportCuts = 0;
+    function exportShadows(box, x, y, wd, ht, rx, blurs) {
+        const cs = getComputedStyle(box), list = String(cs.boxShadow || 'none');
+        if (list === 'none') return '';
+        const fill = exportPaint(cs.backgroundColor), seeThrough = !fill || fill.a < 0.999;
+        let out = '';
+        // The first shadow is on top: drawn last.
+        list.split(/,(?![^(]*\))/).reverse().forEach(sh => {
+            if (/\binset\b/.test(sh)) return;
+            const col = /rgba?\([^)]*\)|#[0-9a-f]{3,6}\b/i.exec(sh), p = col && exportPaint(col[0]);
+            const [dx = 0, dy = 0, blur = 0, spread = 0] = sh.replace(col ? col[0] : '', '').trim().split(/\s+/).map(parseFloat).filter(v => !isNaN(v));
+            if (!p || !(p.a > 0) || !(blur > 0)) return;
+            const b = +blur.toFixed(2);
+            blurs.add(b);
+            let cut = '';
+            if (seeThrough) {
+                const id = 'export-cut-' + (++exportCuts), m = 2 * b + Math.abs(dx) + Math.abs(dy) + Math.abs(spread) + 2;
+                out += `<mask id="${id}" maskUnits="userSpaceOnUse" x="${x - m}" y="${y - m}" width="${wd + 2 * m}" height="${ht + 2 * m}">`
+                    + `<rect x="${x - m}" y="${y - m}" width="${wd + 2 * m}" height="${ht + 2 * m}" fill="#fff"/><rect x="${x}" y="${y}" width="${wd}" height="${ht}" rx="${rx}" fill="#000"/></mask>`;
+                cut = ` mask="url(#${id})"`;
+            }
+            out += `<rect x="${+(x + dx - spread).toFixed(2)}" y="${+(y + dy - spread).toFixed(2)}" width="${+(wd + 2 * spread).toFixed(2)}" height="${+(ht + 2 * spread).toFixed(2)}"`
+                + ` rx="${+(rx + spread).toFixed(2)}" fill="${p.color}"${p.a < 0.999 ? ` fill-opacity="${+p.a.toFixed(3)}"` : ''} filter="url(#export-blur-${String(b).replace('.', '_')})"${cut}/>`;
+        });
+        return out;
+    }
+    // `opts.faces`, a Set: filled with the math's fonts the picture uses. A
+    // selected box's ring and deeper shadow are the canvas's, not the map's:
+    // taken off while the picture is drawn (r27.102).
+    function buildExportSVG(opts) {
+        const lifted = Array.from(document.querySelectorAll('#surface .node.selected'));
+        lifted.forEach(n => n.classList.remove('selected'));
+        try { return drawExportSVG(opts); }
+        finally { lifted.forEach(n => n.classList.add('selected')); }
+    }
+    function drawExportSVG(opts) {
         const EXPORT_THEME = getExportTheme();
+        const faces = opts && opts.faces, blurs = new Set();
         const groups = [...document.querySelectorAll('.node-group')];
         if (!groups.length) return null;
         const PAD = 40, FS = 14, LH = 19.6;
@@ -27556,11 +28399,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const wrapW = (rd && rd.clientWidth) ? rd.clientWidth : (ta && ta.clientWidth) ? ta.clientWidth : wd - 28;
                 const rawText = ta ? ta.value : (rd ? rd.textContent : '');
                 const cleanText = richTextToPlain(boxLinksAsLabels(rawText));
-                const nodeId = box.getAttribute('data-node-id');
                 const nodeIdx = box.getAttribute('data-node-idx');
-                const label = labelMode !== 'none' ? currentLabels.get(`${nodeId}-${nodeIdx}`) : null;
-                const labelPrefix = label ? `[${label}] ` : '';
-                const lines = wrapText(labelPrefix + cleanText, wrapW, font);
                 const bw = type === 'contention' ? 2 : 2;
                 const isImplicit = ctx && ctx.node.implicits && ctx.node.implicits[parseInt(nodeIdx)];
                 const isGiven = ctx && ctx.node.givens && ctx.node.givens[parseInt(nodeIdx)];
@@ -27575,7 +28414,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     ? ` fill="${isGiven ? EXPORT_THEME.givenBg : isNote ? EXPORT_THEME.noteBg : EXPORT_THEME.nodeBg}"`
                     : isGiven ? ` fill="${EXPORT_THEME.givenBg}" fill-opacity="${EXPORT_THEME.givenSeeThrough}"` : ' fill="none"';
                 const fadeAttr = isImplicit ? ` stroke-opacity="${EXPORT_THEME.implicitEdgeOpacity}"` : '';
-                let t = `<rect x="${x}" y="${y}" width="${wd}" height="${ht}" rx="${isNote ? 2 : 6}"`
+                // Its shadows, where the canvas lays it out (r27.102).
+                let t = (box.offsetWidth && box.getClientRects().length ? exportShadows(box, x, y, wd, ht, isNote ? 2 : 6, blurs) : '')
+                    + `<rect x="${x}" y="${y}" width="${wd}" height="${ht}" rx="${isNote ? 2 : 6}"`
                     + fillAttr
                     + ` stroke="${edgeColor}" stroke-width="${bw}"${fadeAttr}${dashAttr}/>`;
                 // Its IMPLICIT tag sits across the top border at the right, as
@@ -27595,15 +28436,57 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     t += `<rect x="${x - 5}" y="${y - 5}" width="${wd + 10}" height="${ht + 10}" rx="9"`
                         + ` fill="none" stroke="${EXPORT_THEME.contentionRing}" stroke-width="2"/>`;
                 }
-                const tx = boxAlign === 'center' ? x + wd / 2 : boxAlign === 'right' ? x + wd - 14 : x + 14;
-                const anchor = boxAlign === 'center' ? 'middle' : boxAlign === 'right' ? 'end' : 'start';
-                const refEl = rd || ta;
-                const ty0 = y + ((refEl && refEl.offsetTop) ? refEl.offsetTop : 17) + FS * 0.8;
-                const textFill = isImplicit ? EXPORT_THEME.implicitText : color;   // fainter, as on screen
-                lines.forEach((ln, k) => {
-                    if (ln) t += `<text x="${tx}" y="${ty0 + k * LH}" text-anchor="${anchor}"`
-                        + ` font-family="${xmlEsc(isNote ? EXPORT_THEME.noteFont : EXPORT_THEME.font)}"`
-                        + ` font-size="${FS}" fill="${textFill}">${xmlEsc(ln)}</text>`;
+                // The words as the canvas lays them out (r27.102); where they
+                // are not laid out, wrapped as plain text.
+                const br = box.getBoundingClientRect(), zoom = box.offsetWidth ? br.width / box.offsetWidth : 0;
+                const X = cx => x + (cx - br.left) / zoom, Y = cy => y + (cy - br.top) / zoom;
+                const laidOut = el => zoom > 0 ? exportLaidOut(el, X, Y, zoom, faces) : null;
+                const shown = [rd, ta].find(el => el && el.getClientRects().length && getComputedStyle(el).display !== 'none');
+                const words = shown ? laidOut(shown) : null;
+                if (words !== null) t += words;
+                else {
+                    const lines = wrapText(cleanText, wrapW, font);
+                    const tx = boxAlign === 'center' ? x + wd / 2 : boxAlign === 'right' ? x + wd - 14 : x + 14;
+                    const anchor = boxAlign === 'center' ? 'middle' : boxAlign === 'right' ? 'end' : 'start';
+                    const refEl = rd || ta;
+                    const ty0 = y + ((refEl && refEl.offsetTop) ? refEl.offsetTop : 17) + FS * 0.8;
+                    const textFill = isImplicit ? EXPORT_THEME.implicitText : color;   // fainter, as on screen
+                    lines.forEach((ln, k) => {
+                        if (ln) t += `<text x="${tx}" y="${ty0 + k * LH}" text-anchor="${anchor}"`
+                            + ` font-family="${xmlEsc(isNote ? EXPORT_THEME.noteFont : EXPORT_THEME.font)}"`
+                            + ` font-size="${FS}" fill="${textFill}">${xmlEsc(ln)}</text>`;
+                    });
+                }
+                const own = cls => Array.from(box.children).filter(c => c.classList.contains(cls));
+                // Its label, as the canvas has it: a small tag at its top left,
+                // not "[S1]" before its words.
+                own('node-label').forEach(lbl => {
+                    const drawn = laidOut(lbl);
+                    t += drawn !== null ? drawn : `<text x="${x + (parseFloat(lbl.style.left) || 6)}" y="${y + 13}" font-family="${xmlEsc(EXPORT_THEME.font)}"`
+                        + ` font-size="10" font-weight="600" letter-spacing="0.3" fill="${EXPORT_THEME.labelText}">${xmlEsc(lbl.textContent)}</text>`;
+                });
+                // Its cross-references where the canvas has their button: the
+                // boxes they point to, "See S3, O2".
+                own('crossref-badge').forEach(badge => {
+                    let see = ctx ? exportCrossRefText(ctx.node, parseInt(nodeIdx, 10) || 0) : '';
+                    if (!see) return;
+                    const seeFont = `600 10px ${EXPORT_THEME.font}`, room = Math.max(24, wd - 52);
+                    const fits = v => textWidth(v, seeFont) + 0.3 * v.length <= room;
+                    if (!fits(see)) {
+                        let n = see.length;
+                        while (n > 5 && !fits(see.slice(0, n) + '\u2026')) n--;
+                        see = see.slice(0, n).replace(/[,\s]+$/, '') + '\u2026';
+                    }
+                    const r = zoom > 0 && badge.getClientRects().length ? badge.getBoundingClientRect() : null;
+                    const cx = r ? X((r.left + r.right) / 2) : x + wd / 2, cy = r ? Y((r.top + r.bottom) / 2) : y + ht - 18.5;
+                    t += `<text x="${+cx.toFixed(2)}" y="${+cy.toFixed(2)}" text-anchor="middle" dominant-baseline="central" font-family="${xmlEsc(EXPORT_THEME.font)}"`
+                        + ` font-size="10" font-weight="600" letter-spacing="0.3" fill="${EXPORT_THEME.labelText}" data-see="1">${xmlEsc(see)}</text>`;
+                });
+                // Its evaluation dot.
+                own('status-dot').forEach(dot => {
+                    const r = zoom > 0 && dot.getClientRects().length ? dot.getBoundingClientRect() : null;
+                    const p = r && exportPaint(getComputedStyle(dot).backgroundColor);
+                    if (p && p.a > 0) t += `<circle cx="${+X((r.left + r.right) / 2).toFixed(2)}" cy="${+Y((r.top + r.bottom) / 2).toFixed(2)}" r="${+(r.width / zoom / 2).toFixed(2)}" fill="${p.color}"/>`;
                 });
                 boxesOut.push(t);
             });
@@ -27617,7 +28500,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // exactly what "arrows missing but arrowheads present" looked like.)
         // Resolve each var() to the computed color on the way out.
         const linesSvg = document.getElementById('lines-svg');
-        const rootStyle = getComputedStyle(document.documentElement);
+        // ... the theme on show: the light theme sets its colors on the body,
+        // and read from the root they were the dark theme's (r27.102).
+        const rootStyle = getComputedStyle(linesSvg || document.body);
         const resolveVars = (markup) => String(markup).replace(
             /var\(\s*(--[A-Za-z0-9-]+)\s*(?:,\s*([^)]*))?\)/g,
             (whole, name, fallback) => {
@@ -27648,6 +28533,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const w0 = Math.max(1, maxX - minX) + PAD * 2, h0 = Math.max(1, maxY - minY) + PAD * 2;
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w0)}" height="${Math.ceil(h0)}"`
             + ` viewBox="${minX - PAD} ${minY - PAD} ${w0} ${h0}">`
+            + (blurs.size ? '<defs>' + [...blurs].map(b => `<filter id="export-blur-${String(b).replace('.', '_')}" x="-50%" y="-50%" width="200%" height="200%">`
+                + `<feGaussianBlur stdDeviation="${+(b / 2).toFixed(3)}"/></filter>`).join('') + '</defs>' : '')
             + `<rect x="${minX - PAD}" y="${minY - PAD}" width="${w0}" height="${h0}" fill="${EXPORT_THEME.bg}"/>`
             + linesMarkup
             + boxesOut.join('')
@@ -27711,9 +28598,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // less for a map too big for a canvas), on its own background: a promise
     // of the canvas and the picture's size, or null.
     function rasterizeExport(scale) {
-        const svg = buildExportSVG();
-        if (!svg) return Promise.resolve(null);
-        return new Promise(resolve => {
+        const faces = new Set(), drawn = buildExportSVG({ faces });
+        if (!drawn) return Promise.resolve(null);
+        return exportWithFonts(drawn, faces).then(svg => new Promise(resolve => {
             const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
             const img = new Image();
             // A picture that neither loads nor fails leaves no save hanging.
@@ -27736,7 +28623,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             };
             img.onerror = () => { clearTimeout(giveUp); URL.revokeObjectURL(url); resolve(null); };
             img.src = url;
-        });
+        }));
     }
     const canvasBlob = (c, mime, quality) => new Promise(resolve => { try { c.toBlob(b => resolve(b || null), mime, quality); } catch (e) { resolve(null); } });
     // The export picture's words, line by line, where they are drawn: each
@@ -27748,9 +28635,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         try { doc = new DOMParser().parseFromString(svg, 'image/svg+xml'); } catch (e) { return []; }
         const vb = String(doc.documentElement.getAttribute('viewBox') || '0 0 0 0').split(/\s+/).map(Number);
         const widths = new Map();
-        const advance = (ch, family) => {
-            const key = family + '\u0000' + ch;
-            if (!widths.has(key)) widths.set(key, textWidth(ch, '1000px ' + family));
+        const advance = (ch, lead, family) => {
+            const key = lead + family + '\u0000' + ch;
+            if (!widths.has(key)) widths.set(key, textWidth(ch, lead + '1000px ' + family));
             return widths.get(key);
         };
         return [...doc.querySelectorAll('text')].map(t => {
@@ -27759,13 +28646,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const size = parseFloat(t.getAttribute('font-size')) || 14;
             const spacing = parseFloat(t.getAttribute('letter-spacing')) || 0;
             const family = t.getAttribute('font-family') || 'sans-serif';
+            // Bold and slanted words are as wide as they are drawn (r27.102).
+            const lead = (t.getAttribute('font-style') ? t.getAttribute('font-style') + ' ' : '') + (t.getAttribute('font-weight') ? t.getAttribute('font-weight') + ' ' : '');
             const chars = [...text];
-            const width = textWidth(text, size + 'px ' + family) + spacing * chars.length;
+            const width = textWidth(text, lead + size + 'px ' + family) + spacing * chars.length;
             const anchor = t.getAttribute('text-anchor') || 'start';
             let x = parseFloat(t.getAttribute('x')) || 0, y = parseFloat(t.getAttribute('y')) || 0;
             if (anchor === 'middle') x -= width / 2; else if (anchor === 'end') x -= width;
             if (t.getAttribute('dominant-baseline') === 'central') y += size * 0.35;
-            return { x: x - (vb[0] || 0), y: y - (vb[1] || 0), size, width, text, family, spacing, advances: chars.map(ch => advance(ch, family)) };
+            return { x: x - (vb[0] || 0), y: y - (vb[1] || 0), size, width, text, family: lead + family, spacing, advances: chars.map(ch => advance(ch, lead, family)) };
         }).filter(Boolean);
     }
     // One page, the map on it as a picture -- the JPEG's own bytes as the
@@ -27856,7 +28745,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function saveFormatBlob(fmt) {
         if (fmt.id === 'json') return Promise.resolve(mapJsonBlob());
         if (fmt.id === 'txt') return Promise.resolve(new Blob([generateTextRepresentation()], { type: 'text/plain' }));
-        if (fmt.id === 'svg') { const svg = buildExportSVG(); return Promise.resolve(svg ? new Blob([svg], { type: 'image/svg+xml' }) : null); }
+        if (fmt.id === 'svg') {
+            const faces = new Set(), svg = buildExportSVG({ faces });
+            return svg ? exportWithFonts(svg, faces).then(full => new Blob([full], { type: 'image/svg+xml' })) : Promise.resolve(null);
+        }
         return rasterizeExport(2).then(r => {
             if (!r) return null;
             if (fmt.id === 'png') return canvasBlob(r.canvas, 'image/png');
@@ -29104,7 +29996,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Colors 3"): in colors 2 the stretch is underlined too.
     let inferenceColorsOn = false, inferenceColorsVersion = 1;
     const IC_COLORS = 6;
-    const IC_NEG = /\bit\s+is\s+(?:not\s+the\s+case|false)\s+that\b|\b(?:(?:do|does|did|is|are|was|were|am|has|have|had|will|would|can|could|should|must|may|might|shall)\s+)?not\b|\b[a-z]+n['\u2019]t\b|\bcannot\b|\b(?:no|never|none|nothing|nobody|neither|nor)\b|\bnon-(?=[a-z])|\u00ac/gi;
+    const IC_NEG = /\bit(?:\s+is|['\u2019]s)\s+(?:not\s+(?:the\s+case|true|so)|false|untrue(?:\s+to\s+say)?)\s+that\b|\bit\s+isn['\u2019]t\s+(?:the\s+case|true|so)\s+that\b|\b(?:is|are|was|were)\s+(?:not\s+(?:the\s+case|true)|false|untrue)\b|\b(?:isn|aren|wasn|weren)['\u2019]t\s+(?:the\s+case|true)\b|\b(?:false|untrue)\b|\b(?:(?:do|does|did|is|are|was|were|am|has|have|had|will|would|can|could|should|must|may|might|shall)\s+)?not\b|\b[a-z]+n['\u2019]t\b|\bcannot\b|\bfail(?:s|ed)?\s+to\b|\b(?:no|never|none|nothing|nobody|neither|nor)\b|\bnon-(?=[a-z])|\u00ac/gi;
     // Denials in symbols, each spelling the reader takes (r27.83): "¬", "~",
     // "∼" before a letter or a bracket, spaced or not; "!", "−", "-" right
     // before one -- and none after a letter or digit ("well-known", "x-1").
@@ -29165,8 +30057,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const base = out.length;
                 sub.forEach(cl => out.push(cl));
                 if (groups) {
-                    subGroups.forEach(g => groups.push({ words: g.words, from: g.from + base, to: g.to + base }));
-                    if (icWords(form)) groups.push({ words: icWords(form), from: base, to: out.length });
+                    subGroups.forEach(g => groups.push({ words: g.words, form: g.form, from: g.from + base, to: g.to + base }));
+                    if (icWords(form)) groups.push({ words: icWords(form), form, from: base, to: out.length });
                 }
                 return out;
             }
@@ -29180,12 +30072,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (f.subjectText && f.vpText) return f.subjectText + ' ' + f.vpText;
         if (f.text) return String(f.text);
         return f.kind === 'not' ? icWords(f.inner) : '';
-    }
-    // Whether a clause denies: in its words, or as the check made it (an
-    // objection's conclusion is the denial of its box).
-    function icNeg(f) {
-        if (!f || f.kind !== 'not') return false;
-        return f.src || f.vpText ? true : !icNeg(f.inner);
     }
     // Below a clause: for all or some of a kind, the kind with its quantifier
     // ("all ravens") and what is said of it ("black"); for one thing, the
@@ -29248,7 +30134,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const parts = plan.parts.map(p => Object.assign({}, p, { words: back(p.words) }));
         from = 0;
-        return Object.assign({}, plan, { parts, spans: (plan.spans || []).map(back) });
+        const spans = (plan.spans || []).map(back);
+        from = 0;
+        return Object.assign({}, plan, { parts, spans, stretches: (plan.stretches || []).map(st => Object.assign({}, st, { words: back(st.words) })) });
     }
     // How many denials words say: each word or phrase that denies, and each
     // denial symbol ("~~P" says two).
@@ -29262,6 +30150,39 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // The denials a form says that its words do not show: a formula's "¬Q"
     // has the words "q".
     const icNegUnsaid = f => !!f && f.kind === 'not' && !f.src && !f.vpText ? 1 + icNegUnsaid(f.inner) : 0;
+    // The words of a clause that oppose a word of the box it attacks: "have"
+    // against "lack", "sad" against "happy", "true" against "false"
+    // (r27.104) -- each as it may be written ("has", "had").
+    function icOpposingWords(words, against) {
+        const has = (text, w) => new RegExp('(^|[^\\p{L}\\p{N}])' + w.replace(/ /g, '\\s+') + '(?![\\p{L}\\p{N}])', 'iu').test(String(text || ''));
+        const forms = (w, verb) => verb ? [w, claimThirdPerson(w), claimPastForm(w)] : [w];
+        const out = [];
+        CLAIM_OPPOSITES.concat([{ a: 'true', b: 'false' }, { a: 'true', b: 'untrue' }]).forEach(e => [[e.a, e.b], [e.b, e.a]].forEach(([x, y]) => {
+            if (forms(y, e.verb).some(w => has(against, w))) forms(x, e.verb).forEach(w => { if (has(words, w) && out.indexOf(w) < 0) out.push(w); });
+        }));
+        return out;
+    }
+    // The word that affirms what a denial of a claim denies -- the word
+    // stressed in saying it back -- with the two after it to find it by: its
+    // quantifier ("some ravens are", against "no ravens are white"), "is" in
+    // "there is a god", or the first word of what it says of its subject,
+    // past an adverb ("exists" in "God really exists"; "can be minds")
+    // (r27.105). A compound has none.
+    function icAffirmed(f) {
+        if (!f || !/^(?:pred|all|some)$/.test(f.kind)) return null;
+        const words = String(icWords(f)), toks = icTokens(words).map(t => t.n);
+        const adv = w => CLAIM_SYN_ADVERBS.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w));
+        let at;
+        if (f.kind !== 'pred' && /^(?:some|someone|somebody|something|all|every|everyone|everybody|everything|each|any|anyone|anybody|anything|many|most|several)$/.test(toks[0] || '')) at = 0;
+        else if (f.kind !== 'pred' && toks[0] === 'there' && /^(?:is|are|was|were|exists?|existed)$/.test(toks[1] || '')) at = 1;
+        else {
+            const vp = String((f.kind === 'pred' ? f.vpText : f.vp) || '').toLowerCase(), i = vp ? words.toLowerCase().lastIndexOf(vp) : -1;
+            if (i < 0) return null;
+            at = icTokens(words.slice(0, i)).length;
+            while (at < toks.length && adv(toks[at])) at++;
+        }
+        return at < toks.length ? toks.slice(at, at + 3).join(' ') : null;
+    }
     function icPlanRead(step) {
         const P = step.premises;
         if (!Array.isArray(P) || !P.length || P.some(p => !p)) return null;
@@ -29291,7 +30212,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Whole clauses: in the conclusion, or where premises meet.
         clauses.forEach(list => list.forEach(cl => {
             const inC = C && cClauses.find(x => same(cl.form, x.form));
-            if (inC) { cl.role = 'c'; cl.denied = icNeg(cl.form) !== icNeg(inC.form); return; }
+            if (inC) { cl.role = 'c'; cl.denied = !claimSame(cl.form, inC.form); return; }
             if (clauses.some(other => other.some(o => o !== cl && same(cl.form, o.form)))) {
                 cl.role = 'link'; cl.color = colorOf(x => x.form && same(x.form, cl.form), { form: cl.form });
             }
@@ -29320,6 +30241,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }));
         }
         const ownColor = p => p.key ? colorOf(x => x.key === p.key, { key: p.key }) : colorOf(x => x.form && same(x.form, p.form), { form: p.form });
+        // An objection's or a rebuttal's stretch that goes on to its
+        // conclusion: the words in it that deny the box it attacks are red
+        // (r27.104; the user: "Color negations red in green conclusions if
+        // they reject the parent premise/contention") -- as many denials as
+        // it says beyond the box's own, the outermost first -- and, where it
+        // denies the box with a word and no denial ("Pre-linguistic humans
+        // have minds" against "... lack minds"; "true" against "false"), that
+        // word. Not a weak one's, which does not deny the box.
+        const attacked = C && step.attack && !/^weak-/.test(step.kind || '') && step.conclusionText ? parseClaim(step.conclusionText) : null;
+        const boxClauses = attacked ? icClauses(attacked, '', []) : [];
+        // A clause with no denial that denies a box with one ("God exists"
+        // against "God does not exist"): its affirming word (r27.105).
+        const against = cl => {
+            let contra = 0, affirms = false;
+            const rejects = [];
+            boxClauses.forEach(bc => {
+                const denies = claimDenies(cl.form, bc.form);
+                if (denies) contra = Math.max(contra, denials(cl) - denials(bc));
+                if (denies && !denials(cl) && denials(bc)) affirms = true;
+                if (denies || claimOppositeStep(cl.form, { kind: 'not', inner: bc.form }))
+                    icOpposingWords(cl.words, bc.words).forEach(w => { if (rejects.indexOf(w) < 0) rejects.push(w); });
+            });
+            return { contra, rejects, affirm: affirms && !rejects.length ? icAffirmed(cl.form) : null };
+        };
         return clauses.map((list, i) => {
             // A certified step uses every premise: one none of whose parts
             // is found goes on to the conclusion whole.
@@ -29333,7 +30278,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // Not recognized: each part its own color.
                 else if (!C) cls = 'ic-k' + ownColor(p);
                 else cls = 'ic-u';
-                parts.push({ words: p.words, cls, ctx: cl.ctx, contra: (whole ? cl.contra : p.contra) || 0 });
+                const unit = whole ? cl : p, vs = (whole || p.role === 'c') && unit.form && boxClauses.length ? against(unit) : null;
+                parts.push({ words: p.words, cls, ctx: cl.ctx, contra: Math.max((whole ? cl.contra : p.contra) || 0, vs ? vs.contra : 0),
+                    rejects: vs && vs.rejects.length ? vs.rejects : undefined, affirm: vs && vs.affirm ? vs.affirm : undefined });
             }));
             // Valid: what goes on to the conclusion is one stretch -- a
             // compound all of whose parts go on, with the words joining them.
@@ -29346,8 +30293,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const ifs = list.filter(cl => cl.ctx === 'if'), thens = list.filter(cl => cl.ctx === 'then');
                 keep.if = ifs.length > 0 && ifs.every(cl => cl.role === 'c');
                 keep.then = thens.length > 0 && thens.every(cl => cl.role === 'c');
+                // ... or of the later conditions, each with its own "if", where
+                // the first stay behind ("If P, then if Q, then R", with P:
+                // "if Q, then R") (r27.106).
+                const goes = ifs.map(goesOn), j = goes.indexOf(true);
+                keep.lateIf = !keep.if && j > 0 && goes.slice(j).every(Boolean);
             }
-            return { parts, keep, spans };
+            // A stretch that goes on and denies the box attacked as a whole
+            // ("not S1", S1 an if-then; r27.105, the user: "I think "not" in
+            // "not S1" should be red"): its denials beyond the box's, the
+            // outermost first, red.
+            const stretches = [];
+            if (attacked) {
+                const box = denials({ words: icWords(attacked), form: attacked });
+                (whole ? [{ words: icWords(P[i]), form: P[i] }] : []).concat(groupsOf[i].filter(g => g.form && g.to > g.from && list.slice(g.from, g.to).every(goesOn)))
+                    .forEach(g => { const d = denials(g) - box; if (g.words && d > 0 && claimDenies(g.form, attacked)) stretches.push({ words: g.words, contra: d }); });
+            }
+            return { parts, keep, spans, stretches };
         });
     }
     // Words as the check reads them: small letters, contractions as two
@@ -29367,6 +30329,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const out = [];
         for (const m of String(text || '').matchAll(IC_WORD))
             icNorm(m[0]).forEach(n => out.push({ n, s: icStem(n), a: m.index, b: m.index + m[0].length }));
+        // "Fails to fly", which the check reads as "does not fly" (r27.106).
+        out.forEach((t, i) => {
+            const f = { fails: 'does', failed: 'did', fail: 'do' }[t.n];
+            if (f && out[i + 1] && out[i + 1].n === 'to') { t.n = t.s = f; out[i + 1].n = out[i + 1].s = 'not'; }
+        });
         return out;
     }
     // Where a part's words stand among a box's: in order, most of them (the
@@ -29540,6 +30507,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 else if (closes > opens && text[a - 1] === open) { a--; changed = true; }
                 else if (hold && opens === closes && text[a - 1] === open && text[b] === close) { a--; b++; changed = true; }
             }
+            // A single quotation mark, straight or curly, before the stretch
+            // pairs with one that closes a word inside it ("'God exists' is
+            // false": the closing mark is read with its word) (r27.106).
+            if (/['\u2018]/.test(text[a - 1] || '') && !/[\p{L}\p{N}]/u.test(text[a - 2] || '') && /[\p{L}\p{N}]['\u2019](?![\p{L}\p{N}])/u.test(text.slice(a, b))) { a--; changed = true; }
             // A straight double quotation mark pairs by count.
             if (count(text.slice(a, b), '"') % 2 === 1) {
                 if (text[b] === '"') { b++; changed = true; }
@@ -29552,7 +30523,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let c = icContent(rd);
         const cls = new Array(c.text.length).fill('ic-rest');
         const taken = new Array(c.words.length).fill(false);
-        const first = {}, end = {}, contra = [];
+        const first = {}, end = {}, contra = [], rejects = [], affirms = [], ifRuns = [];
         let from = 0;
         plan.parts.forEach(p => {
             const part = icTokens(p.words);
@@ -29562,20 +30533,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             c.words.forEach((w, k) => { if (w.a >= a && w.b <= b) taken[k] = true; });
             for (let i = a; i < b; i++) cls[i] = p.cls;
             if (p.contra) contra.push([a, b, p.contra]);
+            if (p.rejects) rejects.push([a, b, p.rejects]);
+            if (p.affirm) {
+                const at = icTokens(p.affirm), got = at.length ? icAlign(c.words, at, new Array(c.words.length).fill(false), hit[0]) : null;
+                if (got && got[0] >= hit[0] && got[0] <= hit[1] && (c.words[got[0]].n === at[0].n || c.words[got[0]].s === at[0].s)) affirms.push([c.words[got[0]].a, c.words[got[0]].b]);
+            }
             if (p.ctx && first[p.ctx] === undefined) first[p.ctx] = a;
             if (p.ctx) end[p.ctx] = b;
+            if (p.ctx === 'if') ifRuns.push({ a, b, goes: /^ic-c/.test(p.cls) });
             from = hit[1] + 1;
         });
         // A chain of ifs: the "if" before the part that carries on, the "then" before the other.
-        const keepWord = (word, before) => {
+        const keepWord = (word, before, after = 0) => {
             if (before === undefined) return false;
             let last = null;
-            for (const m of c.text.matchAll(new RegExp('\\b' + word + '\\b', 'gi'))) if (m.index < before && cls[m.index] === 'ic-rest') last = m;
+            for (const m of c.text.matchAll(new RegExp('\\b' + word + '\\b', 'gi'))) if (m.index < before && m.index >= after && cls[m.index] === 'ic-rest') last = m;
             if (last) for (let i = last.index; i < last.index + word.length; i++) cls[i] = 'ic-c';
             return !!last;
         };
         const keptIf = plan.keep.if && keepWord('if', first.if);
-        const keptThen = plan.keep.then && keepWord('then', first.then);
+        // The "then" after the last condition: in "If P, then if Q, R" the
+        // only "then" is P's (r27.106).
+        const keptThen = plan.keep.then && keepWord('then', first.then, end.if || 0);
+        // The later conditions' "if", after the first's words (r27.106).
+        if (plan.keep.lateIf) {
+            const j = ifRuns.findIndex(r => r.goes);
+            if (j > 0) keepWord('if', ifRuns[j].a, ifRuns[j - 1].b);
+        }
         // In symbols the arrow is both: "P \u2192 Q" keeps its arrow with the
         // part that carries on, as "If P" or "then Q" would (r27.83).
         if (((plan.keep.if && !keptIf) || (plan.keep.then && !keptThen)) && first.then !== undefined) {
@@ -29592,6 +30576,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!hit) return;
             const [a, b] = icWiden(c.text, c.words[hit[0]].a, c.words[hit[1]].b);
             for (let i = a; i < b; i++) if (cls[i] === 'ic-rest') cls[i] = 'ic-c';
+        });
+        (plan.stretches || []).forEach(st => {
+            const part = icTokens(st.words);
+            const hit = part.length ? icAlign(c.words, part, new Array(c.words.length).fill(false), 0) : null;
+            if (!hit) return;
+            const [a, b] = icWiden(c.text, c.words[hit[0]].a, c.words[hit[1]].b);
+            contra.push([a, b, st.contra]);
         });
         // ... as do the symbols between two pieces of it ("P \u2192 Q" when
         // both go on), which have no words to be found by (r27.83).
@@ -29640,6 +30631,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         units.sort((x, y) => x.at - y.at);
         contra.forEach(([a, b, k]) => units.filter(u => (u.at < b && u.end > a) || (u.binds !== undefined && u.binds >= a && u.binds < b)).slice(0, k)
             .forEach(u => { for (let i = u.at; i < u.end; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg'; }));
+        // ... and a word that opposes the box attacked (r27.104).
+        rejects.forEach(([a, b, words]) => words.forEach(w => {
+            const re = new RegExp('(^|[^\\p{L}\\p{N}])(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+') + ')(?![\\p{L}\\p{N}])', 'giu');
+            for (const m of c.text.slice(a, b).matchAll(re)) {
+                const at = a + m.index + m[1].length;
+                for (let i = at; i < at + m[2].length; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg';
+            }
+        }));
+        affirms.forEach(([a, b]) => { for (let i = a; i < b; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg'; });
         const sig = c.text + '\u0001' + cls.join('|');
         if (rd.dataset.icSig === sig && rd.querySelector('span.ic')) return false;
         if (rd.querySelector('span.ic')) { icClear(rd); c = icContent(rd); }
@@ -29666,6 +30666,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             sg.node.replaceWith(frag);
         });
+        // Pieces of one color side by side, one span: two tints that meet at a
+        // fraction of a pixel leave a faint line between them -- in the light
+        // theme, between words and a premise link (r27.104; the user: "a
+        // strange space in-between green conclusion words and premise links").
+        // A word that denies, in a part with a tint or a line, is a span inside
+        // the part's, so the part is one piece: a space at the edge of a span
+        // can go without the part's line, as between "not" and "S1" (r27.106;
+        // the user: "Still getting this gap"). In a dimmed part it stays a
+        // span of its own, never dimmed.
+        const base = sp => sp.className.replace(/ ic-neg\b/, '');
+        const lined = cls => /\bic-(?:c|k\d)\b/.test(cls);
+        const red = sp => { const w = document.createElement('span'); w.className = 'ic ic-neg'; while (sp.firstChild) w.appendChild(sp.firstChild); return w; };
+        Array.from(rd.querySelectorAll('span.ic')).forEach(sp => {
+            if (!sp.parentNode || sp.closest('.katex') || sp.parentElement.closest('span.ic')) return;
+            const b = base(sp);
+            if (b !== sp.className) {
+                if (!lined(b)) return;
+                sp.appendChild(red(sp));
+                sp.className = b;
+            }
+            for (let next = sp.nextSibling; next && next.nodeType === 1 && next.matches('span.ic') && !next.closest('.katex') && base(next) === b; next = sp.nextSibling) {
+                if (next.className === b) while (next.firstChild) sp.appendChild(next.firstChild);
+                else if (lined(b)) sp.appendChild(red(next));
+                else break;
+                next.remove();
+            }
+        });
         if (rd.querySelector('.katex-html span.ic')) { icMathGaps(rd); icMathFit(rd); }
         rd.dataset.icSig = sig;
         return true;
@@ -29682,7 +30709,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const rules = claimRulesSignature();
                 steps.forEach(step => {
                     if (step.referenceArgument || step.missingPremises || !Array.isArray(step.premiseRefs)) return;
-                    const key = rules + '\u0001' + (step.rule ? step.rule.id : '-') + '\u0001' + (step.attack ? 'A' : 'S') + '\u0001' +
+                    const key = rules + '\u0001' + (step.rule ? step.rule.id : '-') + '\u0001' + (step.attack ? 'A' + (step.kind || '') : 'S') + '\u0001' +
                         (step.premiseTexts || []).join('\u0002') + '\u0001' + (step.conclusionText || '');
                     let plan = icPlans.get(key);
                     if (plan === undefined) {
@@ -30992,13 +32019,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             html += `<button title="Center the text" onclick="ctxAction(()=>setSelectedAlign('center'))" class="${currentAlign==='center'?'ctx-active':''}">Center</button>`;
             html += `<button title="Align the text right" onclick="ctxAction(()=>setSelectedAlign('right'))" class="${currentAlign==='right'?'ctx-active':''}">Right</button>`;
             html += '</div>';
-            html += `<button class="ctx-item" title="Link to another premise in this box's text" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise</button>`;
+            html += `<button class="ctx-item" title="Link to another premise in this box's text (Ctrl+K)" onclick="ctxAction(()=>linkPremiseInto('${nodeId}', ${boxIdx || 0}))">Link a Premise</button>`;
             html += `<button class="ctx-item" title="Link words in this box to a web address" onclick="ctxAction(()=>linkWebAddressInto('${nodeId}', ${boxIdx || 0}))">Link to Web Address</button>`;
             html += '<div class="ctx-divider"></div>';
 
             // --- References: premises elsewhere linked to this box, and the
             // arguments made of them (what its ↗ badge opens) ---
-            html += `<button class="ctx-item" title="Link this box to a premise elsewhere in the map" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference</button>`;
+            html += `<button class="ctx-item" title="Link this box to a premise elsewhere in the map (Shift+R)" onclick="ctxAction(()=>armCrossRefPicking('${nodeId}', ${boxIdx || 0}))">Add Cross-Reference</button>`;
             if (node.type !== 'note') html += `<button class="ctx-item" title="Group linked premises into arguments for or against this box (its ↗ badge opens the same)" onclick="ctxAction(()=>openReferenceArguments('${nodeId}', ${boxIdx || 0}))">Reference Arguments</button>`;
             html += '<div class="ctx-divider"></div>';
 
@@ -31518,6 +32545,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (code === 'KeyZ') { if (!isTyping) { if(e.shiftKey)redo();else undo(); } return; }
             if (code === 'KeyY') { if (!isTyping) redo(); return; }
+            // Ctrl+K, as Word's (r27.102; r27.104, the user: "Ctrl + whatever
+            // is most intuitive and available"): a premise linked at the
+            // caret, while typing in a box; else into the selected box, where
+            // its caret was, as Link a Premise on its menu does.
+            if (code === 'KeyK' && !e.shiftKey && !e.altKey) {
+                e.preventDefault();
+                const ed = document.activeElement, box = boxEditor.isOpen(ed) && ed.closest && ed.closest('.node[data-node-id]');
+                if (box) { startBoxLinkPicking(box.dataset.nodeId, Number(box.dataset.nodeIdx) || 0, ed.selectionStart, ed.selectionEnd); return; }
+                if (reviewMode) return;
+                const first = selectedIds.length ? parseSel(selectedIds[0]) : null;
+                if (first) linkPremiseInto(first.id, first.hasBox ? first.box : 0);
+                else showHintToast('Select a box, or type in one, then press Ctrl+K to link a premise.', true);
+                return;
+            }
             if (code === 'KeyX' && !isTyping) { cutNode(); return; }
             if (code === 'KeyC' && !isTyping) { copyNode(); return; }
             if (code === 'KeyV' && !isTyping) { e.preventDefault(); if (e.shiftKey) pasteAsCoPremise(); else pasteNode(); return; }
@@ -31592,6 +32633,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (code === 'KeyS' || key === 's') { if (!e.repeat) toggleSelectedArgumentType('s'); return; }
             if (code === 'KeyO' || key === 'o') { if (!e.repeat) toggleSelectedArgumentType('o'); return; }
+            // Shift+R: cross-reference the selected box (r27.102); R, Rebuttal.
+            if ((code === 'KeyR' || key === 'r') && e.shiftKey) {
+                const first = selectedIds.length ? parseSel(selectedIds[0]) : null;
+                if (first) armCrossRefPicking(first.id, first.hasBox ? first.box : 0);
+                else showHintToast('Select a box, then press Shift+R to cross-reference it.', true);
+                return;
+            }
             if (code === 'KeyR' || key === 'r') { changeSelectedTypes('rebuttal'); return; }
             if (code === 'KeyW' || key === 'w') { if (!e.repeat) toggleSelectedArgumentType('w'); return; }   // toggle the selected attack's strength
             if (code === 'KeyN' || key === 'n') { changeSelectedTypes('note'); return; }

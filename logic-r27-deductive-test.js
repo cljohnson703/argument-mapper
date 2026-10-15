@@ -396,9 +396,10 @@ const MAP = [
             'idempotence', 'a premise not established', 'a false premise', 'conclusion not established',
             'an unsound argument', 'a rule under a quantifier'];
         // The optional ones, kept apart: the word-meaning rules (r27.85: ab
-        // esse ad posse beside "-able"), double-negation replacement and its
-        // "anywhere" partner, the zero-premise shortcuts, and the catch-alls.
-        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+        // esse ad posse beside "-able"; r27.103: contraries and
+        // contradictories), double-negation replacement and its "anywhere"
+        // partner, the zero-premise shortcuts, and the catch-alls.
+        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
             'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
             'instances up to the replacements'];
         const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);

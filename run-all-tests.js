@@ -102,6 +102,10 @@ const SUITES = [
     'locutions-r27-test.js',
     'hints-r27-test.js',
     'multiselect-r27-test.js',
+    'modal-r27-test.js',
+    'shortcuts-r27-link-test.js',
+    'picture-r27-test.js',
+    'opposites-r27-test.js',
     'collab-r26-firebase-test.js',
 ];
 

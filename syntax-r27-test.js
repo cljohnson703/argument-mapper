@@ -568,6 +568,51 @@ console.log('\n-- the pronoun analysis --');
         '"they" is "the price increases" (it had no referent), "they" is "the Beatles" (not "Beatles" too), and "it" after "the Senate closed" is asked about', J([price, beatles, senate]));
 }
 
+console.log('\n-- adjectives before a plural (r27.102) --');
+{
+    // The user, 2026-10-14: "For some reason, "Pre-linguistic humans don't
+    // lack minds" is not considered the negation of "Pre-linguistic humans
+    // lack minds"" -- the second had "humans" as its verb.
+    const tags = ev(`var out = {}; ['pre-linguistic', 'post-modern', 'non-human', 'self-esteem', 'x-ray'].forEach(function (w) { out[w] = !!claimSynWord(w).adj; }); return out;`);
+    ok(J(tags) === J({ 'pre-linguistic': true, 'post-modern': true, 'non-human': true, 'self-esteem': false, 'x-ray': false }),
+        'a hyphenated adjective is one: its last part one ("non-human"), or a prefix on a word that ends as one ("pre-linguistic"); "self-esteem" is not', J(tags));
+    const cases = [
+        ['Pre-linguistic humans lack minds.', '[pre-linguistic humans] lack minds'],
+        ['Conscious humans lack minds.', '[conscious humans] lack minds'],
+        ['The conscious humans lack minds.', '[the conscious humans] lack minds'],
+        ['Post-modern theories reject truth.', '[post-modern theories] reject truth'],
+        ['Human beings have rights.', '[human beings] have rights'],
+        ['The counter-argument fails.', '[the counter-argument] fails'],
+    ];
+    const got = cases.map(([t]) => split(t));
+    ok(got.every((g, i) => g === cases[i][1]), 'an -s word after adjectives alone is the plural noun they go with, where a verb follows it', J(got));
+    const denies = ev(`var a = parseClaim('Pre-linguistic humans lack minds.'), b = parseClaim("Pre-linguistic humans don't lack minds.");
+        return [claimDenies(a, b), claimDenies(b, a)];`);
+    ok(J(denies) === J([true, true]), '"Pre-linguistic humans don\'t lack minds" denies "Pre-linguistic humans lack minds", and the other way', J(denies));
+    const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Pre-linguistic humans lack minds.'], collapsed: [], children: [{ id: 'O', type: 'objection',
+        texts: ["If babies think, then pre-linguistic humans don't lack minds.", 'Babies think.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null;`);
+    ok(step === 'modus ponens', 'so an objection that gives the denial is certified', J(step));
+    // Found beside it: "Free will exists" had been "[free] will exists".
+    const will = [
+        ['Free will exists.', '[free will] exists'],
+        ['Free will is an illusion.', '[free will] is an illusion'],
+        ['Free will really exists.', '[free will] really exists'],
+        ['Might makes right.', '[might] makes right'],
+        ['The can is empty.', '[the can] is empty'],
+        ['Mary will exist.', '[mary] will exist'],
+        ['Mary will not exist.', '[mary] will not exist'],
+        ['Poe can fly.', '[poe] can fly'],
+        ['We will miss the bus.', '[we] will miss the bus'],
+    ];
+    const wgot = will.map(([t]) => split(t));
+    ok(wgot.every((g, i) => g === will[i][1]), '"will", "can", "might" before a finite verb ("will exists", "can is") are nouns; before a plain one, helping verbs, as before', J(wgot));
+    const mt = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Free will does not exist.'], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ['If free will exists, then we are responsible.', 'We are not responsible.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, why: (st.why && st.why.text || '') } : null;`);
+    ok(mt && mt.rule === 'modus tollens', '"If free will exists, then we are responsible", "we are not responsible": "free will does not exist", by modus tollens (it had been "Free will not exists")', J(mt));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

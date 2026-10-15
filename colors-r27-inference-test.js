@@ -105,9 +105,21 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
     const val = js => JSON.parse(run('JSON.stringify(' + js + ')'));
     const CSS = run(`Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\\n')`);
     run(`window.__load = function (trees) { state.trees = trees; ensureCollabFields(state); selectedIds = []; render(); };
+        // A red word inside a part's span (r27.106) is listed as a piece of the
+        // part with "ic-neg" added, as when it was a span beside the others.
         window.__parts = function (j) {
             const rd = document.querySelector('.node[data-node-id="A"][data-node-idx="' + j + '"] .rendered-text');
-            return Array.prototype.map.call(rd.querySelectorAll('span.ic'), s => s.className.replace(/^ic /, '') + ': ' + s.textContent);
+            const out = [];
+            rd.querySelectorAll('span.ic').forEach(s => {
+                if (s.parentElement.closest('span.ic')) return;
+                const cls = s.className.replace(/^ic /, '');
+                let run = null;
+                s.childNodes.forEach(n => {
+                    const c = n.nodeType === 1 && n.matches('span.ic-neg') ? cls + ' ic-neg' : cls;
+                    if (run && run.c === c) run.t += n.textContent; else out.push(run = { c, t: n.textContent });
+                });
+            });
+            return out.map(r => r.c + ': ' + r.t);
         };
         window.__step = function (trees) { __load(trees); if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
             const st = collectDeductiveSteps(state.trees, null)[0];
@@ -202,8 +214,12 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(J(bars.boxes[0]) === J(['ic-k0: All humans', 'ic-rest:  are ', 'ic-c: mortal']) && J(bars.boxes[1]) === J(['ic-c: All Greeks', 'ic-rest:  are ', 'ic-k0: humans']),
             'a syllogism: the middle term one color in both premises', J(bars));
         const obj = paint(['If Poe is a crow, then Poe is not a raven', 'Poe is a crow'], 'Poe is a raven', 'objection');
-        ok(obj.rule === 'modus ponens' && J(runs(obj.boxes[0], /^ic-c/)) === J(['Poe is not a raven']) && !obj.boxes[0].some(p => /ic-cn|ic-neg/.test(p)),
-            'an objection: what it concludes is the denial of its box, so "Poe is not a raven" goes on plain -- its "not" denying no premise, not red (r27.91)', J(obj));
+        // r27.104 (the user: "Color negations red in green conclusions if they
+        // reject the parent premise/contention"): its "not" denies the box it
+        // attacks, so it is red.
+        ok(obj.rule === 'modus ponens' && runs(obj.boxes[0], /^ic-c/).join(' ') === 'Poe is not a raven' && !obj.boxes[0].some(p => /ic-cn/.test(p)) &&
+            J(runs(obj.boxes[0], /ic-neg/)) === J(['is not']),
+            'an objection: what it concludes is the denial of its box, so "Poe is not a raven" goes on -- its "is not" red, as it denies the box (r27.104)', J(obj));
         const mtn = paint(["If the alarm didn't go off, then the dog was quiet", 'The dog was not quiet'], 'The alarm went off');
         ok(runs(mtn.boxes[0], /ic-cn/).join(' ') === "the alarm didn't go off", 'a denied part the conclusion affirms is underlined too', J(mtn));
         const ac = paint(['If it rains, then the ground is wet', 'The ground is wet'], 'It rains');
@@ -277,8 +293,14 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
 
     console.log('\n-- (5) the look --');
     {
-        const dark = ['#5fd3e8', '#f59bc4', '#c3b1ff', '#ffd479', '#ffb38a', '#8fd0ff'];
-        ok(dark.every((c, k) => new RegExp('\\.rendered-text \\.ic-k' + k + '\\s*\\{\\s*color:\\s*' + c + ';\\s*\\}').test(CSS)), 'six colors on dark boxes');
+        // r27.107 (the user, 2026-10-15: "In dark mode, only the text is
+        // colored, so, they're more difficult to associate with the correct
+        // colors"; "the tints are a little difficult to distinguish
+        // between"): dark boxes have tints too, the light boxes' hues,
+        // stronger.
+        const dark = [['#5fd3e8', '0,170,205'], ['#f59bc4', '225,60,140'], ['#c3b1ff', '110,80,230'], ['#ffd479', '230,170,0'], ['#ffb38a', '240,120,60'], ['#8fd0ff', '40,130,230']];
+        ok(dark.every(([c, t], k) => new RegExp('\\n    \\.rendered-text \\.ic-k' + k + '\\s*\\{\\s*color:\\s*' + c + ';\\s*background:\\s*rgba\\(' + t + ',\\.(?:2[5-9]|3\\d?)\\)').test(CSS)),
+            'six colors on dark boxes, each with a tint of the light boxes\' hue behind it, stronger (r27.107)');
         const light = [['#006b80', '0,170,205'], ['#a8235f', '225,60,140'], ['#5536b8', '110,80,230'], ['#7a5200', '230,170,0'], ['#a6430f', '240,120,60'], ['#1f5fa0', '40,130,230']];
         ok(light.every(([c, t], k) => new RegExp('body\\.nodes-light \\.rendered-text \\.ic-k' + k + '\\s*\\{\\s*color:\\s*' + c + ';\\s*background:\\s*rgba\\(' + t + ',\\.\\d+\\)').test(CSS)),
             'and on light boxes darker ones, each with a pale tint of itself behind the words');
@@ -298,7 +320,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         const v2 = val(`(function () {
             const look = () => {
                 const cs = sel => { const x = document.querySelector('.node[data-node-id="A"] .rendered-text ' + sel); if (!x) return null; const c = getComputedStyle(x); return c.color + ' / ' + c.opacity + ' / ' + c.backgroundColor; };
-                return { c: cs('span.ic-c:not(.ic-neg)'), cneg: cs('span.ic-c.ic-neg'), rest: cs('span.ic-rest:not(.ic-neg)'), k0: cs('span.ic-k0:not(.ic-neg)') };
+                return { c: cs('span.ic-c:not(.ic-neg)'), cneg: cs('span.ic-c > span.ic-neg'), rest: cs('span.ic-rest:not(.ic-neg)'), k0: cs('span.ic-k0:not(.ic-neg)') };
             };
             if (inferenceColorsOn) { inferenceColorsOn = false; syncInferenceColorsButton(); }
             cycleInferenceColors(); cycleInferenceColors();
@@ -310,16 +332,18 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             const parts = __parts(0);
             cycleInferenceColors(); cycleInferenceColors();   // off, then colors 1 again for what follows
             return { version: inferenceColorsVersion, dark, light, parts }; })()`);
-        ok(v2.dark.c === 'rgb(111, 191, 139) / 1 / rgba(0, 0, 0, 0)' && / \/ 1 \/ /.test(v2.dark.rest || '') && /^rgb\(95, 211, 232\) \/ 1 \//.test(v2.dark.k0 || ''),
-            'colors 2: what goes on to the conclusion green (#6fbf8b), the words around it not dimmed, meetings in their colors', J(v2.dark));
+        // r27.107 (the user: "hard to tell the blue and green highlights
+        // apart in dark mode when using premise links"): a yellow green.
+        ok(v2.dark.c === 'rgb(127, 207, 151) / 1 / rgba(120, 190, 40, 0.22)' && / \/ 1 \/ /.test(v2.dark.rest || '') && /^rgb\(95, 211, 232\) \/ 1 \/ rgba\(0, 170, 205, 0\.3\)$/.test(v2.dark.k0 || ''),
+            'colors 2: what goes on to the conclusion green (#7fcf97) on a yellow-green tint, apart from teal; the words around it not dimmed, meetings in their colors on their tints (r27.107)', J(v2.dark));
         const red2 = val(`(function () {
             const cs = sel => { const x = document.querySelector('.node[data-node-id="A"] .rendered-text ' + sel); if (!x) return null; const c = getComputedStyle(x); return c.color + ' / ' + c.opacity + ' / ' + c.backgroundColor; };
             if (inferenceColorsOn) { inferenceColorsOn = false; syncInferenceColorsButton(); }
             cycleInferenceColors(); cycleInferenceColors();
             __load(${J(step(['The dog did not bark', 'If the dog barked, then the alarm went off'], 'The dog did not bark, and if the dog barked, then the alarm went off'))});
-            const dark = cs('span.ic-c.ic-neg');
+            const dark = cs('span.ic-c > span.ic-neg');
             document.body.classList.add('nodes-light'); refreshDerivationTags();
-            const light = cs('span.ic-c.ic-neg');
+            const light = cs('span.ic-c > span.ic-neg');
             document.body.classList.remove('nodes-light');
             cycleInferenceColors(); cycleInferenceColors();   // off, then colors 1 again for what follows
             return { dark, light }; })()`);
@@ -391,8 +415,8 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'a claim read as two whose pieces have no words of their own is one part, colored (it went uncolored)', J(kind));
         const rule = sel => (CSS.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}')) || [])[1] || '';
         const under = rule('body.ic-v2 .rendered-text .ic-c'), underLight = rule('body.ic-v2.nodes-light .rendered-text .ic-c');
-        ok(/color:\s*#6fbf8b/.test(under) && /text-decoration-line:\s*underline/.test(under) && /text-decoration-style:\s*solid/.test(under) &&
-            /text-decoration-color:\s*#6fbf8b/.test(under) && /text-decoration-thickness:\s*1px/.test(under) && /text-underline-offset:\s*3px/.test(under),
+        ok(/color:\s*#7fcf97/.test(under) && /text-decoration-line:\s*underline/.test(under) && /text-decoration-style:\s*solid/.test(under) &&
+            /text-decoration-color:\s*#7fcf97/.test(under) && /text-decoration-thickness:\s*1px/.test(under) && /text-underline-offset:\s*3px/.test(under),
             'colors 2: the stretch green and underlined in its green, 1px, 3px below the words (a red word in it keeps the green line)', under);
         ok(/color:\s*#17803a/.test(underLight) && /text-decoration-color:\s*#17803a/.test(underLight) && /rgba\(23,128,58,\.12\)/.test(underLight),
             'on light boxes the darker green, its tint and its line', underLight);
@@ -432,9 +456,10 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         const tint = val(`(function () {
             document.body.classList.add('nodes-light');
             __step(${J(step(['P → Q', '~Q'], '~P'))});
+            // The "~" red, inside its part's span, whose tint is behind it (r27.106).
             const x = document.querySelector('.node[data-node-id="A"][data-node-idx="1"] .rendered-text span.ic-neg');
-            const c = x && getComputedStyle(x); document.body.classList.remove('nodes-light');
-            return c ? c.color + ' / ' + c.backgroundColor : null; })()`);
+            const c = x && getComputedStyle(x), o = x && getComputedStyle(x.parentElement.closest('span.ic') || x); document.body.classList.remove('nodes-light');
+            return c ? c.color + ' / ' + o.backgroundColor : null; })()`);
         ok(tint === 'rgb(198, 40, 40) / rgba(0, 170, 205, 0.17)', 'on light boxes the tint of its part runs behind the "~" too, the "~" red', tint);
         ok(under.rule === 'modus ponens' && J(under.boxes[0]) === J(['ic-k0: P', 'ic-rest:  → ', 'ic-c: Q']), 'an underlined letter is the letter: the step is valid and colored', J(under));
         const bold = paint(['If **it rains**, then the ground is wet', 'It rains'], 'The ground is wet');
@@ -526,10 +551,168 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(J(sub) === J(['0.13889em', '0.05em', '0.2778em']), 'a sub- or superscript and what is next to it keep their spacing', J(sub));
         const css = CSS.replace(/\s+/g, ' ');
         ok(/span\.ic\.ic-c\[data-ic-fit\]:not\(\.ic-cn\) \{ text-decoration-line: none; position: relative; \}/.test(css) &&
-            /span\.ic\.ic-c\[data-ic-fit\]:not\(\.ic-cn\)::after \{ content: ''; position: absolute; left: 0; right: 0; top: calc\(var\(--ic-base\) \+ 3px\); height: 1px; background: #6fbf8b;/.test(css) &&
+            /span\.ic\.ic-c\[data-ic-fit\]:not\(\.ic-cn\)::after \{ content: ''; position: absolute; left: 0; right: 0; top: calc\(var\(--ic-base\) \+ 3px\); height: 1px; background: #7fcf97;/.test(css) &&
             /body\.ic-v2\.nodes-light \.rendered-text span\.ic\.ic-c\[data-ic-fit\]:not\(\.ic-cn\)::after \{ background: #17803a; \}/.test(css) &&
             /\[data-ic-jl\]:not\(\.ic-cn\)::after \{ left: -\.5px; \}/.test(css) && /\[data-ic-jr\]:not\(\.ic-cn\)::after \{ right: -\.5px; \}/.test(css),
             'colors 2\'s line under math: a 1px strip where the underline would be (3px below the baseline), in its green, reaching half a pixel into a neighbor it goes on into');
+    }
+
+    console.log('\n-- (r27.102, r27.104) premise links in parts; what an objection concludes --');
+    {
+        // The user, 2026-10-14: "In color mode, highlighting on linked
+        // premises doesn't work as well as you'd expect"; then (r27.104):
+        // "Keep blue lines underneath links ... lower green underlines to the
+        // same position as red dash underlines so that regular underlines
+        // and links can keep their underline positions without overlapping.
+        // Keep links blue in all color modes."
+        ok(/\.rendered-text span\.ic a\.node-link, \.rendered-text span\.ic u \{ text-underline-offset: auto; \}/.test(CSS) && !/a\.box-link \{ color: inherit/.test(CSS) &&
+            /\.rendered-text \.node-link \{\s*color: var\(--color-selected\); text-decoration: underline;/.test(CSS),
+            'a link in a part stays blue, underlined where links are; so do words underlined; the part\'s line runs below them, where the red dashes do');
+        const obj = val(`(function () {
+            __load([{ id: 'M', type: 'contention', texts: ['Physicalism is false.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'A', type: 'objection', texts: ['Physics is complete.', 'If [O1](#box:A), then it is not the case that [M1](#box:M).'], collapsed: [], children: [] }] }]);
+            if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
+            const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
+            const rd = document.querySelector('.node[data-node-id="A"][data-node-idx="1"] .rendered-text');
+            return { rule: st && st.rule ? st.rule.name : null, matched: !!st && !!st.conclusion && certifyStep(st.premises, [st.conclusion], true) !== null,
+                links: Array.from(rd.querySelectorAll('a.box-link')).map(a => a.parentElement.className + ': ' + a.parentElement.textContent), parts: __parts(1) }; })()`);
+        ok(obj.rule === 'modus ponens' && obj.matched, 'an objection\'s step is colored against the denial of its box that the check matched', J(obj));
+        ok(runs(obj.parts, /^ic-c/).join(' ') === 'it is not the case that M1' && !obj.parts.some(p => /ic-u|ic-cn/.test(p)),
+            'so "it is not the case that M1" goes on to it -- not dimmed as unused, not underlined as denied -- its link with it', J(obj));
+        ok(J(runs(obj.parts, /ic-neg/)) === J(['it is not the case that']),
+            '"it is not the case that", which denies the box it attacks, red (r27.104)', J(obj.parts));
+        ok(J(obj.links) === J(['ic ic-k0: O1', 'ic ic-c: it is not the case that M1']),
+            'a link and the words beside it of its color are one piece, the red words in it too: two tints that meet leave no line between them (r27.104, r27.106)', J(obj.links));
+        const pre = paint(["If babies think, then pre-linguistic humans don't lack minds.", 'Babies think.'], 'Pre-linguistic humans lack minds.', 'objection');
+        ok(pre.rule === 'modus ponens' && runs(pre.boxes[0], /^ic-c/).join(' ') === "pre-linguistic humans don't lack minds" && !pre.boxes[0].some(p => /ic-cn/.test(p)) &&
+            J(runs(pre.boxes[0], /ic-neg/)) === J(["don't"]),
+            'a part that says what the conclusion says goes on plain, however its denial is worded -- the denial red', J(pre));
+        const mt = paint(['If zombies are possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not possible.');
+        ok(mt.rule === 'modus tollens' && J(runs(mt.boxes[0], /ic-cn/)) === J(['zombies are possible']), 'one that the conclusion denies is still underlined as denied', J(mt));
+        // No denial of its own: the word that opposes the box's (r27.104).
+        const have = paint(['Pre-linguistic humans have minds.'], 'Pre-linguistic humans lack minds.', 'objection');
+        const truth = paint(['If physics is complete, then physicalism is true.', 'Physics is complete.'], 'Physicalism is false.', 'objection');
+        const sad = paint(['Mary is sad.'], 'Mary is happy.', 'objection');
+        ok(J(runs(have.boxes[0], /ic-neg/)) === J(['have']) && J(runs(truth.boxes[0], /ic-neg/)) === J(['true']) && J(runs(sad.boxes[0], /ic-neg/)) === J(['sad']),
+            'denying the box with a word, no denial: that word red -- "have" against "lack", "true" against "false", "sad" against "happy"', J([have, truth, sad]));
+        const weak = paint(['If physics is complete, then it is not established that physicalism is false.', 'Physics is complete.'], 'Physicalism is false.', 'weak-objection');
+        const support = paint(['If zombies are possible, then it is not the case that physicalism is true.', 'Zombies are possible.'], 'It is not the case that physicalism is true.');
+        ok(!weak.boxes[0].some(p => /ic-neg/.test(p)) && !support.boxes[0].some(p => /ic-neg/.test(p)),
+            'not a weak objection\'s, which does not deny the box; nor a support\'s', J([weak, support]));
+        const sameWords = ['If physics is complete, then physicalism is true.', 'Physics is complete.'];
+        const strong = paint(sameWords, 'Physicalism is false.', 'objection'), weakSame = paint(sameWords, 'Physicalism is false.', 'weak-objection');
+        ok(strong.boxes[0].some(p => /ic-neg/.test(p)) && weakSame.rule && !weakSame.boxes[0].some(p => /ic-neg/.test(p)),
+            'the same boxes as a weak objection, after as an objection: told apart', J([strong, weakSame]));
+    }
+
+    console.log('\n-- (r27.105) a denial of the box attacked, however worded; a claim without one against a box with one --');
+    {
+        // The user, 2026-10-14: "I think "not" in "not S1" should be red";
+        // "We should probably give the same treatment to all the negation
+        // locutions ("it's not the case that", "is not the case", "is
+        // false", "is false that", etc.)"; and "What do you suggest when we
+        // have a negated parent and a non-negated child?"
+        const attack = second => val(`(function () {
+            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine can think.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", ${J(second)}], collapsed: [], children: [] }] }] }]);
+            if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
+            const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
+            return { rule: st && st.rule ? st.rule.name : null, parts: __parts(1) }; })()`);
+        const wordings = { 'not': 'not [S1](#box:S)', "it's not the case that": "it's not the case that [S1](#box:S)",
+            'it is false that': 'it is false that [S1](#box:S)', "it isn't true that": "it isn't true that [S1](#box:S)",
+            'is false': '[S1](#box:S) is false', 'is not the case': '[S1](#box:S) is not the case',
+            'is untrue': '[S1](#box:S) is untrue', "isn't true": "[S1](#box:S) isn't true" };
+        const linked = Object.keys(wordings).map(k => {
+            const r = attack("If computers can't be minds, then " + wordings[k] + '.');
+            return { k, rule: r.rule, red: runs(r.parts, /ic-neg/), green: runs(r.parts, /^ic-c/).join(' ') };
+        });
+        ok(linked.every(g => g.rule === 'modus ponens' && J(g.red) === J([g.k]) && g.green.includes('S1') && g.green.includes(g.k)),
+            'the box denied whole, the denial before its link or after it: the denial red, the link green with it ("not" in "not S1" had stayed green)', J(linked));
+        // Found by the box's own words, where it is read with a pronoun for
+        // its referent ("identifying it", read as "identifying the computer").
+        const said = val(`(function () {
+            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer is able to fool the investigator into identifying it as human, then the machine can think.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", "If computers can't be minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
+            if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
+            const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
+            return { stretches: icPlan(st)[1].stretches.map(x => x.words), parts: __parts(1) }; })()`);
+        ok(said.stretches.length === 1 && /identifying it as human/.test(said.stretches[0]) && J(runs(said.parts, /ic-neg/)) === J(['not']),
+            'the stretch is found by the box\'s own words -- "identifying it", which is read as "identifying the computer"', J(said));
+        const written = [["it's not the case that God exists", "it's not the case that"], ["'God exists' is false", 'is false'],
+            ['the proposition that God exists is false', 'is false'], ['it is untrue that God exists', 'it is untrue that']]
+            .map(([t, want]) => { const r = paint(['If physics is complete, then ' + t + '.', 'Physics is complete.'], 'God exists.', 'objection');
+                return { t, want, rule: r.rule, red: runs(r.boxes[0], /ic-neg/) }; });
+        ok(written.every(x => x.rule === 'modus ponens' && J(x.red) === J([x.want])), 'written out, each wording is one denial, red whole: "it\'s not the case that", not its "not" alone', J(written));
+        const mt = paint(['If zombies are possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not possible.');
+        ok(mt.rule === 'modus tollens' && J(runs(mt.boxes[1], /ic-neg/)) === J(['is not']) && !mt.boxes[0].some(p => /ic-neg/.test(p)),
+            '"is not false" is two denials, "is false" one: the outer one red, "is not"', J(mt));
+        const plain = [['God exists', 'God does not exist.', 'exists'], ['some ravens are white', 'No ravens are white.', 'some'],
+            ['there is a God', 'There is no God.', 'is'], ['Socrates is mortal', 'Socrates is not mortal.', 'is'],
+            ['computers can think', "Computers can't think.", 'can'], ['all ravens are black', 'Not all ravens are black.', 'all']]
+            .map(([t, box, want]) => { const r = paint(['If physics is complete, then ' + t + '.', 'Physics is complete.'], box, 'objection');
+                return { t, want, rule: r.rule, red: runs(r.boxes[0], /ic-neg/) }; });
+        ok(plain.every(x => x.rule === 'modus ponens' && J(x.red) === J([x.want])),
+            'a claim with no denial against a box with one: the word stressed in saying it back is red -- its verb, the first word of what it says, or its quantifier', J(plain));
+        const both = paint(['If physics is complete, then it rains and it snows.', 'Physics is complete.'], 'It is not the case that both it rains and it snows.', 'objection');
+        const lack = paint(['If babies think, then pre-linguistic humans lack minds.', 'Babies think.'], "Pre-linguistic humans don't lack minds.", 'objection');
+        ok(both.rule === 'modus ponens' && !both.boxes[0].some(p => /ic-neg/.test(p)) && lack.rule === 'modus ponens' && J(runs(lack.boxes[0], /ic-neg/)) === J(['lack']),
+            'nothing in a compound ("it rains and it snows" against its denial); "lack" against "don\'t lack", which has no word against it', J([both, lack]));
+    }
+
+    console.log('\n-- (r27.106) a part one piece with its red words; a later condition\'s "if"; quotation marks --');
+    {
+        // The user, 2026-10-14: "Still getting this gap" -- the green line
+        // broken at the space between a red "not" and the link "S1" -- and, of
+        // the "if" of "if it rains, then the game is off" left uncolored:
+        // "Fix both."
+        const piece = val(`(function () {
+            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine can think.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", "If computers can't be minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
+            if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
+            const rd = document.querySelector('.node[data-node-id="A"][data-node-idx="1"] .rendered-text');
+            const red = rd.querySelector('span.ic-neg'), part = red && red.parentElement;
+            return { red: red && red.className + ': ' + red.textContent, part: part && part.className + ': ' + part.textContent, link: !!part && !!part.querySelector('a.box-link') }; })()`);
+        ok(piece.red === 'ic ic-neg: not' && piece.part === 'ic ic-c: not S1' && piece.link,
+            'a red word is a span inside its part\'s: "not S1" is one piece, its line and tint unbroken at the space between the red "not" and the link', J(piece));
+        const dim = val(`(function () {
+            const rd = document.createElement('div'); rd.className = 'rendered-text'; rd.textContent = 'The dog did not bark.';
+            document.body.appendChild(rd);
+            icPaint(rd, { parts: [{ words: 'the dog did not bark', cls: 'ic-u', contra: 1 }], keep: {}, spans: [] });
+            const out = Array.from(rd.querySelectorAll('span.ic')).map(s => s.className + (s.parentElement.closest('span.ic') ? ' (inside)' : '') + ': ' + s.textContent);
+            rd.remove(); return out; })()`);
+        ok(J(dim) === J(['ic ic-u: The dog ', 'ic ic-u ic-neg: did not', 'ic ic-u:  bark', 'ic ic-rest: .']),
+            'in a dimmed part a red word stays a span of its own, so that it is never dimmed', J(dim));
+        const late = paint(['If physics is complete, then if it rains, then the game is off.', 'Physics is complete.'], 'It is false that if it rains, then the game is off.', 'objection');
+        const lateNoThen = paint(['If physics is complete, then if it rains, the game is off.', 'Physics is complete.'], 'It is false that if it rains, the game is off.', 'objection');
+        ok(late.rule === 'modus ponens' && runs(late.boxes[0], /^ic-c/).join(' ') === 'if it rains, then the game is off' &&
+            lateNoThen.rule === 'modus ponens' && runs(lateNoThen.boxes[0], /^ic-c/).join(' ') === 'if it rains, the game is off',
+            'a later condition that goes on alone keeps its "if"; the "then" before it, the first condition\'s, does not go on', J([late, lateNoThen]));
+        const quoted = ["'God exists' is false", '‘God exists’ is false'].map(t => paint(['If physics is complete, then ' + t + '.', 'Physics is complete.'], 'God exists.', 'objection'));
+        ok(quoted.every((q, i) => q.rule === 'modus ponens' && runs(q.boxes[0], /^ic-c/).join(' ') === (i ? '‘God exists’ is false' : "'God exists' is false")),
+            'a single quotation mark, straight or curly, goes on with the words it opens, as the one that closes them does', J(quoted));
+        const really = paint(['If physics is complete, then God really exists.', 'Physics is complete.'], 'God does not exist.', 'objection');
+        ok(really.rule === 'modus ponens' && runs(really.boxes[0], /^ic-c/).join(' ') === 'God really exists' && J(runs(really.boxes[0], /ic-neg/)) === J(['exists']),
+            '"God really exists" against "God does not exist": certified, "really" in the green, "exists" red', J(really));
+        const fails = paint(['If Poe is a raven, then Poe flies.', 'Poe fails to fly.'], 'Poe is not a raven.');
+        ok(fails.rule === 'modus tollens' && J(runs(fails.boxes[1], /ic-neg/)) === J(['fails to']),
+            '"Poe fails to fly", read as "Poe does not fly", denies "Poe flies": "fails to" red', J(fails));
+    }
+
+    console.log('\n-- (r27.107) a premise linked into another box of its own step --');
+    {
+        // The user, 2026-10-15: with the antecedent the link O1, "the 'not'
+        // in O2 doesn't turn red, and the conclusion doesn't validate".
+        const o2 = val(`(function () {
+            __load([{ id: 'M', type: 'contention', texts: ['If the computer is able to fool the investigator into identifying it as human approximately as often as the woman was able to fool the investigator into identifying her as a man, then we should conclude that the machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'A', type: 'objection', texts: ["Computers can't be minds.", 'If [O1](#box:A), then not [M1](#box:M).'], collapsed: [], children: [] }] }]);
+            if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
+            const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
+            return { tag: st ? deductiveStepTagText(st) : null, parts: __parts(1) }; })()`);
+        ok(o2.tag === '✓ modus ponens' && J(runs(o2.parts, /ic-neg/)) === J(['not']) && runs(o2.parts, /^ic-c/).join(' ') === 'not M1',
+            '"If O1, then not M1", O1 the box beside it: certified, "not M1" green, "not" red', J(o2));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

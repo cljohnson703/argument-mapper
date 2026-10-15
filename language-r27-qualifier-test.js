@@ -236,6 +236,45 @@ try {
             'and not their look-alikes: affirming a disjunct; "the ravens" (which ravens?)');
     }
 
+    console.log('\n-- "really" and "truly" before the verb --');
+    {
+        // r27.106 (the user, 2026-10-14, of "Socrates really is mortal" not
+        // read as "Socrates is mortal": "Fix both"): before the verb they
+        // stress the claim, as "indeed" does.
+        const pairs = [['Socrates really is mortal.', 'Socrates is mortal.'], ['God really exists.', 'God exists.'], ['God does really exist.', 'God exists.'],
+            ['Socrates truly is wise.', 'Socrates is wise.'], ['All ravens really are black.', 'All ravens are black.'], ['Computers can really think.', 'Computers can think.']];
+        const apart = pairs.filter(([a, b]) => !same(a, b));
+        ok(J(apart) === '[]', '"really" and "truly" before the verb stress the claim: "God really exists" is "God exists", "Socrates truly is wise" is "Socrates is wise"', J(apart));
+        const kept = [['Socrates is really mortal.', 'Socrates is mortal.'], ['God does not really exist.', 'God does not exist.'],
+            ['The really old man is mortal.', 'The old man is mortal.'], ['Socrates thinks really hard.', 'Socrates thinks hard.']].filter(([a, b]) => same(a, b));
+        ok(J(kept) === '[]', 'not after "is" ("is really tall" may be "is very tall"), nor after "not" ("not really" may hedge), nor before an adjective or after the verb', J(kept));
+        ok(step(['If physics is complete, then God really exists.', 'Physics is complete.'], 'God does not exist.', 'objection').rule === 'modus ponens',
+            'so "God really exists" denies "God does not exist": modus ponens');
+        // Read again without the word, the claim had asked which "can" twice,
+        // once of "Computers also".
+        const asked = ['Computers also can think.', 'Computers can indeed think.', 'Computers really can think.'].map(t =>
+            ev('return parseClaimFull(' + J(t) + ').notes.filter(function (n) { return /"can" may say/.test(n.message); }).map(function (n) { return n.message; });'));
+        ok(asked.every(a => a.length === 1 && !/also|indeed|really/.test(a[0])), 'which "can" is asked once, of "Computers", where a word that qualifies the claim is left out (r27.106)', J(asked));
+    }
+
+    console.log('\n-- "the butler did it"; "fails to" --');
+    {
+        // r27.106: the textbook's butler -- "do it", with nothing in the box
+        // it can be, says the deed, as written (it had asked for a referent);
+        // "Poe fails to fly" says Poe does not fly.
+        const butler = [
+            [['If the butler did it, then the butler had a motive.', 'The butler did it.'], 'The butler had a motive.', 'modus ponens'],
+            [['If the butler did it, then the butler had a motive.', "The butler didn't have a motive."], "The butler didn't do it.", 'modus tollens'],
+            [['Either the butler did it or the maid did it.', 'The butler did not do it.'], 'The maid did it.', 'disjunctive syllogism'],
+            [['If Poe is a raven, then Poe flies.', 'Poe fails to fly.'], 'Poe is not a raven.', 'modus tollens']].map(([p, c, want]) => ({ p, c, want, got: step(p, c).rule }))
+            .filter(x => x.got !== x.want);
+        ok(J(butler) === '[]', '"the butler did it" is read as written, and "fails to fly" as "does not fly": modus ponens, modus tollens, disjunctive syllogism', J(butler));
+        ok(same('Poe fails to fly.', 'Poe does not fly.') && same('Computers fail to think.', 'Computers do not think.') && !same('Poe will fail to fly.', 'Poe will not fly.') &&
+            !same('The butler took the knife and did it.', 'The butler took the knife and did the knife.') &&
+            ev('var f = parseClaim("The argument has failed to show that God exists."); return !!f && f.kind !== "not";'),
+            'not "will fail to", "has failed to"; and an "it" the box gives something for is still asked about', '');
+    }
+
     console.log('\n-- wording and claims about one argument --');
     {
         const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
