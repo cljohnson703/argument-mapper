@@ -324,11 +324,91 @@ console.log('\n-- 15. a linked box\'s pronouns, as the box reads alone --');
     // "her" in M1's had been offered "Computers", a capital after a bracket
     // taken for a name.
     const linked = read("If (Computers can't be minds), then not (If the computer is able to fool the investigator into identifying it as human approximately as often as the woman was able to fool the investigator into identifying her as a man, then we should conclude that the machine can think).");
-    ok(/identifying the woman as a man/.test(linked.said) && !linked.notes.some(n => /^ambiguous/.test(n)),
+    // (Its "should conclude" asks of its own, hedge or ought, as it does
+    // without pronouns -- r27.108: read again with its referents, it had
+    // come back from memory without its question.)
+    ok(/identifying the woman as a man/.test(linked.said) && !linked.notes.some(n => /may be “Computers”|“her” may be/.test(n)),
         'inside brackets a pronoun goes back to what they hold: "her" is "the woman", not "Computers" before them', J(linked));
     const out = read('If (Mary is tall), then she is happy.'), back = read('Bob left (and he cried).');
     ok(/then mary is happy/i.test(out.said) && /and bob cried/i.test(back.said),
         'a pronoun outside them still goes back into them; one inside them with nothing there to be, outside them', J([out, back]));
+}
+
+console.log('\n-- 16. the Experience Machine\'s pronouns --');
+{
+    // r27.108 (the user, 2026-10-15: 'It registers "it" as being ambiguous
+    // between "that someone" (the "that" should be interpreted as a
+    // conjunction rather than a demonstrative determiner)').
+    const bad = read('There is nothing bad about learning that someone never really loved you aside from the bad feeling it produces.');
+    ok(/the bad feeling learning that someone never really loved you produces/.test(bad.said) && !bad.notes.some(n => /^ambiguous/.test(n) || /counts times/.test(n)),
+        '"learning that someone ...": "that" opens what is learned, no "that someone"; "it" is the learning, not "the bad feeling" it produces; "never" in the clause no note', J(bad));
+    const machine = read('If real experiences outside the experience machine are more valuable than fake ones in machine, then we should be able to say what makes real experiences outside the experience machine more valuable than fake ones in it.');
+    const pleasure = read('If being genuinely loved has more value than the pleasure being loved gives you in the experience machine, then we are able to say what makes real experiences outside the experience machine more valuable than fake ones in it.');
+    ok([machine, pleasure].every(r => /fake experiences in the experience machine$/.test(r.said) && r.notes.some(n => /“it” as “the experience machine”/.test(n)) && !r.notes.some(n => /“it” may be/.test(n))),
+        '"outside the experience machine ... fake ones in it": "it" is the experience machine -- not what a clause says, nor "the pleasure being"', J([machine, pleasure]));
+    const sad = read('Bob is sad about learning that someone never loved him.');
+    ok(sad.said.toLowerCase() === 'bob is sad about learning that someone never loved bob', '"sad about learning that someone never loved him": one claim about Bob, what he learned whole', J(sad));
+    // "Fake ones" stands for experiences in one box of a step and stood for
+    // nothing in the other, so the two did not match (r27.108).
+    const ones = read('We are unable to say what makes real experiences outside the experience machine more valuable than fake ones in it.');
+    const dogs = read('We saw big dogs and small ones.');
+    ok(/more valuable than fake experiences in the experience machine/.test(ones.said) && /big dogs and small dogs/.test(dogs.said) && /“ones” as “experiences”/.test(pleasure.notes.join(' ')),
+        '"ones" after an adjective stands for a plural after its own adjective before it, with no determiner ("real experiences ... fake ones", "big dogs and small ones") -- not a verb ("being loved gives you")', J([ones, dogs, pleasure]));
+}
+
+console.log('\n-- 17. a plural after its verb, with no determiner --');
+{
+    // r27.109 (the user, 2026-10-20, of "Bob makes cakes and sells them",
+    // where "them" had been offered "bob makes": "Can you fix this?").
+    const cakes = read('Bob makes cakes and sells them.'), baker = read('The baker makes cakes and sells them.'), dogs = read('Mary loves dogs and feeds them.');
+    ok(/sells cakes$/.test(cakes.said) && /sells cakes$/.test(baker.said) && /feeds dogs$/.test(dogs.said) &&
+        [cakes, baker, dogs].every(r => r.notes.some(n => /the one it can be in this box/.test(n)) && !r.notes.some(n => /may be/.test(n))),
+        '"Bob makes cakes and sells them": "them" is "cakes", a plural after its verb -- not "bob makes", nor Bob, who sells', J([cakes, baker, dogs]));
+    ok(step(['Bob makes cakes and sells them.'], 'Bob sells cakes.').tag === '✓ conjunction elimination', 'so "Bob sells cakes" follows: conjunction elimination');
+    // (The user: 'is this ambiguous? I only see "Mary loves dogs and Mary
+    // feeds dogs"' -- it had been one claim, "feeds" a word no list knows.)
+    const cars = read('Mary loves dogs and sports cars.'), raw = read('Bob eats apples and pears raw.');
+    ok(dogs.kind === 'and' && cars.kind !== 'and' && raw.kind !== 'and',
+        '"Mary loves dogs and feeds them": two claims, "Mary feeds dogs" one, no list need know "feeds"; "loves dogs and sports cars", "eats apples and pears raw" one each', J([dogs, cars, raw]));
+    const alone = read('Bob sells them.');
+    ok(alone.notes.some(n => /“them” is not “Bob”/.test(n)) && !/bob sells bob/.test(alone.said), '"Bob sells them": "them" is not Bob, and nothing else is there ("bob sells" had been)', J(alone));
+    const pets = read('Bob likes the cats and the dogs and feeds them.');
+    ok(pets.notes.includes('ambiguous: “them” may be “the cats” or “the dogs”'),
+        '"likes the cats and the dogs and feeds them": "the cats" or "the dogs" -- not Bob, who feeds; "the dogs" has no verb of its own, so it is no subject', J(pets));
+    const ravens = read('Black ravens fly and they caw.'), programs = read('Computer programs are formal and they lack semantics.');
+    ok(ravens.notes.some(n => /“they” as “black ravens”/.test(n)) && programs.notes.some(n => /“they” as “computer programs”/.test(n)),
+        'a capital before its noun is no name: "they" is "black ravens", "computer programs" (it had been asked whether it was "Black", "Computer")', J([ravens, programs]));
+    const lack = ev('return claimKey(parseClaim("Computer programs lack semantics.")).split(String.fromCharCode(0xE000)).join("");');
+    ok(lack === 'P:computer programs|~lack semantics', '"computer programs lack semantics": "lack" is its verb ("programs" had been)', J(lack));
+    const apposed = read('Bob, a baker, makes cakes and sells them.');
+    ok(/sells cakes$/.test(apposed.said), '"Bob, a baker, makes cakes": "a baker, makes" is no phrase, its words adjectives', J(apposed));
+    // As they were.
+    const kept = ['Ravens eat worms and they fly.', 'Brown left and he cried.', 'Young sings and he dances.'].map(read);
+    ok(/ravens fly$/i.test(kept[0].said) && /brown cried$/i.test(kept[1].said) && /young dances$/i.test(kept[2].said) && !kept.some(r => r.notes.some(n => /may be/.test(n))),
+        'as before: "Ravens eat worms and they fly" is the ravens, the worms not asked about; "Brown left", "Young sings": names', J(kept));
+    ok(read('Bob makes cakes and they sell well.').notes.includes('ambiguous: “they” may be “Bob” or “cakes”'), '"... and they sell well": Bob or the cakes, asked');
+}
+
+console.log('\n-- 18. "fake ones in it": in its own clause --');
+{
+    // r27.109 (the user, 2026-10-20: 'It says "it" is ambiguous between "the
+    // world" and "the experience machine", which seems wrong'; 'if read more
+    // accurately, "It" is ambiguous between "the world of the experience
+    // machine" and "the experience machine"').
+    const IF = 'If real experiences are more valuable than fake ones in the world of the experience machine, then we would be able to say what makes real experiences outside the experience machine more valuable than fake ones in it.';
+    const own = read(IF);
+    ok(/than fake experiences in the experience machine$/.test(own.said) && own.notes.some(n => /“it” as “the experience machine”/.test(n)) && !own.notes.some(n => /“it” may be/.test(n)),
+        '"outside the experience machine ... fake ones in it": "it" is the experience machine, in its own clause -- not "the world", in the "if" before it', J(own));
+    ok(step([IF, 'We are unable to say what makes real experiences outside the experience machine more valuable than fake ones in it.'],
+        'Real experiences are not more valuable than fake ones in the world of the experience machine.').tag === '✓ modus tollens', 'so the step follows: modus tollens');
+    // Not always (the user: "is it always the case that 'it' will always take
+    // the container from its own clause?"): where the clause says the same
+    // thing is outside it, it is asked (r27.110).
+    const mouse = read('If the cat is in the box, then the mouse, which is outside the house, is in it too.');
+    ok(mouse.notes.includes('ambiguous: “it” may be “the box” or “the house”'),
+        '"the mouse, which is outside the house, is in it too": asked -- its own clause\'s container only where something else is placed there ("fake ones")', J(mouse));
+    const world = read('Bob lives in the world of the experience machine, and Mary lives in it too.');
+    ok(/mary lives in the world of the experience machine too$/i.test(world.said), '"in the world of the experience machine ... in it": the world of the experience machine, not "the world"', J(world));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

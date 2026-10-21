@@ -275,6 +275,90 @@ try {
             'not "will fail to", "has failed to"; and an "it" the box gives something for is still asked about', '');
     }
 
+    console.log('\n-- "someone could not"; denials said as English --');
+    {
+        // r27.108 (the user, 2026-10-15, of "If pleasure is the only good,
+        // then someone couldn't rationally choose not to plug into the
+        // experience machine" beside "Someone could rationally choose not to
+        // plug into the experience machine": "This map seems absolutely
+        // unambiguous and valid to me").
+        const asks = t => ev('return parseClaimFull(' + J(t) + ').notes.filter(function (n) { return n.kind === "ambiguous" && n.someScope; }).map(function (n) { return n.readings; });');
+        const one = asks("Someone couldn't swim."), quiet = asks("Someone didn't swim.").concat(asks('Someone could swim.'));
+        ok(one.length === 1 && J(one[0]) === J(['there is someone who could not swim', 'no one could swim']) && !quiet.length,
+            '"someone couldn\'t swim" asks: one person couldn\'t, or no one could; "someone didn\'t swim" and "someone could swim" do not', J([one, quiet]));
+        const m = step(["If pleasure is the only good, then someone couldn't rationally choose not to plug into the experience machine.", 'Someone could rationally choose not to plug into the experience machine.'], 'Pleasure is the only good.', 'objection');
+        const no = step(['If pleasure is the only good, then no one could rationally choose not to plug into the experience machine.', 'Someone could rationally choose not to plug into the experience machine.'], 'Pleasure is the only good.', 'objection');
+        ok(m.ambiguous && /Read as “no one could rationally choose not to plug into the experience machine”, the step follows by modus tollens/.test(m.why) && no.rule === 'modus tollens',
+            'so the step asks, and says that read as "no one could ..." it follows by modus tollens; said so, it does', J([m, no]));
+        const both = ev('return parseClaimFull("If real experiences are not more valuable than fake ones in the world of the experience machine, then someone could not swim.").notes.filter(function (n) { return n.kind === "ambiguous"; }).length;');
+        ok(both === 2, 'a box read again with "ones" as "experiences" still asks what its other clause asks (it had come back from memory without its question)', J(both));
+        const denials = ['Someone could rationally choose not to plug in.', 'Someone sings.', "Someone doesn't sing.", 'Some ravens can fly.', 'Something is perfect.',
+            'Learning that someone never really loved you gives you a genuine reason to be disappointed.', 'Computers think.', 'Bob went home.', 'Bob has a car.', 'If it rains, the ground is wet.']
+            .map(t => ev('return claimShowForm(negateClaim(parseClaim(' + J(t) + ')));'));
+        ok(J(denials) === J(['no one could rationally choose not to plug in', 'no one sings', 'everyone sings', 'no raven can fly', 'nothing is perfect',
+            'learning that someone never really loved you does not give you a genuine reason to be disappointed', 'computers do not think', 'bob did not go home', 'bob does not have a car',
+            'it is not the case that if it rains, the ground is wet']),
+            'a denial is said as English: "no one could ...", "everyone sings", "... does not give you ..." (they had been "every person not could ...", "every person sing", "not learning ... gives you")', J(denials));
+        // r27.109 (the user, of an objection to "Being genuinely loved has more
+        // value than the pleasure being loved gives you in the experience
+        // machine": "these steps aren't verifying for me").
+        const B = 'Being genuinely loved has more value than the pleasure being loved gives you in the experience machine.';
+        const loved = ev('return [claimKey(parseClaim(' + J(B) + ')), claimShowForm(negateClaim(parseClaim(' + J(B) + '))), claimKey(parseClaim("Being is not a predicate."))]' +
+            '.map(function (k) { return String(k).split(String.fromCharCode(0xE000)).join(""); });');
+        ok(J(loved) === J(['P:being genuinely loved|~have more value than the pleasure being loved gives you in the experience machine',
+            'being genuinely loved does not have more value than the pleasure being loved gives you in the experience machine', 'N(P:being|=predicate)']),
+            '"being genuinely loved" is the subject, its adverb and participle the gerund\'s ("being" had been, and "genuinely loved has ..." said of it); "being is not a predicate" as before', J(loved));
+        const against = step(['If learning that someone never really loved you gives you a genuine reason to be disappointed outside the experience machine, then being genuinely loved does not have more value than the pleasure being loved gives you in the experience machine.',
+            'Learning that someone never really loved you gives you a genuine reason to be disappointed outside the experience machine.'], B, 'objection');
+        ok(against.rule === 'modus ponens', 'so an objection that gives its denial follows by modus ponens', J(against));
+        // r27.110: what would follow, its adverb before its verb. (A "would"
+        // said of a choice is no what-if while "would" and "could" are duals,
+        // r27.112: "rationally leave", not "rationally choose to plug in".)
+        const would = ev('return parseClaimFull("If real experiences are not more valuable than fake ones in the world of the experience machine, then everyone would rationally leave the experience machine.")' +
+            '.notes.map(function (n) { return n.message; }).join(" | ");');
+        const really = ev('return ["If it rained, Bob would not really have been happy.", "If it rained, the streets would quickly flood."].map(function (t) { return parseClaimFull(t).notes.map(function (n) { return n.message; }).join(" | "); }).join(" || ");');
+        ok(/what would follow: "everyone rationally leaves the experience machine"/.test(would) && !/rationallies/.test(would) &&
+            /what would follow: "Bob was not really happy"/.test(really) && /what would follow: "the streets quickly flood"/.test(really),
+            '"everyone would rationally leave": what would follow is "everyone rationally leaves ..." (it had been "rationallies leave"); "was not really happy", "quickly flood"', J([would, really]));
+        const choice = ev('var r = parseClaimFull("If real experiences are not more valuable than fake ones in the world of the experience machine, then everyone would rationally choose to plug into the experience machine.");' +
+            ' return { cf: !!r.form.counterfactual, notes: r.notes.filter(function (n) { return /what-if/.test(n.message); }).length };');
+        ok(!choice.cf && !choice.notes, '"then everyone would rationally choose to plug in": its "would" what is chosen, no what-if, while "would" and "could" are duals (r27.112)', J(choice));
+        const tag = ev('var trees = [{ id: "M", type: "contention", texts: ["Pleasure is the only good."], collapsed: [], children: [{ id: "S", type: "objection", texts: ' +
+            J(["If pleasure is the only good, then someone couldn't rationally choose not to plug into the experience machine.", 'Someone could rationally choose not to plug into the experience machine.']) +
+            ', collapsed: [], children: [] }] }]; return deductiveStepTagText(collectDeductiveSteps(trees)[0]);');
+        ok(tag === '? ambiguous', 'its tag: "? ambiguous", as for "any" and "can" -- not "? generic"', J(tag));
+        // r27.109 (the user, of the chooser on that step: "I can't select an
+        // option here"): each reading put where "someone couldn't" was, the
+        // rest of the box kept; picked, it is what the box says.
+        const choose = (c, ps, pick) => ev('state.trees = [{ id: "M", type: "contention", texts: [' + J(c) + '], collapsed: [], x: 0, y: 0, children: [{ id: "S", type: "objection", texts: ' + J(ps) +
+            ', collapsed: [], children: [] }] }]; deductiveCache.clear(); ensureCollabFields(state); render(); var s = collectDeductiveSteps(state.trees)[0]; openReadingChooser(s, document.body);' +
+            'var rows = Array.prototype.map.call(document.querySelectorAll("#reading-chooser .rc-row"), function (r) { return r.querySelector("input").disabled ? null : r.textContent; });' +
+            'var radio = document.querySelectorAll("#reading-chooser .rc-row input")[' + pick + ']; radio.checked = true; radio.dispatchEvent(new Event("change")); document.querySelector("#reading-chooser .rc-apply").click();' +
+            'deductiveCache.clear(); var t = collectDeductiveSteps(state.trees)[0], box = state.trees[0].children[0].texts[0]; closeReadingChooser(); state.trees = []; render();' +
+            'return { rows: rows, box: box, rule: t.rule ? t.rule.name : null };');
+        const chosen = choose('Pleasure is the only good.', ["If pleasure is the only good, then someone couldn't rationally choose not to plug into the experience machine.", 'Someone could rationally choose not to plug into the experience machine.'], 1);
+        ok(J(chosen.rows) === J(['If pleasure is the only good, then there is someone who could not rationally choose not to plug into the experience machine.',
+            'If pleasure is the only good, then no one could rationally choose not to plug into the experience machine. — the step follows by modus tollens']) &&
+            chosen.box === 'If pleasure is the only good, then no one could rationally choose not to plug into the experience machine.' && chosen.rule === 'modus tollens',
+            'in the chooser both readings can be picked, each put where "someone couldn\'t" was; picked, "no one could" is the box, and the step follows by modus tollens (neither could be picked)', J(chosen));
+        const cannot = choose('Somebody can fly.', ['If Poe is black, somebody cannot fly.', 'Poe is black.'], 0);
+        ok(J(cannot.rows) === J(['If Poe is black, there is somebody who cannot fly.', 'If Poe is black, no one can fly. — the step follows by modus ponens']) &&
+            cannot.box === 'If Poe is black, there is somebody who cannot fly.' && !cannot.rule,
+            '"somebody cannot fly": "there is somebody who cannot fly" (picked, the box says so, and nothing follows) or "no one can fly"', J(cannot));
+        // (A name's mark taken out: "mary", "bob".)
+        const key = t => ev('var f = parseClaim(' + J(t) + '); return f ? claimKey(f).split(String.fromCharCode(0xE000)).join("") : null;');
+        const learned = ['There is nothing bad about learning that someone never really loved you.', 'Every student learning that Mary left is sad.',
+            'Every student learning that Mary left or that Bob stayed is sad.', 'Every raven that Mary loves is black.'].map(key);
+        ok(J(learned) === J(['U:∀any|¬=bad about learning that someone never really loved you', 'U:=student learning that mary left|=sad',
+            'U:=student learning that mary left or that bob stayed|=sad', 'U:(=raven&^mary|~love _)|=black']),
+            '"that" after a word that takes a clause opens what is learned, no relative clause ("nothing bad about learning that ...", "every student learning that Mary left"); "a raven that Mary loves" is still one', J(learned));
+        const being = ev('return parseClaimFull("If being loved has more value than the pleasure being loved gives you, then it is good.").notes.map(function (n) { return n.message; }).join(" | ");');
+        ok(/“the pleasure”/.test(being) && !/the pleasure being”/.test(being), '"the pleasure being loved gives you": "being" opens a clause, and "it" may be "the pleasure", not "the pleasure being"', being);
+        ok(ev('return !parseClaimFull("Bob is sad that Mary never sings.").notes.length;'), '"never" in a clause taken whole ("sad that Mary never sings") is no note: it is not read here either');
+        ok(ev('var f = parseClaim("There is nothing bad about learning that someone never really loved you."); return f.kind === "all" && !parseClaimFull("There is nothing bad about learning that someone never really loved you.").notes.length;'),
+            '"nothing bad about learning that someone never really loved you": nothing is bad about that learning, no relative clause in it and no note on "never"');
+    }
+
     console.log('\n-- wording and claims about one argument --');
     {
         const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",

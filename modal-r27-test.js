@@ -272,6 +272,40 @@ console.log('\n-- 6. the Logic panel --');
     ok(!wrongs.length, 'all 32 choices of axioms: named from the cube, and each closure true of the frames', wrongs.slice(0, 5).join(' | '));
 }
 
+console.log('\n-- 7. "would" and "could" --');
+{
+    // r27.112 (the user, 2026-10-20: '"Everyone would" is ∀x □P vs "Someone
+    // could not", ∃x ◇~P, and ∀x □P is equivalent to ~∃x ◇~P, and ~∃x ◇~P
+    // straightforwardly contradicts ∃x ◇~P'; "Let's add that as a switch but
+    // leave it on by default").
+    const attack = (ps, c) => ev(`state.trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], x: 0, y: 0, children: [
+        { id: 'O', type: 'objection', texts: ${J(ps)}, collapsed: [], children: [] } ] }];
+        deductiveCache.clear(); ensureCollabFields(state); var s = collectDeductiveSteps(state.trees)[0]; return s.rule ? s.rule.name : null;`);
+    const IF = 'If real experiences are not more valuable than fake ones in the world of the experience machine, then everyone would rationally choose to plug into the experience machine.';
+    const R = 'Real experiences are not more valuable than fake ones in the world of the experience machine.';
+    const S = 'Someone could rationally choose not to plug into the experience machine.';
+    setModal(null);
+    const on = attack([IF, R], S), mt = step(['If it rains, then Bob would choose to stay.', 'Bob could choose not to stay.'], 'It does not rain.');
+    const same = [key('Everyone would decide to leave.') === key('No one could decide not to leave.'), key('Bob would choose to stay.') === key('It is not the case that Bob could choose not to stay.'),
+        step(['If it rains, then Bob would choose to stay.', 'It rains.'], 'Bob could not choose not to stay.').rule === 'modus ponens'];
+    ok(on === 'modus ponens' && mt.rule === 'modus tollens' && same.every(Boolean),
+        '"everyone would rationally choose to plug in" denies "someone could rationally choose not to plug in": the objection follows by modus ponens; modus tollens with "could choose not to"; "everyone would decide to leave" is "no one could decide not to leave"',
+        J([on, mt, same]));
+    ev(`state.logic = { base: 'standard', rules: { 'modal-would': false } }; deductiveCache.clear(); return 1;`);
+    const off = attack([IF, R], S);
+    ok(off === null && key('Bob would choose to stay.') !== key('It is not the case that Bob could choose not to stay.'),
+        'switched off, not certified: "would" after "then" makes a what-if claim, as before', J(off));
+    setModal(null);
+    const wet = step(['If it rains, the ground would be wet.', 'It rains.'], 'The ground is wet.');
+    ok(wet.rule === 'modus ponens', 'a "would" not said of a choice is a what-if, as before: "if it rains, the ground would be wet" and "it rains" give "the ground is wet"', J(wet));
+    const panel = ev(`renderLogicPanel(); var b = document.getElementById('eval-logic-body'), w = b.querySelector('[data-modal="would"]');
+        var r = { checked: w.checked, label: w.nextSibling.textContent }; w.click();
+        r.off = state.logic.rules['modal-would'] === false && !b.querySelector('[data-modal="would"]').checked; w.click();
+        r.on = b.querySelector('[data-modal="would"]').checked; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
+    ok(panel.checked && panel.label === '“Would” and “could”' && panel.off && panel.on,
+        'the Logic panel: "“Would” and “could”" under Modal logic, on by default; it switches off and back on', J(panel));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

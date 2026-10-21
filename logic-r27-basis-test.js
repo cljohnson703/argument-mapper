@@ -790,9 +790,10 @@ try {
             return { groups: b.querySelectorAll('.logic-group-row').length, symbols: [].map.call(b.querySelectorAll('.logic-sym'), function (x) { return x.textContent; }).join(''),
                 options: [].map.call(document.querySelectorAll('#eval-logic-base option'), function (o) { return o.textContent + (o.disabled ? '-' : '+'); }),
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
-        // Modal logic is a group the map switches on, not a base (r27.101).
-        ok(built.groups === 12 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, eleven groups of steps and metaphysical necessity', J(built));
+        // Modal logic is a group the map switches on, not a base (r27.101);
+        // "would" and "could" under it (r27.112).
+        ok(built.groups === 13 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, eleven groups of steps, metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
         ok(built.rules === want && built.lists === 8, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want + ', ' + built.lists + ' lists');

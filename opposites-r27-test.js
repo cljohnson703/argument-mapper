@@ -18,6 +18,9 @@
  *    step of two rules, the claim between them in the box's own words.
  * 4. The Logic panel: its own group, on by default; and a conclusion is not
  *    proposed by it.
+ * 5. (r27.110) A word of more than one meaning where the other word says
+ *    which ("tall" and "short", "heavy" and "light"); a word after "a" that
+ *    ends what is said is a noun ("a light", "a right"), not the adjective.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -65,7 +68,7 @@ console.log('\n-- 1. every pair, both ways --');
             });
         });
         return { pairs: CLAIM_OPPOSITES.length, both: CLAIM_OPPOSITES.filter(function (e) { return e.both; }).length, gives: gives, reverse: reverse, wrong: wrong };`);
-    ok(r.pairs === 72 && r.both === 8, 'a list of 72 pairs, 8 of them contradictories', J({ pairs: r.pairs, both: r.both }));
+    ok(r.pairs === 78 && r.both === 8, 'a list of 78 pairs, 8 of them contradictories', J({ pairs: r.pairs, both: r.both }));
     ok(r.gives.length === 0, 'each word gives the denial of its pair, both ways, the step named by its pair as the words come', J(r.gives));
     ok(r.reverse.length === 0, 'a contradictory pair: each one\'s denial gives the other', J(r.reverse));
     ok(r.wrong.length === 0, 'a contrary pair: never ("Kim is not unhappy" does not give "Kim is happy")', J(r.wrong));
@@ -146,6 +149,31 @@ console.log('\n-- 4. the Logic panel; conclusions --');
         'its note in the panel', g.gloss);
     const derived = ev(`return deriveConclusion(['Mary is unhappy.']);`);
     ok(!derived || derived.rule.id !== 'opposites', 'a conclusion is not proposed by it', J(derived));
+}
+
+console.log('\n-- 5. "tall" and "short"; a noun after "a" --');
+{
+    // r27.110 (the user, 2026-10-20, of "John is tall" giving "John is not
+    // short": "Sounds good" to pairs whose other word says which meaning).
+    const tall = [['John is tall.', 'John is not short.'], ['The rope is long.', 'The rope is not short.'], ['The box is heavy.', 'The box is not light.'],
+        ['The room is dark.', 'The room is not light.'], ['The pillow is soft.', 'The pillow is not hard.'], ['The exam is easy.', 'The exam is not hard.']]
+        .map(([p, c]) => step([p], c).rule);
+    ok(J(tall) === J(['contraries ‘tall’ and ‘short’', 'contraries ‘long’ and ‘short’', 'contraries ‘heavy’ and ‘light’', 'contraries ‘dark’ and ‘light’',
+        'contraries ‘soft’ and ‘hard’', 'contraries ‘easy’ and ‘hard’']),
+        '"John is tall" gives "John is not short"; so "long" and "short", "heavy" and "light", "dark" and "light", "soft" and "hard", "easy" and "hard"', J(tall));
+    const not = [['John is not short.', 'John is tall.'], ['The lamp is a light.', 'The lamp is not heavy.'], ['Free speech is a right.', 'Free speech is not wrong.'],
+        ['John is short of money.', 'John is not tall.']].map(([p, c]) => step([p], c).rule);
+    ok(not.every(r => !r), 'not "not short", so "tall" (contraries); not "a light", so "not heavy", nor "a right", so "not wrong" (a noun after "a"); not "short of money"', J(not));
+    // r27.111 (the user: "use the built-in syntax trees to parse the parts of
+    // speech so that 'light' only gives 'not heavy' when it's an adjective"):
+    // the head of a phrase a determiner opens is a noun, whatever the
+    // determiner; an adjective before its noun is not.
+    const nouns = [['Voting is the right.', 'Voting is not wrong.'], ['The lamp is my light.', 'The lamp is not heavy.']].map(([p, c]) => step([p], c).rule);
+    ok(nouns.every(r => !r) && step(['Kim is a friend of Lee.'], 'Kim is not an enemy of Lee.').rule === 'contraries ‘friend of’ and ‘enemy of’',
+        'by the syntax tree: "the right", "my light" are nouns, as "a light" is; "a friend of Lee" still the pair "friend of"', J(nouns));
+    ok(step(['Mary is a good person.'], 'Mary is not a bad person.').rule === 'contraries ‘good’ and ‘bad’', '"a good person": an adjective before its noun, as before');
+    const note = ev('return [DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === "opposites"; }).gloss, CLAIM_OPPOSITES.length];');
+    ok(note[0].indexOf('a list of ' + note[1] + ' pairs') === 0 && /“?"tall" and "short"/.test(note[0]), 'the rule\'s note counts the pairs as the list has them, and names "tall" and "short"', J(note));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

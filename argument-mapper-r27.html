@@ -2292,6 +2292,19 @@
 #link-menu .link-menu-format .fmt-em { font-style: italic; }
 #link-menu .link-menu-format .fmt-u { text-decoration: underline; }
 #link-menu .link-menu-format button[aria-pressed="true"] { background: rgba(33,118,193,.25); }
+/* A touch screen's editing toolbar, just above its keyboard (r27.113). */
+#edit-toolbar { position: fixed; left: 0; top: 0; width: 100%; z-index: 650; display: flex; align-items: center; gap: 2px;
+    box-sizing: border-box; padding: 4px 6px; background: var(--panel-bg, #fff); color: var(--panel-text, #1a1a1a);
+    border-top: 1px solid var(--panel-border, #d0d0d0); box-shadow: 0 -2px 10px rgba(0,0,0,.18); overflow-x: auto; }
+#edit-toolbar[hidden] { display: none; }
+#edit-toolbar button { all: unset; cursor: pointer; padding: 8px 10px; border-radius: 6px; font: 13px system-ui, sans-serif; white-space: nowrap; touch-action: manipulation; }
+#edit-toolbar button:active { background: rgba(128,128,128,.22); }
+#edit-toolbar .fmt { min-width: 22px; text-align: center; font: 17px Georgia, 'Times New Roman', serif; }
+#edit-toolbar .fmt-strong { font-weight: 700; }
+#edit-toolbar .fmt-em { font-style: italic; }
+#edit-toolbar .fmt-u { text-decoration: underline; }
+#edit-toolbar .fmt[aria-pressed="true"] { background: rgba(33,118,193,.25); }
+#edit-toolbar .sep { width: 1px; align-self: stretch; margin: 4px; background: var(--panel-border, #d0d0d0); }
 </style>
 </head>
 <body>
@@ -2951,7 +2964,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-15 r27.107';
+    const APP_BUILD = '2026-10-20 r27.113';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5548,7 +5561,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         boxLinkPicking = { sourceId, sourceIdx, start, end };
         document.getElementById('canvas').classList.add('picking-crossref');
         const hint = document.getElementById('crossref-hint');
-        hint.innerHTML = 'Click the box to link into the text \u2014 <kbd>Esc</kbd> to cancel';
+        // On a touch screen: tap it, and the canvas to cancel -- no Esc (r27.113).
+        hint.innerHTML = touchPointerType === 'touch' || touchPointerType === 'pen' ? 'Tap the box to link into the text, or the canvas to cancel'
+            : 'Click the box to link into the text \u2014 <kbd>Esc</kbd> to cancel';
         hint.classList.add('visible');
     }
     function cancelBoxLinkPicking(reopen) {
@@ -6908,6 +6923,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
         catchall: 'Anything truth tables show, including swapping a part for an equivalent one.' };
+    const LOGIC_WOULD_GLOSS = 'Reads "would" and "could" said of a choice as opposites, with "not" moved: "everyone would choose to stay" denies "someone could choose not to stay". "Decide", "opt" and "elect" too. Off, "would" after "then" makes a what-if claim.';
     const LOGIC_MODAL_GLOSS = 'Reads "it is metaphysically necessary that …", "it is metaphysically possible that …", □ and ◇, and takes steps by the axioms switched on.';
     const LOGIC_MODAL_AXIOMS = {
         D: 'D: □A → ◇A. What is necessary is possible.',
@@ -7007,6 +7023,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         mlabel.title = LOGIC_MODAL_GLOSS;
         mrow.appendChild(mbox); mrow.appendChild(mlabel);
         body.appendChild(mrow);
+        // "Would" and "could" (r27.112): on unless a map switches it off.
+        const wrow = el('div', 'logic-group-row'), wbox = el('input');
+        wbox.type = 'checkbox'; wbox.id = 'logic-modal-would'; wbox.dataset.modal = 'would';
+        wbox.addEventListener('change', () => switchLogicRules(['modal-would'], wbox.checked));
+        const wlabel = el('label', null, '\u201cWould\u201d and \u201ccould\u201d');
+        wlabel.htmlFor = wbox.id;
+        wlabel.title = LOGIC_WOULD_GLOSS;
+        wrow.appendChild(wbox); wrow.appendChild(wlabel);
         const mbody = el('div', 'logic-modal'), axioms = el('div', 'logic-modal-row'), system = el('div', 'logic-modal-row');
         mbody.id = 'logic-modal-meta-body';
         axioms.appendChild(el('span', null, 'Axioms'));
@@ -7022,6 +7046,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         system.appendChild(name);
         mbody.appendChild(axioms); mbody.appendChild(system);
         body.appendChild(mbody);
+        body.appendChild(wrow);
     }
     // Draw the panel from the map's settings: built once, then kept in step.
     function renderLogicPanel() {
@@ -7070,6 +7095,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
             body.querySelector('[data-modal-name="meta"]').textContent = claimModalSystem(has);
         }
+        const wbox = body.querySelector('[data-modal="would"]');
+        if (wbox) { wbox.checked = claimWouldCouldOn(); wbox.disabled = ro; }
     }
     function renderEvalOverview() {
         renderLogicPanel();
@@ -9801,6 +9828,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_NAMED_BEFORE = /^(?:aforementioned|aforesaid|above|above-mentioned|abovementioned|said)$/;
     const claimThatTakesClause = w => CLAIM_ATTITUDE_WORD.test(w) || claimVerbBases(w).concat([CLAIM_IRREGULAR_PAST[w] || '']).some(b => CLAIM_ATTITUDE_VERBS.has(b)) ||
         CLAIM_CONTENT_NOUNS.has(w) || CLAIM_CLAUSE_ADJECTIVES.has(w) || /^(?:so|such|now|given|provided|providing|except|in|than|is|was|are|were|be|been|being)$/.test(w);
+    // A word that takes a clause ("learn", "learning", "learned"), in any
+    // of its forms.
+    const claimAttitudeWord = w => !!claimAttitudeBase(w) || CLAIM_ATTITUDE_VERBS.has(w) ||
+        (/^[a-z]{3,}ing$/.test(w) && [w.slice(0, -3), w.slice(0, -3) + 'e', w.slice(0, -4)].some(b => CLAIM_ATTITUDE_VERBS.has(b)));
+    // A gerund: an -ing word whose verb the lexicon knows ("learning").
+    const claimIngVerb = w => /^[a-z]{2,}ing$/.test(w) && [w.slice(0, -3), w.slice(0, -3) + 'e', w.slice(0, -4)].some(b => b.length > 1 && (CLAIM_ATTITUDE_VERBS.has(b) || claimSynWord(b).knownVerb));
     function claimPronounReadingsUncached(t) {
         const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
         if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said) && !CLAIM_POINTING_BACK.test(said)) return none;
@@ -9857,6 +9890,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // word of its own.
         const synWs = claimSynWords(toks.map((x, k) => /^[,;:.!?()]$/.test(x.w) ? x.w
             : (k > 0 && /^[A-Z]/.test(x.w) && !/^[.!?]$/.test(toks[k - 1].w) ? '\uE000' : '') + x.l));
+        const capitalNoName = k => {
+            const y = toks[k + 1], z = y && /^[a-z][a-z'-]*$/.test(y.w) && !claimSynClosed(y.l) && !CLAIM_PRONOUN_KIND[y.l] ? claimSynWord(y.l) : null;
+            if (!z) return false;
+            const plural = claimPluralWord(y.l) && !/'s$/.test(y.l) && claimSynVerbStart(synWs, k + 2, 'pl') === 'strong';
+            if (claimKnownAdjective(toks[k].l) && !claimSynWord(toks[k].l).knownVerb) return (z.noun && !z.knownVerb && !z.past && !z.s) || plural;
+            return plural && !z.knownVerb;
+        };
         let last = null;
         toks.forEach((x, k) => {
             // A name: capitalized, and no hedge, frame or function word;
@@ -9864,6 +9904,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Ravens are black": a plural before "are", no name.
             const opensClause = k === 0 || clauses.some(c => c.from === k);
             if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && /^(?:are|were|have|do)$/.test(toks[k + 1].l) && claimPluralWord(x.l)) { last = null; }
+            // "Black ravens fly", "Real experiences are", "Computer programs
+            // are formal": a capital that opens a clause is no name before its
+            // noun -- after an adjective, a noun no list knows as a verb (in
+            // -s, with a sure verb after it); after any word, a plural with a
+            // sure verb after it. "Bob makes cakes", "Brown left" and "Young
+            // sings" keep their names (r27.109).
+            else if (/^[A-Z][a-z]/.test(x.w) && opensClause && !/'s$/.test(x.l) && capitalNoName(k)) { last = null; }
             else if (/^[A-Z][a-z]/.test(x.w)) {
                 const name = x.w.replace(/['\u2019]s$/, ''), lower = name.toLowerCase();
                 // Not right after a determiner: "the Beatles" is that phrase's word.
@@ -9888,11 +9935,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (/^(?:someone|somebody)$/.test(x.l)) { add({ at: x.at, k0: k, k1: k, words: 'the person', kind: 'person', indef: true }); return; }
             if (x.l === 'something') { add({ at: x.at, k0: k, k1: k, words: 'the thing', kind: 'thing', indef: true }); return; }
+            // "About learning that someone never loved you": the deed a gerund
+            // after its preposition names, to its clause's end, is a thing an
+            // "it" may be (r27.108).
+            if (k > 0 && claimIngVerb(x.l) && (CLAIM_PREPOSITIONS.has(toks[k - 1].l) || /^(?:about|of|for|with|by|from|without|in|on)$/.test(toks[k - 1].l))) {
+                const stop = /^(?:[,;:.!?()]|and|or|but|nor|then|if|when|whenever|while|because|since|although|though|unless|aside|apart|except|besides|beyond|other|rather|instead|he|she|it|they|him|her|them|its|his|their)$/;
+                let e = k;
+                while (e + 1 < toks.length && e + 1 - k < 12 && !stop.test(toks[e + 1].l)) e++;
+                if (e > k) add({ at: x.at, k0: k, k1: e, words: t.slice(x.at, toks[e].at + toks[e].w.length), kind: 'thing' });
+                return;
+            }
             if (!/^(?:the|a|an|this|that|some|one|another|my|your|our|their|his|her|its)$|'s$/.test(x.l)) return;
             if (k > 0 && (CLAIM_COPULA_BEFORE.test(toks[k - 1].l) ||                           // what something is
                 (k > 1 && /^(?:not|never|also|still|really|just|always|indeed|then|now)$/.test(toks[k - 1].l) && CLAIM_COPULA_BEFORE.test(toks[k - 2].l)))) return;
             if (/^(?:this|that)$/.test(x.l) && toks[k + 1] && (/^[A-Z]/.test(toks[k + 1].w) || CLAIM_PRONOUN_KIND[toks[k + 1].l] ||   // "that Bob", "that it": a clause
-                /^(?:the|a|an|this|that|these|those|some|one|another|my|your|our|their|his|her|its|every|each|no|any|i|we|you)$|'s$/.test(toks[k + 1].l))) return;
+                /^(?:the|a|an|this|that|these|those|some|one|another|my|your|our|their|his|her|its|every|each|no|any|i|we|you)$|'s$/.test(toks[k + 1].l) ||
+                // "that someone never loved you", "learning that ...": a clause
+                // too, not "that" pointing (r27.108; the user: "the 'that'
+                // should be interpreted as a conjunction rather than a
+                // demonstrative determiner").
+                /^(?:someone|somebody|something|everyone|everybody|everything|anyone|anybody|anything|nobody|nothing|none|all|both|either|neither|there|here)$/.test(toks[k + 1].l) ||
+                (x.l === 'that' && k > 0 && claimAttitudeWord(toks[k - 1].l)))) return;
             const np = [];
             // Where the phrases end it: before its verb ("the vase fell", "the
             // price increases were large").
@@ -9903,6 +9966,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             for (let j = k + 1; j < toks.length && np.length < 3 + commas; j++) {
                 const y = toks[j], prev = np[np.length - 1];
                 if (synEnd > k + 1 && j >= synEnd) break;
+                // "The pleasure being loved gives you": "being" before a
+                // participle opens a clause; it is no noun of the phrase
+                // (r27.108).
+                if (y.l === 'being' && toks[j + 1] && claimSynWord(toks[j + 1].l).participle) break;
                 if (y.l === ',' && prev && synEnd > j + 1) { commas++; continue; }
                 if (!/^[a-z]/.test(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) || CLAIM_RELATIVES.has(y.l) || CLAIM_PREPOSITIONS.has(y.l) ||
                     CLAIM_PRONOUN_KIND[y.l] || (/^[A-Z]/.test(y.w) && !(synEnd > j)) || (prev && CLAIM_PAST_UNCHANGED.has(y.l) && !(synEnd > j))) break;
@@ -9937,12 +10004,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 run.push(y);
                 if (claimPluralWord(y.l) && !/'s$/.test(y.l)) {
                     const next = toks[j + 1];
-                    if (next && (CLAIM_VERB_MARKERS.has(next.l) || claimPastStem(next.l) !== null || /^[a-z]+$/.test(next.l) && !CLAIM_FUNCTION_WORDS.has(next.l)))
+                    // Its verb after it, as a plural takes one: "Bob makes cakes",
+                    // "sells them" open with no plural (r27.109; "them" had been
+                    // offered "bob makes").
+                    if (next && claimSynVerbStart(synWs, j + 1, 'pl'))
                         add({ at: run[0].at, k0: run[0] === toks[c.from] ? c.from : j, k1: j,
                             words: run.map((z, i) => i === 0 && z.at === 0 && /^[A-Z][a-z]/.test(z.w) && !CLAIM_NATIONAL_ADJECTIVES.has(z.l) ? z.w.toLowerCase() : z.w).join(' '), kind: 'many' });
                     break;
                 }
             }
+        });
+        // A plural after its verb or a preposition, with no determiner: "Bob
+        // makes cakes and sells them", "fond of cats and dogs" -- what a
+        // "they" or "them" may be where nothing before it that is many is
+        // otherwise (r27.109). Not a verb ("feeds them", "bakes and sells
+        // them"), nor "lots of".
+        const bare = [];
+        toks.forEach((y, j) => {
+            if (j === 0 || !/^[a-z][a-z'-]*$/.test(y.w) || /'s$/.test(y.l) || /^(?:ones?|others)$/.test(y.l) || !claimPluralWord(y.l) || claimSynClosed(y.l) ||
+                CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_PRONOUN_KIND[y.l] || claimSynWord(y.l).knownVerb ||
+                (toks[j + 1] && /^(?:of|me|you|him|her|it|us|them|the|a|an|this|that|these|those|my|your|his|its|our|their)$/.test(toks[j + 1].l)) ||
+                cands.some(c => c.k0 <= j && j <= c.k1)) return;
+            // Its adjectives: "red cakes", "real experiences".
+            let i = j - 1;
+            while (i > 0 && /^[a-z][a-z'-]*$/.test(toks[i].w) && !claimSynClosed(toks[i].l) && claimSynWord(toks[i].l).adj && !claimSynWord(toks[i].l).knownVerb &&
+                claimPastStem(toks[i].l) === null) i--;
+            const v = toks[i], w = claimSynWord(v.l);
+            const joined = /^(?:and|or)$/.test(v.l) && bare.some(c => c.k1 === i - 1);
+            if (!joined && !CLAIM_SYN_PREPOSITIONS.has(v.l) && !/^(?:has|have|had|having)$/.test(v.l) && !(/^[a-z]/.test(v.w) && !w.closed && (w.knownVerb || w.past || w.ing))) return;
+            bare.push({ at: toks[i + 1].at, k0: i + 1, k1: j, words: t.slice(toks[i + 1].at, y.at + y.w.length), kind: 'many' });
         });
         // A name the box says is no one: "Poe is a raven".
         cands.filter(c => c.name).forEach(c => {
@@ -10091,6 +10181,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!!claimPluralWord(c.words) !== plural || heads.some(o => o.words === c.words)) return;
                 heads.push({ at: c.at, k0: c.k0, k1: c.k1, words: c.words, kind: 'thing' });
             });
+            // "What makes real experiences ... more valuable than fake ones":
+            // a plural after its adjective, anywhere before, with no
+            // determiner -- as "fake ones" beside a clause that opens with
+            // "real experiences" had read (r27.108). An adjective, not a
+            // participle ("being loved gives you": a verb), and no object
+            // after it.
+            if (plural && !heads.length) for (let i = 1; i < from; i++) {
+                const y = toks[i], a = claimSynWord(toks[i - 1].l), after = toks[i + 1] ? toks[i + 1].l : '';
+                if (!/^[a-z][a-z'-]*$/.test(y.l) || /^ones?$/.test(y.l) || !claimPluralWord(y.l) || CLAIM_FUNCTION_WORDS.has(y.l) || CLAIM_VERB_MARKERS.has(y.l) ||
+                    !a.adj || a.participle || /^(?:me|you|him|her|it|us|them|the|a|an|this|that|these|those|my|your|his|its|our|their)$/.test(after) ||
+                    heads.some(o => o.words === y.l)) continue;
+                heads.push({ at: toks[i - 1].at, k0: i - 1, k1: i, words: y.l, kind: 'thing' });
+            }
             if (heads.length) open.push({ at: x.at, w: x.w, l: x.l, kind: 'd:one@' + k, k, ci: clauseOf(k), ii: innerOf(k), next: [], dem: heads });
         });
         // "Poe is black, and this surprises Mary": a "this" or "that" that
@@ -10151,6 +10254,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             for (let c = ii; c >= 0; c--) {
                 const k0 = inner[c].from;
                 const cand = cands.find(x => x.k0 === k0);
+                // "Bob likes the cats and the dogs and feeds them": "the dogs",
+                // with no verb of its own, is no subject (r27.109).
+                if (cand && c < ii && !toks.slice(cand.k1 + 1, inner[c].to).some((y, i) => claimSynVerbStart(synWs, cand.k1 + 1 + i, '?'))) continue;
                 if (cand) return { cand };
                 const pron = open.find(x => x.k === k0);
                 if (pron) return { pron };
@@ -10170,6 +10276,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!slot) slots.push(slot = { kind: p.kind, not, members: [], exclude: [] });
             slot.members.push(p);
             if (subj && subj.cand) slot.exclude.push(subj.cand);
+            // "The bad feeling it produces": what a relative clause says
+            // something of is not that clause's own "it" (r27.108) -- a clause
+            // whose verb lacks its object, after a noun of no name that no
+            // "told" or "asked" has before it ("told Alice she was late",
+            // "told the boy that he left" say what was told).
+            const head = cands.find(c => !c.fact && !c.name && (c.k1 === p.k - 1 || (c.k1 === p.k - 2 && /^(?:that|which|whom)$/.test(toks[p.k - 1].l))) &&
+                !(c.k0 > 0 && claimAttitudeWord(toks[c.k0 - 1].l)) &&
+                toks[p.k + 1] && claimSynWord(toks[p.k + 1].l).knownVerb && !CLAIM_VERB_MARKERS.has(toks[p.k + 1].l) &&
+                (!toks[p.k + 2] || /^(?:[,;:.!?)]|and|or|but|then|is|are|was|were)$/.test(toks[p.k + 2].l)));
+            if (head) slot.exclude.push(head);
         });
         if (slots.length > 4) return none;
         const fits = { m: ['person', 'animal'], f: ['person', 'animal'], n: ['thing', 'animal'], q: ['thing', 'animal'], p: ['many', 'person'] };
@@ -10185,6 +10301,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (first.dem) return first.dem.filter((c, i) => c.indef || first.dem.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
             let list = cands.filter(c => c.at < first.at && (c.at >= frameEnd || c.name) && (fits[x.kind].includes(c.kind) || ((x.kind === 'n' || x.kind === 'q') && c.thingToo)) &&
                 !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase()));
+            // "Bob makes cakes and sells them": "cakes" (r27.109).
+            if (x.kind === 'p' && !list.some(c => c.kind === 'many'))
+                list = list.concat(bare.filter(c => c.at < first.at && c.at >= frameEnd && !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase())));
             // Inside brackets -- a linked box's words, read as the box is
             // alone (r27.89) -- a pronoun goes back to what they hold, where
             // they hold something it can be: "If (Computers can't be minds),
@@ -10192,11 +10311,39 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // for "her" (r27.107).
             const held = bracketOpen(first.at);
             if (held >= 0 && list.some(c => c.at > held)) list = list.filter(c => c.at > held);
+            // "Outside the experience machine ... fake ones in it": an "it" in
+            // or out of which things are is what the box puts things in or out
+            // of, where it does so (r27.108).
+            const inside = first.k > 0 && /^(?:in|inside|outside|within|into)$/.test(toks[first.k - 1].l);
+            const container = c => c.k0 > 0 && (/^(?:in|inside|outside|within|into)$/.test(toks[c.k0 - 1].l) || (toks[c.k0 - 1].l === 'of' && c.k0 > 1 && toks[c.k0 - 2].l === 'out'));
+            if (inside && list.some(container)) {
+                list = list.filter(container);
+                // One in its own clause, where there is one: "outside the
+                // experience machine ... fake ones in it" -- not "in the world
+                // of the experience machine" in the "if" before it (r27.109).
+                // Where something else is said to be there: not "the mouse,
+                // which is outside the house, is in it too", where it would be
+                // in what it is outside of -- that is asked (r27.110; the user:
+                // "is it always the case ...?").
+                const own = list.filter(c => clauseOf(c.k0) === first.ci &&
+                    toks.slice(c.k1 + 1, first.k - 1).some(y => /^[a-z]/i.test(y.w) && !claimSynClosed(y.l) && claimSynWord(y.l).noun && !claimSynWord(y.l).adj));
+                if (own.length) list = own;
+                // "In the world of the experience machine": the "of" after it,
+                // and what that names, are the container's (it had been "the
+                // world").
+                list = list.map(c => {
+                    const d = c.k1 + 2;
+                    if (!toks[c.k1 + 1] || toks[c.k1 + 1].l !== 'of' || !toks[d] || !/^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their)$/.test(toks[d].l)) return c;
+                    const e = claimSynPhraseEnd(synWs, d);
+                    if (!(e > d + 1) || e > toks.length || toks.slice(d + 1, e).some(y => !/^[a-z]/.test(y.w) || CLAIM_PRONOUN_KIND[y.l])) return c;
+                    return Object.assign({}, c, { k1: e - 1, words: t.slice(c.at, toks[e - 1].at + toks[e - 1].w.length) });
+                });
+            }
             // A name, or "the raven", said twice is one thing (it had offered
             // "the raven" or "the raven"); "a raven" twice may be two.
             list = list.filter((c, i) => c.indef || list.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
             // For an "it", what the whole clause before its own says.
-            if (x.kind === 'n' && first.l === 'it' && first.ci > 0 && !claimNoClauseSubject(first.next) &&
+            if (x.kind === 'n' && first.l === 'it' && first.ci > 0 && !inside && !claimNoClauseSubject(first.next) &&
                 !(object(first) && claimNoClauseSubject([toks[first.k - 1].l]))) {
                 const before = clauses[first.ci - 1], said2 = clauseText(before);
                 const hasVerb = toks.slice(before.from, before.to).some(y => CLAIM_VERB_MARKERS.has(y.l) || claimPastStem(y.l) !== null || (claimEndsInS(y.l) && !claimPluralWord(y.l)));
@@ -11878,7 +12025,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return unique.length ? { parts: unique } : null;
         }
         // "Raven that Poe loves": a raven, and Poe loves it.
-        const objRel = words.findIndex((w, i) => i > 0 && /^(?:that|whom|which)$/.test(w) && /^\uE000[a-z]/.test(tokens[i + 1] || ''));
+        // "Every student learning that Mary left": what is learned, no
+        // relative clause (r27.108).
+        const objRel = words.findIndex((w, i) => i > 0 && /^(?:that|whom|which)$/.test(w) && !(w === 'that' && claimAttitudeWord(words[i - 1])) && /^\uE000[a-z]/.test(tokens[i + 1] || ''));
         // "Clear that Mary left", "fact that Mary left": a claim of its own;
         // "so heavy that Bob cannot lift it", what follows from it.
         // One inside another relative clause is that clause's: "student who
@@ -11896,6 +12045,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // has a subject of its own).
         const v = words.findIndex((w, i) => i > 0 && /^(?:that|who|which)$/.test(w) && words[i + 1] && !/^(?:is|are)$/.test(words[i + 1]) &&
             !CLAIM_PREPOSITIONS.has(words[i - 1]) && !CLAIM_OBJECT_PREPOSITIONS.has(words[i - 1]) && !CLAIM_VERB_MARKERS.has(words[i + 2] || '') &&
+            // "Learning that someone never loved you": what is learned, no
+            // relative clause; nor one whose subject is "someone" (r27.108).
+            !(w === 'that' && claimAttitudeWord(words[i - 1])) &&
+            !/^(?:someone|somebody|something|everyone|everybody|everything|anyone|anybody|anything|nobody|nothing)$/.test(words[i + 1]) &&
             !CLAIM_NOUN_DETERMINERS.test(words[i + 1]) && !CLAIM_SUBJECT_PRONOUNS.has(words[i + 1]) && !/^(?:we|you|they|i|he|she|it|a|an)$/.test(words[i + 1]) &&
             !/^\uE000/.test(tokens[i + 1]) && !CLAIM_FUNCTION_WORDS.has(words[i + 1]));
         // "Black, which surprises Mary": no noun before it, as above.
@@ -12618,7 +12771,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (hedged) return hedged;
         }
         const rest = words.slice(1).join(' ');
-        const frequency = words.join(' ').match(CLAIM_FREQUENCY);
+        // Not in a clause it takes ("learning that someone never loved
+        // you"), which is not read here either (r27.108).
+        const own = words.findIndex((w, i) => i > 0 && /^(?:that|whether)$/.test(claimWord(w)));
+        const frequency = (own > 0 ? words.slice(0, own) : words).join(' ').match(CLAIM_FREQUENCY);
         if (frequency) claimUnread('"' + frequency[0] + '" counts times or cases, which the checker cannot: it is not read');
         let prop;
         if (CLAIM_COPULAS.has(first) || first === 'be') {
@@ -12973,6 +13129,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     if (auto) {
                         claimReadState.notes = claimReadState.notes.filter((n, i) => i < noteMark || n === auto);
                         claimReadState.sites = siteMark;
+                        // Every clause read anew, so that each asks again what it
+                        // asks: one the referent leaves alone had come back from
+                        // memory without its question (r27.108: "someone could
+                        // not ..." beside "fake ones").
+                        claimReadState.memo = new Map();
                     }
                     if (auto && auto.whole) form = claimAtom(raw);
                     else if (auto) {
@@ -14405,6 +14566,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // gives what is (the user, 2026-09-25).
             if (!not && claimWord(tokens[j]) === 'no' && claimWord(tokens[j + 1]) === 'longer') { not = true; longer = true; j += 2; }
             else if (not && claimWord(tokens[j]) === 'any' && claimWord(tokens[j + 1]) === 'longer') { longer = true; j += 2; }
+            // "Would rationally choose": its adverbs stay before its verb
+            // ("rationally chooses"; it had been "rationallies choose")
+            // (r27.110).
+            const advs = [];
+            while (tokens[j + 1] && claimSynWord(claimWord(tokens[j])).adv && !claimSynWord(claimWord(tokens[j])).noun && !/^(?:not|no|any)$/.test(claimWord(tokens[j]))) advs.push(tokens[j++]);
             const next = claimWord(tokens[j] || '');
             if (!next || /^(?:like|love|rather|prefer|hate|sooner|that)$/.test(next)) return null;
             let person = claimPersonBefore(tokens, k);
@@ -14416,18 +14582,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // "would have been", "would not have known": the past.
                 const pp = claimWord(tokens[j + 1]);
                 const was = person === 'plural' ? 'were' : 'was', pastForm = pp === 'been' ? was : CLAIM_PARTICIPLE_PASTS[pp] || pp;
-                if (!not) out.push(pastForm);
-                else if (pp === 'been') out.push(pastForm, 'not');
-                else { const base = claimBaseOfPast(pastForm); if (!base) return null; out.push('did', 'not', base); }
+                if (!not) out.push(...advs, pastForm);
+                else if (pp === 'been') out.push(pastForm, 'not', ...advs);
+                else { const base = claimBaseOfPast(pastForm); if (!base) return null; out.push('did', 'not', ...advs, base); }
                 k = j + 1; past = true; changed = true;
                 continue;
             }
             // "would be", "would not know", "would have to": the present.
-            if (next === 'be') out.push(person === 'first' ? 'am' : person === 'plural' ? 'are' : 'is');
-            else if (not) out.push(person === 'singular' ? 'does' : 'do');
-            else out.push(person === 'singular' ? claimThirdPerson(next) : next);
-            if (not) out.push('not');
-            if (next !== 'be' && not) out.push(tokens[j]);
+            if (next === 'be') out.push(person === 'first' ? 'am' : person === 'plural' ? 'are' : 'is', ...(not ? ['not'] : []), ...advs);
+            else if (not) out.push(person === 'singular' ? 'does' : 'do', 'not', ...advs, tokens[j]);
+            else out.push(...advs, person === 'singular' ? claimThirdPerson(next) : next);
             k = j; changed = true;
         }
         const longerNote = '"no longer" in what would follow is read as "not": what it adds -- that before, it was so -- is not used';
@@ -14497,6 +14661,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!/\bwould\b/.test(t) || !/\bif\b/.test(t)) return null;
         const probe = claimQuietly(() => readClaimWords(t));
         if (!probe || probe.kind !== 'if' || !probe.cons || !probe.cons.src) return null;
+        // "Then everyone would rationally choose to plug in", with "would"
+        // and "could" duals: what everyone would choose, kept -- no what-if
+        // (r27.112).
+        if (claimWouldSaid(probe.cons)) return null;
         const condSrcs = [];
         (function gather(f) {
             if (!f) return;
@@ -14673,7 +14841,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return joins && joins.filter(j => j.then).length === thens.length ? joins : null;
         };
         const mark = st.notes.length, sites = st.sites;
-        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope).length;
+        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope).length;
         const whole = readClaim(joined), joins = joinsIn(whole);
         if (joins) {
             const parts = whole.parts;
@@ -14746,7 +14914,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (asked) return asked;
             // "If it had rained, the match would have been canceled": a
             // counterfactual, which is not a material conditional.
-            if (form.kind === 'if' && /\bwould\b/.test(String(text))) {
+            if (form.kind === 'if' && /\bwould\b/.test(String(text)) && !claimWouldSaid(form.cons)) {
                 form.counterfactual = true;
                 claimUnread('"would" makes this a what-if claim: only modus ponens and modus tollens apply to it');
             }
@@ -15221,7 +15389,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (a && a.kind !== 'atom') {
                 const mark = claimReadState.notes.length, b = readClaim(m[4]);
-                const asked = claimReadState.notes.slice(mark).filter(n => n.kind === 'ambiguous' && !n.part && !n.anyScope && !n.canScope);
+                const asked = claimReadState.notes.slice(mark).filter(n => n.kind === 'ambiguous' && !n.part && !n.anyScope && !n.canScope && !n.someScope);
                 // A list its answer gives goes on the first clause's list.
                 if (b && (b.kind === 'if' || (b.kind !== 'atom' && asked.length)))
                     return claimList(word, [a].concat(b.kind === word && !b.iff && !b.compound && !b.grouped ? b.parts : [b]));
@@ -16474,6 +16642,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 [{ label: none.join(' '), build: () => ({ kind: 'all', subject, predicate }) },
                  { label: 'not ' + positive.join(' '), build: () => ({ kind: 'some', subject, predicate }) }], true) || claimAtom(s);
         }
+        // "Someone couldn't rationally choose that": one person couldn't, or,
+        // "someone" as anyone, no one could -- with "can", "could" and their
+        // kin it may be either (r27.108; the user, of "If pleasure is the only
+        // good, then someone couldn't rationally choose not to plug into the
+        // experience machine" beside "Someone could ...": "This map seems
+        // absolutely unambiguous"). Asked where a step turns on it. The one
+        // person worded "there is someone who could not ...", which asks
+        // nothing (r27.109).
+        if (quant === 'some' && pronoun && /^(?:someone|somebody)$/.test(lower[0]) && predicate.charAt(0) === '¬' &&
+            /^(?:can|could|would|will|might|may|must|shall|should)$/.test(claimWord(vp[0] || '')) && claimWord(vp[1] || '') === 'not') {
+            const form = Object.assign({ kind: quant, subject, predicate }, words);
+            const modal = claimWord(vp[0]), affirmed = vp.filter((t, i) => i !== 1).join(' ');
+            return claimAmbiguous('"' + lower[0] + ' ' + modal + ' not" may say that one person ' + modal + ' not, or that no one ' + modal,
+                [{ label: 'there is ' + lower[0] + ' who ' + (modal === 'can' ? ['cannot'].concat(vp.slice(2)) : vp).join(' '), build: () => form },
+                 { label: 'no one ' + affirmed, build: () => ({ kind: 'all', subject, predicate }) }], false,
+                { generic: true, someScope: true, subject: lower[0] + ' ' + modal + ' not' }) || form;
+        }
         return Object.assign({ kind: quant, subject, predicate }, words);
     }
     // "there is a raven", "there exists a raven that is black", "there is someone
@@ -16492,7 +16677,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (w(0) === 'single') t = t.slice(1);
         if (!t.length) return null;
         let form;
-        const r = t.findIndex((tok, i) => i > 0 && /^(?:that|which|who)$/.test(claimWord(tok)));
+        // "Nothing bad about learning that someone never loved you": a "that"
+        // after a word that takes a clause opens it; it is no relative
+        // pronoun (r27.108).
+        const r = t.findIndex((tok, i) => i > 0 && /^(?:that|which|who)$/.test(claimWord(tok)) && !(claimWord(tok) === 'that' && claimAttitudeWord(claimWord(t[i - 1]))));
         if (r > 0 && !CLAIM_PREPOSITIONS.has(claimWord(t[r - 1]))) {
             const subject = restrictorProp(t.slice(0, r)), predicate = claimObjectRelativeProp(t.slice(r + 1)) || verbPhraseProp(t.slice(r + 1));
             if (!subject || !predicate) return null;
@@ -16550,7 +16738,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         CLAIM_VERB_MARKERS.has(w) || CLAIM_SYN_NUMBERS.test(w) || (CLAIM_SYN_ADVERBS.has(w) && !CLAIM_SYN_ORDINALS.has(w));
     // Verbs the lists know, by their plain form.
     const claimSynKnownVerb = w => CLAIM_ATTITUDE_VERBS.has(w) || CLAIM_TOGETHER_VERBS.has(w) || CLAIM_USE_UP_VERBS.has(w) ||
-        CLAIM_PAST_UNCHANGED.has(w) || /^(?:exist|matter|follow|entail|imply|require|need|make|give|take|cause|produce|create|allow|prevent|depend|involve|include|contain|mean|show|prove|suggest|support|explain|justify|determine|affect|influence|lead|bring|keep|let|seem|appear|become|remain|want|love|hate|fear|see|hear|feel|find|get|go|come|run|move|grow|die|live|work|happen|occur|arise|result|obtain|hold|apply|fail|succeed|begin|end|change|increase|decrease|reduce|destroy|win|lose|rule|help|harm|fly|swim|sing|dance|sleep|eat|drink|walk|talk|speak|write|read|cry|laugh|smile|leave|arrive|stay|wait|sit|stand|fall|rise|think|know|say|tell|ask|answer|carry|bark|bite|chase|catch|kill|love|like|own|use|build|break|open|close|pay|buy|sell|send|teach|learn|play|work|rain|snow|shine|burn|freeze|melt|survive|perish|reign|prevail|persist|suffer|enjoy|praise|blame|hurt|hit|meet|marry|visit|admire|respect|trust|doubt|deny|affirm|assert|claim|argue|conclude|infer|reason|occupy|soothe|reflect|absorb|attract|repel|expand|evaporate|dissolve|consist|belong|differ|resemble|weigh)$/.test(w);
+        CLAIM_PAST_UNCHANGED.has(w) || /^(?:exist|matter|follow|entail|imply|require|need|make|give|take|cause|produce|create|allow|prevent|depend|involve|include|contain|mean|show|prove|suggest|support|explain|justify|determine|affect|influence|lead|bring|keep|let|seem|appear|become|remain|want|love|hate|fear|see|hear|feel|find|get|go|come|run|move|grow|die|live|work|happen|occur|arise|result|obtain|hold|apply|fail|succeed|begin|end|change|increase|decrease|reduce|destroy|win|lose|rule|help|harm|fly|swim|sing|dance|sleep|eat|drink|walk|talk|speak|write|read|cry|laugh|smile|leave|arrive|stay|wait|sit|stand|fall|rise|think|know|say|tell|ask|answer|carry|bark|bite|chase|catch|kill|love|like|own|use|build|break|open|close|pay|buy|sell|send|teach|learn|play|work|rain|snow|shine|burn|freeze|melt|survive|perish|reign|prevail|persist|suffer|enjoy|praise|blame|hurt|hit|meet|marry|visit|admire|respect|trust|doubt|deny|affirm|assert|claim|argue|conclude|infer|reason|occupy|soothe|reflect|absorb|attract|repel|expand|evaporate|dissolve|consist|belong|differ|resemble|weigh|lack)$/.test(w);
     // A word's parts of speech, as { noun, plural, adj, past, s, base, ... }.
     function claimSynWord(token) {
         const t = String(token || ''), w = claimWord(t);
@@ -16801,6 +16989,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let e = j + 1, last = j;
         while (e < ws.length && (claimSynPlain(ws[e]) || comma(e))) { if (ws[e].t === ',') last = e; e++; }
         for (let q = b; q <= last; q++) if (ws[q].t === ',' && noun(ws[q - 1])) return false;
+        // Nor a verb the lists know, to the word after the last comma: "Bob, a
+        // baker, makes cakes" (r27.109; it had been "a baker, makes" before
+        // "cakes").
+        for (let q = b; q <= last + 1; q++) if (ws[q].t !== ',' && ws[q].knownVerb && !ws[q].adj) return false;
         return e - 1 - last >= 2 && !!ws[e - 1].noun;
     }
     function claimSynAdjectiveAhead(ws, i) {
@@ -16894,6 +17086,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // `number`: the first verb's -- 'sg' after a verb in -s, whose joined
     // verbs take -s too, 'pl', or '?'; 'prop' for a property's words, whose
     // first verb has lost its ending.
+    // Plural nouns that go before another noun ("sports cars", "sales
+    // taxes"): not verbs with their objects after "and".
+    const CLAIM_SYN_PLURAL_MODIFIERS = new Set(('sports sales arms goods savings customs clothes systems communications operations admissions awards ' +
+        'rights weapons drugs parts jobs ratings earnings arts letters humanities sciences').split(' '));
     function claimSynVerbJoins(raw, from, copula, number) {
         const ws = claimSynWords(raw), inner = claimSynInnerJoins(ws, 0), out = [];
         let that = false, piece = from;
@@ -16904,8 +17100,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let v = c + 1;
             while (ws[v] && ws[v].adv && !ws[v].noun) v++;
             const z = ws[v + 1], objectAfter = !!z && (z.det || z.quant || z.num || z.name || z.poss || z.pro);
+            // "Loves dogs and feeds dogs", "... and feeds hungry dogs": after a
+            // verb in -s, a word in -s with a bare plural after it (past its
+            // adjectives) is a verb and its object, where no list knows the
+            // verb -- a plural noun seldom goes before another ("sports cars",
+            // "sales taxes" are listed). Not "eats apples and pears raw"
+            // (r27.109; "loves dogs and feeds dogs" had been one object).
+            let q = v + 1;
+            while (ws[q] && ws[q].adj && !ws[q].noun && !ws[q].closed) q++;
+            const bare = !objectAfter && number === 'sg' && !!ws[v] && !!ws[v].s && !CLAIM_SYN_PLURAL_MODIFIERS.has(ws[v].w) &&
+                !!ws[q] && /^[a-z]/.test(ws[q].w || '') && ws[q].noun && ws[q].plural && !ws[q].knownVerb && !ws[q].closed && !ws[q].name && !ws[q].pro;
             const start = claimSynVerbStart(ws, c + 1, number === 'sg' ? 'sg' : '?');
-            let join = copula || start === 'strong' || (start === 'weak' && ws[v] && (ws[v].s || ws[v].past) && objectAfter);
+            let join = copula || start === 'strong' || (start === 'weak' && ws[v] && (ws[v].s || ws[v].past) && (objectAfter || bare));
             // A plain word after the "and", nothing after it, may be a noun
             // the object before it is joined with ("love music and dance") --
             // not after a verb alone ("sing and dance"). After a verb in -s it
@@ -17010,7 +17216,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // Of a phrase's ends, the one its verb group follows, as above; -1 if none.
     function claimSynChoose(ws, phrases) {
-        const ends = phrases.map(o => Object.assign({}, o, { verb: claimSynVerbStart(ws, o.end, o.number) })).filter(o => o.verb && o.end < ws.length);
+        // "Being genuinely loved has ...": after "being" or "having", a
+        // participle, past its adverbs, is the gerund's own, not its verb
+        // (r27.109; "being" had been the subject, and "genuinely loved has
+        // ..." said of it, so its denial was not found).
+        const owned = e => {
+            if (!(e > 0 && /^(?:being|having)$/.test(ws[e - 1].w))) return false;
+            let v = e;
+            while (ws[v] && ws[v].adv && !ws[v].noun) v++;
+            return !!ws[v] && !ws[v].aux && !!(ws[v].participle || ws[v].past);
+        };
+        const ends = phrases.map(o => Object.assign({}, o, { verb: claimSynVerbStart(ws, o.end, o.number) })).filter(o => o.verb && o.end < ws.length && !owned(o.end));
         if (!ends.length) return -1;
         let best = ends.find(o => o.verb === 'strong') || ends[0];
         // "Every theory proposed so far | has failed": a participle after the
@@ -18455,6 +18671,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Whether a predication's subject is one thing, for claimSelfSaid.
     const claimSelfTerm = f => !f.noIndividual && (!f.subjectNumber || f.subjectNumber === 'singular') &&
         !claimPluralWord(claimUnmarked(String(f.term || '')).trim().split(/\s+/).pop() || '') ? f.term : null;
+    // "Would" and "could" as duals (r27.112; the user, 2026-10-20: '"Everyone
+    // would" is ∀x □P vs "Someone could not", ∃x ◇~P, and ∀x □P is equivalent
+    // to ~∃x ◇~P', and "Let's add that as a switch but leave it on by
+    // default"): what one would choose to do, one could not choose not to.
+    // Said of a choice -- "choose", "decide", "opt", "elect" -- where its
+    // "not" is plain ("would choose to stay", "could choose not to stay").
+    function claimWouldCouldOn() {
+        const set = claimRuleSettings();
+        return set && Object.prototype.hasOwnProperty.call(set, 'modal-would') ? !!set['modal-would'] : true;
+    }
+    // A predicate's "could" form, and whether that is denied, or null.
+    function claimWouldDual(prop) {
+        const m = /^(¬?)~would((?: [a-z]+ly)*) (choose|decide|opt|elect)( not)? to (\S.*)$/.exec(String(prop || ''));
+        if (!m || !claimWouldCouldOn()) return null;
+        return { prop: '~could' + m[2] + ' ' + m[3] + (m[4] ? '' : ' not') + ' to ' + m[5], denied: !m[1] };
+    }
+    const claimWouldProp = p => { const d = typeof p === 'string' ? claimWouldDual(p) : null; return d ? (d.denied ? '¬' : '') + d.prop : p; };
+    // Is it said with such a "would"?
+    const claimWouldSaid = f => !!f && ((f.kind === 'pred' && !!claimWouldDual(f.prop)) ||
+        ((f.kind === 'all' || f.kind === 'some') && typeof f.predicate === 'string' && !!claimWouldDual(f.predicate)) || (f.kind === 'not' && claimWouldSaid(f.inner)));
     function claimKeyBy(form, loose) {
         if (!form) return '?';
         const words = w => loose ? claimUnmarked(w) : w;
@@ -18465,11 +18701,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'atom': return 'A:' + words(claimExactVariables && form.exact ? form.exact : form.text);
             // "It is possible for Poe to fly" is not "Poe is able to fly"
             // (claimPlainCan): the "can" of what is possible is its own.
-            case 'pred': return 'P:' + (loose ? normalizeClaimTerm(claimUnmarked(form.term)) : form.term) +
-                (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(claimSelfSaid(form.prop, claimSelfTerm(form)));
-            case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
-            case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(form.predicate)));
-            case 'not': return 'N(' + key(form.inner) + ')';
+            case 'pred': {
+                // "Bob would choose to stay": "not: Bob could choose not to stay" (r27.112).
+                const d = claimWouldDual(form.prop);
+                const k = 'P:' + (loose ? normalizeClaimTerm(claimUnmarked(form.term)) : form.term) +
+                    (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(claimSelfSaid(d ? d.prop : form.prop, claimSelfTerm(form)));
+                return d && d.denied ? 'N(' + k + ')' : k;
+            }
+            case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
+            case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
+            case 'not': {
+                // "It is not the case that Bob would choose to stay": "Bob could choose not to stay".
+                const d = form.inner && form.inner.kind === 'pred' ? claimWouldDual(form.inner.prop) : null;
+                if (d && d.denied) return key(Object.assign({}, form.inner, { prop: d.prop }));
+                return 'N(' + key(form.inner) + ')';
+            }
             case 'modal': return (form.op === 'nec' ? '□' : '◇') + form.mod + '(' + key(form.inner) + ')';
             case 'unestablished': return (form.whether ? 'W?(' : 'W(') + (form.inner ? key(form.inner) : '*') + (form.from ? '|' + form.from.map(key).sort().join('&') : '') + ')';
             case 'unsound': case 'invalid':
@@ -18519,7 +18765,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function claimSame(a, b) {
         if (!a || !b) return false;
-        if (claimKey(a) === claimKey(b) && claimSameWords(a, b)) return true;
+        if (claimKey(a) === claimKey(b) && (claimSameWords(a, b) || claimWouldSaid(a) || claimWouldSaid(b))) return true;
         if (claimNearMisses && claimLooseKey(a) === claimLooseKey(b)) { claimNearMisses.push({ a, b }); return true; }
         if (claimNearMisses && claimWorded && claimWordingDeep(a, b)) return true;
         return false;
@@ -19766,10 +20012,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // other's denial, and nothing more. An adjective's or a noun's is said with
     // "is", "was", "will be"; a verb's in any tense ("lacks", "lacked", "will
     // lack"). Not here: what "im-", "in-" and "non-" deny, read as denials
-    // already (CLAIM_EXACT_DENIALS); words of more than one meaning ("light",
-    // "hard", "short"); and pairs whose opposition is a thesis, not a meaning
-    // ("free" and "determined", "mental" and "physical"), for a map to state
-    // as a premise.
+    // already (CLAIM_EXACT_DENIALS); and pairs whose opposition is a thesis,
+    // not a meaning ("free" and "determined", "mental" and "physical"), for a
+    // map to state as a premise. A word of more than one meaning only where
+    // the other word says which: "short" beside "tall" or "long", "light"
+    // beside "heavy" or "dark", "hard" beside "soft" or "easy" (r27.110; the
+    // user, 2026-10-20, "Sounds good", a small risk of equivocation taken).
     const CLAIM_OPPOSITES = [
         ['contradictory', 'verb', 'lack/have lack/possess'],
         ['contradictory', 'word', 'absent/present guilty/innocent married/unmarried distinct_from/identical_to distinct_from/identical_with different_from/same_as'],
@@ -19777,7 +20025,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             'unwise/wise unethical/ethical unkind/kind unpleasant/pleasant unhealthy/healthy unwilling/willing unfriendly/friendly unimportant/important ' +
             'disloyal/loyal impolite/polite unpopular/popular sad/happy bad/good evil/good wrong/right cold/hot cold/warm poor/rich small/large small/big ' +
             'young/old new/old weak/strong dry/wet empty/full difficult/easy dangerous/safe ugly/beautiful foolish/wise dirty/clean low/high late/early ' +
-            'slow/fast expensive/cheap closed/open asleep/awake dead/alive dead/living odd/even contingent/necessary enemy_of/friend_of'],
+            'slow/fast expensive/cheap closed/open asleep/awake dead/alive dead/living odd/even contingent/necessary short/tall short/long light/heavy light/dark hard/soft hard/easy enemy_of/friend_of'],
         ['contrary', 'verb', 'reject/accept disagree/agree disbelieve/believe lose/win fail/pass fail/succeed forget/remember disobey/obey forbid/allow ' +
             'forbid/permit prohibit/allow prohibit/permit decrease/increase fall/rise exclude/include']
     ].flatMap(([kind, pos, list]) => list.split(' ').map(p => {
@@ -19818,7 +20066,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!f) return null;
         const inner = f.kind === 'not' ? f.inner : f, denied = f.kind === 'not';
         if (!inner) return null;
-        if (inner.kind === 'pred') return { of: claimKey(Object.assign({}, inner, { prop: '=' })), props: [inner.prop], denied };
+        // What is said, for its parts of speech: "is a light" (claimOppositeNoun).
+        if (inner.kind === 'pred') return { of: claimKey(Object.assign({}, inner, { prop: '=' })), props: [inner.prop], denied, vp: String(f.vpText || inner.vpText || '') };
         if (inner.kind === 'identity') {
             // Named as written first: "identical with", "the same as".
             const src = String(f.src || inner.src || ''), ways = ['identical to', 'identical with', 'same as'];
@@ -19828,6 +20077,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!denied && (f.kind === 'all' || f.kind === 'some') && typeof f.predicate === 'string' && f.subject !== CLAIM_ANY)
             return { of: claimKey(Object.assign({}, f, { predicate: '=' })), props: [f.predicate.replace(/^¬/, '')], denied: /^¬/.test(f.predicate) };
         return null;
+    }
+    // Is a word of a pair, in what is said of something, a noun: the head of
+    // a phrase that a determiner opens ("is a light", "is the right", "is my
+    // light"), not an adjective ("is light", "is a light box", "is a good
+    // person")? By the phrases of the syntax tree (r27.111; the user: "use
+    // the built-in syntax trees to parse the parts of speech so that 'light'
+    // only gives 'not heavy' when it's an adjective"). Both read "=light".
+    function claimOppositeNoun(vp, word) {
+        const toks = claimTokens(String(vp || '').replace(/[.!?]+\s*$/, ''));
+        let i = 0;
+        while (i < toks.length && /^(?:is|are|am|was|were|be|been|being|will|would|can|could|may|might|shall|should|must|not|never|isn't|aren't|wasn't|weren't)$/.test(claimWord(toks[i]))) i++;
+        const rest = toks.slice(i), n = String(word).split(' ').length;
+        if (!rest.length) return false;
+        const ws = claimSynWords(rest);
+        if (!(ws[0].det || ws[0].poss || ws[0].quant)) return false;
+        const end = claimSynPhraseEnd(ws, 0);
+        return end > n && rest.slice(end - n, end).map(claimWord).join(' ') === word;
     }
     // One step of opposites (r27.103): "Mary is unhappy" gives "Mary is not
     // happy"; "Pre-linguistic humans do not lack minds" gives "Pre-linguistic
@@ -19841,7 +20107,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!a || !b || a.of !== b.of || a.denied === b.denied) return null;
         const rest = r => claimUnmarked(r).toLowerCase();
         for (const pa of a.props) for (const pb of b.props) for (const x of claimOppositeSlots(pa)) for (const y of claimOppositeSlots(pb)) {
+            const e0 = CLAIM_OPPOSITES[x.pair];
             if (x.pair !== y.pair || x.side === y.side || x.copula !== y.copula || x.lead !== y.lead || x.past !== y.past || rest(x.rest) !== rest(y.rest)) continue;
+            if (x.copula && (claimOppositeNoun(a.vp, x.side ? e0.b : e0.a) || claimOppositeNoun(b.vp, y.side ? e0.b : e0.a))) continue;
             const e = CLAIM_OPPOSITES[x.pair], step = { from: x.side ? e.b : e.a, to: y.side ? e.b : e.a, both: e.both };
             if (!a.denied) return step;
             if (e.both) return step;
@@ -19924,7 +20192,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Contraries and contradictories, a list of pairs (r27.103): a rule of
         // word meaning, its own step, named by its pair.
         { id: 'opposites', name: 'contraries and contradictories', optional: true,
-          gloss: 'a list of 72 pairs: contraries such as "sad" and "happy", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
+          gloss: 'a list of 78 pairs: contraries such as "sad" and "happy", "tall" and "short", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
           test: (P, C) => P.length === 1 && !!claimOppositeStep(P[0], C) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
@@ -22037,6 +22305,45 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!denied && /^~did\s/.test(String(p))) body = body.replace(/^did\s+/, '');
         return (denied ? 'not ' : '') + claimShowWords(body);
     };
+    // "All" and "some" said as English: "no one could choose", "everyone
+    // sings", "some raven is not white" -- they had been "every person not
+    // could choose", "every person sing" (r27.108).
+    function claimShowQuantified(form) {
+        const noun = claimShowProp(form.subject), person = noun === 'person', thing = noun === 'thing';
+        const denied = String(form.predicate).charAt(0) === '¬';
+        const raw = String(form.predicate).replace(/^¬/, ''), body = claimShowWords(raw.replace(/^[=~§]/, ''));
+        const words = body.split(' '), first = (words[0] || '').toLowerCase();
+        const says = not => {
+            if (raw.charAt(0) === '=') return 'is ' + (not ? 'not ' : '') + body;
+            if (first === 'did') return not ? ['did', 'not', claimVerbPlain(words[1] || '') || words[1]].concat(words.slice(2)).join(' ') : words.slice(1).join(' ');
+            if (/^(?:can|could|will|would|shall|should|may|might|must|does|do|has|had|have|is|was)$/.test(first)) return not ? [words[0], 'not'].concat(words.slice(1)).join(' ') : body;
+            return not ? 'does not ' + body : [claimThirdPerson(words[0])].concat(words.slice(1)).join(' ');
+        };
+        const who = form.kind === 'all' ? (denied ? (person ? 'no one' : thing ? 'nothing' : 'no ' + noun) : (person ? 'everyone' : thing ? 'everything' : 'every ' + noun))
+            : (person ? 'someone' : thing ? 'something' : 'some ' + noun);
+        return who + ' ' + says(form.kind === 'some' && denied);
+    }
+    // A denial said as English: "learning that ... does not give you a
+    // reason", "Poe does not fly", "no one could choose" -- it had been "not
+    // learning that ... gives you" (r27.108). What is no one clause, "it is
+    // not the case that".
+    function claimShowDenial(inner) {
+        if (!inner) return 'not';
+        if ((inner.kind === 'all' || inner.kind === 'some') && inner.src === undefined && inner.subject && inner.predicate) return claimShowQuantified(negateClaim(inner));
+        if (inner.kind === 'pred' && inner.subjectText && inner.vpText) {
+            const vp = claimShowWords(inner.vpText).split(' '), first = vp[0].toLowerCase(), second = (vp[1] || '').toLowerCase();
+            const helping = /^(?:is|are|was|were|am|can|could|will|would|shall|should|may|might|must|does|do|did)$/.test(first) ||
+                (/^(?:has|have|had)$/.test(first) && !!second && !!claimSynWord(second).participle);
+            const said = second === 'not' ? null
+                : helping ? [vp[0], 'not'].concat(vp.slice(1))
+                : /^(?:has|have|had)$/.test(first) ? [first === 'had' ? 'did' : first === 'has' ? 'does' : 'do', 'not', 'have'].concat(vp.slice(1))
+                : claimPastStem(first) !== null ? ['did', 'not', claimVerbPlain(first)].concat(vp.slice(1))
+                : claimEndsInS(first) ? ['does', 'not', claimVerbPlain(first)].concat(vp.slice(1))
+                : ['do', 'not', vp[0]].concat(vp.slice(1));
+            if (said) return claimShowWords(inner.subjectText) + ' ' + said.join(' ');
+        }
+        return 'it is not the case that ' + claimShowForm(inner);
+    }
     function claimShowForm(form) {
         if (!form) return '';
         if (form.src !== undefined) return claimShowWords(claimClauseStart(form.src));
@@ -22045,14 +22352,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             case 'identity': return claimShowWords(form.left) + ' is identical to ' + claimShowWords(form.right);
             case 'atom': return claimShowWords(form.text);
             case 'pred': return claimShowWords(form.term) + ' ' + claimShowProp(form.prop);
-            case 'not': return 'not ' + claimShowForm(form.inner);
+            case 'not': return claimShowDenial(form.inner);
             case 'modal': return 'it is ' + claimModalWord(form) + ' that ' + claimShowForm(form.inner);
             case 'unestablished':
                 if (form.from) return 'not established from ' + form.from.map(claimShowForm).join('; ') + (form.inner ? ': ' + claimShowForm(form.inner) : '');
                 return (form.whether ? 'not established either way: ' : 'not established: ') + claimShowForm(form.inner);
             case 'unsound': case 'invalid':
                 return 'the argument from ' + form.from.map(claimShowForm).join('; ') + (form.inner ? ' to ' + claimShowForm(form.inner) : '') + ' is ' + form.kind;
-            case 'all': case 'some': return (form.kind === 'all' ? 'every ' : 'some ') + claimShowProp(form.subject) + ' ' + claimShowProp(form.predicate);
+            case 'all': case 'some': return claimShowQuantified(form);
             case 'then': return form.parts.map(claimShowForm).join(' and then ');
         }
         return '';
@@ -22122,7 +22429,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     derives.push({ label, bareChallenge: true });
             });
             if (note.always || derives.length) ambiguous.push({ text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
-                generic: !!note.generic, anyScope: !!note.anyScope, canScope: !!note.canScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
+                generic: !!note.generic, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 typo: !!note.typo, missing: !!note.missing, single: !!note.single });
         }));
         // A modal step the map's system does not take (r27.101): with every
@@ -22525,7 +22832,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimEveryReadingRule(premiseTexts, conclusionText, attack, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
-        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope));
+        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope));
         if (!asked.some(a => a.length) || asked.some(a => a.some(n => !n.shared || !n.readings || n.readings.length < 2)) ||
             reads.some(r => r.notes.some(n => n.kind === 'unread'))) return null;
         // Each box's choices: one site map per combination of its questions.
@@ -22732,7 +23039,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             const texts = premiseTexts.concat([conclusionText]);
                             const quote = t => '\u201c' + stripClaimMarkup(t) + '\u201d';
                             const asked = role.entries.filter((e, k, all) => all.findIndex(x => x.box === e.box) === k).map(e => ({
-                                text: texts[e.box], message: e.note.message, readings: e.note.readings, site: e.note.site, generic: true, anyScope: !!e.note.anyScope, canScope: !!e.note.canScope, canDenied: !!e.note.canDenied,
+                                text: texts[e.box], message: e.note.message, readings: e.note.readings, site: e.note.site, generic: true, anyScope: !!e.note.anyScope, canScope: !!e.note.canScope, someScope: !!e.note.someScope, canDenied: !!e.note.canDenied,
                                 canPlain: !!e.note.canPlain, canFrom: e.note.canFrom || null, canBe: e.note.canBe || null, grammar: false,
                                 subject: e.note.subject || null,
                                 derives: role.derives.map(d => ({ label: e.note.readings[d.reading], rule: d.rule }))
@@ -22768,7 +23075,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                     // once they are checked: said plainly, or with the box in
                                     // brackets (a conditional box needs them).
                                     const pair = q => ['If we lack reasons to think that ' + q + ', then we can\u2019t conclude that ' + q, 'We lack reasons to think that ' + q];
-                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope)) &&
+                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope)) &&
                                         (fs => fs.every(Boolean) && !!certifyStep(fs, conclusions, attack))(ps.map(t => parseClaim(t)));
                                     const offer = [pair(p), pair('(' + p + ')')].find(passes);
                                     return '\u201c' + stripClaimMarkup(premiseTexts[0]) + '\u201d only says that \u201c' + box +
@@ -23897,6 +24204,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // markdown link at those exact character offsets.
             ed.addEventListener('contextmenu', (e) => {
                 if (ed.readOnly) return;   // only in edit mode
+                if ((e.pointerType || touchPointerType) !== 'mouse') return;   // a finger's hold: the browser selects words (r27.111)
                 if (e.shiftKey) return;    // Shift: the browser's own menu (spelling, paste)
                 const a = ed.selectionStart, b = ed.selectionEnd;
                 e.preventDefault(); e.stopPropagation();
@@ -23935,15 +24243,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     if (a === b) return;
                     ev.stopPropagation();
                     menu.remove();
-                    let url = null;
-                    try { url = prompt('Link URL:', 'https://'); } catch (_) {}
-                    if (!url || url === 'https://') { ed.focus(); return; }
-                    const sel = ed.value.slice(a, b);
-                    const before = ed.value.slice(0, a), after = ed.value.slice(b);
-                    pushHistory();
-                    node.texts[index] = before + '[' + sel + '](' + url + ')' + after;
-                    ed.value = node.texts[index];
-                    render();
+                    linkEditorSelection(ed, node, index, a, b);
                 };
                 menu.appendChild(btn);
                 const note = document.createElement('div');
@@ -30212,7 +30512,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Whole clauses: in the conclusion, or where premises meet.
         clauses.forEach(list => list.forEach(cl => {
             const inC = C && cClauses.find(x => same(cl.form, x.form));
-            if (inC) { cl.role = 'c'; cl.denied = !claimSame(cl.form, inC.form); return; }
+            if (inC) { cl.role = 'c'; cl.denied = !claimSame(cl.form, inC.form); cl.inC = inC; return; }
             if (clauses.some(other => other.some(o => o !== cl && same(cl.form, o.form)))) {
                 cl.role = 'link'; cl.color = colorOf(x => x.form && same(x.form, cl.form), { form: cl.form });
             }
@@ -30237,7 +30537,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     if (inC) { sp.role = 'c'; sp.denied = !!(sp.said && inC.said) && sp.neg !== inC.neg; return; }
                     if (every.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
                 });
-                clauses[i][ci].parts = parts;
+                // A clause none of whose parts meets anything stays whole: one
+                // color, not its subject apart ("learning that someone never
+                // really loved you", beside "there is nothing bad about ...")
+                // (r27.111).
+                if (parts.some(sp => sp.role)) clauses[i][ci].parts = parts;
             }));
         }
         const ownColor = p => p.key ? colorOf(x => x.key === p.key, { key: p.key }) : colorOf(x => x.form && same(x.form, p.form), { form: p.form });
@@ -30279,8 +30583,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 else if (!C) cls = 'ic-k' + ownColor(p);
                 else cls = 'ic-u';
                 const unit = whole ? cl : p, vs = (whole || p.role === 'c') && unit.form && boxClauses.length ? against(unit) : null;
-                parts.push({ words: p.words, cls, ctx: cl.ctx, contra: Math.max((whole ? cl.contra : p.contra) || 0, vs ? vs.contra : 0),
-                    rejects: vs && vs.rejects.length ? vs.rejects : undefined, affirm: vs && vs.affirm ? vs.affirm : undefined });
+                // A part that goes on denied (its red dashes): what the
+                // conclusion contradicts in it is red -- a denial the
+                // conclusion does not say, or, where the conclusion says one
+                // it does not, its affirming word: "is" in "pleasure is the
+                // only good", against "pleasure is not the only good"
+                // (r27.112; the user: "we should always make the contradictory
+                // part of a red-underlined conclusion red"). An attack's parts
+                // are read against the box it attacks (vs).
+                const dn = !whole && !vs && p.role === 'c' && p.denied && unit.form && p.inC && p.inC.form ? (() => {
+                    const mine = denials(unit), theirs = denials(p.inC);
+                    return { contra: Math.max(0, mine - theirs), affirm: mine < theirs ? icAffirmed(unit.form) : null };
+                })() : null;
+                parts.push({ words: p.words, cls, ctx: cl.ctx, contra: Math.max((whole ? cl.contra : p.contra) || 0, vs ? vs.contra : 0, dn ? dn.contra : 0),
+                    rejects: vs && vs.rejects.length ? vs.rejects : undefined, affirm: (vs && vs.affirm) || (dn && dn.affirm) || undefined });
             }));
             // Valid: what goes on to the conclusion is one stretch -- a
             // compound all of whose parts go on, with the words joining them.
@@ -30629,8 +30945,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             for (let q = 0; q < m[0].length; q++) units.push({ at: m.index + q, end: m.index + q + 1, binds: j });
         }
         units.sort((x, y) => x.at - y.at);
-        contra.forEach(([a, b, k]) => units.filter(u => (u.at < b && u.end > a) || (u.binds !== undefined && u.binds >= a && u.binds < b)).slice(0, k)
-            .forEach(u => { for (let i = u.at; i < u.end; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg'; }));
+        // The outermost first, by the phrases of the syntax tree: in the
+        // clause's own verb or an object of it before one in a clause inside
+        // it ("that ...", "who ...", "not to ..."); then the first. "No" in
+        // "learning that someone never really loved you gives you no genuine
+        // reason", not "never" (r27.112; the user: '"no" is the words that
+        // contradicts, not "never" ("never" is in both)', and "We could always
+        // try using the internal syntax tree to reveal it").
+        const depthIn = (a, b) => {
+            const toks = [];
+            for (const m of c.text.slice(a, b).matchAll(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu)) toks.push({ w: m[0].toLowerCase().replace(/’/g, "'"), at: a + m.index });
+            const verb = claimSynSubjectEnd(toks.map(t => t.w));
+            const opens = i => /^(?:that|who|whom|whose|which|whether)$/.test(toks[i].w) || (toks[i].w === 'to' && i > 0 && /^(?:not|never)$/.test(toks[i - 1].w));
+            return u => {
+                const t = toks.findIndex(x => x.at <= u.at && u.at < x.at + x.w.length);
+                if (t < 0) return 0;
+                if (toks[t + 1] && toks[t + 1].w === 'to' && /^(?:not|never)$/.test(toks[t].w)) return 1;     // "choose not to stay"
+                const from = verb > 0 && t >= verb ? verb : 1;
+                for (let i = from; i < t; i++) if (opens(i)) return 1;
+                return 0;
+            };
+        };
+        contra.forEach(([a, b, k]) => {
+            const depth = depthIn(a, b);
+            units.filter(u => (u.at < b && u.end > a) || (u.binds !== undefined && u.binds >= a && u.binds < b))
+                .map((u, i) => ({ u, i, d: u.binds === undefined ? depth(u) : 0 })).sort((x, y) => x.d - y.d || x.i - y.i).slice(0, k)
+                .forEach(({ u }) => { for (let i = u.at; i < u.end; i++) if (!cls[i].endsWith(' ic-neg')) cls[i] += ' ic-neg'; });
+        });
         // ... and a word that opposes the box attacked (r27.104).
         rejects.forEach(([a, b, words]) => words.forEach(w => {
             const re = new RegExp('(^|[^\\p{L}\\p{N}])(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+') + ')(?![\\p{L}\\p{N}])', 'giu');
@@ -30836,7 +31177,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimAskedKind(step) {
         const asked = (step.why && step.why.ambiguous) || [];
         return asked.some(a => a.typo) ? 'typo' : asked.some(a => a.missing) ? 'no referent' : asked.some(a => a.grammar) ? 'grammar'
-            : asked.length && asked.every(a => a.generic && !a.anyScope && !a.canScope) ? 'generic' : 'ambiguous';
+            : asked.length && asked.every(a => a.generic && !a.anyScope && !a.canScope && !a.someScope) ? 'generic' : 'ambiguous';
     }
     // Its tag: a typo or a missing referent is a fault ("✗"), the rest questions.
     function claimAskedTag(step) {
@@ -31111,6 +31452,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return null;
     }
+    // "Someone couldn't" answered in place: "there is someone who could not"
+    // or "no one could", the box's other words kept (r27.109; the user: "I
+    // can't select an option here").
+    function claimSomeWords(entry, label) {
+        const r = entry.readings.indexOf(label), m0 = /^(someone|somebody) ([a-z]+) not$/.exec(String(entry.subject || ''));
+        if (!entry.someScope || r < 0 || !m0) return null;
+        const who = m0[1], modal = m0[2];
+        const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.someScope && n.subject === entry.subject);
+        const rank = asked.findIndex(n => n.site === entry.site);
+        const neg = modal === 'can' ? "can(?:['\u2019]t|not|\\s+not)" : modal === 'will' ? "(?:won['\u2019]t|will\\s+not)" : modal === 'shall' ? "(?:shan['\u2019]t|shall\\s+not)"
+            : modal + "(?:n['\u2019]t|\\s+not)";
+        const re = new RegExp('(^|[^A-Za-z])(' + who + ')\\s+' + neg + '(?![A-Za-z])', 'gi');
+        let m, k = 0;
+        while ((m = re.exec(entry.text))) {
+            if (k++ !== rank) continue;
+            const at = m.index + m[1].length, cap = /^[A-Z]/.test(m[2]);
+            const word = r === 1 ? (cap ? 'No one ' : 'no one ') + modal : (cap ? 'There is ' : 'there is ') + who + ' who ' + (modal === 'can' ? 'cannot' : modal + ' not');
+            return entry.text.slice(0, at) + word + entry.text.slice(m.index + m[0].length);
+        }
+        return null;
+    }
     function claimGenericWords(entry, label) {
         const q = /^(all|some|most|every)\s/.exec(label);
         if (!entry.generic || !entry.subject || !q) return null;
@@ -31206,7 +31568,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const linked = !!where && (() => { const c = findNodeContext(state.trees, where.id); return !!c && hasBoxLinks(c.node.texts[where.idx]); })();
                 let fits = !!where && !linked && (entry.typo || claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, words)));
                 if (!fits && where && !linked) {
-                    const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimGenericWords(entry, label) || claimPartWords(entry, label));
+                    const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimSomeWords(entry, label) || claimGenericWords(entry, label) || claimPartWords(entry, label));
                     if (inPlace && claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, inPlace))) { words = inPlace; fits = true; }
                 }
                 const row = document.createElement('label');
@@ -31755,6 +32117,94 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         document.addEventListener('pointercancel', () => { clearTimeout(timer); timer = null; hide(); }, true);
         window.addEventListener('scroll', hide, true);
     })();
+    // The editor's selected words, a link to a web address asked for: the
+    // right-click menu's "Link selection", and the touch toolbar's.
+    function linkEditorSelection(ed, node, index, a, b) {
+        let url = null;
+        try { url = prompt('Link URL:', 'https://'); } catch (_) {}
+        if (!url || url === 'https://') { ed.focus(); return; }
+        const sel = ed.value.slice(a, b);
+        const before = ed.value.slice(0, a), after = ed.value.slice(b);
+        pushHistory();
+        node.texts[index] = before + '[' + sel + '](' + url + ')' + after;
+        ed.value = node.texts[index];
+        render();
+    }
+    // --- Touch screens: the editing toolbar -------------------------------
+    // While a box is edited on a touch screen, bold, italic, underline and
+    // the two links sit in a strip just above the keyboard, as a phone's
+    // writing apps have them (r27.113; the user chose it, of three sketches:
+    // "Option 3"). There a finger's hold selects words (r27.111), so the
+    // right-click menu is not to be had. Its buttons leave the box's focus,
+    // and so its keyboard, where it is -- their pointerdown is cancelled, so
+    // no mousedown moves the focus -- and act on the selection, or the word
+    // at the caret, as Ctrl+B does.
+    const editToolbar = (function () {
+        let bar = null, ed = null;
+        const touch = () => touchPointerType === 'touch' || touchPointerType === 'pen';
+        const hostOf = x => x && x.closest && x.closest('.node');
+        function build() {
+            bar = document.createElement('div');
+            bar.id = 'edit-toolbar';
+            bar.setAttribute('role', 'toolbar');
+            bar.setAttribute('aria-label', 'Formatting');
+            bar.hidden = true;
+            const add = (label, cls, title, act) => {
+                const b = document.createElement('button');
+                b.type = 'button'; b.textContent = label; b.title = title; b.setAttribute('aria-label', title);
+                if (cls) b.className = cls;
+                b.addEventListener('pointerdown', e => e.preventDefault());
+                b.addEventListener('mousedown', e => e.preventDefault());
+                b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (ed && boxEditor.isOpen(ed)) act(ed); });
+                bar.appendChild(b);
+                return b;
+            };
+            [['strong', 'B', 'Bold'], ['em', 'I', 'Italic'], ['u', 'U', 'Underline']].forEach(([tag, letter, title]) => {
+                add(letter, 'fmt fmt-' + tag, title, x => { boxEditor.format(x, tag); sync(); }).dataset.fmt = tag;
+            });
+            const sep = document.createElement('span');
+            sep.className = 'sep';
+            bar.appendChild(sep);
+            add('Link a premise', '', 'Link a premise here: tap its box', x => {
+                const host = hostOf(x);
+                if (host) startBoxLinkPicking(host.getAttribute('data-node-id'), parseInt(host.getAttribute('data-node-idx') || '0', 10), x.selectionStart, x.selectionEnd);
+            });
+            add('Link selection', '', 'Link the selected words to a web address', x => {
+                if (x.selectionStart === x.selectionEnd) { showHintToast('Select words first', true); return; }
+                const host = hostOf(x), ctx = host && findNodeContext(state.trees, host.getAttribute('data-node-id'));
+                if (ctx) linkEditorSelection(x, ctx.node, parseInt(host.getAttribute('data-node-idx') || '0', 10), x.selectionStart, x.selectionEnd);
+            });
+            document.body.appendChild(bar);
+        }
+        // Along the bottom of what is seen: just above the keyboard.
+        function place() {
+            if (!bar || bar.hidden) return;
+            const vv = window.visualViewport, h = bar.offsetHeight;
+            bar.style.top = Math.max(0, vv ? vv.offsetTop + vv.height - h : window.innerHeight - h) + 'px';
+            bar.style.left = (vv ? vv.offsetLeft : 0) + 'px';
+            bar.style.width = (vv ? vv.width : window.innerWidth) + 'px';
+        }
+        // Bold, italic and underline pressed where the words are so.
+        function sync() {
+            if (!bar || !ed) return;
+            const has = boxEditor.formatState(ed);
+            bar.querySelectorAll('[data-fmt]').forEach(b => b.setAttribute('aria-pressed', String(!!has[b.dataset.fmt])));
+        }
+        function show(x) { if (!bar) build(); ed = x; bar.hidden = false; sync(); place(); }
+        function hide() { if (bar) bar.hidden = true; ed = null; }
+        document.addEventListener('focusin', e => {
+            const t = e.target;
+            if (t && t.classList && t.classList.contains('box-editor') && boxEditor.isOpen(t) && hostOf(t) && touch()) show(t);
+            else if (bar && !bar.hidden && !bar.contains(t)) hide();
+        });
+        document.addEventListener('focusout', e => {
+            if (ed && e.target === ed) setTimeout(() => { if (ed && (document.activeElement !== ed || !boxEditor.isOpen(ed))) hide(); }, 0);
+        });
+        document.addEventListener('selectionchange', () => { if (bar && !bar.hidden) sync(); });
+        if (window.visualViewport) { window.visualViewport.addEventListener('resize', place); window.visualViewport.addEventListener('scroll', place); }
+        window.addEventListener('resize', place);
+        return { show, hide, get element() { return bar; } };
+    })();
     // --- Hover tips ---------------------------------------------------------
     // What a control does, on hover, in the theme's colors (the user,
     // 2026-10-01: "The hover tips in light mode should be consistent with the
@@ -32149,6 +32599,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Right-click: show context menu. On Android, a long-press fires this
     // natively — cancel the manual timer below and defer if it already won.
     document.getElementById('surface').addEventListener('contextmenu', (e) => {
+        if ((e.pointerType || touchPointerType) !== 'mouse' && boxEditor.isOpen(e.target.closest && e.target.closest('.box-editor'))) return;
         e.preventDefault();
         cancelSurfaceLongPress();
         if (longPressFired) return;
@@ -32275,6 +32726,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     document.getElementById('surface').addEventListener('pointerdown', (e) => {
         if (e.pointerType === 'mouse') return; // mouse uses the contextmenu event
+        // Held in a box being edited: its words are selected, as the browser
+        // does it -- no menu (r27.111; the user: "the context menu comes up
+        // and they can't highlight text").
+        if (boxEditor.isOpen(e.target.closest('.box-editor'))) return;
         if (e.target.closest('.crossref-badge, .node-link, .drag-handle')) return;   // ⠿ held: a drag alone
         if (e.target.closest('[title]') && !e.target.closest('.node')) return;          // held for its tip (initTouchTips)
         if (e.target.closest('.collapse-btn, .status-dot[title], .touch-grip')) return;
@@ -33140,7 +33595,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         crossRefPicking = { sourceId, sourceIdx, argumentId };
         canvas.classList.add('picking-crossref');
         const hint = document.getElementById('crossref-hint');
-        hint.innerHTML = 'Click a node to link to it \u2014 <kbd>Esc</kbd> to cancel';
+        hint.innerHTML = touchPointerType === 'touch' || touchPointerType === 'pen' ? 'Tap a node to link to it, or the canvas to cancel'
+            : 'Click a node to link to it \u2014 <kbd>Esc</kbd> to cancel';
         hint.classList.add('visible');
     }
     function cancelCrossRefPicking() {

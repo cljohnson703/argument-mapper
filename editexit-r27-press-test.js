@@ -220,6 +220,77 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
             JSON.stringify(other));
     }
 
+    /* ================================================================
+       6. Held on a touch screen inside the box being edited: its words are
+          the browser's to select -- no menu (r27.111; the user: "when they
+          try to highlight text in a node while in text edit mode, the
+          context menu comes up and they can't highlight text").
+       ================================================================ */
+    console.log('\n-- a hold inside the box being edited --');
+    {
+        // The touch press of (4) let go on the document, not the canvas: its
+        // hold runs out and opens the menu. Let it, and close it.
+        await sleep(650);
+        T(W, `hideContextMenu(); return true;`);
+        T(W, `__p.load(); __p.open('s', 0);
+            __p.ta('s', 0).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, button: 0, buttons: 1,
+                pointerId: 1, isPrimary: true, clientX: 5, clientY: 5, pointerType: 'touch' }));
+            return true;`);
+        await sleep(650);
+        const held = T(W, `const cm = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+            __p.ta('s', 0).dispatchEvent(cm);
+            const r = { menu: document.getElementById('context-menu').classList.contains('open'), linkMenu: !!document.getElementById('link-menu'),
+                prevented: cm.defaultPrevented, editing: __p.editing() };
+            document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'touch' }));
+            return r;`);
+        ok(!held.menu && !held.linkMenu && !held.prevented && held.editing === 's-0',
+            'a finger held in the box being edited opens no menu, and the browser may select its words (the box menu had opened)', JSON.stringify(held));
+        const right = T(W, `__p.load(); __p.open('s', 0);
+            __p.ta('s', 0).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 2, buttons: 2, pointerId: 1, pointerType: 'mouse' }));
+            const cm = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+            __p.ta('s', 0).dispatchEvent(cm);
+            const r = { linkMenu: !!document.getElementById('link-menu'), prevented: cm.defaultPrevented };
+            document.querySelectorAll('#link-menu').forEach(m => m.remove());
+            document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse' }));
+            return r;`);
+        ok(right.linkMenu && right.prevented, 'a right-click there still opens its own menu (bold, italic, a link)', JSON.stringify(right));
+    }
+
+    /* ================================================================
+       7. A touch screen's editing toolbar, just above its keyboard
+          (r27.113; the user, of three sketches: "Option 3").
+       ================================================================ */
+    console.log('\n-- the editing toolbar on a touch screen --');
+    {
+        const mouse = T(W, `__p.load(); touchPointerType = 'mouse'; __p.open('s', 0); var t = document.getElementById('edit-toolbar'), r = !!t && !t.hidden;
+            document.activeElement.blur(); return r;`);
+        ok(mouse === false, 'opened with a mouse: no toolbar', JSON.stringify(mouse));
+        const bar = T(W, `__p.load(); touchPointerType = 'touch'; __p.open('s', 0); var t = document.getElementById('edit-toolbar');
+            return { shown: !t.hidden, buttons: [].map.call(t.querySelectorAll('button'), function (b) { return b.textContent; }), editing: __p.editing() };`);
+        ok(bar.shown && JSON.stringify(bar.buttons) === JSON.stringify(['B', 'I', 'U', 'Link a premise', 'Link selection']) && bar.editing === 's-0',
+            'opened by touch: bold, italic, underline and the two links, in a toolbar, the box still being edited', JSON.stringify(bar));
+        const press = (i) => `var b = document.querySelectorAll('#edit-toolbar button')[${i}], d = new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' });
+            b.dispatchEvent(d); b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));`;
+        const bold = T(W, `var ed = document.activeElement; ed.value = 'Bob sings'; ed.dispatchEvent(new Event('input', { bubbles: true })); ed.setSelectionRange(4, 9);
+            ${press(0)}
+            return { prevented: d.defaultPrevented, text: findNodeContext(state.trees, 's').node.texts[0], editing: __p.editing(), pressed: b.getAttribute('aria-pressed') };`);
+        ok(bold.prevented && bold.text === 'Bob **sings**' && bold.editing === 's-0' && bold.pressed === 'true',
+            'B bolds the selected words, and the box stays open: the press keeps its focus, and so the keyboard', JSON.stringify(bold));
+        const pick = T(W, `document.activeElement.setSelectionRange(0, 0);
+            ${press(3)}
+            var r = { picking: !!boxLinkPicking, hint: document.getElementById('crossref-hint').textContent }; cancelBoxLinkPicking(false); return r;`);
+        ok(pick.picking && pick.hint === 'Tap the box to link into the text, or the canvas to cancel', '"Link a premise": a box to tap, and the canvas to cancel -- no Esc on a phone', JSON.stringify(pick));
+        const cross = T(W, `armCrossRefPicking('s', 1, 's'); var h = document.getElementById('crossref-hint').textContent; cancelCrossRefPicking(); return h;`);
+        ok(cross === 'Tap a node to link to it, or the canvas to cancel', 'a cross-reference on a touch screen likewise: tap, and the canvas to cancel', JSON.stringify(cross));
+        const css = T(W, `var t = [].map.call(document.querySelectorAll('style'), function (s) { return s.textContent; }).join(' '), m = /#edit-toolbar \\{([^}]*)\\}/.exec(t);
+            return { fixed: !!m && /position: fixed/.test(m[1]), panel: !!m && /var\\(--panel-bg/.test(m[1]), hidden: /#edit-toolbar\\[hidden\\] \\{ display: none; \\}/.test(t) };`);
+        ok(css.fixed && css.panel && css.hidden, 'its look: fixed along the bottom of what is seen, in the panels\' colors, and gone when hidden', JSON.stringify(css));
+        await sleep(20);
+        const gone = T(W, `return document.getElementById('edit-toolbar').hidden;`);
+        ok(gone === true, 'the box closed, the toolbar goes', JSON.stringify(gone));
+        T(W, `touchPointerType = 'mouse'; return 1;`);
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);
     W.dom.window.close();
