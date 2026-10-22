@@ -246,7 +246,10 @@ console.log('\n-- 8. what the premises give (r27.99) --');
     const ob = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['Socrates will die.'], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'objection', texts: ['All men are mortal.', 'Socrates is a man.'], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render(); var s = collectDeductiveSteps(state.trees)[0]; return s.why && s.why.text || '';`);
-    ok(!/gives? “/.test(ob) && !/ give “/.test(ob), 'not of an objection', ob);
+    // Of an objection too, since r27.115: what its premises give does not
+    // deny the box it objects to.
+    ok(ob === 'The premises give “Socrates is mortal” by universal modus ponens, which does not deny “Socrates will die”.',
+        'of an objection: what its premises give, which does not deny its box (r27.115)', ob);
     ok(/takes two steps/.test(step(['All men are mortal.', 'Socrates is a man.', 'If Socrates is mortal, then Socrates will die.'], 'Socrates will die.').why) &&
         /fallacy of affirming the consequent\.$/.test(step(['If it rains, then the ground is wet.', 'The ground is wet.'], 'It rains.').why),
         'nor where the check says something else: two steps, a fallacy');

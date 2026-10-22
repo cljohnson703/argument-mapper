@@ -2566,7 +2566,7 @@
         <p><strong>✓ Warranted</strong> means the main contention is established by the argument as it stands; <strong>✗ Unwarranted</strong> means it isn't yet, not that it's false. The <strong>Logic</strong> panel lists the rules the checker uses.</p>
         <p>For modal logic, switch on <strong>Metaphysical necessity</strong> in the Logic panel and choose its axioms (S5 to start). Boxes can then say <em>it is metaphysically necessary that …</em>, <em>it is metaphysically possible that …</em>, or use □ and ◇.</p>
         <h3>Reuse premises</h3>
-        <p>To use a premise again in another argument, choose <strong>Add Cross-Reference</strong> from a box's menu, then click the original; <strong>Reference Arguments</strong> (or the box's ↗ badge) groups such premises into arguments for or against the box, each checked as a step. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise</strong> from the right-click menu while editing.</p>
+        <p>To use a premise again in another argument, choose <strong>Add Cross-Reference</strong> from a box's menu, then click the original; <strong>Reference Arguments</strong> (or the box's ↗ badge) groups such premises into arguments for or against the box, each checked as a step. To name another premise in a box's text (<em>If S7 and S8, then S4</em>), choose <strong>Link a premise</strong> from the right-click menu while editing. To give a claim a name, write the name before a colon (<em>Ex nihilo principle: Nothing comes from nothing</em>): the box says the claim, and where another box says the name as a claim (<em>If the ex nihilo principle is true, then …</em>), the check reads the claim.</p>
         <h3>Arrange and annotate</h3>
         <p>Drop a box beside another to make it a co-premise, below a box to make it a child, or above one to make it a parent. Hold <strong>Shift</strong> as you drop to leave it unconnected. To move a box without its children, hold its <strong>⠿</strong> handle until it turns into <strong>✥</strong>, then drag. <strong>Place: Free</strong> keeps boxes where you drop them.</p>
         <p><strong>Implicit</strong> marks an unstated assumption, and <strong>Given</strong> a premise accepted without argument. <strong>Evaluate</strong> marks a box and adds comments; <strong>Evaluations</strong> lists them. <strong>Review</strong> locks the map except for evaluations.</p>
@@ -2964,7 +2964,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-20 r27.113';
+    const APP_BUILD = '2026-10-22 r27.118';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5378,9 +5378,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_LINK_JOIN = '\u2060';
     const claimLinkName = label => String(label).replace(/-(?=[A-Za-z0-9])/g, CLAIM_LINK_JOIN + '-');
     function claimWithBoxLinks(text, seen, names) {
-        if (!hasBoxLinks(text)) return text;
         seen = seen || new Set();
-        return text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
+        // A claim's name, read as its claim (r27.116).
+        if (!hasBoxLinks(text)) return claimWithNamedClaims(text, seen);
+        return claimWithNamedClaims(text.replace(BOX_LINK_RE, (m, label, ref, idx) => {
             const name = () => {
                 const n = claimLinkName(label);
                 if (names && n !== label && !names.has(n)) names.set(n, m);
@@ -5390,9 +5391,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!hit) return name();
             const key = hit.node.id + '#' + hit.idx;
             if (seen.has(key) || seen.size > 8) return name();
-            const inner = String(claimWithBoxLinks(hit.node.texts[hit.idx], new Set([...seen, key]), names)).trim().replace(/[.!?]+$/, '').trim();
+            // Its claim, without its label ("Ex nihilo principle: ...",
+            // "P1: ..."), as the box alone is read (r27.116).
+            const inner = String(claimWithBoxLinks(claimWithoutLabel(hit.node.texts[hit.idx]), new Set([...seen, key]), names)).trim().replace(/[.!?]+$/, '').trim();
             return inner ? '(' + inner + ')' : name();
-        });
+        }), seen);
     }
     // Words the check derived, each link name in them written back as the
     // link it was read from: a derived box says "[-O1](#box:...)", read as the
@@ -9539,7 +9542,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
         }
         // A logic word keeps no mark, contracted or not ("It's", "Won't").
+        // A capital "A" inside a sentence is a letter, not the article:
+        // "belief set A changes belief sets B, C, D, and E" had read "a
+        // changes" as a noun phrase, "set" as its verb, and the letters after
+        // it as claims of their own (r27.115) -- not after an opening
+        // quotation mark, where a quoted sentence begins.
         const logic = tok => {
+            if (/^[^A-Za-z\uE000]*\uE000a[^A-Za-z]*$/.test(tok) && !/^["“‘'(\[]/.test(tok)) return false;
             const w = claimWord(tok.replace(/[’‘]/g, "'")).replace(/^'+|'+$/g, '');
             return CLAIM_LOGIC_WORDS.has(w) || CLAIM_LOGIC_WORDS.has(w.replace(/'(?:s|d|ll|re|ve|m)$/, ''));
         };
@@ -10790,6 +10799,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     Object.values(CLAIM_AUXILIARY_PAST).includes(said) || /^(?:lay|found|saw|left|lit|felt|fell)$/.test(said))) return m;
                 return said ? pre + said : m;
             })
+            // "Is itself a mental state" says what "is a mental state" says:
+            // a reflexive just after "is" stresses the subject (r27.115) --
+            // not "is not himself today", "is herself again".
+            .replace(/\b(is|are|was|were|am|be|been|being)( not)? (?:himself|herself|itself|themselves|oneself|myself|yourself|ourselves|yourselves) (?!(?:today|tomorrow|yesterday|now|again|anymore|lately|recently|then|here|there|alone|too|also)\b)(?=[a-z])/g, '$1$2 ')
             // "Poe fails to fly" says Poe does not fly; "failed to", did not
             // (r27.106). Not "has failed to", "will fail to", "to fail to";
             // nor "fails to be", which is "is not".
@@ -10910,7 +10923,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "All black THINGS are dark" says of black what "Poe is black" says:
         // a bare adjective and that adjective made into a noun are one
         // predicate here.
-        t = t.replace(/\s+(?:thing|object|item|entity|stuff|being|person|people|one)$/, '');
+        // Not after a determiner or a preposition: "a child of a person",
+        // "loved by that person" had lost "person" (r27.115).
+        t = t.replace(/(^|\s)(\S+)\s+(?:thing|object|item|entity|stuff|being|person|people|one)$/, (m, pre, w) =>
+            /^?(?:a|an|the|this|that|these|those|some|any|every|each|no|another|other|such|my|your|his|her|its|our|their|whose|of|for|by|to|with|from|about|than|as|in|on|at|into|onto|upon|without|within)$/.test(w) ? m : pre + w);
         return t.trim();
     }
     // Plurals the spelling rules cannot undo, and -s nouns that are not plurals.
@@ -11732,7 +11748,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // E, L" is denied, too, by "not L" said without the time: what is so at
     // no time is not so then (the user's Mary step, 2026-09-24).
     function claimDenials(form) {
-        const out = form.kind === 'not' ? [form.inner, negateClaim(form)] : [negateClaim(form)];
+        // What a denial denies, with its own words to show: "influencing
+        // reasoning is a necessary function of ...", which had been shown as
+        // "influencing reasoning necessary function of ..." (r27.115).
+        const shown = form.kind === 'not' && form.inner && form.inner.src === undefined && form.src ? claimAffirmedClause(form.src) : null;
+        const out = form.kind === 'not' ? [shown ? Object.assign({}, form.inner, { shown }) : form.inner, negateClaim(form)] : [negateClaim(form)];
         if (form.kind === 'atom' && form.frameMain) out.push(negateClaim(form.frameMain));
         return out;
     }
@@ -12758,7 +12778,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (thatClause) words = words.slice(0, that + 1).concat(thatClause.split(' '));
         const NPI = Object.assign(Object.create(null), { anyone: 'someone', anybody: 'somebody', anything: 'something', anywhere: 'somewhere' });
         if (denied) words = words.map((w, i) => i > 0 && NPI[claimWord(w)] ? w.replace(claimWord(w), NPI[claimWord(w)]) : w);
-        words = words.filter((w, i) => i === 0 || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)));
+        // Not the letter "A" ("all B are A", r27.115), which keeps its mark,
+        // nor one with no noun after it ("Bob believes A").
+        words = words.filter((w, i) => i === 0 || /^/.test(w) || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)) ||
+            (/^(?:a|an)$/.test(claimWord(w)) && (i === words.length - 1 || /^(?:and|or|nor|but|then)$/.test(claimWord(words[i + 1])) || CLAIM_VERB_MARKERS.has(claimWord(words[i + 1])))));
         words = claimCanonicalObjects(words, denied);
         // "We should be able to leave" may hedge "we can leave", or say what
         // ought to be: read as written, and flagged when the hedge would matter.
@@ -12961,7 +12984,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             found.push({ kind: 'lead', at: start, end: m.index + m[0].length, before: m.index, word: m[1].toLowerCase(), aux: m[2], subj: m[3].trim() });
         }
         // "Mary did too", "Fido is not", "evil does", "Mary did so".
-        for (const m of said.matchAll(new RegExp(B + '((?:(?!\\b(?:and|but|or|then|so|neither|nor|as)\\b)[^,;.!?])+?)\\s+(' + CLAIM_CUT_AUX + ')(\\s+(?:so|the same|likewise))?' + TOO + END, 'gi'))) {
+        // Its subject runs back to its clause's start, and no further: "if
+        // beliefs can influence reasoning while Otto's notebook can't" had
+        // been taken from the "if" (r27.115).
+        for (const m of said.matchAll(new RegExp(B + '((?:(?!\\b(?:and|but|or|then|so|neither|nor|as|yet|if|unless|because|since|when|whenever|although|though|while|whereas|before|after|until)\\b)[^,;.!?])+?)\\s+(' + CLAIM_CUT_AUX + ')(\\s+(?:so|the same|likewise))?' + TOO + END, 'gi'))) {
             const subjAt = said.indexOf(m[1], m.index);
             found.push({ kind: 'tail', at: subjAt, end: m.index + m[0].length, before: m.index, aux: m[2], subj: m[1].trim(), so: !!m[3] });
         }
@@ -13017,7 +13043,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const auxWords = f.aux.toLowerCase().replace(/\u2019/g, "'").split(/\s+/);
                 const aux = CLAIM_CUT_NOT[auxWords[0]] || auxWords[0];
                 const neg = !!CLAIM_CUT_NOT[auxWords[0]] || auxWords[1] === 'not' || f.word === 'neither' || f.word === 'nor';
-                const family = claimAuxFamily(aux), vp = claimClauseVerbPhrase(prev);
+                const family = claimAuxFamily(aux);
+                let vp = claimClauseVerbPhrase(prev);
+                // Where the clause's own helping verb is of another kind, the
+                // one inside its that-clause: "it's not the case that beliefs
+                // can influence reasoning, while the notebook can't" (r27.115).
+                if ((!vp || vp.family !== family) && /\bthat\s+\S/i.test(prev)) {
+                    const inner = claimClauseVerbPhrase(prev.replace(/^.*\bthat\s+/i, ''));
+                    if (inner && inner.family === family) vp = inner;
+                }
                 if (!family || !vp || (f.so && family !== 'do')) return;
                 const subj = claimTokens(f.subj), syn = subj.map((x, i) => (/^[A-Z]/.test(x) && (i > 0 || f.at > 0) ? '\uE000' : '') + x.toLowerCase());
                 if (!subj.length || !claimSynNounPhrases(claimSynWords(syn), 0).some(o => o.end === syn.length)) return;
@@ -13039,12 +13073,139 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return { text, edits, message: 'read with ' + said3.join(', and ') + (said3.length > 1 ? ', from the clauses before them' : ', from the clause before it') };
     }
     // A box's own label -- "P1:", "Premise 2:", "C:", "Conclusion:", "1." --
-    // names it and says nothing (r27.96). Not a numbered list's "(1)".
+    // names it and says nothing (r27.96). Not a numbered list's "(1)". So a
+    // name for its claim, "Ex nihilo principle: Nothing comes from nothing"
+    // (r27.116; claimNamedLabel).
     function claimWithoutLabel(t) {
         t = String(t == null ? '' : t);
         const m = /^\s*(?:(?:premise|conclusion|lemma)(?:\s+\d{1,2})?\s*[:.]|[pc]\d{1,2}\s*[:.)]|c\s*:|\(?\d{1,2}[.)])\s+(?=\S)/i.exec(t);
-        if (!m || (/^\s*\(?\d/.test(m[0]) && /\(\s*\d{1,2}\s*\)/.test(t.slice(m[0].length)))) return t;
+        if (!m) { const named = claimNamedLabel(t); return named ? t.slice(named.at) : t; }
+        if (/^\s*\(?\d/.test(m[0]) && /\(\s*\d{1,2}\s*\)/.test(t.slice(m[0].length))) return t;
         return t.slice(m[0].length);
+    }
+    // --- Named claims (r27.116) -------------------------------------------------
+    // The user, 2026-10-21: 'there are some nodes that involve naming a
+    // principle, like: "Ex nihilo principle: Nothing comes from nothing". I
+    // want the content of the principle to be counted, not the name of the
+    // principle. It's sort of doing double duty as a premise and a definition
+    // such that all instances of the ex nihilo principle refer to the
+    // definition.' A box "<name>: <claim>" says its claim, and names it: a
+    // principle, a law, a thesis and their kin ("the problem of evil"), an
+    // "-ism" ("Physicalism"), an acronym ("PSR"), or a name with its acronym
+    // ("The principle of sufficient reason (PSR)"). "Definition:", "Thesis:"
+    // alone name a kind of claim, and so nothing. Wherever the map says the
+    // name as a claim -- "the ex nihilo principle is true", "if the PSR, then
+    // ...", "physicalism is false", "physicalism implies that ..." -- it is
+    // read as its claim, as a premise link is (claimWithBoxLinks). As an
+    // object ("Aquinas accepts the ex nihilo principle") it stays a name.
+    const CLAIM_NAME_HEADS = new Set(('principle principles law laws thesis theses axiom axioms postulate postulates rule rules maxim maxims ' +
+        'doctrine doctrines hypothesis hypotheses assumption assumptions conjecture dictum premise premises lemma theorem corollary proposition ' +
+        'claim definition criterion condition intuition view theory account argument objection reply response problem dilemma paradox ' +
+        'fact observation requirement constraint').split(' '));
+    // A box's label that names its claim: { at, names: [{ text, exact }],
+    // category }, or null. Not a clause before the colon ("There are two
+    // options: ..."), nor one with no claim after it.
+    function claimNamedLabel(text) {
+        const t = String(text == null ? '' : text);
+        const m = /^\s*[*_]*((?:[A-Za-z][A-Za-z'\u2019-]*\s+){0,7}[A-Za-z][A-Za-z'\u2019-]*)[*_]*\s*(?:\(\s*([A-Za-z][A-Za-z0-9-]{1,9})\s*\))?[*_]*\s*:[*_]*\s+(?=\S)/.exec(t);
+        if (!m) return null;
+        const label = m[1].trim(), words = label.toLowerCase().replace(/\u2019/g, "'").split(/\s+/);
+        if (words.some(w => CLAIM_VERB_MARKERS.has(w) || CLAIM_SYN_OPENERS.has(w) || CLAIM_RELATIVES.has(w) ||
+            /^(?:i|you|he|she|it|we|they|not|no|then|therefore|thus|hence)$/.test(w))) return null;
+        const acronym = w => /^[A-Z]{2,6}s?$/.test(w);
+        const head = words[words.length - 1], of = words.indexOf('of');
+        if (!(CLAIM_NAME_HEADS.has(head) || (of > 0 && CLAIM_NAME_HEADS.has(words[of - 1])) || /^[a-z]{3,}ism$/.test(head) || acronym(label))) return null;
+        if (!claimLooksLikeClause(normalizeClaimText(t.slice(m[0].length)))) return null;
+        const plain = words[0] === 'the' ? words.slice(1) : words;
+        const category = plain.length === 1 && CLAIM_NAME_HEADS.has(plain[0]);
+        const names = category ? [] : [acronym(label) ? { text: label, exact: true } : { text: plain.join(' '), exact: false }]
+            .concat(m[2] ? [{ text: m[2], exact: acronym(m[2]) }] : []);
+        return { at: m[0].length, names, category };
+    }
+    // The map's named claims: each { key, content, name }. A name given two
+    // claims stands for neither. Kept while the boxes with a colon are as
+    // they were.
+    let claimNamedCache = { sig: null, defs: [] };
+    function claimNamedDefinitions() {
+        const boxes = [];
+        boxLinkNodes().forEach(n => {
+            if (!n || n.type === 'note') return;
+            (n.texts || []).forEach((t, i) => { if (typeof t === 'string' && t.indexOf(':') >= 0) boxes.push([n.id + '#' + i, t]); });
+        });
+        const sig = boxes.map(b => b[0] + '\u0001' + b[1]).join('\u0002');
+        if (claimNamedCache.sig === sig) return claimNamedCache.defs;
+        const found = new Map();
+        boxes.forEach(([key, t]) => {
+            const lab = claimNamedLabel(t);
+            if (!lab) return;
+            const content = t.slice(lab.at).trim().replace(/[.!?]+$/, '').trim();
+            lab.names.forEach(name => {
+                const k = name.exact ? name.text : name.text.toLowerCase();
+                const had = found.get(k);
+                if (!had) found.set(k, { key, content, name, contents: [content] });
+                else if (had.contents.indexOf(content) < 0) { had.conflict = true; had.contents.push(content); }
+            });
+        });
+        const all = [...found.values()], defs = all.filter(d => !d.conflict);
+        claimNamedCache = { sig, defs, conflicts: all.filter(d => d.conflict) };
+        return defs;
+    }
+    // The names a box says as claims that the map gives more than one claim.
+    function claimNamedConflictsIn(text) {
+        claimNamedDefinitions();
+        return (claimNamedCache.conflicts || []).filter(d => claimNamedEdits(text, [Object.assign({}, d, { key: '\u0000' })], null).length)
+            .map(d => ({ name: d.name.text, contents: d.contents }));
+    }
+    // Where a box says a name as a claim: each { at, end, say }, `say` its
+    // claim in brackets -- with "is true" or "is false" where the box says
+    // so ("holds", "does not hold", "is mistaken"). A claim's name is said as
+    // one where a claim goes: at the box's start, after "if", "then", "and",
+    // "or", "unless", "that", "whether", a comma or a bracket; and before what
+    // says it is true or false, "implies" or "entails", or the end of its
+    // sentence -- or, after "if" or "unless", a comma or "then". Not
+    // "theism and atheism are rivals", nor "physicalism, the view that ...":
+    // there the name is a noun. Not in the box that names it, nor in one on
+    // the way (`seen`, "id#idx").
+    function claimNamedEdits(text, defs, seen) {
+        const t = String(text == null ? '' : text), out = [];
+        (defs || []).forEach(d => {
+            if (seen && (seen.has(d.key) || seen.size > 8)) return;
+            const words = d.name.text.split(/\s+/).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s\\u2010-\\u2015-]+');
+            const re = new RegExp("(^|[^A-Za-z0-9'\\u2019-])((?:[Tt]he\\s+)?" + words + ')(?![A-Za-z0-9-])', d.name.exact ? 'g' : 'gi');
+            let m;
+            while ((m = re.exec(t))) {
+                const at = m.index + m[1].length, end = at + m[2].length, before = t.slice(0, at), after = t.slice(end);
+                const pre = /(?:^|[,;(]|\b(if|then|and|or|unless|that|whether))\s*[*_]*$/i.exec(before);
+                if (!pre) continue;
+                const truth = /^\s+((?:is|are)\s+(?:not\s+)?(?:true|false|untrue|correct|incorrect|right|wrong|mistaken|the\s+case)|holds|obtains|(?:does\s+not|doesn['\u2019]t)\s+(?:hold|obtain)|fails)(?![A-Za-z])/i.exec(after);
+                const ends = /^[*_]*\s*(?:$|[.;!?)]|(?:implies|entails)(?![A-Za-z]))/i.test(after) ||
+                    (!!pre[1] && /^(?:if|unless)$/i.test(pre[1]) && /^[*_]*\s*(?:,|then(?![A-Za-z]))/i.test(after));
+                if (!truth && !ends) continue;
+                const inner = String(claimWithBoxLinks(d.content, new Set([...(seen || []), d.key]))).trim().replace(/[.!?]+$/, '').trim();
+                if (!inner) continue;
+                let say = '(' + inner + ')', stop = end;
+                if (truth) {
+                    const w = truth[1].toLowerCase();
+                    const denied = /\bnot\b|n['\u2019]t\b/.test(w) !== /false|untrue|incorrect|wrong|mistaken|fails/.test(w);
+                    say += ' is ' + (denied ? 'false' : 'true');
+                    stop = end + truth[0].length;
+                }
+                out.push({ at, end: stop, say, def: d });
+            }
+        });
+        out.sort((a, b) => a.at - b.at);
+        return out.filter((e, i) => !out.slice(0, i).some(f => e.at < f.end && f.at < e.end));
+    }
+    // A box's words with each claim's name it says as a claim read as the claim.
+    function claimWithNamedClaims(text, seen) {
+        if (typeof text !== 'string' || !text) return text;
+        const defs = claimNamedDefinitions();
+        if (!defs.length) return text;
+        const edits = claimNamedEdits(text, defs, seen);
+        if (!edits.length) return text;
+        let out = '', from = 0;
+        edits.forEach(e => { out += text.slice(from, e.at) + e.say; from = e.end; });
+        return out + text.slice(from);
     }
     function parseClaimFull(text, choice) {
         text = claimWithoutLabel(text);
@@ -14251,7 +14412,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "It is the case that" only groups what it holds.
             text = String(text == null ? '' : text).replace(/^it is (?:the case|true) that\s+/, '');
             const said = qualifier && text ? claimClauseStart(qualifier) + ', ' + claimClauseStart(text) : s;
-            return Object.assign(claimAtom(said), { src: said });
+            // Its words as the box has them, for the colors: "P while Q" is
+            // the claim "while Q, P", whose words were looked for in that
+            // order, and not found (r27.115).
+            return Object.assign(claimAtom(said), { src: said }, said !== s ? { asWritten: s } : {});
         };
         // "Q is not so when P" is the denial of "Q is so when P": a "when" that
         // says when names one time, and the "not" at that time may be taken
@@ -14365,7 +14529,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((m = s.match(CLAIM_FLAGGED_AFTER)) && m[2] === 'given that' && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[3]) && !claimHasQuotation(s))
             return claimAmbiguous('"given that" may give a reason, as "because" does, or a condition, as "if" does: choose which',
                 [m[1] + ' because ' + m[3], m[1] + ' if ' + m[3]].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
-        if ((m = s.match(CLAIM_FLAGGED_AFTER)) && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[3]) && !claimHasQuotation(s)) {
+        // Not after a denial in front, whose that-clause runs on to the end:
+        // "it is not the case that beliefs can influence reasoning while the
+        // notebook can't" denies the whole (r27.115; it had been read as one
+        // claim, so it denied nothing).
+        if ((m = s.match(CLAIM_FLAGGED_AFTER)) && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[3]) && !claimHasQuotation(s) &&
+            !/^it (?:is|was) (?:not (?:the case|true|so)|false|untrue) that\s/.test(m[1])) {
             // "Q only when P" is "Q only if P" if "when" is "if": if Q, then P.
             const contrast = /^whil/.test(m[2]), only = m[2] === 'only when', main = only ? m[3] : m[1], cond = only ? m[1] : m[3];
             return claimAmbiguous('"' + m[2] + '" may say ' + (contrast ? 'when, or join two claims' : 'when, or why, rather than on what condition'), [
@@ -16072,7 +16241,60 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // Unclosed punctuation must not count as explicit whole grouping.
         if (wholeGroup) return !depth && !quote && groupEnd === text.length-1;
-        return depth || quote ? text : out;
+        if (depth || quote) return text;
+        // Letters listed after a noun, its labels -- "belief sets B, C, D,
+        // and E" -- are one phrase: their commas and their "and" join no
+        // claims, as a bracket's do not (r27.115).
+        claimLabelLists(text).forEach(([a, b]) => { out = out.slice(0, a) + fill.repeat(b - a) + out.slice(b); });
+        return out;
+    }
+    // Where letters are listed as a noun's labels: "belief sets B, C, D, and
+    // E", "rooms A and B" -- after a noun of a subject or an object, by the
+    // syntax tree, not the clause's verb ("Bob believes A and B" lists sentence
+    // letters). Each [from, to] in the text: from the first letter's end to
+    // the last's (r27.115).
+    const claimLabelListCache = new Map();
+    let claimLabelListBusy = false;
+    function claimLabelLists(text) {
+        const t = String(text || '');
+        if (claimLabelListBusy || !/(?:^|[^a-z0-9'-])[a-z]\d*(?:\s*,\s*(?:(?:and|or)\s+)?|\s+(?:and|or)\s+)[a-z]\d*(?![a-z0-9'-])/.test(t)) return [];
+        if (claimLabelListCache.has(t)) return claimLabelListCache.get(t);
+        claimLabelListBusy = true;
+        const out = [];
+        try {
+            const toks = claimTokens(t), at = [];
+            let from = 0;
+            toks.forEach(x => { const p = t.indexOf(x, from); at.push(p); if (p >= 0) from = p + x.length; });
+            const ws = claimSynWords(toks);
+            const letter = q => !!ws[q] && !!ws[q].name && /^[a-z]\d*$/.test(ws[q].w);
+            for (let i = 1; i < ws.length; i++) {
+                if (!claimSynLetterLabel(ws, i) || at[i] < 0) continue;
+                // The list: letters joined by commas, "and" or "or".
+                let e = i;
+                for (;;) {
+                    if (/,$/.test(ws[e].t) && letter(e + 1)) e++;
+                    else if (ws[e + 1] && /^(?:and|or)$/.test(ws[e + 1].w) && letter(e + 2) && !/,$/.test(ws[e + 1].t)) e += 2;
+                    else break;
+                }
+                if (e === i) continue;
+                // Its noun no verb of its clause: the clause from the last
+                // opener or comma before it.
+                const p = i - 1;
+                let start = p;
+                while (start > 0 && !/[,;:]$/.test(ws[start - 1].t) && !ws[start - 1].opener && !/^(?:then|that|which|who)$/.test(ws[start - 1].w)) start--;
+                const k = claimSynSubjectEnd(toks.slice(start));
+                if (k < 0) { i = e; continue; }
+                const g = claimSynGroupEnd(ws.slice(start), k);
+                if (p - start < k || p - start >= g) {
+                    const a = at[i] + toks[i].replace(/[,;.!?]+$/, '').length, b = at[e] + toks[e].replace(/[,;.!?]+$/, '').length;
+                    if (at[e] >= 0 && b > a) out.push([a, b]);
+                }
+                i = e;
+            }
+        } finally { claimLabelListBusy = false; }
+        if (claimLabelListCache.size > 5000) claimLabelListCache.clear();
+        claimLabelListCache.set(t, out);
+        return out;
     }
     // `re` matched at the top level of `text` (as String.match, but never
     // inside brackets or quotation marks), its groups taken from the text.
@@ -16877,6 +17099,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // Adjectives parted by commas that are words of their own (as
                 // the pronoun reader has them): "the long , dark , windy road".
                 if (y.t === ',' && j > b && claimSynCommaAdjectives(ws, b, j)) continue;
+                // A letter after a noun is its label, and ends the phrase:
+                // "belief set A", "person B" (r27.115).
+                if (claimSynLetterLabel(ws, j) && j > b) { add(j + 1, numberOf(ws[j - 1], j - 1)); break; }
                 if ((y.closed && !CLAIM_SYN_ORDINALS.has(y.w)) || (y.name && !determined) || (y.poss && j > b)) break;
                 if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y, j));
                 if (!(y.noun || y.adj || y.num || y.participle || y.ing || proper || CLAIM_SYN_ORDINALS.has(y.w))) break;
@@ -16937,6 +17162,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         if (r < ws.length) { past = claimSynGroupEnd(ws, r); q = past - 1; continue; }
                     }
                     if (commaOpened && !/,$/.test(ws[q - 1].t)) continue;
+                    // An -s word after an adjective inside a phrase -- "as
+                    // mental states of a subject" -- is the adjective's
+                    // plural noun, not the verb after the clause (r27.115).
+                    if (ws[q].s && ws[q].noun && q >= 2 && ws[q - 1].adj && !ws[q - 1].noun && !ws[q - 1].participle &&
+                        (ws[q - 2].prep || ws[q - 2].det || ws[q - 2].quant)) continue;
                     const v = claimSynVerbStart(ws, q, o.number);
                     if (v) found.push({ q, v });
                 }
@@ -16953,6 +17183,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         });
         out.sort((a, b) => a.end - b.end);
         return out;
+    }
+    // A letter -- "A", "B2" -- just after a common noun: its label ("belief
+    // set A", "person B"), no name of its own nor a sentence letter (r27.115).
+    function claimSynLetterLabel(ws, j) {
+        const y = ws[j], x = ws[j - 1];
+        return !!y && !!y.name && /^[a-z]\d*$/.test(y.w) && !!x && !!x.noun && !x.name && !x.closed && !x.pro && !/,$/.test(x.t);
     }
     // Does a clause begin with these words, by their phrases? true: a noun
     // phrase and a sure verb group after it ("crows sing", "Bob and Ann
@@ -17185,7 +17421,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!y || (depth || 0) > 2) return null;
         // Not just after "the", "a", "his": a noun's place, not a verb's --
         // "every raven that sings | dries the dishes", not "... the | dishes".
-        if (i > 0 && ws[i - 1] && /^(?:the|a|an|my|your|his|its|our|their|whose)$/.test(ws[i - 1].w)) return null;
+        if (i > 0 && ws[i - 1] && !ws[i - 1].name && /^(?:the|a|an|my|your|his|its|our|their|whose)$/.test(ws[i - 1].w)) return null;
         if (y.aux) return 'strong';
         if ((y.adv && !y.noun) || /^(?:all|both|each|neither|either)$/.test(y.w)) return claimSynVerbStart(ws, i + 1, number, (depth || 0) + 1);
         if (y.closed || y.name || y.poss) return null;
@@ -17229,6 +17465,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const ends = phrases.map(o => Object.assign({}, o, { verb: claimSynVerbStart(ws, o.end, o.number) })).filter(o => o.verb && o.end < ws.length && !owned(o.end));
         if (!ends.length) return -1;
         let best = ends.find(o => o.verb === 'strong') || ends[0];
+        // "Belief set A changes ...": the phrase runs on through a noun's
+        // letter, its label, to a sure verb -- "set" is no verb with "A" its
+        // object (r27.115).
+        const labelled = ends.find(o => o.end > best.end + 1 && o.verb === 'strong' && claimSynLetterLabel(ws, o.end - 1) &&
+            ws.slice(best.end, o.end - 1).every(x => x.noun && !x.closed && !x.name));
+        if (labelled) best = labelled;
         // "Every theory proposed so far | has failed": a participle after the
         // noun, with a sure verb group after its phrase, is not the verb.
         const cut = ends.find(o => o.reduced === best.end && o.verb === 'strong');
@@ -18799,7 +19041,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimWordsOf(f) {
         let words = claimWordsCache.get(f);
         if (!words) {
-            words = claimTokens(claimUnmarked(stripClaimMarkup(claimShowForm(f))).toLowerCase().replace(/[.,;:!?"“”]/g, ' ')).filter(Boolean);
+            // A copula's number is no difference in words: "syntactics are"
+            // and "syntax is" differ in "syntactics" alone (r27.115).
+            words = claimTokens(claimUnmarked(stripClaimMarkup(claimShowForm(f))).toLowerCase().replace(/[.,;:!?"“”]/g, ' ')).filter(Boolean)
+                .map(w => /^(?:are|am)$/.test(w) ? 'is' : w === 'were' ? 'was' : w);
             claimWordsCache.set(f, words);
         }
         return words;
@@ -18917,6 +19162,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimKeyMatch(a, b) {
         if (claimKey(a) === claimKey(b)) return true;
         if (claimNearMisses && claimLooseKey(a) === claimLooseKey(b)) { claimNearMisses.push({ a, b }); return true; }
+        // A rule's case worded nearly as a premise words it, while a failed
+        // step is diagnosed: "role" in one where the other has "roles"
+        // (r27.115), as for a claim (claimSame).
+        if (claimNearMisses && claimWorded && claimWordingDeep(a, b)) return true;
         return false;
     }
     function claimPropMatch(p, q) {
@@ -21157,7 +21406,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
               const t = claimTermOf(C);
               return (t !== null && P.length >= 2 && P.some((u, i) => u.kind === 'all' && u.subject !== CLAIM_ANY &&
                   claimCaseIn(applyClaimProp(u.subject, t), P.filter((_, j) => j !== i)) &&
-                  claimKeyMatch(applyClaimProp(u.predicate, t), C))) || claimObjectModusPonens(P, C);
+                  claimKeyMatch(applyClaimProp(u.predicate, t), C))) || claimObjectModusPonens(P, C) || claimDonkeyModusPonens(P, C);
           } },
         // And back from a case that fails the rule: "all humans are mortal" and
         // "Zeus is not mortal", so "Zeus is not human".
@@ -21436,8 +21685,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return restated ? DEDUCTIVE_RULES.concat(DEDUCTIVE_MODAL_RULES).find(r => r.id === (restated === 'double-negation' ? 'negation-elimination' : restated)) : null;
             }
         }
+        // While near misses are listed, a rule worded "a subject ... that
+        // subject" is tried first as said of the subject the step names: as
+        // written, its "that subject" would be a near miss of "Otto".
+        if (claimNearMisses && !claimDonkeyBusy) {
+            const mark = claimNearMisses.length, found = claimDonkeyStep(premises, conclusions, attack);
+            if (found) return found;
+            claimNearMisses.length = mark;
+        }
         // The rules in force: the basis, and the extensions this map has on.
-        const rule = claimRulesInForce().find(rule => conclusions.some(C => rule.test(premises, C))) || null;
+        // While near misses are listed, those a rule found and then failed
+        // with are dropped: only the one that goes through says what differs
+        // (r27.115).
+        const rule = claimRulesInForce().find(rule => conclusions.some(C => {
+            const mark = claimNearMisses ? claimNearMisses.length : 0, ok = rule.test(premises, C);
+            if (!ok && claimNearMisses) claimNearMisses.length = mark;
+            return ok;
+        })) || null;
         if (rule && rule.id === 'under-quantifier') {
             for (const C of conclusions) { const lifted = claimLiftedStep(premises, C) || claimObjectLiftedStep(premises, C); if (lifted) return lifted; }
         }
@@ -21449,7 +21713,128 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (rule && rule.id === 'opposites') {
             for (const C of conclusions) { const step = claimOppositeStep(premises[0], C); if (step) return claimOppositeRule(step); }
         }
+        // "Anything that is a mental state of a subject is a part of that
+        // subject's mind" and its case, "the records are mental states of
+        // Otto": the rule said of Otto (r27.118).
+        if (!rule && !claimDonkeyBusy && !claimNearMisses) return claimDonkeyStep(premises, conclusions, attack);
         return rule;
+    }
+    // The step with a rule worded "a subject ... that subject" said of each
+    // thing the step's other claims name in its noun's place, the case and
+    // the rule one step, as "every raven that sings is black" and its case
+    // are (r27.118; the user: "you can put in any name for the subject. It's
+    // equivalent to 'For any entity, anything that is a mental state of that
+    // entity is a part of that entity's mind' ... shouldn't it just be one
+    // step?"). A noun that limits the rule to its kind takes a premise that
+    // the thing is one ("Mary is a person"), as "everyone" takes "Socrates is
+    // a person"; a noun that stands for anything at all (CLAIM_DONKEY_ANY)
+    // takes none, and one given is used. The rule it follows by, or null.
+    let claimDonkeyBusy = false;
+    const CLAIM_DONKEY_ANY = new Set('thing entity object individual item being subject'.split(' '));
+    // The premise that says the thing is of the noun's kind: "Otto is a
+    // subject"; its place, or -1.
+    function claimDonkeyRestriction(premises, i, n, value) {
+        const v = claimUnmarked(String(value)).trim().toLowerCase();
+        return premises.findIndex((p, j) => j !== i && !!p && p.kind === 'pred' && claimPropCanon(String(p.prop)) === claimPropCanon('=' + n) &&
+            claimUnmarked(String(p.term)).trim().toLowerCase() === v);
+    }
+    function claimDonkeyStep(premises, conclusions, attack) {
+        for (let i = 0; i < premises.length; i++) {
+            const n = claimDonkeyNoun(premises[i]);
+            if (!n) continue;
+            for (const inst of claimDonkeyInstances(premises[i], premises.filter((_, j) => j !== i).concat(conclusions))) {
+                const at = claimDonkeyRestriction(premises, i, n, inst.donkeyValue);
+                if (at < 0 && !CLAIM_DONKEY_ANY.has(n)) continue;
+                const rest = premises.map((p, j) => j === i ? inst : p).filter((_, j) => j !== at);
+                claimDonkeyBusy = true;
+                let found = null;
+                try { found = certifyStep(rest, conclusions, attack); } finally { claimDonkeyBusy = false; }
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+    // "Anything that is a mental state of a subject is a part of that
+    // subject's mind": "that subject" is the one "a subject" speaks of --
+    // any subject, the same in both places, as a second "every" says
+    // (r27.115; the Extended Mind map, the user: "a lot of things get marked as
+    // unrecognized"). The noun, where what the quantifier speaks of has "a
+    // subject" and what it says of it "that subject" ("this subject", "the
+    // subject", "that same subject"); or null. Said of Otto, with its case,
+    // one step (claimDonkeyStep, r27.118); said of Otto alone, given that he
+    // is a subject, one too (claimDonkeyModusPonens, r27.117).
+    const claimDonkeyWord = n => new RegExp('(^|[\\s=~¬])(?:(?:a|an)\\s+)?' + n + '(?![a-z-])', 'g');
+    const claimDonkeyThat = n => new RegExp('(^|[\\s=~¬])(?:that|this|the)\\s+(?:same\\s+)?' + n + '(?![a-z-])', 'g');
+    function claimDonkeyNoun(u) {
+        if (!u || u.kind !== 'all' || u.donkey || typeof u.subject !== 'string' || typeof u.predicate !== 'string' || u.subject === CLAIM_ANY) return null;
+        const restrictor = String(u.np || u.restrictorVp || '');
+        for (const m of restrictor.matchAll(/(?:^|\s)(?:a|an|some|any)\s+([a-z][a-z-]*)(?![a-z-])/g)) {
+            const n = m[1];
+            if (CLAIM_FUNCTION_WORDS.has(n) || !claimDonkeyThat(n).test(u.predicate) || !claimDonkeyWord(n).test(u.subject)) continue;
+            return n;
+        }
+        return null;
+    }
+    // The rule said of each thing the other claims name in its noun's place:
+    // "anything that is a mental state of Otto is a part of Otto's mind", for
+    // "the records are mental states of Otto". At most four.
+    function claimDonkeyInstances(u, others) {
+        const n = claimDonkeyNoun(u);
+        if (!n) return [];
+        const esc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // The words, with each place of the noun a slot.
+        const slots = (prop, re) => {
+            const parts = [];
+            let last = 0, m;
+            re.lastIndex = 0;
+            while ((m = re.exec(prop))) { parts.push(esc(prop.slice(last, m.index + m[1].length))); last = m.index + m[0].length; }
+            return parts.length ? new RegExp('^' + parts.map(p => p + '(.+?)').join('') + esc(prop.slice(last)) + '$') : null;
+        };
+        const leaves = [];
+        const walk = f => {
+            if (!f || typeof f !== 'object') return;
+            if (f.kind === 'pred' && typeof f.prop === 'string') leaves.push(f.prop.replace(/^¬/, ''));
+            if ((f.kind === 'all' || f.kind === 'some') && typeof f.subject === 'string' && typeof f.predicate === 'string')
+                leaves.push(f.subject.replace(/^¬/, ''), f.predicate.replace(/^¬/, ''));
+            [f.inner, f.cons].concat(f.parts || [], f.conds || []).forEach(walk);
+        };
+        others.forEach(walk);
+        const values = [];
+        [[u.subject, claimDonkeyWord(n)], [u.predicate, claimDonkeyThat(n)]].forEach(([prop, re]) => {
+            const t = slots(prop.replace(/^¬/, ''), re);
+            if (t) leaves.forEach(l => {
+                const m = t.exec(l);
+                if (m && m.slice(1).every(v => v === m[1]) && !/^(?:that|this|the)\s/.test(m[1]) && values.indexOf(m[1]) < 0 && values.length < 4) values.push(m[1]);
+            });
+        });
+        return values.map(v => Object.assign({}, u, {
+            subject: u.subject.replace(claimDonkeyWord(n), (_, pre) => pre + v),
+            predicate: u.predicate.replace(claimDonkeyThat(n), (_, pre) => pre + v), donkey: n, donkeyValue: v }));
+    }
+    // "Anything that is a mental state of a subject is a part of that
+    // subject's mind" and "Otto is a subject" give "anything that is a mental
+    // state of Otto is a part of Otto's mind": universal modus ponens on the
+    // subject, one quantifier at a time (r27.117; the user: "if we were to be
+    // logically precise, we might need to use additional steps to go from
+    // Otto to the subject"). The case is no other claim: "the records are
+    // mental states of Otto" shows no subject.
+    function claimDonkeyModusPonens(P, C) {
+        if (!C || C.kind !== 'all' || P.length !== 2) return false;
+        return [0, 1].some(i => {
+            const u = P[i], n = claimDonkeyNoun(u), r = P[1 - i];
+            if (!n || !r || r.kind !== 'pred' || claimPropCanon(String(r.prop)) !== claimPropCanon('=' + n)) return false;
+            const v = claimUnmarked(String(r.term)).trim().toLowerCase();
+            const inst = claimDonkeyInstances(u, [C]).find(x => claimUnmarked(String(x.donkeyValue)).trim().toLowerCase() === v);
+            return !!inst && claimKeyMatch(inst, C);
+        });
+    }
+    // A step's premises with each such rule said of the thing the step's
+    // other claims name, where one is: for its colors.
+    function claimDonkeyPremises(premises, conclusion) {
+        return premises.map((p, i) => {
+            const insts = claimDonkeyInstances(p, premises.filter((_, j) => j !== i).concat(conclusion ? [conclusion] : []));
+            return insts.length ? insts[0] : p;
+        });
     }
     // The rule a conditional expresses, of a case: its antecedent (or the
     // conjuncts of it) to its consequent, by one rule; or "a = a".
@@ -22347,11 +22732,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimShowForm(form) {
         if (!form) return '';
         if (form.src !== undefined) return claimShowWords(claimClauseStart(form.src));
+        if (form.shown) return claimShowWords(claimClauseStart(form.shown));
         switch (form.kind) {
             case 'bottom': return '⊥';
             case 'identity': return claimShowWords(form.left) + ' is identical to ' + claimShowWords(form.right);
             case 'atom': return claimShowWords(form.text);
-            case 'pred': return claimShowWords(form.term) + ' ' + claimShowProp(form.prop);
+            // What "is" says, with its "is" (or "are"): "Bob is loved by
+            // Mary", which had been "Bob loved by Mary" (r27.115).
+            case 'pred': {
+                const p = String(form.prop), denied = p.charAt(0) === '¬', body = denied ? p.slice(1) : p;
+                if (body.charAt(0) === '=' && body.length > 1 && p !== CLAIM_PERSON) {
+                    const last = claimUnmarked(String(form.term)).trim().split(/\s+/).pop() || '';
+                    return claimShowWords(form.term) + ' ' + (claimPluralWord(last) && !CLAIM_S_NOUNS.has(last) ? 'are' : 'is') + (denied ? ' not ' : ' ') + claimShowWords(body.slice(1));
+                }
+                return claimShowWords(form.term) + ' ' + claimShowProp(form.prop);
+            }
             case 'not': return claimShowDenial(form.inner);
             case 'modal': return 'it is ' + claimModalWord(form) + ' that ' + claimShowForm(form.inner);
             case 'unestablished':
@@ -22464,6 +22859,41 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const step = C.map(c => claimOppositeStep(P[0], c, true)).find(x => x && x.reversed);
                 if (step) return Object.assign(none, { contraries: step,
                     text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
+            }
+        }
+        // A rule worded "a person ... that person", its case given, but not
+        // that the one it is said of is a person: what it would give once that
+        // is shown, as for "everyone" (r27.118). And a premise the step does not
+        // use: the others give the conclusion by one rule, and a step uses every
+        // premise.
+        if (!nearMiss && reads.every(r => r.form) && claimHintsAffordable(texts) && !texts.some(claimAsksUser)) {
+            const forms = reads.map(r => r.form), P = forms.slice(0, -1), C = claimStepConclusions(forms[forms.length - 1], attack, weak);
+            const said = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
+            const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
+            const done = text => ({ unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null,
+                text: claimRestoreStops([text].concat(unread.map(u => '\u201c' + stripClaimMarkup(u.text) + '\u201d: ' + u.message + '.')).join(' '), texts) });
+            for (let i = 0; i < P.length; i++) {
+                const n = claimDonkeyNoun(P[i]);
+                if (!n || CLAIM_DONKEY_ANY.has(n)) continue;
+                for (const inst of claimDonkeyInstances(P[i], P.filter((_, j) => j !== i).concat(C))) {
+                    if (claimDonkeyRestriction(P, i, n, inst.donkeyValue) >= 0) continue;
+                    const Pi = P.map((p, j) => j === i ? inst : p), rule = certifyStep(Pi, C, attack), near = rule ? null : claimWordedNearMiss(Pi, C, attack);
+                    if (!rule && !near) continue;
+                    const value = claimRecase(claimShowWords(claimUnmarked(String(inst.donkeyValue))), texts.join(' '));
+                    const notes = (near ? near.pairs : []).map(p => {
+                        const d = claimWordDiff(claimWordsOf(p.a), claimWordsOf(p.b)), says = w => '\u201c' + w.join(' ') + '\u201d';
+                        return '\u2018' + claimShowForm(p.a) + '\u2019 and \u2018' + claimShowForm(p.b) + '\u2019 differ: ' +
+                            (d.onlyX.length && d.onlyY.length ? says(d.onlyX) + ' in one where the other has ' + says(d.onlyY) : says(d.onlyX.length ? d.onlyX : d.onlyY) + ' is in one and not the other');
+                    }).filter((x, k, all) => all.indexOf(x) === k);
+                    return done(said(premiseTexts[i]) + ' would give ' + target + ' once it is shown that \u2018' + value + ' is ' + (/^[aeiou]/.test(n) ? 'an ' : 'a ') + n + '\u2019' +
+                        (notes.length ? ', and worded the same way each time: ' + notes.slice(0, 2).join('; ') : '') + '.');
+                }
+            }
+            if (P.length > 1) for (let j = 0; j < P.length; j++) {
+                const rule = certifyStep(P.filter((_, k) => k !== j), C, attack);
+                if (rule && rule.id !== DEDUCTIVE_SAME_CLAIM.id)
+                    return done(said(premiseTexts[j]) + ' is not needed: ' + (P.length === 2 ? said(premiseTexts[1 - j]) + ' gives ' : 'the other premises give ') + target +
+                        ' by ' + rule.name + ', and a step uses every premise.');
             }
         }
         // Worded alike, would it follow? Then say which words differ.
@@ -22581,9 +23011,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // The premises give a claim, but not the box they support: which, and
         // by what rule (r27.99) -- where nothing else is said.
         let gives = null;
-        if (affordable && !attack && !weak && !unread.length && !ambiguous.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able &&
+        // And an objection's or a rebuttal's: what they give does not deny the
+        // box it attacks ("do not have to perform" against "cannot perform";
+        // r27.115, the Extended Mind map).
+        if (affordable && !weak && !unread.length && !ambiguous.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able &&
             !split && !between && !must && !fallacy && !wrapped && reads.every(r => r.form)) gives = deriveConclusion(premiseTexts);
-        if (!unread.length && !ambiguous.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able && !split && !between && !must && !fallacy && !wrapped && !gives) return null;
+        // "That subject" in a box with no subject before it, beside a box
+        // worded "a subject ... that subject": copied from that box, it points
+        // back to nothing, as each box is read alone (r27.115; the Extended Mind map).
+        let dangling = null;
+        if (!nearMiss && !worded) {
+            const forms = reads.map(r => r.form);
+            for (let i = 0; i < texts.length && !dangling; i++) {
+                const t = stripClaimMarkup(String(texts[i]));
+                for (const m of t.matchAll(/\b(?:that|this)\s+(?:same\s+)?([a-z][a-z-]*)\b/gi)) {
+                    const n = m[1].toLowerCase();
+                    if (CLAIM_FUNCTION_WORDS.has(n) || claimSynClosed(n) || new RegExp('\\b' + n + '\\b', 'i').test(t.slice(0, m.index))) continue;
+                    const rule = new RegExp('\\b(?:a|an)\\s+' + n + "\\b(?:['\u2019]s)?.*\\b(?:that|this)\\s+(?:same\\s+)?" + n + '\\b', 'i');
+                    const k = texts.findIndex((x, j) => j !== i && rule.test(stripClaimMarkup(String(x))));
+                    if (k < 0) continue;
+                    const values = forms[k] ? claimDonkeyInstances(forms[k], forms.filter((_, j) => j !== k).map(f => f)).map(x => x.donkeyValue) : [];
+                    dangling = { at: i, words: m[0], noun: n, value: values.length === 1 ? claimRecase(claimShowWords(values[0]), texts.join(' ')) : null };
+                    break;
+                }
+            }
+        }
+        // A claim's name the map gives two claims (r27.116): read as neither.
+        const twice = [];
+        texts.forEach(t => claimNamedConflictsIn(t).forEach(c => { if (!twice.some(x => x.name === c.name)) twice.push(c); }));
+        if (!unread.length && !ambiguous.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able && !split && !between && !must && !fallacy && !wrapped && !gives && !dangling && !twice.length) return null;
         const wordedNotes = worded ? worded.pairs.map(p => {
             const x = claimWordsOf(p.a), y = claimWordsOf(p.b), d = claimWordDiff(x, y);
             const says = w => '“' + w.join(' ') + '”';
@@ -22600,8 +23056,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
         const give = n => n === 1 ? 'gives' : 'give';
         const persons = ps => ps.map(p => '‘' + (claimSayPart(p, texts) || claimShowForm(p)) + '’').join(' and ');
-        const lines = (nearMiss ? [(nearMiss.pairs.length ? 'Spelled the same way each time' : 'Without the extra space') +
-            ', the premises would give ' + target + ' by ' + nearMiss.rule.name + ', but ' + claimNearMissNotes(nearMiss.pairs, nearMiss.spaces) + '.'] : [])
+        // Words that differ, not their capitals: "Worded", not "Spelled" ("the
+        // mind" and "minds", r27.115).
+        const missNotes = nearMiss ? claimNearMissNotes(nearMiss.pairs, nearMiss.spaces) : '';
+        const lines = (nearMiss ? [(!nearMiss.pairs.length ? 'Without the extra space' : / are worded differently/.test(missNotes) ? 'Worded the same way each time' : 'Spelled the same way each time') +
+            ', the premises would give ' + target + ' by ' + nearMiss.rule.name + ', but ' + missNotes + '.'] : [])
             .concat(worded && !(fallacy && worded.rule.id === 'same-claim') && !(must && must.same) ? [worded.rule.id === 'same-claim'
                 ? 'The claims differ: ' + wordedNotes.slice(0, 2).join('; ') + '.'
                 : 'Worded the same way each time, the premises would give ' + target + ' by ' + worded.rule.name + ', but ' + wordedNotes.slice(0, 2).join('; ') + '.'] : [])
@@ -22654,7 +23113,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 (fallacy.existential ? ' (“' + ((/^[^A-Za-z]*(all|every|each|no|none|any)(?![A-Za-z])/i.exec(premiseTexts[fallacy.at[0]]) || [0, 'all'])[1].toLowerCase()) +
                     '” does not say that there are any)' : fallacy.note ? ' (' + fallacy.note + ')' : '') + '.'] : [])
             .concat(gives ? [(premiseTexts.length === 1 ? said(premiseTexts[0]) + ' gives ' : 'The premises give ') + said(gives.text) + ' by ' + gives.rule.name +
-                ', but not ' + said(conclusionText) + '.'] : [])
+                (attack ? ', which does not deny ' + said(conclusionText) : ', but not ' + said(conclusionText)) + '.'] : [])
+            .concat(dangling ? [quote(texts[dangling.at]) + ': “' + dangling.words + '” points back to nothing in this box, and each box is read alone: name the ' +
+                dangling.noun + (dangling.value ? ' (“' + dangling.value + '”?)' : '') + '.'] : [])
+            .concat(twice.map(c => '“' + c.name + '” names more than one claim on this map (' + c.contents.map(x => '“' + stripClaimMarkup(x) + '”').join(' and ') +
+                '), so it is read as neither: give each its own name.'))
             // Two steps: each with its premises and its rule, and where the
             // claim between them goes.
             .concat(between ? (() => {
@@ -23223,6 +23686,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (['explosion','contradiction-introduction'].includes(st.rule?.id)) return 'defeated';
             const premises = st.premiseTexts.map((_, j) => verdict.premise(st, j));
             if (premises.some(v => v.status === 'refuted') || claimStepInvalid(st)) return 'defeated';
+            // A premise argued for, every argument for it defeated and none
+            // still open: it has no warrant, and the step resting on it fails
+            // -- an objection so is fended off, not left pending (r27.114; the
+            // user, of an Experience Machine map whose every step certified:
+            // "The initial supporting premises were successfully defended at
+            // the bottom, so, what gives?"). One argument still open leaves the
+            // step pending, as before; a premise never argued for is assumed.
+            if (premises.some(v => v.status === 'unestablished' && !v.missing && !v.relative && v.failed.length > 0 && !(v.pendingSupports || []).length)) return 'defeated';
             if (!st.rule || premises.some(v => !acceptable(v))) return 'pending';
             return 'active';
         }
@@ -23386,7 +23857,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if(st.circular)return 'the '+kindName(st)+' depends on its own conclusion';
             if(st.missingPremises)return 'the '+kindName(st)+' has missing premises';
             if (!st.rule) return 'the ' + kindName(st) + ' from ' + list(st.premiseTexts) + ' isn’t settled: ' +
-                (st.why ? st.why.text : 'no rule confirms it, and it hasn’t been shown invalid');
+                (st.why ? st.why.text.replace(/[.\s]+$/, '') : 'no rule confirms it, and it hasn’t been shown invalid');
             const bad = st.premiseTexts.map((t, j) => ({t, pv: verdict.premise(st, j)})).filter(x => !verdict.acceptable(x.pv));
             return 'the ' + kindName(st) + ' remains unsettled: ' + bad.map(x => q(x.t) + ' ' + trouble(x.pv)).join(', and ');
         };
@@ -30368,6 +30839,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function icWords(f) {
         if (!f) return '';
+        if (f.asWritten) return f.asWritten;
         if (f.src) return f.src;
         if (f.subjectText && f.vpText) return f.subjectText + ' ' + f.vpText;
         if (f.text) return String(f.text);
@@ -30383,14 +30855,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((f.kind === 'all' || f.kind === 'some') && f.subject && f.predicate) {
             const src = f.src || '', vp = f.vp || '';
             const at = vp ? src.toLowerCase().lastIndexOf(vp.toLowerCase()) : -1;
+            // What is said, with its "is" (r27.118): "is a part of that
+            // subject's mind" -- the "is" had been dimmed between the parts.
             const said = vp.replace(IC_COPULA, '');
             return [{ key: 'p:' + f.subject, words: at > 0 ? src.slice(0, at).trim() : (f.np || '') },
-                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: said, said: true, neg: icDenies(said) !== made }];
+                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: vp || said, said: true, neg: icDenies(said) !== made }];
         }
         if (f.kind === 'pred' && f.term && f.prop) {
-            const said = String(cl.form.vpText || f.vpText || '').replace(IC_COPULA, '');
+            const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
             return [{ key: 't:' + f.term, words: cl.form.subjectText || f.subjectText || '' },
-                    { key: 'p:' + String(f.prop).replace(/^\u00ac/, ''), words: said, said: true, neg: icDenies(said) !== made }];
+                    { key: 'p:' + String(f.prop).replace(/^\u00ac/, ''), words: vp || said, said: true, neg: icDenies(said) !== made }];
         }
         return null;
     }
@@ -30484,9 +30958,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return at < toks.length ? toks.slice(at, at + 3).join(' ') : null;
     }
     function icPlanRead(step) {
-        const P = step.premises;
-        if (!Array.isArray(P) || !P.length || P.some(p => !p)) return null;
+        if (!Array.isArray(step.premises) || !step.premises.length || step.premises.some(p => !p)) return null;
         const C = step.rule ? step.conclusion : null;
+        // "Anything that is a mental state of a subject ...": as said of the
+        // subject the step names (r27.115).
+        const P = claimDonkeyPremises(step.premises, step.conclusion);
         const same = (a, b) => claimSame(a, b) || claimDenies(a, b);
         const groupsOf = P.map(() => []);
         const clauses = P.map((f, i) => icClauses(f, '', [], groupsOf[i], true));
@@ -30563,7 +31039,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             boxClauses.forEach(bc => {
                 const denies = claimDenies(cl.form, bc.form);
                 if (denies) contra = Math.max(contra, denials(cl) - denials(bc));
-                if (denies && !denials(cl) && denials(bc)) affirms = true;
+                // Fewer denials than the box, not none: "can perform the functions
+                // of non-occurrent beliefs" against "cannot perform ..." (r27.118).
+                if (denies && denials(cl) < denials(bc)) affirms = true;
                 if (denies || claimOppositeStep(cl.form, { kind: 'not', inner: bc.form }))
                     icOpposingWords(cl.words, bc.words).forEach(w => { if (rejects.indexOf(w) < 0) rejects.push(w); });
             });
@@ -30700,6 +31178,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
         })(rd);
         const words = icTokens(text);
+        // A claim's name said as a claim: its claim's words where the name is
+        // (r27.116), as a premise link's are where the link is.
+        const box = rd.closest && rd.closest('.node[data-node-id]'), self = box ? new Set([box.dataset.nodeId + '#' + (box.dataset.nodeIdx || 0)]) : null;
+        claimNamedEdits(text, claimNamedDefinitions(), self).forEach(e => {
+            for (let k = words.length - 1; k >= 0; k--) if (words[k].a >= e.at && words[k].b <= e.end) words.splice(k, 1);
+            icTokens(stripClaimMarkup(e.say).replace(/[()]/g, ' ')).forEach(t => words.push({ n: t.n, s: t.s, a: e.at, b: e.end }));
+        });
         links.forEach(l => {
             const id = l.el.dataset.boxId, idx = Number(l.el.dataset.boxIdx || 0);
             const ctx = id ? (findNodeContext(state.trees, id) || findNodeContext(state.trees, Number(id))) : null;

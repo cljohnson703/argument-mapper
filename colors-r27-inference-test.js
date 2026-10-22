@@ -195,11 +195,11 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J(ds.boxes[1]) === J(['ic-k0: It ', 'ic-k0 ic-neg: is not', 'ic-k0:  raining']),
             'disjunctive syllogism: the disjunct denied meets its denial, one color; the other goes on', J(ds));
         const ump = paint(['All ravens are black', 'Poe is a raven'], 'Poe is black');
-        ok(ump.rule === 'universal modus ponens' && J(ump.boxes[0]) === J(['ic-k0: All ravens', 'ic-rest:  are ', 'ic-c: black']) &&
-            J(ump.boxes[1]) === J(['ic-c: Poe', 'ic-rest:  is ', 'ic-k0: a raven']),
-            '"All ravens" colored whole, quantifier and all, meeting "a raven"; "black" and "Poe" go on', J(ump));
+        ok(ump.rule === 'universal modus ponens' && J(ump.boxes[0]) === J(['ic-k0: All ravens', 'ic-rest:  ', 'ic-c: are black']) &&
+            J(ump.boxes[1]) === J(['ic-c: Poe', 'ic-rest:  ', 'ic-k0: is a raven']),
+            '"All ravens" colored whole, quantifier and all, meeting "is a raven"; "are black" and "Poe" go on -- each "is" with what it says (r27.118)', J(ump));
         const no = paint(['No ravens are white', 'Poe is a raven'], 'Poe is not white');
-        ok(J(no.boxes[0]) === J(['ic-k0: No ravens', 'ic-rest:  are ', 'ic-c ic-cn: white']),
+        ok(J(no.boxes[0]) === J(['ic-k0: No ravens', 'ic-rest:  ', 'ic-c ic-cn: are white']),
             '"No ravens are white": "No" denies nothing another premise says, so it is not red (r27.91); "white" underlined -- the conclusion denies it', J(no));
         const hs = paint(['If it rains, then the ground is wet', 'If the ground is wet, then the game is cancelled'], 'If it rains, then the game is cancelled');
         ok(hs.rule === 'hypothetical syllogism' &&
@@ -214,7 +214,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J(runs(dil.boxes[1], /^ic-c/)) === J(['the game is off']) && J(runs(dil.boxes[2], /^ic-c/)) === J(['the game is off']),
             'two meetings, two colors: "it rains" one, "it snows" the other', J(dil));
         const bars = paint(['All humans are mortal', 'All Greeks are humans'], 'All Greeks are mortal');
-        ok(J(bars.boxes[0]) === J(['ic-k0: All humans', 'ic-rest:  are ', 'ic-c: mortal']) && J(bars.boxes[1]) === J(['ic-c: All Greeks', 'ic-rest:  are ', 'ic-k0: humans']),
+        ok(J(bars.boxes[0]) === J(['ic-k0: All humans', 'ic-rest:  ', 'ic-c: are mortal']) && J(bars.boxes[1]) === J(['ic-c: All Greeks', 'ic-rest:  ', 'ic-k0: are humans']),
             'a syllogism: the middle term one color in both premises', J(bars));
         const obj = paint(['If Poe is a crow, then Poe is not a raven', 'Poe is a crow'], 'Poe is a raven', 'objection');
         // r27.104 (the user: "Color negations red in green conclusions if they

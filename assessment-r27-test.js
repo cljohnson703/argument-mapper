@@ -94,6 +94,32 @@ try {
     assert.equal(result.retagged, '↗ 2 premises');
     assert.equal(result.contentionRef, '↗ Contention');
     console.log('PASS: assessments, nested weak rebuttals, invariant modus ponens, and typed cross-references.');
+    // r27.114 (the user, of an Experience Machine map whose every step
+    // certified and whose contention was unwarranted: "The initial supporting
+    // premises were successfully defended at the bottom, so, what gives?"): an
+    // objection resting on a box whose every argument is defeated fails -- it
+    // is fended off, not left pending. With an argument for that box still
+    // open, it stays pending, as before.
+    const below = dom.window.eval(`(() => {
+        const n = (id, type, texts, children = [], targetIndex) => Object.assign({ id, type, texts, children, collapsed: [], x: 30000, y: 30000 }, targetIndex === undefined ? {} : { targetIndex });
+        const read = (defense) => {
+            const sub = n('T', 'support', ['Poe is a raven.', 'If Poe is a raven, then zombies are metaphysically possible.'], [defense], 0);
+            const objection = n('O', 'objection', ['Zombies are metaphysically possible.', 'If zombies are metaphysically possible, then consciousness is non-physical.'], [sub]);
+            const root = n('M', 'contention', ['Consciousness is not non-physical.'], [n('S', 'support', ['If Poe is a crow, then consciousness is not non-physical.', 'Poe is a crow.']), objection]);
+            const steps = collectDeductiveSteps([root]), verdict = claimMapVerdict([root], steps), v = verdict('M', 0);
+            return { label: VERDICT_LABEL[v.status], status: v.status, objection: verdict.stepState(steps.find(s => s.childId === 'O')), premise: verdict('O', 0).status };
+        };
+        return {
+            refuted: read(n('R', 'rebuttal', ['If Poe is black, then Poe is not a raven.', 'Poe is black.'], [], 0)),
+            open: read(n('W', 'weak-rebuttal', ['If the evidence is thin, then it has not been shown that Poe is a raven.', 'The evidence is thin.'], [], 0))
+        };
+    })()`);
+    assert.equal(below.refuted.premise, 'unestablished');
+    assert.equal(below.refuted.objection, 'defeated');
+    assert.equal(below.refuted.label, '✓ Warranted');
+    assert.equal(below.open.objection, 'pending');
+    assert.equal(below.open.label, '✗ Unwarranted');
+    console.log('PASS: an objection whose premise has lost every argument for it is fended off; one whose premise is still argued over stays pending.');
     // Optional real-map diagnostic; the input file is read without modification.
     if (process.argv[3]) {
         const map = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));

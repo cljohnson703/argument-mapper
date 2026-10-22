@@ -106,6 +106,8 @@ const SUITES = [
     'shortcuts-r27-link-test.js',
     'picture-r27-test.js',
     'opposites-r27-test.js',
+    'extended-mind-r27-test.js',
+    'named-claims-r27-test.js',
     'collab-r26-firebase-test.js',
 ];
 
