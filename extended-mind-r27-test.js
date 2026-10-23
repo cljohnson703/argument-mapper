@@ -22,6 +22,11 @@
  *    in words said to be one, what an objection's premises give, and a "that
  *    subject" that points back to nothing in its box.
  * 7. The colors of steps 1-4.
+ * 8. Existential syllogism with the kinds after a verb ("hit a poodle", so
+ *    "hit a dog"); a bare plural there, or "a" in a comparison, asked --
+ *    with the step's generics, together -- its readings the words that
+ *    give the step; a plural with a phrase after it a generic; "any" and a
+ *    plural after "not" (r27.120).
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -221,6 +226,113 @@ console.log('\n-- 6. what the check says --');
         { id: 'A', type: 'objection', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render(); var steps = collectDeductiveSteps(state.trees), v = claimMapVerdict(state.trees, steps); return claimVerdictWhy(v, v('M', 0));`);
     ok(!/\.\./.test(verdict) && /gives\. Nothing on the map supports it\.$/.test(verdict), 'the verdict\'s reason ends once ("gives.", not "gives..")', verdict);
+}
+
+console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (r27.119) --');
+{
+    // The user, of a presentation map: "particularly with the part labeled
+    // 'ambiguous'. The colors aren't matching, the disambiguation is wrong,
+    // and it doesn't certify."
+    const s = step(["If an AI system is reliably and routinely consulted by a student as part of the student's thinking process, then the AI system functions as a cognitive extension.",
+        "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.');
+    ok(s.rule === 'modus ponens', 'the step: modus ponens (it had waited on a question whose "any" reading was the sentence as written)', J(s));
+    ok(J(s.colors) === J([['ic-rest: If', "ic-k0: an AI system is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: , then',
+        'ic-c: the AI system functions as a cognitive extension', 'ic-rest: .'], ["ic-k0: An AI system is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: .']]),
+        'its colors: the condition and the premise one part each, one color ("reliably | and routinely" had been two)', J(s.colors));
+    ok(key('Bob is reliably and routinely consulted.') === 'P:bob|=reliably and routinely consulted' && /^C\[/.test(key('Bob is happy and rich.')),
+        '"is reliably and routinely consulted": adverbs joined, one part; "is happy and rich", two', key('Bob is reliably and routinely consulted.'));
+    ok(ev(`return parseClaimFull('Seven is not even or odd.').notes.some(function (n) { return /"not" can deny the whole "or"/.test(n.message); });`),
+        'adverbs in -ly only: "is not even or odd" still asks what "not" denies');
+    const q = ev(`var r = parseClaimFull('If an AI system is consulted, then the AI system is reliable.'), a = parseClaimFull('An AI system is reliably consulted.');
+        return { if: r.notes.map(function (n) { return [n.message, n.readings.map(function (x) { return x.replace(/\\uE000/g, '^'); })]; }), plain: a.notes.map(function (n) { return n.message; }) };`);
+    ok(q.if.length === 1 && q.if[0][0] === '"an AI system" after "if" may mean any AI system, AI systems in general, or one particular AI system' &&
+        /^if any \^a\^i system is consulted, then the \^a\^i system is reliable$/.test(q.if[0][1][0]),
+        'after "if": its "any" reading says "any", its words their capitals, "AI systems in general"', J(q.if));
+    ok(J(q.plain) === J(['"an AI system" may mean every one, some one, or one in general']), '"AI system": no question whether "AI" describes the system itself', J(q.plain));
+    const ai = ev(`return ['ChatGPT is an AI system.', 'Every US senator is a citizen.', 'This is a zombie argument.'].map(function (t) {
+        return parseClaimFull(t).notes.filter(function (n) { return /describes the/.test(n.message); }).length; });`);
+    ok(J(ai) === J([0, 0, 1]), 'an acronym before its noun names a kind with it ("AI system", "US senator"); a word the lists do not know still asks ("zombie argument")', J(ai));
+    const big = ev(`return parseClaimFull('Big Norwegian ravens fly.').notes.map(function (n) { return n.message; });`);
+    ok(J(big) === J(['"big Norwegian ravens" may mean all of them, some, most, or what holds in general']), 'a question says its words with their capitals', J(big));
+}
+
+console.log('\n-- 8. the kinds after a verb: existential syllogism, and the question a bare plural asks (r27.120) --');
+{
+    // The user, of step 4: "It says, 'All As are Bs', 'F plays the role of an
+    // A', so, 'F plays the role of a B', no?" -- and: "If it's strictly
+    // speaking ambiguous, then no. The ambiguity checker would need to be
+    // able to offer a suggestion."
+    const rule = (p, c, type) => step(p, c, type).rule;
+    ok(rule(['Bob hit a poodle.', 'Every poodle is a dog.'], 'Bob hit a dog.') === 'existential syllogism' &&
+       rule(['Bob hit some poodle.', 'All poodles are dogs.'], 'Bob hit some dog.') === 'existential syllogism' &&
+       rule(['Every dog is a poodle.', 'Bob hit a dog.'], 'Bob hit a poodle.') === 'existential syllogism' &&
+       rule(['Bob is taller than some poodle.', 'Every poodle is a dog.'], 'Bob is taller than some dog.') === 'existential syllogism',
+       '"hit a poodle" and "every poodle is a dog" give "hit a dog": existential syllogism, the kinds after the verb');
+    const none = [[['Every poodle is a dog.', 'Bob hit a dog.'], 'Bob hit a poodle.'], [['Bob fears a poodle.', 'Every poodle is a dog.'], 'Bob fears a dog.'],
+        [['Bob must own a poodle.', 'Every poodle is a dog.'], 'Bob must own a dog.'], [['Bob owns a large mouse.', 'Every mouse is an animal.'], 'Bob owns a large animal.'],
+        [['Bob does not own a poodle.', 'Every poodle is a dog.'], 'Bob does not own a dog.'], [['Bob hit a poodle.', 'Every poodle is a dog.'], 'Bob hit an animal.'],
+        [['Bob almost hit a poodle.', 'Every poodle is a dog.'], 'Bob almost hit a dog.']]
+        .filter(([p, c]) => rule(p, c));
+    ok(!none.length, 'but not from a dog to a poodle, after "fears" or "must", with "large" kept (a large mouse is no large animal), after "not", to another kind, nor after "almost"', J(none));
+    const otto = ["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
+        "Non-occurrent beliefs within a subject's brain are mental states of that subject."];
+    const asked = step(otto, "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.");
+    ok(asked.tag === '? generic' && asked.why.indexOf('"non-occurrent beliefs within his brain" may mean some of them, all of them, or what holds of them in general') > 0 &&
+       asked.why.indexOf('"mental states of Otto" may mean some of them, all of them, or what holds of them in general') > 0 &&
+       asked.why.indexOf("Read as “The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.”, “all non-occurrent beliefs within a subject's brain are mental states of that subject”, and “The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.”, the step follows by existential syllogism.") > 0,
+       'step 4 as written asks: the bare plurals after the verb (some, all, or in general) and the rule\'s (all, some, most), and says the readings that give it', asked.why);
+    const answered = step(["The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.",
+        "All non-occurrent beliefs within a subject's brain are mental states of that subject."], "The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.");
+    ok(answered.rule === 'existential syllogism' && J(answered.colors) === J([
+        ["ic-c: The records in Otto's notebook play the same causal/explanatory role as some", 'ic-k0: non-occurrent beliefs within his brain', 'ic-rest: .'],
+        ["ic-k0: All non-occurrent beliefs within a subject's brain", 'ic-c: are mental states of that subject', 'ic-rest: .']]),
+        'answered, it follows; the verb\'s words go on, the object meets the rule\'s kind, and the rule\'s predicate goes on as the object', J(answered));
+    const chosen = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ["The records in Otto's notebook play the same causal/explanatory role as mental states of Otto."], collapsed: [], x: 0, y: 0, children: [
+        { id: 'A', type: 'support', texts: ${J(otto)}, collapsed: [], children: [] } ] }];
+        deductiveCache.clear(); ensureCollabFields(state); selectedIds = []; render();
+        var s = collectDeductiveSteps(state.trees)[0]; openReadingChooser(s, document.body);
+        var pop = document.getElementById('reading-chooser'), rows = [].slice.call(pop.querySelectorAll('.rc-row'));
+        var heads = [].slice.call(pop.querySelectorAll('.rc-head')).map(function (h) { return h.textContent.split(' \\u2014 ')[1]; });
+        var marked = rows.filter(function (r) { return r.querySelector('.rc-follows'); }).map(function (r) { return r.textContent; });
+        var fits = rows.every(function (r) { return !r.querySelector('input').disabled; });
+        var radio = rows[0].querySelector('input'); radio.checked = true; radio.dispatchEvent(new window.Event('change'));
+        pop.querySelector('.rc-apply').click();
+        return { heads: heads, marked: marked, fits: fits, box: state.trees[0].children[0].texts[0] };`);
+    ok(chosen.heads.length === 3 && /^"non-occurrent beliefs within his brain"/.test(chosen.heads[0]) && /^"Non-occurrent beliefs within a subject's brain"/.test(chosen.heads[1]) &&
+       /^"mental states of Otto"/.test(chosen.heads[2]) && chosen.fits && chosen.marked.length === 3 &&
+       chosen.marked.every(t => /the step follows by existential syllogism, with the others as marked$/.test(t)) &&
+       chosen.box === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.",
+       'its chooser: three questions, box by box, the readings that give it marked; choosing one writes "some" into the box', J(chosen));
+    const step3 = step(["The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.",
+        'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.");
+    ok(step3.tag === '? generic' && /Read as “Anything that plays the same causal\/explanatory role as some mental states of a subject is itself a mental state of that subject\.”, the step follows by universal modus ponens\.$/.test(step3.why) &&
+       rule(["The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.",
+            'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.") === 'universal modus ponens',
+       'step 3, once its premise says "some": its rule asks for "some" too; as written, both alike, it follows as it did', step3.why);
+    const rebut = step(["If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
+        "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs."], "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal');
+    ok(rebut.tag === '? generic' && rebut.why.indexOf('"non-occurrent beliefs within Otto\'s brain" after "not" may mean any of them, all of them, or what holds of them in general') > 0 &&
+       /Read as “If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal\/explanatory role as any non-occurrent beliefs within Otto's brain\.”, the step follows by modus ponens\./.test(rebut.why) &&
+       !/Worded the same way/.test(rebut.why),
+       'the rebuttal of "... as some ...": its "not ... non-occurrent beliefs" asks, "any" offered -- not the hint to write "not ... some", which says something else', rebut.why);
+    const comp = step(['Bob is taller than a poodle.', 'Every poodle is a dog.'], 'Bob is taller than a dog.');
+    ok(comp.tag === '? generic' && comp.why.indexOf('"a poodle" may mean some one, or any one') > 0 && /the step follows by existential syllogism\.$/.test(comp.why),
+       '"a" in a comparison ("taller than a poodle") asks: some one, or any one', comp.why);
+    const ravens = step(['Poe loves ravens.', 'Fido is a raven.'], 'Poe loves Fido.');
+    ok(ravens.tag === '? generic' && /Read as “Poe loves all ravens\.”, the step follows by universal modus ponens\.$/.test(ravens.why),
+       'and a bare plural object read as "all": "Poe loves ravens", "Fido is a raven", "Poe loves Fido"', ravens.why);
+    const heads = ev(`return ['Ravens in the park are black.', 'Students who study pass.', "Non-occurrent beliefs within a subject's brain are mental states of that subject."].map(function (t) {
+        return parseClaimFull(t).notes.map(function (n) { return n.message; }); });`);
+    ok(J(heads) === J([['"ravens in the park" may mean all of them, some, most, or what holds in general'], ['"students who study" may mean all of them, some, most, or what holds in general'],
+        ['"non-occurrent beliefs within a subject\'s brain" may mean all of them, some, most, or what holds in general']]),
+        'a plural with a phrase or a clause after it is a generic, as "ravens are black" is (it had been read as one thing\'s name)', J(heads));
+    const same = ev(`var a = parseClaim("All non-occurrent beliefs within a subject's brain are mental states of that subject."), b = parseClaim("Every non-occurrent belief within a subject's brain is a mental state of that subject.");
+        var c = parseClaim("The records play the same role as some non-occurrent beliefs within his brain."), d = parseClaim("The records play the same role as some non-occurrent belief within his brain.");
+        return [claimSame(a, b), claimSame(c, d), normalizeClaimTerm("non-occurrent beliefs within a subject's brain"), normalizeClaimTerm('dogs within cities')];`);
+    ok(same[0] && same[1] && same[2] === "non-occurrent belief within a subject's brain" && same[3] === 'dog within cities',
+        '"beliefs within his brain" is the kind "belief within his brain", as "beliefs in his brain" is, and "cities" in "dogs within cities" keeps its number; "some beliefs within" is "some belief within"', J(same));
+    ok(rule(['If Bob is kind, then Bob does not own any poodles.', 'Bob is kind.'], 'Bob owns some poodles.', 'rebuttal') === 'modus ponens',
+       '"does not own any poodles" denies "owns some poodles" (the plural had been kept)');
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

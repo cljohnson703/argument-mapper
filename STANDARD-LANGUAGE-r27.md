@@ -4,6 +4,36 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 22, night: the kinds after a verb (r27.120)
+
+The user, of step 4 of the Extended Mind map: "It says, 'All As are Bs', 'F plays the role of an A', so, 'F plays the role of a B', no?" And, of a rule that would read it so: "If it's strictly speaking ambiguous, then no. The ambiguity checker would need to be able to offer a suggestion."
+
+* Existential syllogism with the kinds after the verb: "Bob hit a poodle" (or "some poodle") and "every poodle is a dog" give "Bob hit a dog", as "some F is G" and "every G is H" give "some F is H". A rule worded "a subject ... that subject" is said of the one the objects name: "... play the same causal/explanatory role as some non-occurrent beliefs within his brain" and "All non-occurrent beliefs within a subject's brain are mental states of that subject" give "... as some mental states of Otto". Not after "fears", "seeks" and their kin, a modal or "not"; not from a dog to a poodle; not with an adjective kept ("a large mouse" is no large animal); not what "is" says ("is a mental state of Otto" is a predicate, and that step is universal modus ponens, as before).
+* Where an object can mean more than "some" of its kind, the step asks. A bare plural ("the same role as non-occurrent beliefs") may mean some of them, all of them, or what holds of them in general. "A" in a comparison ("taller than a poodle", "the same role as a belief") may mean some one or any one. After "not", "any" takes the place of "some". A step that follows on a reading and not as written waits, as one turning on "birds fly" does, and these questions are asked together with the generics the step turns on: step 4 as the map words it asks three -- of its premise, of the rule it uses, and of its conclusion -- and says the readings that give it. Each reading is the box's own words with "some", "all", "any" or "in general" put in, and choosing one writes it into the box. "Poe loves ravens", "Fido is a raven", so "Poe loves Fido" asks too, read as "all". A step that follows as written asks nothing: step 3, its two "mental states" alike, is as it was.
+* A plural with a phrase or a clause after it is a generic, as "ravens are black" is: "Non-occurrent beliefs within a subject's brain are mental states of that subject", "Students who study pass" and "Ravens in the park are black" ask what they mean where a step turns on it. They had been read as one thing's name.
+* "Beliefs within his brain" names the kind "belief within his brain", as "beliefs in his brain" does: "within", "inside", "beyond" and their kin start a phrase after a noun, and an object's "some" ends before them ("some beliefs within his brain" is "some belief within his brain").
+* "Does not own any poodles" denies "owns some poodles": after "not" (or in a condition), "any" and a plural are read as "some" and it. The plural had been kept.
+* Colors: the verb's words go on to the conclusion, the object meets the rule's kind, and the rule's predicate goes on as the conclusion's object.
+
+The Extended Mind map. As the map stands, with the premise added for step 4, nothing changes. Without that premise, step 4 asks its three questions; answered ("some", "all", "some"), it follows by existential syllogism. Then step 3's rule asks for "some" too ("Anything that plays the same causal/explanatory role as some mental states of a subject ..."), and the rebuttal of step 4's first premise for "any" ("... do not play the same causal/explanatory role as any non-occurrent beliefs within Otto's brain"), each with the reading that gives it.
+
+In the user's saved maps, no step or verdict changes.
+
+Tests. extended-mind-r27-test.js (59; section 8 new). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified; the soundness sweep finds no false validity. All 90 suites pass, and the public build's smoke test.
+
+### October 22, evening: a presentation map's "ambiguous" step (r27.119)
+
+The user, of a presentation map: "This map also has some issues, particularly with the part labeled "ambiguous". The colors aren't matching, the disambiguation is wrong, and it doesn't certify."
+
+* "If an AI system is reliably and routinely consulted by a student as part of the student's thinking process, then the AI system functions as a cognitive extension", "An AI system is reliably and routinely consulted ..." and "The AI system functions as a cognitive extension": modus ponens, as written. It had waited on its question about "an AI system" after "if". The "any" reading that question offered was the sentence as written: "an ai system", looked for without its capitals' marks, was not found in words that have them, so "any" was never put in -- and on that reading the step followed, so it asked. The question now says "any AI system" and "AI systems in general", with the capitals.
+* "Is reliably and routinely consulted" is one part: adverbs in -ly joined before the word they go with are no part of their own. "Is reliably" had been one claim and "is routinely consulted ..." another, which split the colors. Not "is not even or odd".
+* An acronym before its noun names a kind with it -- "AI system", "US senator" -- so there is no question whether "AI" describes the system itself.
+* A question about "a ..." or a bare plural says its words with their capitals ("an AI system", "big Norwegian ravens"), not with the marks the reader keeps.
+
+In the user's saved maps, the presentation map's step certifies, and the three boxes above it are established. No other step or verdict changes.
+
+Tests. extended-mind-r27-test.js (47; section 7 new). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified; the soundness sweep finds no false validity. All 90 suites pass, and the public build's smoke test.
+
 ### October 22, afternoon: "a subject ... that subject" one step again; "can" red; "is" with what it says; a premise the step does not use (r27.118)
 
 The user, of r27.117's two steps: "The idea is that you can put in any name for the subject. It's equivalent to 'For any entity, anything that is a mental state of that entity is a part of that entity's mind.' At least that's the reading I see. I don't see any other reading. And if that's what it's saying, then shouldn't it just be one step?" Of an objection: "The word "can" in the white conclusion ... should be red, no? It contradicts its parent on that predicate (can vs cannot)." And of the Extended Mind map: "The clause parsing ... isn't going quite right (e.g., "is", "are", "is itself", etc. breaking clauses) ... And none of the steps certify."
