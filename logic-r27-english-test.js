@@ -870,7 +870,7 @@ function reportCorpus(name, res) {
             deductiveCache.clear(); ensureCollabFields(state); render();
             var st = collectDeductiveSteps(state.trees)[0];
             openReadingChooser(st, document.body);
-            out.offered = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + r.textContent; });
+            out.offered = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll('.rc-follows, .rc-own'), function (x) { return x.textContent; }).join('') : r.textContent); });
             closeReadingChooser();
             return out;`);
         ok(g.lone.inference === 'we can conclude that' && /in a box/.test(g.lone.tag),
@@ -971,7 +971,7 @@ function reportCorpus(name, res) {
                 deductiveCache.clear(); ensureCollabFields(state); render();
                 var s = collectDeductiveSteps(state.trees)[0], rows = [];
                 if (s.ambiguous) { openReadingChooser(s, document.body);
-                    rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + r.textContent; });
+                    rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (/rc-unfit/.test(r.className) ? 'unfit: ' : '') + (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll('.rc-follows, .rc-own'), function (x) { return x.textContent; }).join('') : r.textContent); });
                     closeReadingChooser(); }
                 return { tag: deductiveStepTagText(s), why: s.why && s.why.text ? String(s.why.text) : '', rows: rows };
             };

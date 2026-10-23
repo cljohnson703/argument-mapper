@@ -332,7 +332,7 @@ try {
         // rest of the box kept; picked, it is what the box says.
         const choose = (c, ps, pick) => ev('state.trees = [{ id: "M", type: "contention", texts: [' + J(c) + '], collapsed: [], x: 0, y: 0, children: [{ id: "S", type: "objection", texts: ' + J(ps) +
             ', collapsed: [], children: [] }] }]; deductiveCache.clear(); ensureCollabFields(state); render(); var s = collectDeductiveSteps(state.trees)[0]; openReadingChooser(s, document.body);' +
-            'var rows = Array.prototype.map.call(document.querySelectorAll("#reading-chooser .rc-row"), function (r) { return r.querySelector("input").disabled ? null : r.textContent; });' +
+            'var rows = Array.prototype.map.call(document.querySelectorAll("#reading-chooser .rc-row"), function (r) { return r.querySelector("input").disabled ? null : (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll(".rc-follows, .rc-own"), function (x) { return x.textContent; }).join("") : r.textContent); });' +
             'var radio = document.querySelectorAll("#reading-chooser .rc-row input")[' + pick + ']; radio.checked = true; radio.dispatchEvent(new Event("change")); document.querySelector("#reading-chooser .rc-apply").click();' +
             'deductiveCache.clear(); var t = collectDeductiveSteps(state.trees)[0], box = state.trees[0].children[0].texts[0]; closeReadingChooser(); state.trees = []; render();' +
             'return { rows: rows, box: box, rule: t.rule ? t.rule.name : null };');

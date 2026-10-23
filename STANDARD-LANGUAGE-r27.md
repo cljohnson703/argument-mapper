@@ -4,6 +4,27 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 23: the reading chooser walks on (r27.122)
+
+The user, of the Extended Mind map: "going with the recommended fixes infected other nodes with '? generic'. But maybe that's the point?" It is: a box means one thing in every step that uses it, and step 4's answers ("some") left step 3 and the rebuttal with "some" on one side and a bare plural on the other -- each had followed on any reading, its two plurals alike. Of three mockups (warn, include, walk on), the user chose the window that walks on, with the warnings, and rows shortened.
+
+* After a rewrite, the window stays open on what now asks: the step itself, if it still does, and each step that uses a box just rewritten -- "✓ The step follows by existential syllogism", then "Other steps that use the boxes you changed now ask:" and their questions. Yadiel's map: two presses, and every step certifies.
+* Under a reading that gives the step, a note says what it would set off in another step that uses the same box, worked out on a copy of the map after the window opens: "Another step uses this box. It will then ask for “Anything that plays … as some mental states of a subject …”." Or that it would no longer follow.
+* A row shows what its reading changes -- "…as some non-occurrent beliefs within his brain." -- with the box whole on hover; whole where little would be left out.
+
+Tests. reading-r27-chooser-test.js (31; section 7 new); five suites that read a row's words read them whole, from its title. Take-one-out: each edit is caught. All 90 suites pass, and the public build's smoke test.
+
+### October 23: the reading chooser, with several questions (r27.121)
+
+The user, of the Extended Mind map: "it seems impossible to fix it using the suggestions in the ?generic window."
+
+* The window had no limit to its height and could not scroll. Step 4's three questions, with the bridging premise taken out, made it 932 px tall; on a 768 px screen the third question's rows and its button were below the screen, out of reach. It now scrolls where it is taller than the screen.
+* Each question had its own button, which wrote its one box and closed the window, though the readings that give the step are marked "with the others as marked". Where a window asks several questions, one button, kept in view at its foot, now writes every box a reading is chosen for -- "Rewrite the boxes this way" -- as one step to undo. A window with one question is as it was.
+
+Step 4, its three marked readings chosen and the button pressed once, follows by existential syllogism. Steps 3 and the rebuttal then ask one question each ("some" in step 3's rule, "any" in the rebuttal's "then"); answered, every step in the map certifies.
+
+Tests. reading-r27-chooser-test.js (24; section 6 new). Take-one-out: each edit is caught. All 90 suites pass, and the public build's smoke test.
+
 ### October 22, night: the kinds after a verb (r27.120)
 
 The user, of step 4 of the Extended Mind map: "It says, 'All As are Bs', 'F plays the role of an A', so, 'F plays the role of a B', no?" And, of a rule that would read it so: "If it's strictly speaking ambiguous, then no. The ambiguity checker would need to be able to offer a suggestion."

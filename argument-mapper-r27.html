@@ -1243,6 +1243,7 @@
     /* --- Reading chooser: an ambiguous step's readings --- */
     #reading-chooser {
         position: fixed; z-index: 610; max-width: min(360px, calc(100vw - 16px)); box-sizing: border-box;
+        max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain;
         background: #2a2a2e; border: 1px solid #555; border-radius: 8px; padding: 10px 12px;
         box-shadow: 0 6px 24px rgba(0,0,0,0.5); color: #ddd;
         font: 13px/1.35 system-ui, -apple-system, sans-serif;
@@ -1257,6 +1258,12 @@
     #reading-chooser .rc-apply { display: block; margin: 6px 0 2px auto; padding: 4px 10px; border-radius: 5px;
         border: 1px solid #666; background: #3a3a40; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
     #reading-chooser .rc-apply:disabled { opacity: 0.45; cursor: not-allowed; }
+    #reading-chooser .rc-foot { position: sticky; bottom: -10px; margin: 6px 0 -10px; padding: 2px 0 10px; background: inherit; }
+    #reading-chooser .rc-foot .rc-apply { margin: 4px 0 0 auto; }
+    #reading-chooser .rc-done { color: var(--logic-certified); margin: 0 0 8px; }
+    #reading-chooser .rc-next { font-size: 12px; color: #aaa; margin: 10px 0 4px; padding-top: 8px; border-top: 1px solid #444; }
+    #reading-chooser .rc-done + .rc-next { margin-top: 0; }
+    #reading-chooser .rc-note { margin: 0 0 4px 21px; padding: 3px 7px; border-radius: 5px; font-size: 11.5px; color: #e0c27a; background: rgba(224, 180, 80, 0.12); }
     #reading-chooser .rc-all { display: block; margin-top: 8px; padding: 0; border: none; background: none; color: #9ab;
         font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
     body.bg-light #reading-chooser { background: #f5f5f5; border-color: #bbb; color: #222; box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
@@ -1266,6 +1273,9 @@
        5.1:1 (the tags' #00a800 is 2.9:1 there). */
     body.bg-light #reading-chooser .rc-follows { color: #007a00; }
     body.bg-light #reading-chooser .rc-apply { border-color: #bbb; background: #fff; }
+    body.bg-light #reading-chooser .rc-done { color: #007a00; }
+    body.bg-light #reading-chooser .rc-next { color: #666; border-top-color: #ccc; }
+    body.bg-light #reading-chooser .rc-note { color: #7a5300; background: rgba(200, 140, 20, 0.12); }
     body.bg-light #reading-chooser .rc-all { color: #357; }
 
     /* --- Context menu (right-click / long-press) --- */
@@ -2964,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-22 r27.120';
+    const APP_BUILD = '2026-10-23 r27.122';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -32301,18 +32311,116 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         claimStepDenials = step && step.denials && step.denials.length ? new Set(step.denials) : null;
         try { return fn(); } finally { claimStepDenials = saved; }
     }
-    function openReadingChooser(step, anchor) {
+    // A row's words shortened to what the reading changes (r27.122; the
+    // user: rows shortened, "Sure"): the box's words before the change and
+    // after it left out -- "…as some non-occurrent beliefs within his
+    // brain." -- the word before it kept, and five after it; whole where
+    // little would be left out. `head`: the box's first three words kept
+    // too, to say which box ("Anything that plays … as some mental states
+    // of a subject …").
+    function claimReadingShort(original, words, head) {
+        const a = String(original).trim().split(/\s+/), b = String(words).trim().split(/\s+/);
+        let p = 0;
+        while (p < a.length && p < b.length && a[p] === b[p]) p++;
+        let q = 0;
+        while (q < a.length - p && q < b.length - p && a[a.length - 1 - q] === b[b.length - 1 - q]) q++;
+        const from = p - 1 >= 2 ? p - 1 : 0, end = Math.min(b.length, b.length - q + 5), to = b.length - end >= 2 ? end : b.length;
+        if (from + b.length - to < 3) return b.join(' ');
+        const lead = head && from > 4 ? b.slice(0, 3).join(' ') + ' \u2026 ' : from ? '\u2026' : '';
+        return lead + b.slice(from, to).join(' ') + (to < b.length ? ' \u2026' : '');
+    }
+    // What a marked reading would set off elsewhere (r27.122; the user: "going
+    // with the recommended fixes infected other nodes with '? generic'"):
+    // tried on a copy of the map, each other step that uses the box and
+    // follows now -- what it would then ask for, or that it would no longer
+    // follow. The notes, or none.
+    const claimStepUses = (s, keys) => (s.premiseRefs || []).some(r => keys.has(r.targetId + '#' + r.targetIdx)) || keys.has(s.parentId + '#' + s.boxIdx);
+    const claimStepAsks = s => s.ambiguous && !s.rule && !!s.why && (s.why.ambiguous || []).some(a => a.readings && a.readings.length && a.site !== undefined);
+    function claimReadingKnockOns(where, words, own) {
+        const keys = new Set([where.id + '#' + where.idx]);
+        const before = collectDeductiveSteps(state.trees).filter(s => !own.has(String(s.childId)) && claimStepUses(s, keys) && s.rule);
+        if (!before.length) return [];
+        const copy = JSON.parse(JSON.stringify(state.trees)), ctx = findNodeContext(copy, where.id);
+        if (!ctx || ctx.node.texts[where.idx] == null) return [];
+        ctx.node.texts[where.idx] = words;
+        const after = collectDeductiveSteps(copy), out = [];
+        before.forEach(b => {
+            const st = after.find(x => x.childId === b.childId && x.parentId === b.parentId && x.boxIdx === b.boxIdx);
+            if (!st || st.rule) return;
+            const asked = ((st.why && st.why.ambiguous) || []).map(a => ({ a, d: (a.derives || []).find(d => d.rule) })).find(x => x.d);
+            // Its full stop inside the quotation marks, and none after them.
+            const said = asked && claimReadingShort(stripClaimMarkup(asked.a.text), claimReadingWords(asked.d.label, asked.a.text), true);
+            out.push(asked ? 'Another step uses this box. It will then ask for \u201c' + said + '\u201d' + (/[.!?]$/.test(said) ? '' : '.')
+                : 'Another step uses this box. It will then no longer follow as written.');
+        });
+        return out;
+    }
+    // After a rewrite (r27.122; of three mockups, the user chose "C",
+    // walking on): the window stays open on what now asks -- the steps it
+    // showed, where they still ask, and each step that uses a box just
+    // rewritten -- first saying that the step now follows, where it does.
+    function claimReadingWalkOn(own, boxes) {
+        const steps = collectDeductiveSteps(state.trees);
+        const mine = steps.filter(s => own.has(String(s.childId)));
+        const others = steps.filter(s => !own.has(String(s.childId)) && claimStepUses(s, boxes) && claimStepAsks(s));
+        const next = mine.filter(claimStepAsks).concat(others);
+        if (!next.length) return false;
+        const follow = mine.filter(s => s.rule);
+        const done = mine.length === 1 && follow.length ? 'The step follows by ' + follow[0].rule.name + '.'
+            : mine.length > 1 && follow.length === mine.length ? 'Those steps follow.' : null;
+        const tag = [...document.querySelectorAll('.derivation-tag.ambiguous')].find(t => t.dataset.step === String(next[0].childId));
+        return openReadingChooser(next, tag || document.body, { done, others: new Set(others.map(s => String(s.childId))) });
+    }
+    // `step`: one step, or several (walking on); `opts`: { done, others }.
+    function openReadingChooser(step, anchor, opts) {
         closeReadingChooser();
-        const entries = ((step.why && step.why.ambiguous) || []).filter(a => a.readings && a.readings.length && a.site !== undefined);
-        if (!entries.length) return false;
+        const steps = Array.isArray(step) ? step : [step], others = (opts && opts.others) || new Set();
+        const items = [].concat(...steps.map(st => ((st.why && st.why.ambiguous) || [])
+            .filter(a => a.readings && a.readings.length && a.site !== undefined).map(entry => ({ entry, st }))));
+        if (!items.length) return false;
+        const entries = items.map(x => x.entry);
         const readOnly = reviewMode || collabReadOnly();
         const pop = document.createElement('div');
         pop.id = 'reading-chooser';
-        pop.dataset.step = String(step.childId);
-        pop.dataset.sig = claimStepSignature(step);
+        pop.dataset.step = String(steps[0].childId);
+        pop.dataset.sig = claimStepSignature(steps[0]);
         pop.setAttribute('role', 'dialog');
         ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(type => pop.addEventListener(type, e => e.stopPropagation()));
-        entries.forEach((entry, n) => {
+        // Several questions (r27.121; the user: "it seems impossible to fix it
+        // using the suggestions"): one button rewrites every box a reading is
+        // chosen for -- readings that give the step together ("with the
+        // others as marked") are written together, one undo -- where each
+        // question's own button had written its one box and closed the window.
+        const several = entries.length > 1, chosen = new Map(), marks = [];
+        let applyAll = null;
+        // Write the readings chosen, then walk on (r27.122).
+        const rewrite = list => {
+            const done = new Set();
+            pushHistory();
+            list.forEach(c => {
+                const key = c.where.id + '#' + c.where.idx, ctx = findNodeContext(state.trees, c.where.id);
+                // One reading to a box: a second question about it waits.
+                if (done.has(key) || !ctx || ctx.node.texts[c.where.idx] == null) return;
+                ctx.node.texts[c.where.idx] = c.words;
+                done.add(key);
+            });
+            closeReadingChooser();
+            render();
+            claimReadingWalkOn(new Set(steps.map(s => String(s.childId))), done);
+        };
+        if (opts && opts.done) {
+            const d = document.createElement('div');
+            d.className = 'rc-done';
+            d.textContent = '\u2713 ' + opts.done;
+            pop.appendChild(d);
+        }
+        items.forEach(({ entry, st: step }, n) => {
+            if (others.has(String(step.childId)) && !pop.querySelector('.rc-next')) {
+                const nx = document.createElement('div');
+                nx.className = 'rc-next';
+                nx.textContent = others.size > 1 ? 'Other steps that use the boxes you changed now ask:' : 'Another step that uses a box you changed now asks:';
+                pop.appendChild(nx);
+            }
             const where = claimReadingBox(step, entry.text);
             const head = document.createElement('div');
             head.className = 'rc-head';
@@ -32320,11 +32428,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             head.textContent = '\u201c' + (entry.typo ? entry.text : stripClaimMarkup(entry.text)) + '\u201d \u2014 ' + claimRecase(entry.message, entry.text);
             if (entry.typo) head.style.whiteSpace = 'pre-wrap';
             pop.appendChild(head);
-            const apply = document.createElement('button');
-            apply.type = 'button';
-            apply.className = 'rc-apply';
-            apply.textContent = entry.typo ? 'Fix the box' : 'Rewrite the box this way';
-            apply.disabled = true;
+            const apply = several ? null : document.createElement('button');
+            if (apply) {
+                apply.type = 'button';
+                apply.className = 'rc-apply';
+                apply.textContent = entry.typo ? 'Fix the box' : 'Rewrite the box this way';
+                apply.disabled = true;
+            }
             entry.readings.forEach((label, r) => {
                 let words = entry.typo ? label : claimReadingWords(label, entry.text);
                 const linked = !!where && (() => { const c = findNodeContext(state.trees, where.id); return !!c && hasBoxLinks(c.node.texts[where.idx]); })();
@@ -32340,10 +32450,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 radio.type = 'radio';
                 radio.name = 'rc-' + n;
                 radio.disabled = !fits;
-                radio.addEventListener('change', () => { apply.disabled = readOnly || !fits; apply.dataset.words = words; });
+                radio.addEventListener('change', () => {
+                    chosen.set(n, { where, words, fits });
+                    if (apply) { apply.disabled = readOnly || !fits; apply.dataset.words = words; }
+                    if (applyAll) applyAll.disabled = readOnly || ![...chosen.values()].some(c => c.fits);
+                });
                 const text = document.createElement('span');
-                text.textContent = words;
+                // What the reading changes, the box whole on hover (r27.122).
+                text.textContent = entry.typo ? words : claimReadingShort(stripClaimMarkup(entry.text), words);
+                if (!entry.typo) row.title = words;
                 const d = (entry.derives || []).find(x => x.label === label);
+                if (d && d.rule && fits && where) marks.push({ row, where, words });
                 if (d) {
                     const f = document.createElement('span');
                     f.className = 'rc-follows';
@@ -32363,28 +32480,64 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 row.appendChild(text);
                 pop.appendChild(row);
             });
+            if (!apply) return;
             apply.addEventListener('click', () => {
-                if (apply.disabled || !where || !apply.dataset.words) return;
-                const ctx = findNodeContext(state.trees, where.id);
-                if (!ctx || ctx.node.texts[where.idx] == null || readOnly) return;
-                pushHistory();
-                ctx.node.texts[where.idx] = apply.dataset.words;
-                closeReadingChooser();
-                render();
+                if (apply.disabled || !where || !apply.dataset.words || readOnly) return;
+                rewrite([{ where, words: apply.dataset.words }]);
             });
             if (readOnly) apply.title = 'This map is read-only here.';
             pop.appendChild(apply);
         });
+        if (several) {
+            const foot = document.createElement('div');
+            foot.className = 'rc-foot';
+            applyAll = document.createElement('button');
+            applyAll.type = 'button';
+            applyAll.className = 'rc-apply';
+            applyAll.textContent = entries.every(e => e.typo) ? 'Fix the boxes' : 'Rewrite the boxes this way';
+            applyAll.disabled = true;
+            applyAll.addEventListener('click', () => {
+                const todo = [...chosen.values()].filter(c => c.fits && c.where);
+                if (applyAll.disabled || readOnly || !todo.length) return;
+                rewrite(todo);
+            });
+            if (readOnly) applyAll.title = 'This map is read-only here.';
+            foot.appendChild(applyAll);
+            pop.appendChild(foot);
+        }
         const all = document.createElement('button');
         all.type = 'button';
         all.className = 'rc-all';
         all.textContent = 'Every step\u2026';
-        all.addEventListener('click', () => { closeReadingChooser(); openDeductiveCheck(step.childId); });
+        all.addEventListener('click', () => { closeReadingChooser(); openDeductiveCheck(steps[0].childId); });
         pop.appendChild(all);
         document.body.appendChild(pop);
         placeReadingChooser(pop, anchor);
         const first = pop.querySelector('.rc-row input:not(:disabled)');
         if (first && first.focus) first.focus({ preventScroll: true });
+        // What each marked reading would set off in other steps, under it
+        // (r27.122): worked out after the window opens, one reading at a
+        // time; `data-notes` says when they are all in.
+        const own = new Set(steps.map(s => String(s.childId)));
+        let k = 0;
+        pop.dataset.notes = marks.length ? 'pending' : 'done';
+        const noteNext = () => {
+            if (document.getElementById('reading-chooser') !== pop) return;
+            if (k >= marks.length) { pop.dataset.notes = 'done'; return; }
+            const m = marks[k++];
+            let at = m.row;
+            claimReadingKnockOns(m.where, m.words, own).forEach(t => {
+                const el = document.createElement('div');
+                el.className = 'rc-note';
+                el.textContent = t;
+                at.after(el);
+                at = el;
+            });
+            const tag = [...document.querySelectorAll('.derivation-tag.ambiguous')].find(t => t.dataset.step === pop.dataset.step);
+            if (tag || anchor.isConnected) placeReadingChooser(pop, tag || anchor);
+            setTimeout(noteNext, 0);
+        };
+        if (marks.length) setTimeout(noteNext, 0);
         setTimeout(() => document.addEventListener('pointerdown', readingChooserOutside, true), 0);
         document.addEventListener('keydown', readingChooserKey, true);
         return true;

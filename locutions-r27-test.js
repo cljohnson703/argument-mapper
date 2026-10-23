@@ -78,7 +78,7 @@ const step = (premises, conclusion) => ev(`
     var s = collectDeductiveSteps(state.trees)[0], rows = [];
     if (s.ambiguous) { openReadingChooser(s, document.body);
         rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) {
-            return (/rc-unfit/.test(r.className) ? '[unfit] ' : '[ok] ') + r.textContent; });
+            return (/rc-unfit/.test(r.className) ? '[unfit] ' : '[ok] ') + (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll('.rc-follows, .rc-own'), function (x) { return x.textContent; }).join('') : r.textContent); });
         closeReadingChooser(); }
     return { tag: deductiveStepTagText(s), rows: rows, rule: s.rule ? s.rule.name : null };`);
 const certifies = (premises, conclusion, rule) => { const s = step(premises, conclusion); return s.tag === '✓ ' + rule; };

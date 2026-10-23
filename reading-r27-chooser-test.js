@@ -9,7 +9,12 @@
 // what it means -- and undo restores what it said before. A reading the
 // checker would not read back as itself cannot be written in; a read-only map
 // shows the readings but writes nothing; any other tag still opens the list of
-// every step.
+// every step. With several questions (r27.121), the window scrolls where it
+// is taller than the screen, and one button rewrites every box a reading is
+// chosen for. A row shows what its reading changes, the box whole on hover;
+// under a marked reading, a note says what it would set off in another step
+// that uses its box; and once boxes are rewritten, the window stays open on
+// the steps that use them and now ask (r27.122).
 //
 // Run:  node reading-r27-chooser-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -182,6 +187,107 @@ const J = JSON.stringify;
         try { selectedIds = ['S-0']; render(); addChild('support'); selectedIds = ['S-0']; render(); addChild('objection'); return { ok: true, n: findNodeContext(state.trees, 'S').node.children.length }; }
         catch (e) { return { ok: false, err: String(e && e.message || e) }; }`);
     ok(empty.ok && empty.n === 2, 'with the check on, new empty boxes draw without error', J(empty));
+
+    // 6. Several questions (r27.121; the user, of the Extended Mind map: "it
+    // seems impossible to fix it using the suggestions in the ?generic
+    // window"). Step 4's three questions made the window taller than a laptop
+    // screen, with no way to scroll to the last one; and each question's own
+    // button wrote its one box and closed the window.
+    const P1 = "The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.";
+    const P2 = "Non-occurrent beliefs within a subject's brain are mental states of that subject.";
+    const C = "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.";
+    const several = T(W, `__c.load(${J([N('M', 'contention', [C], [N('S', 'support', [P1, P2])], { x: 30000, y: 30000 })])});
+        __c.tag('S').click();
+        var pop = __c.pop(), style = getComputedStyle(pop);
+        var buttons = [].slice.call(pop.querySelectorAll('.rc-apply')).map(function (b) { var f = b.closest('.rc-foot');
+            return { text: b.textContent, foot: !!f && getComputedStyle(f).position === 'sticky', off: b.disabled }; });
+        var marked = [].slice.call(pop.querySelectorAll('.rc-row')).filter(function (r) { return r.querySelector('.rc-follows'); });
+        marked.forEach(function (r) { var i = r.querySelector('input'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); });
+        var button = pop.querySelector('.rc-foot .rc-apply'), enabled = !button.disabled;
+        button.click();
+        var box = findNodeContext(state.trees, 'S').node.texts, parent = findNodeContext(state.trees, 'M').node.texts[0];
+        var after = { tag: __c.tag('S') && __c.tag('S').textContent, open: !!__c.pop(), box: box.slice(), parent: parent };
+        undo();
+        var undone = findNodeContext(state.trees, 'S').node.texts.concat([findNodeContext(state.trees, 'M').node.texts[0]]);
+        return { overflow: style.overflowY, maxHeight: style.maxHeight, buttons: buttons, marked: marked.length, enabled: enabled, after: after, undone: undone };`);
+    ok(several.overflow === 'auto' && /calc\(100vh - 16px\)/.test(several.maxHeight || ''),
+        'the window scrolls where it is taller than the screen', J([several.overflow, several.maxHeight]));
+    ok(J(several.buttons) === J([{ text: 'Rewrite the boxes this way', foot: true, off: true }]),
+        'three questions: one button, kept in view at the window\'s foot, for every box a reading is chosen for', J(several.buttons));
+    ok(several.marked === 3 && several.enabled && !several.after.open && /existential syllogism/.test(several.after.tag || '') &&
+        several.after.box[0] === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain." &&
+        several.after.box[1] === "All non-occurrent beliefs within a subject's brain are mental states of that subject." &&
+        several.after.parent === "The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.",
+        'the three marked readings chosen and the button pressed once: the three boxes rewritten, and the step follows', J(several.after));
+    ok(J(several.undone) === J([P1, P2, C]), 'one undo puts all three back', J(several.undone));
+    const one = T(W, `__c.load(${J(MAP('Only Bob runs', 'Bob runs'))});
+        __c.tag('S').click();
+        return [].slice.call(__c.pop().querySelectorAll('.rc-apply')).map(function (b) { return b.textContent + (b.closest('.rc-foot') ? ' (foot)' : ''); });`);
+    ok(J(one) === J(['Rewrite the box this way']), 'one question: its own button, as before', J(one));
+
+    // 7. Walking on (r27.122; the user: "going with the recommended fixes
+    // infected other nodes with '? generic'"; of three mockups, the window
+    // that walks on, with notes of what comes next, and rows shortened).
+    const U3 = 'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.';
+    const RIF = "If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.";
+    const RP = "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.";
+    const OTTO = [N('M', 'contention', ["The records in Otto's notebook are mental states of Otto."], [
+        N('S3', 'support', [C, U3], [
+            N('S4', 'support', [P1, P2], [N('R', 'rebuttal', [RIF, RP], [], { targetIndex: 0 })], { targetIndex: 0 })])], { x: 30000, y: 30000 })];
+    T(W, `__c.load(${J(OTTO)}); __c.tag('S4').click(); return true;`);
+    for (let i = 0; i < 100 && T(W, `return __c.pop() && __c.pop().dataset.notes;`) === 'pending'; i++) await sleep(50);
+    const first = T(W, `var pop = __c.pop();
+        var rows = [].slice.call(pop.querySelectorAll('.rc-row')).map(function (r) { return { shown: r.querySelector('span').firstChild.textContent, whole: r.title }; });
+        var notes = [].slice.call(pop.querySelectorAll('.rc-note')).map(function (n) { return [n.previousElementSibling.title, n.textContent]; });
+        return { rows: rows, notes: notes };`);
+    ok(first.rows[0] && first.rows[0].shown === '…as some non-occurrent beliefs within his brain.' && first.rows[0].whole === P1.replace('as non-occurrent', 'as some non-occurrent') &&
+        first.rows[3] && first.rows[3].shown === 'All non-occurrent beliefs within a subject\'s brain …',
+        'a row shows what its reading changes, the box whole on hover', J(first.rows.slice(0, 4)));
+    ok(J(first.notes) === J([
+        [P1.replace('as non-occurrent', 'as some non-occurrent'), 'Another step uses this box. It will then ask for “If the records … as any non-occurrent beliefs within Otto\'s brain.”'],
+        [C.replace('as mental', 'as some mental'), 'Another step uses this box. It will then ask for “Anything that plays … as some mental states of a subject …”.']]),
+        'under a marked reading, what it sets off in another step that uses its box: the rebuttal will ask for "any", step 3\'s rule for "some"', J(first.notes));
+    const walked = T(W, `var pop = __c.pop();
+        [].slice.call(pop.querySelectorAll('.rc-row')).filter(function (r) { return r.querySelector('.rc-follows'); }).forEach(function (r) { var i = r.querySelector('input'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); });
+        pop.querySelector('.rc-foot .rc-apply').click();
+        pop = __c.pop();
+        return pop ? { done: (pop.querySelector('.rc-done') || {}).textContent, next: (pop.querySelector('.rc-next') || {}).textContent,
+            heads: [].slice.call(pop.querySelectorAll('.rc-head')).map(function (h) { return h.textContent.split(' \\u2014 ')[0]; }) } : null;`);
+    ok(walked && walked.done === '✓ The step follows by existential syllogism.' && walked.next === 'Other steps that use the boxes you changed now ask:' &&
+        J(walked.heads) === J(['“' + U3 + '”', '“' + RIF + '”']),
+        'rewritten, the window stays open: the step follows, and the two steps that use the boxes it changed now ask', J(walked));
+    const end = T(W, `var pop = __c.pop();
+        [].slice.call(pop.querySelectorAll('.rc-row')).filter(function (r) { return r.querySelector('.rc-follows'); }).forEach(function (r) { var i = r.querySelector('input'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); });
+        pop.querySelector('.rc-foot .rc-apply').click();
+        return { open: !!__c.pop(), tags: collectDeductiveSteps(state.trees).map(function (s) { return deductiveStepTagText(s); }) };`);
+    ok(!end.open && J(end.tags) === J(['✓ universal modus ponens', '✓ existential syllogism', '✓ modus ponens']),
+        'answered too, nothing asks and the window closes: every step follows', J(end));
+    // One question, its own button: on to the step that uses the box.
+    const OTTO1 = JSON.parse(J(OTTO).split(J(P2).slice(1, -1)).join("All non-occurrent beliefs within a subject's brain are mental states of that subject.")
+        .split(J(C).slice(1, -1)).join(C.replace('as mental', 'as some mental')).split(J(U3).slice(1, -1)).join(U3.replace('as mental', 'as some mental')));
+    T(W, `__c.load(${J(OTTO1)}); __c.tag('S4').click(); return true;`);
+    for (let i = 0; i < 100 && T(W, `return __c.pop() && __c.pop().dataset.notes;`) === 'pending'; i++) await sleep(50);
+    const single = T(W, `var pop = __c.pop(), note = pop.querySelector('.rc-note'), ns = getComputedStyle(note);
+        var dark = { color: ns.color, background: ns.backgroundColor };
+        document.body.classList.add('bg-light'); ns = getComputedStyle(note); var light = { color: ns.color, background: ns.backgroundColor }; document.body.classList.remove('bg-light');
+        var radio = [].slice.call(pop.querySelectorAll('.rc-row')).find(function (r) { return r.querySelector('.rc-follows'); }).querySelector('input');
+        radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true }));
+        var buttons = [].slice.call(pop.querySelectorAll('.rc-apply')).map(function (b) { return b.textContent; });
+        pop.querySelector('.rc-apply').click();
+        pop = __c.pop();
+        var done = pop && pop.querySelector('.rc-done'), next = pop && pop.querySelector('.rc-next');
+        var ds = done && getComputedStyle(done), xs = next && getComputedStyle(next);
+        document.body.classList.add('bg-light'); var dl = done && getComputedStyle(done).color, xl = next && getComputedStyle(next).color; document.body.classList.remove('bg-light');
+        return { buttons: buttons, dark: dark, light: light, done: done && done.textContent, next: next && next.textContent, heads: pop ? pop.querySelectorAll('.rc-head').length : 0,
+            doneColor: [ds && ds.color, dl], nextStyle: [xs && xs.borderTopStyle, xs && xs.color, xl] };`);
+    ok(J(single.buttons) === J(['Rewrite the box this way']) && single.done === '✓ The step follows by existential syllogism.' &&
+        single.next === 'Another step that uses a box you changed now asks:' && single.heads === 1,
+        'one question and its own button: rewritten, the window walks on to the rebuttal that denies the box', J(single));
+    ok(single.dark.background !== 'rgba(0, 0, 0, 0)' && single.dark.color !== single.light.color && single.light.color === 'rgb(122, 83, 0)' &&
+        single.doneColor[1] === 'rgb(0, 122, 0)' && single.nextStyle[0] === 'solid' && single.nextStyle[1] !== single.nextStyle[2],
+        'notes, the line that the step follows, and the line before the other steps: styled, in the dark theme and the light', J([single.dark, single.light, single.doneColor, single.nextStyle]));
+    const short = T(W, `return [claimReadingShort('Even if Mary runs, Bob runs.', 'Bob runs, and if Mary runs, then Bob runs.'), claimReadingShort('Only Bob runs', 'Everything that runs is Bob')];`);
+    ok(J(short) === J(['Bob runs, and if Mary runs, then Bob runs.', 'Everything that runs is Bob']), 'a row is whole where little would be left out', J(short));
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);

@@ -89,7 +89,7 @@ const step = (premises, conclusion) => ev(`
     deductiveCache.clear(); ensureCollabFields(state); render();
     var s = collectDeductiveSteps(state.trees)[0], rows = [];
     if (s.ambiguous) { openReadingChooser(s, document.body);
-        rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return r.textContent; });
+        rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) { return (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll('.rc-follows, .rc-own'), function (x) { return x.textContent; }).join('') : r.textContent); });
         closeReadingChooser(); }
     return { tag: deductiveStepTagText(s), rows: rows };`);
 const derive = premises => ev(`var d = deriveConclusion(${J(premises)}); return d ? { rule: d.rule.name, text: d.text } : null;`);
