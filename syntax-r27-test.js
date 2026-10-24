@@ -613,6 +613,96 @@ console.log('\n-- adjectives before a plural (r27.102) --');
     ok(mt && mt.rule === 'modus tollens', '"If free will exists, then we are responsible", "we are not responsible": "free will does not exist", by modus tollens (it had been "Free will not exists")', J(mt));
 }
 
+console.log('\n-- words joined by "and" take "are", not "is" (r27.125) --');
+{
+    // Found beside the weather "it": "Bob met Al and Cy, and Al is tall" had
+    // been "Bob met Al" and "Cy, and Al is tall", unread -- "Cy and Al" taken
+    // for the subject of "is".
+    const parts = t => ev(`var f = parseClaim(${J(t)}); return f ? f.kind + ': ' + (f.parts ? f.parts.map(claimShowForm).join(' | ') : claimShowForm(f)) : null;`);
+    const cases = [
+        ['Bob met Al and Cy, and Al is tall.', 'and: bob met Al and Cy | al is tall'],
+        ['Bob met Al and Cy and Al is tall.', 'and: bob met Al and Cy | al is tall'],
+        ['Bob likes the cat and the dog, and the dog is tall.', 'and: bob likes the cat and the dog | the dog is tall'],
+        ['Bob met Al and Cy, and Al has a dog.', 'and: bob met Al and Cy | al has a dog'],
+        ['Bob met Al and Cy and Al does not run.', 'and: bob met Al and Cy | al does not run'],
+        ['Bob met Al, Cy and Dee, and Al was tall.', 'and: bob met Al, Cy and Dee | al was tall'],
+    ];
+    const got = cases.map(([t]) => parts(t));
+    ok(got.every((g, i) => g === cases[i][1]), 'before "is", "was", "has", "does", the clause begins at the last name, and what is joined before it is the object', J(got));
+    const kept = [
+        ['Bob met Al, and Cy and Al are tall.', 'and: bob met Al | cy and Al are tall'],
+        ['Bob met Al and both Cy and Al are tall.', 'and: bob met Al | both Cy and Al are tall'],
+        ['Bob runs and Socrates is wise.', 'and: bob runs | socrates is wise'],
+        ['Bob runs and the news is good.', 'and: bob runs | the news is good'],
+    ];
+    const kgot = kept.map(([t]) => parts(t));
+    ok(kgot.every((g, i) => g === kept[i][1]), 'and before "are", joined words are the subject still; "Socrates" and "the news", which end in -s, take "is"', J(kgot));
+    const starts = ev(`return ['Al and Cy is tall', 'Al and Cy are tall', 'Al, Cy and Dee is tall', 'Al, Cy and Dee are tall', 'Al or Cy is tall', 'the cat and the dog is tall',
+        'the cat, the dog and the cow is tall', 'the cat, the dog and the cow are tall', 'the cat, the dog or the cow is tall']
+        .map(function (t) { return claimSynClauseStart(claimTokens(normalizeClaimText(t))); });`);
+    ok(J(starts) === J([false, true, false, true, true, false, false, true, true]), 'a list closed by "and" is joined too; "or" takes "is"', J(starts));
+    const st = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Al is tall.'], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ['Bob met Al and Cy, and Al is tall.'], collapsed: [], children: [] }] }];
+        var s = collectDeductiveSteps(trees)[0]; return s && s.rule ? s.rule.name : (s && s.why ? s.why.text : null);`);
+    ok(st === 'conjunction elimination', 'so "Al is tall" follows from it, by conjunction elimination (it had been "worded differently": "cy and" in one and not the other)', J(st));
+}
+
+console.log('\n-- a comma before "and" divides clauses (r27.126) --');
+{
+    // The user: "Independent clauses in the same sentence should be divided
+    // by commas." "Bob met Al and Cy, and Al met Dee" had been "Bob met Al"
+    // and "Cy, and Al met Dee", "Cy, and Al" taken for one subject.
+    const parts = t => ev(`var f = parseClaim(${J(t)}); return f ? f.kind + ': ' + (f.parts ? f.parts.map(claimShowForm).join(' | ') : claimShowForm(f)) : null;`);
+    const cases = [
+        ['Bob met Al and Cy, and Al met Dee.', 'and: bob met Al and Cy | al met Dee'],
+        ['Bob met Al, and Cy and Al met Dee.', 'and: bob met Al | cy and Al met Dee'],
+        ['Bob met Al, Cy, and Dee, and Al met Eve.', 'and: bob met Al, Cy, and Dee | al met Eve'],
+        ['Mary left and Bob and Ann cried.', 'and: mary left | bob and Ann cried'],
+        ['Bob likes Al and Cy and Al likes Dee.', 'and: bob likes Al and Cy | al likes Dee'],
+    ];
+    const got = cases.map(([t]) => parts(t));
+    ok(got.every((g, i) => g === cases[i][1]), 'the comma says which "and" joins the clauses; a list of three keeps its comma; where nothing else can be meant, no comma is needed', J(got));
+    const asked = ev(`var r = parseClaimFull('Bob met Al and Cy and Al met Dee.'), n = r.notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return n ? [r.form.kind, n.message, n.readings.map(function (x) { return x.replace(/\\uE000/g, ''); })] : null;`);
+    ok(J(asked) === J(['atom', '"and" can group this two ways', ['bob met al, and cy and al met dee', 'bob met al and cy, and al met dee']]),
+        'with no comma, and either way English ("Cy and Al met Dee", or Bob met Al and Cy), asked: each reading with its comma', J(asked));
+    const back = ['bob met al, and cy and al met dee', 'bob met al and cy, and al met dee'].map(t => ev(`var r = parseClaimFull(${J(t)});
+        return r.notes.filter(function (x) { return x.kind === 'ambiguous' && /group/.test(x.message); }).length;`));
+    ok(J(back) === J([0, 0]), 'and each reading, read back, asks nothing more of its "and"s', J(back));
+    const st = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Al met Dee.'], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ['Bob met Al and Cy, and Al met Dee.'], collapsed: [], children: [] }] }];
+        var s = collectDeductiveSteps(trees)[0]; return s && s.rule ? s.rule.name : (s && s.why ? s.why.text : null);`);
+    ok(st === 'conjunction elimination', 'so "Al met Dee" follows from it (it had been "worded differently")', J(st));
+}
+
+console.log('\n-- a clause by its shape, where the lists do not know its verb (r27.127) --');
+{
+    // The user: "shouldn't the part of speech of each of these phrases be
+    // evaluated by the internal syntax tree?" "Bob likes the cat and the dog
+    // and the dog likes Bob" had been one claim: "the dog and the dog likes"
+    // no subject and verb, the clause test had said "cannot tell", and the
+    // "and" splitter guessed; with "feeds" and "adores", which no list knows,
+    // the older test had found no clause in "Bob feeds the cat and the dog".
+    const parts = t => ev(`var f = parseClaim(${J(t)}); return f ? f.kind + ': ' + (f.parts ? f.parts.map(claimShowForm).join(' | ') : claimShowForm(f)) : null;`);
+    const cases = [
+        ['Bob likes the cat and the dog and the dog likes Bob.', 'and: bob likes the cat and the dog | the dog likes Bob'],
+        ['Bob likes the cat and the dog and the dog adores Bob.', 'and: bob likes the cat and the dog | the dog adores Bob'],
+        ['Bob feeds the cat and the dog and the dog adores Bob.', 'and: bob feeds the cat and the dog | the dog adores Bob'],
+        ['Bob likes Rex and the dog and the dog adores Bob.', 'and: bob likes Rex and the dog | the dog adores Bob'],
+        ['Bob likes Rex, and the cat and the dog adore Bob.', 'and: bob likes Rex | the cat and the dog adore Bob'],
+    ];
+    const got = cases.map(([t]) => parts(t));
+    ok(got.every((g, i) => g === cases[i][1]), 'a verb in -s takes no subject joined by "and", and the clause begins after it', J(got));
+    const starts = ev(`return ['the dog adores Bob', 'the cat and the dog adore Bob', 'the dog and the dog adores Bob', 'the dog adores', 'Bob feeds the cat and the dog']
+        .map(function (t) { return claimSynClauseStart(claimTokens(normalizeClaimText(t))); });`);
+    ok(J(starts) === J([true, true, false, false, true]),
+        'a verb no list knows makes a clause where its subject and an object that ends the clause stand around it ("the dog adores" alone, which may be all one noun phrase, as before)', J(starts));
+    const st = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['The dog adores Bob.'], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ['Bob feeds the cat and the dog and the dog adores Bob.'], collapsed: [], children: [] }] }];
+        var s = collectDeductiveSteps(trees)[0]; return s && s.rule ? s.rule.name : (s && s.why ? s.why.text : null);`);
+    ok(st === 'conjunction elimination', 'so "The dog adores Bob" follows from it', J(st));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

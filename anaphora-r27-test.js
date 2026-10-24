@@ -411,6 +411,70 @@ console.log('\n-- 18. "fake ones in it": in its own clause --');
     ok(/mary lives in the world of the experience machine too$/i.test(world.said), '"in the world of the experience machine ... in it": the world of the experience machine, not "the world"', J(world));
 }
 
+console.log('\n-- 19. "it is cold" after a thing: the weather among the readings (r27.125) --');
+{
+    // The user chose the weather by default, with a note ("a"); shown that it
+    // read "If Poe is a stove, then it is hot" as the weather, the question --
+    // the weather among its readings, written with the "it" clause first,
+    // where nothing before "it" is a thing. It had offered the street, or
+    // "the fact that the street is wet", and never the weather.
+    const asks = t => ev(`var r = parseClaimFull(${J(t)}), n = r.notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return n ? [n.message, n.readings] : null;`);
+    const cases = [
+        ['The street is wet and it is cold.', '“it” may be “the street” or the weather', ['The street is wet and the street is cold.', 'It is cold and the street is wet.']],
+        ['If Poe is a stove, then it is hot.', '“it” may be “Poe” or the weather', ['If Poe is a stove, then Poe is hot.', 'It is hot if Poe is a stove.']],
+        ['Bob opened the window and it was cold.', '“it” may be “the window” or the weather', ['Bob opened the window and the window was cold.', 'It was cold and Bob opened the window.']],
+        ['If the street is wet and it is cold, then Bob stays in.', '“it” may be “the street” or the weather',
+            ['If the street is wet and the street is cold, then Bob stays in.', 'If it is cold and the street is wet, then Bob stays in.']],
+        ['If the street is wet and the sky is grey, then it is cold.', '“it” may be “the street” or “the sky”, or the weather',
+            ['If the street is wet and the sky is grey, then the street is cold.', 'If the street is wet and the sky is grey, then the sky is cold.', 'It is cold if the street is wet and the sky is grey.']],
+        ['The street is wet; it is cold.', '“it” may be “the street” or the weather', ['The street is wet; the street is cold.', 'It is cold; the street is wet.']],
+        ['The meeting ran long and it is late.', '“it” may be “the meeting” or the time', ['The meeting ran long and the meeting is late.', 'It is late and the meeting ran long.']],
+    ];
+    const got = cases.map(([t]) => asks(t));
+    ok(got.every((g, i) => !!g && g[0] === cases[i][1] && J(g[1]) === J(cases[i][2])),
+        '"it" after a thing may be the weather (or the time): that reading moves its clause in front, in the box\'s own words -- and "the fact that the street is wet is cold" is no reading', J(got));
+    const back = ['It is cold and the street is wet.', 'It is hot if Poe is a stove.', 'If it is cold and the street is wet, then Bob stays in.', 'Mary is sad and it is cold.'].map(t => read(t).notes);
+    ok(back.every(n => !n.length), 'and read back, each says the weather, asking nothing; so does "it" with no thing before it', J(back));
+    const house = read('In the old house, it is cold.').notes;
+    ok(house.length && !house.some(n => /^ambiguous/.test(n)), '"In the old house, it is cold": the weather there -- not "it" with nothing to refer to', J(house));
+    const mp = step(['If it is cold and the street is wet, then Bob stays in.', 'The street is wet and it is cold.'], 'Bob stays in.');
+    ok(mp.tag === '? ambiguous' && mp.rows.length === 2 && /^It is cold and the street is wet\..*follows/.test(mp.rows[1]),
+        'a step that needs the weather asks, the weather the reading that gives it', J(mp));
+    const chosen = step(['If it is cold and the street is wet, then Bob stays in.', 'It is cold and the street is wet.'], 'Bob stays in.');
+    ok(chosen.tag === '✓ modus ponens', 'and with it written in, follows', J(chosen));
+    const as = [asks('The soup is hot and it is spicy.'), asks('Bob thinks that the street is wet and it is cold.')];
+    ok(as[0] && as[0][0] === '“it” may be “the soup” or what “The soup is hot” says' && as[1] && !/weather/.test(as[1][0]),
+        'not "it is spicy", no weather; nor where the clause cannot be moved in front ("Bob thinks that ..."): asked as before', J(as));
+    const tip = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['Otto remembers the address.'], collapsed: [], x: 0, y: 0, children: [
+        { id: 'A', type: 'support', texts: ['If Otto reads his notebook, then he remembers the address.', 'Otto reads his notebook.'], collapsed: [], children: [] } ] }];
+        deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="A"]'); openDeductiveCheck('A');
+        var row = document.querySelector('#logic-modal-body .logic-step[data-step="A"]'); document.getElementById('logic-modal-backdrop').classList.remove('open');
+        return [tag && tag.title, row && row.title];`);
+    ok(tip.every(t => (t || '').indexOf('“If Otto reads his notebook, then he remembers the address.”: "his" and "he" are read as "Otto", the one name this claim gives. ' +
+            '“Otto reads his notebook.”: "his" is read as "Otto", the one name this claim gives.') > 0) && /^Valid by modus ponens/.test(tip[0]),
+        'a certified step says how its boxes were read, after "Valid by" -- its tag\'s tip and the list of steps (it had, only where a step did not follow)', J(tip));
+    const tips = (ps, c) => ev(`state.trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], x: 0, y: 0, children: [
+        { id: 'A', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] } ] }];
+        deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="A"]'); return [tag && tag.textContent.trim(), tag && tag.title];`);
+    const same = tips(['If it rains, then Bob is tall and so is Mary.', 'It rains.'], 'Bob is tall and so is Mary.');
+    ok(same[0] === '✓ modus ponens' && same[1].indexOf('“If it rains, then Bob is tall and so is Mary.” and “Bob is tall and so is Mary.”: read with “so is Mary” as “Mary is tall”, from the clause before it.') > 0 &&
+        same[1].split('so is Mary” as').length === 2,
+        'boxes read the same way are named together, the reading once', J(same));
+    const bound = [
+        [['Everything is black if it is a raven.', 'Poe is a raven.'], 'Poe is black.', '"it" is read as what the quantifier speaks of: this says what "everything that is a raven is black" says'],
+        [['If someone is a man, then he is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', '"he" is read as the "someone" in the condition, so the box says what "everyone who is a man is mortal" says'],
+        [['If any man is wise, then he is happy.', 'Socrates is a man.', 'Socrates is wise.'], 'Socrates is happy.', '"he" is read as what the condition speaks of, so the box says what "every man that is wise is happy" says'],
+        [['Bob and Mary love each other.'], 'Bob loves Mary.', '"each other" is read as each of the two to the other'],
+    ].map(([ps, c, note]) => { const t = tips(ps, c); return [/^✓/.test(t[0]), t[1].indexOf('“' + ps[0] + '”: ' + note + '.') > 0, t]; });
+    ok(bound.every(b => b[0] && b[1]), 'so too a pronoun bound by a quantifier or a condition, and "each other"', J(bound.filter(b => !(b[0] && b[1]))));
+    const kept = tips(['If Bob is happy while Mary is sad, then Ann is glad.', 'Bob is happy while Mary is sad.'], 'Ann is glad.');
+    ok(kept[0] === '✓ modus ponens' && !/while|read/.test(kept[1]),
+        'and only what the words left open: "while" read as one claim is no guess, and is not said', J(kept));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

@@ -59,6 +59,10 @@
 //     wide, and only there; colors off, the math as it was; each
 //     colored symbol's tint as tall as the words'; colors 2's line under
 //     math a strip of its own, reaching into its neighbors' (no seams).
+// (10) Every premise of a certified step placed (r27.123): where no clause
+//     of it is found, its pieces are -- an identity's names, a part of a
+//     phrase, a verb's object, contraries, "F(a)" and "a = b" in symbols;
+//     painted whole only where it is another wording of the conclusion.
 //
 // Run:  node colors-r27-inference-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -746,6 +750,82 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             return { tag: st ? deductiveStepTagText(st) : null, parts: __parts(1) }; })()`);
         ok(o2.tag === '✓ modus ponens' && J(runs(o2.parts, /ic-neg/)) === J(['not']) && runs(o2.parts, /^ic-c/).join(' ') === 'not M1',
             '"If O1, then not M1", O1 the box beside it: certified, "not M1" green, "not" red', J(o2));
+    }
+
+    console.log('\n-- (r27.123) every premise of a certified step placed, in pieces where it must be --');
+    {
+        // The user: "is the proposition highlighter working for all types of
+        // propositions? I want to make sure that both are rigorous." A premise
+        // none of whose clauses the painter could place had been painted whole,
+        // as if all of it went on: an identity, a part of a phrase, contraries,
+        // a verb's object. Whole is right only where the premise is another
+        // wording of the conclusion.
+        const EQUIVALENT = new Set(['double-negation elimination', 'quantifier negation', 'Quantifier Commutation', 'change of bound variable', 'commutation',
+            'association', 'idempotence', 'conversion', 'contraposition', 'De Morgan’s laws', 'transposition', 'material implication', 'material equivalence',
+            'exportation', 'Negated Conditional', 'Negated Biconditional', 'distribution', 'Boolean absorption', '⊥ laws', 'rules of passage']);
+        const CATALOG = [
+            [['Poe is black.', 'Poe is a raven.'], 'Poe is black and Poe is a raven.'], [['Poe is black and Poe is a raven.'], 'Poe is black.'],
+            [['Poe is a black raven.'], 'Poe is black.'], [['Poe is a black raven.'], 'Poe is a raven.'], [['Poe is black and old.'], 'Poe is old.'],
+            [['Poe is black.'], 'Poe is black or Poe is white.'], [['Poe is black or Poe is white.', 'Poe is not black.'], 'Poe is white.'],
+            [['It is not the case that both Poe is black and Poe is white.', 'Poe is black.'], 'Poe is not white.'],
+            [['Poe is not both black and white.', 'Poe is black.'], 'Poe is not white.'],
+            [['Poe is black or Poe is white.', 'Poe is not black or Poe is old.'], 'Poe is white or Poe is old.'],
+            [['Poe is black.', 'Poe is not black.'], 'The moon is cheese.'],
+            [['If it rains, then the street is wet.', 'It rains.'], 'The street is wet.'],
+            [['If it rains and it is cold, then it snows.', 'It rains.', 'It is cold.'], 'It snows.'],
+            [['If it rains, then the street is wet.', 'The street is not wet.'], 'It does not rain.'],
+            [['If it rains, then the street is wet.', 'If the street is wet, then the game is off.'], 'If it rains, then the game is off.'],
+            [['It rains or it snows.', 'If it rains, then the game is off.', 'If it snows, then the game is off.'], 'The game is off.'],
+            [['It rains if and only if the street is wet.', 'It rains.'], 'The street is wet.'],
+            [['If it rains, then the street is wet.', 'If the street is wet, then it rains.'], 'It rains if and only if the street is wet.'],
+            [['If it rains, then the street is wet.', 'If it rains, then the street is not wet.'], 'It does not rain.'],
+            [['Socrates is a man.'], 'Something is a man.'], [['Poe is a black raven.'], 'There is a black raven.'], [['Everything is physical.'], 'Poe is physical.'],
+            [['All men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.'], [['All men are mortal.', 'Zeus is not mortal.'], 'Zeus is not a man.'],
+            [['All ravens are birds.', 'All birds are animals.'], 'All ravens are animals.'], [['Some ravens are black.', 'All black things are dark.'], 'Some ravens are dark.'],
+            [['No ravens are fish.', 'Some birds are ravens.'], 'Some birds are not fish.'], [['Everything is physical.'], 'Something is physical.'],
+            [['Mark Twain is Samuel Clemens.'], 'Samuel Clemens is Mark Twain.'],
+            [['Mark Twain is Samuel Clemens.', 'Samuel Clemens is the author of Huck Finn.'], 'Mark Twain is the author of Huck Finn.'],
+            [['Mark Twain is Samuel Clemens.', 'Mark Twain wrote Huckleberry Finn.'], 'Samuel Clemens wrote Huckleberry Finn.'],
+            [['Bob is tall.'], 'Bob is not short.'], [['Bob is alive.'], 'Bob is not dead.'],
+            [['Bob hit a poodle.', 'Every poodle is a dog.'], 'Bob hit a dog.'], [['Poe loves every raven.', 'Fido is a raven.'], 'Poe loves Fido.'],
+            [['Poe loves Fido and Fido is a raven.'], 'Poe loves a raven.'], [['Poe loves everything.'], 'Poe loves Fido.'],
+            [['Poe loves every raven.', 'Poe does not love Fido.'], 'Fido is not a raven.'],
+            [['P → Q', 'P'], 'Q'], [['P → Q', '¬Q'], '¬P'], [['P ∧ Q'], 'Q'], [['P'], 'P ∨ Q'], [['P ∨ Q', '¬P'], 'Q'],
+            [['∀x (F(x) → G(x))', 'F(a)'], 'G(a)'], [['a = b', 'F(a)'], 'F(b)'], [['a = b'], 'b = a'], [['a = b', 'b = c'], 'a = c']];
+        const unplaced = CATALOG.map(([p, c]) => [p, c, val(`(function () { __load(${J(step(p, c))}); const st = collectDeductiveSteps(state.trees, null)[0];
+            const plan = st && st.rule ? icPlan(st) : null; return { rule: st && st.rule ? st.rule.name : null, whole: plan ? plan.map(x => !!x.whole) : null }; })()`)])
+            .filter(([, , r]) => !r.rule || (r.whole.some(Boolean) && !EQUIVALENT.has(r.rule)));
+        ok(!unplaced.length, 'each premise of every certified step placed (' + CATALOG.length + ' steps, a rule or two each), but where it is another wording of the conclusion', J(unplaced));
+        const notNot = val(`(function () { __load(${J(step(['Poe is not not black.'], 'Poe is black.'))}); const st = collectDeductiveSteps(state.trees, null)[0];
+            return st && st.rule ? { rule: st.rule.name, whole: icPlan(st).map(x => x.whole) } : null; })()`);
+        ok(notNot && notNot.rule === 'double-negation elimination' && J(notNot.whole) === J([true]),
+            '... and the plan says where a premise is painted whole: "not not black", another wording of "black"', J(notNot));
+        const twain = paint(['Mark Twain is Samuel Clemens.', 'Mark Twain wrote Huckleberry Finn.'], 'Samuel Clemens wrote Huckleberry Finn.');
+        ok(twain.rule === 'identity substitution' && J(runs(twain.boxes[0], /^ic-k/)) === J(['Mark Twain']) && J(runs(twain.boxes[0], /^ic-c/)) === J(['Samuel Clemens']) &&
+            J(runs(twain.boxes[1], /^ic-k/)) === J(['Mark Twain']) && J(runs(twain.boxes[1], /^ic-c/)) === J(['wrote Huckleberry Finn']),
+            'an identity: the name the premises share meets, the other name and what is said of the first go on', J(twain));
+        const raven = paint(['Poe is a black raven.'], 'Poe is black.');
+        ok(raven.rule === 'conjunction elimination' && J(runs(raven.boxes[0], /^ic-c/)) === J(['Poe', 'black']) && J(runs(raven.boxes[0], /^ic-u/)) === J(['raven']),
+            'a part of a phrase: "Poe" and "black" go on, "raven" dimmed', J(raven));
+        const intro = paint(['Poe is a black raven.'], 'There is a black raven.');
+        ok(intro.rule === 'existential introduction' && J(runs(intro.boxes[0], /^ic-u/)) === J(['Poe']) && J(runs(intro.boxes[0], /^ic-c/)) === J(['is a black raven']),
+            'something is so: what is said goes on, the name it was said of dimmed', J(intro));
+        const ump = paint(['Poe loves every raven.', 'Fido is a raven.'], 'Poe loves Fido.');
+        ok(ump.rule === 'universal modus ponens' && J(runs(ump.boxes[0], /^ic-k/)) === J(['every raven']) && J(runs(ump.boxes[0], /^ic-c/)) === J(['Poe loves']) &&
+            J(runs(ump.boxes[1], /^ic-k/)) === J(['is a raven']) && J(runs(ump.boxes[1], /^ic-c/)) === J(['Fido']),
+            'a verb\'s object: "every raven" meets "is a raven", "Poe loves" and "Fido" go on', J(ump));
+        const umt = paint(['Poe loves every raven.', 'Poe does not love Fido.'], 'Fido is not a raven.');
+        ok(umt.rule === 'universal modus tollens' && umt.boxes[0].includes('ic-c ic-cn: every raven') && J(runs(umt.boxes[1], /ic-neg/)) === J(['does not']) &&
+            J(runs(umt.boxes[1], /^ic-c/)) === J(['Fido']),
+            '... and back: "every raven" goes on denied, "does not" red against "loves"', J(umt));
+        const sym = paint(['a = b', 'b = c'], 'a = c');
+        ok(sym.rule === 'identity transitivity' && J(runs(sym.boxes[0], /^ic-c/)) === J(['a']) && J(runs(sym.boxes[0], /^ic-k/)) === J(['b']) &&
+            J(runs(sym.boxes[1], /^ic-k/)) === J(['b']) && J(runs(sym.boxes[1], /^ic-c/)) === J(['c']),
+            'in symbols too: "a = b", "b = c" -- they had no words to color', J(sym));
+        const both = paint(['Poe is not both black and white.', 'Poe is black.'], 'Poe is not white.');
+        ok(both.rule === 'conjunctive syllogism' && J(runs(both.boxes[0], /^ic-k/)) === J(['black']) && runs(both.boxes[0], /^ic-c/).includes('white') &&
+            J(runs(both.boxes[1], /^ic-k/)) === J(['is black']),
+            '"not both black and white": "black" meets the premise that says it, "white" goes on', J(both));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

@@ -4,11 +4,68 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 24: a clause by the syntax tree, where the word lists do not know its verb (r27.127)
+
+"Bob likes the cat and the dog and the dog likes Bob" was read as one claim. I had said "the dog likes" was taken for a noun; the user: "shouldn't the part of speech of each of these phrases be evaluated by the internal syntax tree? There's no way 'the dog likes' should be taken as a noun if the internal syntax tree works." It was not the tree's reading -- it reads "likes" there as the verb -- but the "and" splitter's.
+
+* Asked whether a clause begins at "the dog", the tree had said it could not tell: "the dog and the dog likes" is no subject and its verb. The splitter then guessed, split after "the cat", found "the dog and the dog likes Bob" no clause, and glued the whole back into one. A verb in -s, like "is" (r27.125), takes no subject joined by "and": no clause begins there, and the sentence is "Bob likes the cat and the dog" and "the dog likes Bob".
+* With verbs no word list knows -- "Bob feeds the cat and the dog and the dog adores Bob" -- the tree could only call "feeds" and "adores" words that may be verbs, and the splitter fell back on an older test, which found no clause in "Bob feeds the cat and the dog". The tree now takes a clause by its whole shape: a subject, a word that can be its verb, and an object that ends the clause. "The dog adores Bob" is a clause whatever the lists know; "the dog adores" alone may still be one noun phrase.
+* Where the tree cannot tell a singular from a plural ("the dog adore Bob" passes, "the dog" being unmarked), "Bob likes Rex and the cat and the dog adore Bob" is asked, as a sentence with two groupings is.
+
+Tests. syntax-r27-test.js (98: verbs in -s and verbs no list knows). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified; the soundness sweep finds no false validity. All 90 suites pass, and the public build's smoke test.
+
+### October 24: a comma before "and" divides clauses (r27.126)
+
+The user: "Independent clauses in the same sentence should be divided by commas. And we can use 'both... and' and 'either... or' for disambiguation, no?" Of "Bob met Al and Cy, and Al met Dee": "I read: 'Bob met Al and Cy. Al met Dee.'"
+
+* So it is now read. It had been "Bob met Al" and "Cy, and Al met Dee", "Cy, and Al" taken for one subject -- so "Al met Dee" did not follow from it. Two that a comma before "and" sets apart are no one subject; a list of three ("Al, Cy, and Dee") keeps its comma.
+* With no comma -- "Bob met Al and Cy and Al met Dee" -- the "and" before "Cy" may join two clauses ("Cy and Al met Dee") or two names (whom Bob met), and the checker asks: "Bob met Al, and Cy and Al met Dee" or "Bob met Al and Cy, and Al met Dee", each reading with the comma that says which. Only where both are English: not "Mary left and Bob and Ann cried" (before "Bob", nothing for it to join), nor "Bob likes Al and Cy and Al likes Dee" ("Cy and Al likes" is no English).
+* "Both ... and" and "either ... or" already group what they hold, and readings use them where a comma cannot say it ("both A and B, or C"). Here the comma says it; "both" would also have said "each" of a subject ("both Cy and Al met Dee"), which is asked on its own.
+
+Tests. syntax-r27-test.js (95: a comma before "and"). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified; the soundness sweep finds no false validity. All 90 suites pass, and the public build's smoke test.
+
+### October 24: "it is cold" after a thing asked, the weather among its readings; how a step's boxes were read, on a step that follows too; joined words before "is" (r27.125)
+
+Of two ways to read "The street is wet and it is cold" -- "it" as the weather by default, with a note, or a question -- the user first chose the default. Built, it read "If Poe is a stove, then it is hot" as the weather too, which an old test of the user's rule (competing readings block a certification) caught; and a question could after all be answered in the box's own words. Shown both, the user chose the question.
+
+* "It is cold", "it is hot", "it is late", "it is dark" after a thing now ask whether "it" is that thing or the weather (or the time): "“it” may be “the street” or the weather". The weather's reading puts the "it" clause first -- "It is cold and the street is wet", "It is hot if Poe is a stove", "If it is cold and the street is wet, then Bob stays in" -- where nothing before "it" is a thing, and so it reads as the weather, in the box's own words. It had offered the street, or "the fact that the street is wet is cold", which no one means; that reading is gone where the weather's is offered. Where the clause cannot be moved in front ("Bob thinks that the street is wet and it is cold"), it asks as before. "It is spicy" is no weather. Read so, a conjunction's order changes: a step that needs it in the old order takes commutation too. And "In the old house, it is cold" no longer says that "it" has nothing to refer to.
+* A step that follows now says, in its tag's tip and in the list of steps, how its boxes were read where their words left it open: "his" as "Otto", words cut short ("Otto's notebook can't" as "Otto's notebook can not automatically influence reasoning"), a pronoun bound by "every" or "someone", "each other" -- so that a wrong guess shows on a step that follows, too. Boxes read the same way are named together, the reading once. What the reader does not take apart ("while" read as one claim) is not said there: the step follows without it. It had been said only where a step did not follow.
+* Found beside it: "Bob met Al and Cy, and Al is tall" had been read as "Bob met Al" and "Cy, and Al is tall", the second unread -- "Cy and Al" taken for the subject of "is" -- so "Al is tall" did not follow from it. Words joined by "and" take "are", not "is": the clause begins at "Al", and Al and Cy are whom Bob met. So too before "was", "has", "does", and "Bob likes the cat and the dog, and the dog is tall". Only where "and" joins them: "Socrates is wise" and "the news is good", which end in -s, keep their "is". Where the verb does not show its number ("... and Al met Dee"), the reading is as before.
+
+Tests. anaphora-r27-test.js (107: the weather among the readings, the notes on a step that follows); syntax-r27-test.js (91: words joined by "and" before "is"). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified; the soundness sweep finds no false validity. All 90 suites pass, and the public build's smoke test.
+
+### October 24: "everything that is not black is not a raven", and the rules after a verb model-checked (r27.124)
+
+The user: "If there's anything else in the mapper that needs to be added/deleted/edited, please do." And, of verbs like "dreams of": "I don't want to assume a specific ontology" -- a verb is read as a relation, which takes no stand on what there is.
+
+* "Everything that is not black is not a raven" asks, rightly, whether it denies it of each one or denies that it holds of all ("all that glitters is not gold"). Its readings had taken out the wrong "not" -- the one in the kind, "that is not black" -- so that the first read "nothing that is black is not a raven", another claim, and neither could be written into the box. They are now "nothing that is not black is a raven" and "not everything that is not black is a raven"; "whatever ... not" has its "nothing that ...", and "it is not the case that whatever ...". Chosen, the first gives "All ravens are black", so the box, by contraposition.
+* A reading keeps the box's capitals for its names only: "Not everything ...", not "Not Everything ...".
+* The model checker that judges every certified first-order step now judges the rules r27.115-r27.120 added, the verb read as a relation: the kinds after a verb ("Poe loves some raven", "every raven is a crow", so "Poe loves some crow"; 300 steps with their look-alikes, 89 certified, none invalid), and "anything that is a part of a thing is smaller than that thing" with its case, with "a person ... that person" only once the step shows the one it names to be a person (42 certified, none invalid).
+
+Tests. reading-r27-chooser-test.js (32); logic-r27-fol-test.js (33: the kinds after a verb, "a thing ... that thing"). Take-one-out: each edit is caught. The corpora read as before; none of the 118 fallacies is certified. All 90 suites pass, and the public build's smoke test.
+
+### October 23: every premise of a certified step placed (r27.123)
+
+The user: "is the proposition highlighter working for all types of propositions? I want to make sure that both are rigorous" -- and, of the fixes proposed, "Just the highlighter."
+
+An audit: in a certified step every premise takes part, so the painter should find how each one does. Where it found none of a premise's clauses -- in the conclusion, or in another premise -- it had painted the premise whole, as if all of it went on. Of 244 certified steps in the student corpus and the user's saved maps, 15 had such a premise, and so did 14 kinds of step in a catalog of every rule: the painter matched whole clauses, and split one into what it is about and what it says only where the step had "all" or "some".
+
+* Such a premise is now taken in pieces, matched coarsest first: what a claim is about, and what it says -- that in its parts ("a black raven": black, raven), as the name it gives ("is Samuel Clemens"), or as a verb and its object ("loves | every raven"); an identity's two names; each claim in a compound with no words of its own ("not both black and white").
+  - "Mark Twain is Samuel Clemens", "Mark Twain wrote Huckleberry Finn", so "Samuel Clemens wrote Huckleberry Finn": "Mark Twain" meets in the two premises; "Samuel Clemens" and "wrote Huckleberry Finn" go on.
+  - "Poe is a black raven", so "Poe is black": "Poe" and "black" go on, "raven" dimmed; so "there is a black raven": "Poe" dimmed.
+  - "Poe loves every raven", "Fido is a raven", so "Poe loves Fido": "every raven" meets "is a raven"; "Poe loves" and "Fido" go on. Back by modus tollens, "every raven" goes on denied and "does not" is red against "loves"; "loves everything", so "loves Fido": "everything" goes on as "Fido".
+  - "Bob is tall", so "Bob is not short": "tall" goes on as its contrary. An objection's word against its box ("have" against "lack") is red, as before.
+  - In symbols, "a = b" and "F(a)" had no words to color: "a = b", "b = c", so "a = c" -- "b" meets, "a" and "c" go on.
+* Painted whole now only where the premise is another wording of the conclusion: "Poe is not not black", so "Poe is black"; quantifier negation; "∀x ∀y", so "∀y ∀x".
+* Nothing that was placed is painted otherwise: of 360 steps in the corpus and the saved maps, the 17 premises that had been painted whole are painted in pieces, and no other.
+
+Tests. colors-r27-inference-test.js (118; section 10 new): every premise of 47 certified steps placed, a rule or two each, but another wording of the conclusion; the pieces above. Take-one-out: each edit is caught. All 90 suites pass, and the public build's smoke test.
+
 ### October 23: the reading chooser walks on (r27.122)
 
 The user, of the Extended Mind map: "going with the recommended fixes infected other nodes with '? generic'. But maybe that's the point?" It is: a box means one thing in every step that uses it, and step 4's answers ("some") left step 3 and the rebuttal with "some" on one side and a bare plural on the other -- each had followed on any reading, its two plurals alike. Of three mockups (warn, include, walk on), the user chose the window that walks on, with the warnings, and rows shortened.
 
-* After a rewrite, the window stays open on what now asks: the step itself, if it still does, and each step that uses a box just rewritten -- "✓ The step follows by existential syllogism", then "Other steps that use the boxes you changed now ask:" and their questions. Yadiel's map: two presses, and every step certifies.
+* After a rewrite, the window stays open on what now asks: the step itself, if it still does, and each step that uses a box just rewritten -- "✓ The step follows by existential syllogism", then "Other steps that use the boxes you changed now ask:" and their questions. The Extended Mind map: two presses, and every step certifies.
 * Under a reading that gives the step, a note says what it would set off in another step that uses the same box, worked out on a copy of the map after the window opens: "Another step uses this box. It will then ask for “Anything that plays … as some mental states of a subject …”." Or that it would no longer follow.
 * A row shows what its reading changes -- "…as some non-occurrent beliefs within his brain." -- with the box whole on hover; whole where little would be left out.
 

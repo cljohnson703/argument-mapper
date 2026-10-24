@@ -502,6 +502,61 @@ try {
             [['Poe is afraid of every raven.', 'Fido is a raven.'], 'Poe is afraid of Fido.'], [['Poe drinks water.', 'Evian is water.'], 'Poe drinks something.']];
         const passedHeld = held.filter(([p, c]) => { const r = step(p, c); return r && r !== 'unread'; }).map(([p, c]) => p.join(' | ') + ' ⊢ ' + c);
         ok(passedHeld.length === 0, 'but not past a modal, the past, a verb of seeking or wanting, "the mother of", "almost", or fear, nor to a case that fails the relative clause', passedHeld.join(' ‖ '));
+
+        // The kinds after a verb (r27.120): "Poe loves some raven" and "every
+        // raven is a crow" give "Poe loves some crow" -- existential
+        // syllogism, the verb read as a relation, as everywhere here; and its
+        // look-alikes, the universal the other way round, a name or a verb
+        // swapped, "every" for "some". Every certified step model-checked.
+        const allAre = (n, m) => rp([{ t: 'Every ' + n[0] + ' is ' + an(m[0]), f: Q('all', 'w', B('imp', pr(n[2], 'w'), pr(m[2], 'w'))) },
+            { t: 'All ' + n[1] + ' are ' + m[1], f: Q('all', 'w', B('imp', pr(n[2], 'w'), pr(m[2], 'w'))) }]);
+        const kinds = [
+            w => { const u = near(w); return [[some(w.x, w.v, w.n), allAre(w.n, w.m)], some(u.x, u.v, rp([w.m, u.n]))]; },
+            w => [[allAre(w.n, w.m), some(w.x, w.v, w.n)], some(w.x, w.v, w.m)],
+            w => [[some(w.x, w.v, w.m), allAre(w.n, w.m)], some(w.x, w.v, w.n)],
+            w => [[every(w.x, w.v, w.n), allAre(w.n, w.m)], every(w.x, w.v, w.m)],
+            w => [[some(w.x, w.v, w.n), allAre(w.n, w.m)], every(w.x, w.v, w.m)]];
+        let kc = 0, kv = 0;
+        const kbad = [];
+        for (let i = 0; i < 300; i++) {
+            const w = words();
+            if (w.m === w.n) w.m = NOUNS.find(n => n !== w.n);
+            const [ps, c] = rp(kinds)(w), got = step(ps.map(p => p.t + '.'), c.t + '.'), valid = !counterModel(ps.map(p => p.f), c.f, i + 11);
+            if (valid) kv++;
+            if (got && got !== 'unread') { kc++; if (!valid) kbad.push(ps.map(p => p.t).join(' | ') + ' ⊢ ' + c.t + ' [' + got + ']'); }
+        }
+        ok(kbad.length === 0 && kc > 40, 'no invalid step with the kinds after a verb is certified (300 steps; ' + kc + ' certified, ' + kv + ' valid)', kbad.slice(0, 3).join(' ‖ '));
+
+        // "Anything that is a part of a thing is smaller than that thing":
+        // "a thing ... that thing" is the one thing it speaks of, any thing,
+        // said of the one the step names (r27.115-r27.118); with a kind that
+        // limits it ("a person ... that person"), only once the step shows
+        // that the one it names is one. Its look-alikes: the case the other
+        // way round, a name swapped, the kind's premise missing.
+        const RELS = [['is a part of', 'Part'], ['is a friend of', 'Friend']], RES = [['is smaller than', 'Small'], ['is loved by', 'Loved']];
+        const dRule = (r, s, kind) => ({ t: 'Anything that ' + r[0] + ' ' + (kind ? 'a ' + kind[0] : 'a thing') + ' ' + s[0] + ' that ' + (kind ? kind[0] : 'thing'),
+            f: Q('all', 'x', Q('all', 'y', B('imp', kind ? B('and', pr(kind[1], 'y'), pr(r[1], 'x', 'y')) : pr(r[1], 'x', 'y'), pr(s[1], 'x', 'y')))) });
+        const dCase = (r, a, b) => ({ t: a[0] + ' ' + r[0] + ' ' + b[0], f: pr(r[1], a[1], b[1]) });
+        const dKind = (a, kind) => ({ t: a[0] + ' is a ' + kind[0], f: pr(kind[1], a[1]) });
+        const PERSON = ['person', 'Person'];
+        const donkeys = [
+            (a, b, c, r, s) => [[dRule(r, s), dCase(r, a, b)], dCase(s, a, b)],
+            (a, b, c, r, s) => [[dRule(r, s), dCase(r, a, b)], dCase(s, b, a)],
+            (a, b, c, r, s) => [[dRule(r, s), dCase(r, b, a)], dCase(s, a, b)],
+            (a, b, c, r, s) => [[dRule(r, s), dCase(r, a, b)], dCase(s, a, c)],
+            (a, b, c, r, s) => [[dRule(r, s, PERSON), dCase(r, a, b), dKind(b, PERSON)], dCase(s, a, b)],
+            (a, b, c, r, s) => [[dRule(r, s, PERSON), dCase(r, a, b)], dCase(s, a, b)],
+            (a, b, c, r, s) => [[dRule(r, s, PERSON), dCase(r, a, b), dKind(a, PERSON)], dCase(s, a, b)]];
+        let dc = 0, dv = 0;
+        const dbad = [];
+        for (let i = 0; i < 200; i++) {
+            const [a, b, c] = [rp(NAMES), rp(NAMES), rp(NAMES)];
+            if (a === b) continue;
+            const [ps, cc] = rp(donkeys)(a, b, c, rp(RELS), rp(RES)), got = step(ps.map(p => p.t + '.'), cc.t + '.'), valid = !counterModel(ps.map(p => p.f), cc.f, i + 17);
+            if (valid) dv++;
+            if (got && got !== 'unread') { dc++; if (!valid) dbad.push(ps.map(p => p.t).join(' | ') + ' ⊢ ' + cc.t + ' [' + got + ']'); }
+        }
+        ok(dbad.length === 0 && dc > 20, 'no invalid step with "a thing ... that thing" is certified (' + dc + ' certified, ' + dv + ' valid)', dbad.slice(0, 3).join(' ‖ '));
     }
     ok(errors.length === 0, 'no JSDOM script errors', errors.join('; '));
 } finally {

@@ -135,6 +135,21 @@ const J = JSON.stringify;
         return [].slice.call(__c.pop().querySelectorAll('.rc-row')).map(function (r) { return { t: r.textContent.replace(/\\s+/g, ' ').trim(), off: r.querySelector('input').disabled }; });`);
     ok(Array.isArray(all) && all.length === 2 && all.every(r => !r.off) && /^No ravens are white/.test(all[0].t),
         'an older ambiguity ("all ravens are not white") is offered the same way', J(all));
+    // r27.124: the verb's own "not" taken out, not the one in the kind ("that
+    // is not black"), which had made the first reading another claim; and
+    // "whatever" said of none.
+    const glitters = ['Everything that is not black is not a raven.', 'Whatever is not black is not a raven.'].map(c => T(W, `__c.load(${J(MAP('All ravens are black.', c))});
+        __c.tag('S').click();
+        var rows = [].slice.call(__c.pop().querySelectorAll('.rc-row')).map(function (r) { return { t: r.textContent.replace(/\\s+/g, ' ').trim(), off: r.querySelector('input').disabled }; });
+        var radios = __c.pop().querySelectorAll('.rc-row input');
+        radios[0].checked = true; radios[0].dispatchEvent(new Event('change', { bubbles: true }));
+        __c.pop().querySelector('.rc-apply').click();
+        return { rows: rows, parent: findNodeContext(state.trees, 'M').node.texts[0], tag: __c.tag('S') && __c.tag('S').textContent };`));
+    ok(J(glitters.map(g => g.rows.map(r => r.t))) === J([
+            ['Nothing that is not black is a raven. — the step follows by contraposition', 'Not everything that is not black is a raven.'],
+            ['Nothing that is not black is a raven. — the step follows by contraposition', 'It is not the case that whatever is not black is a raven.']]) &&
+        glitters.every(g => g.rows.every(r => !r.off) && g.parent === 'Nothing that is not black is a raven.' && /contraposition/.test(g.tag || '')),
+        '"everything that is not black is not a raven": "nothing that is not black is a raven" or "not everything ...", each one written in -- "whatever" too', J(glitters));
 
     // 4. Closing, read-only, and every other tag.
     const closing = T(W, `__c.load(${J(MAP('Only Bob runs', 'Bob runs'))});
