@@ -4,6 +4,21 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: a clause after "after", "before", "as" belongs to the verb, not the subject (r27.128)
+
+The user: "parse language into its syntactical components correctly". Of the fixes proposed: "I agree with you on everything."
+
+* "Mary left after Bob arrived" had been read "[Mary left after Bob] arrived". A participle's phrase after its noun ("swans seen so far") ran on past "after", so a thing called "Mary left after Bob" arrived. With "Everything that arrived was greeted", it was certified to give "Mary left after Bob was greeted", which does not follow: Bob arrives at one, Mary leaves at two, Bob is greeted at three. Likewise "Mary acted as Bob would act", so "Something would act".
+* Now the words settle it where they can, past "after", "before", "since", "until", "till", "as" and "like":
+  - A form that is only a participle says which thing is meant ("the man seen after the party | left early", "the book written before the war | sold well").
+  - A name says no such thing ("Mary | left after Bob arrived").
+  - Nor does a verb that takes no object ("the dog | died before the vet arrived").
+  - A verb that must have an object, with none after it, is not the verb there ("the letters sent after the election | arrived late").
+  - A word that opens the box alone, and that no list knows as a noun, is a name by its place.
+* Where both groupings are English -- "The dog left after Bob arrived", "Every dog left after Bob arrived" -- it is asked where a step turns on it, as a generic is: '"left after Bob" may say which dog is meant, or what the dog did'. Its readings are "the dog that was left after Bob arrived" and "the dog left, after Bob arrived". Until it is answered, the box is read as its first reading says, word for word. So a step follows only where it follows on both ("if the dog left after Bob arrived, then Al cried").
+
+Tests. syntax-r27-test.js (105: a clause after "after", "before", "as"). Take-one-out: each of the 8 edits is caught. Of 4,542 sentences gathered from the suites, the 14 this is about read differently, and the rest as before. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout). All 90 suites pass, and the public build's smoke test.
+
 ### October 24: a clause by the syntax tree, where the word lists do not know its verb (r27.127)
 
 "Bob likes the cat and the dog and the dog likes Bob" was read as one claim. I had said "the dog likes" was taken for a noun; the user: "shouldn't the part of speech of each of these phrases be evaluated by the internal syntax tree? There's no way 'the dog likes' should be taken as a noun if the internal syntax tree works." It was not the tree's reading -- it reads "likes" there as the verb -- but the "and" splitter's.

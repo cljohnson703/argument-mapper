@@ -703,6 +703,59 @@ console.log('\n-- a clause by its shape, where the lists do not know its verb (r
     ok(st === 'conjunction elimination', 'so "The dog adores Bob" follows from it', J(st));
 }
 
+console.log('\n-- a clause after "after", "before", "as" (r27.128) --');
+{
+    // The user: "parse language into its syntactical components correctly."
+    // "Mary left after Bob arrived" had been "[Mary left after Bob] arrived":
+    // the phrase of a participle after its noun ("swans seen so far") ran on
+    // past "after", so a thing called "Mary left after Bob" arrived -- and
+    // with "everything that arrived was greeted", "Mary left after Bob was
+    // greeted" was certified. The words settle it where they can; where both
+    // groupings are English, it is asked where a step turns on it.
+    const cases = [
+        ['Mary left after Bob arrived.', '[mary] left after bob arrived'],
+        ['Mary acted as Bob would act.', '[mary] acted as bob would act'],
+        ['Mary laughed as Bob arrived.', '[mary] laughed as bob arrived'],
+        ['Mary stayed until Bob arrived.', '[mary] stayed until bob arrived'],
+        ['The dog died before the vet arrived.', '[the dog] died before the vet arrived'],
+        ['Some student died before the vet arrived.', '[some student] died before the vet arrived'],
+        ['The man seen after the party left early.', '[the man seen after the party] left early'],
+        ['The book written before the war sold well.', '[the book written before the war] sold well'],
+        ['The letters sent after the election arrived late.', '[the letters sent after the election] arrived late'],
+        ['The swans seen so far are white.', '[the swans seen so far] are white'],
+        ['Theories proposed by philosophers fail.', '[theories proposed by philosophers] fail']];
+    const got = cases.map(([t]) => split(t));
+    ok(J(got) === J(cases.map(c => c[1])),
+        'a name, or a verb that takes no object, is the verb before "after", "before", "as"; "seen", "written", and a verb that must have an object, say which thing is meant', J(got));
+    const asked = ev(`return ['The dog left after Bob arrived.', 'The students left before the lecture ended.', 'Every dog left after Bob arrived.',
+            'Mary left after Bob arrived.', 'The letters sent after the election arrived late.']
+        .map(function (t) { var n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous' && x.grouping; })[0];
+            return n ? n.message.replace(/\\uE000/g, '') + ' | ' + n.readings.map(claimLabel).join(' / ') : null; });`);
+    ok(J(asked) === J(['"left after Bob" may say which dog is meant, or what the dog did | the dog that was left after Bob arrived / the dog left, after Bob arrived',
+        '"left before the lecture" may say which students are meant, or what the students did | the students that were left before the lecture ended / the students left, before the lecture ended',
+        '"left after Bob" may say which dog is meant, or what every dog did | every dog that was left after Bob arrived / every dog left, after Bob arrived',
+        null, null]), 'where both groupings are English, it is asked: which dog is meant, or what the dog did', J(asked));
+    const back = ev(`return ['the dog that was left after Bob arrived', 'the dog left, after Bob arrived', 'every dog left, after Bob arrived'].map(function (t) {
+        var r = parseClaimFull(t); return (r.form ? claimKey(r.form).replace(/\\uE000/g, '') : null) + ' ' + r.notes.filter(function (x) { return x.kind === 'ambiguous'; }).length; });`);
+    ok(J(back) === J(['P:the dog that was left after bob|~did arrived 0', 'P:the dog|~did left after bob arrived 0', 'U:=dog|~did left after bob arrived 0']),
+        'each reading, written in the box, reads as itself and asks nothing more', J(back));
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+    ok(step(['Mary left after Bob arrived.', 'Everything that arrived was greeted.'], 'Mary left after Bob was greeted.') === '? not recognized' &&
+        step(['Mary acted as Bob would act.'], 'Something would act.') === '? not recognized',
+        '"Mary left after Bob arrived" and "everything that arrived was greeted" no longer give "Mary left after Bob was greeted" (it had been certified)');
+    ok(step(['The dog left after Bob arrived.', 'Everything that arrived was greeted.'], 'The dog left after Bob was greeted.') === '? ambiguous' &&
+        step(['The dog left after Bob arrived.'], 'Something arrived.') === '? ambiguous' &&
+        step(['Every dog left after Bob arrived.', 'Rex is a dog.'], 'Rex left after Bob arrived.') === '? ambiguous',
+        'where a step turns on the grouping, it waits for the answer');
+    ok(step(['Every dog left after Bob arrived.', 'Rex is a dog left after Bob.'], 'Rex arrived.') === '? not recognized',
+        'unanswered, it is read as its first reading says, word for word: nothing follows from a third way of reading it');
+    ok(step(['The dog left after Bob arrived.', 'If the dog left after Bob arrived, then Al cried.'], 'Al cried.') === '✓ modus ponens' &&
+        step(['The letters sent after the election arrived late.', 'Everything that arrived late was lost.'], 'The letters sent after the election were lost.') === '✓ universal modus ponens',
+        'a step that follows either way follows; "sent", with no object after it, says which letters are meant');
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
