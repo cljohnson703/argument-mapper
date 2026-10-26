@@ -4,6 +4,31 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: "every raven is black and old" is "every raven is black and every raven is old"; technical steps off by default (r27.142)
+
+The user, of the rules textbooks have and arguments rarely use: "Switch those to on-by-default that you think reflect ordinary reasoning. Tell me why for both those you turned on and those you turned off."
+
+* Quantifier distribution over a kind, new; distribution had covered only "everything" and "something":
+  * "Every raven is black and old" is "every raven is black and every raven is old".
+  * "Some raven is black or white" is "some raven is black or some raven is white".
+  * "No raven is black or white" is "no raven is black and no raven is white"; "nothing is black or white" works the same way.
+* One way only:
+  * "Some ravens are black and old" gives "some ravens are black and some ravens are old".
+  * "Every raven is black or every raven is white" gives "every raven is black or white".
+* Not certified: splitting "every raven is black or white", joining two "some"s, or splitting "no raven is black and old".
+* A new group, Technical steps, off by default, holds six rules that had been on in Familiar steps, Order and grouping, and Quantifier equivalences: absorption, predicate congruence, Boolean absorption, the ⊥ laws, the rules of passage, and the vacuous quantifier anywhere. A step that needs one of them is "not recognized", and the check names the switch.
+* Kept on, because ordinary reasoning uses them: resolution, change of bound variable, and quantifier distribution ("something is black or white", so "something is black or something is white").
+* A map that used one of the six shows those steps as not recognized until the switch is turned on.
+
+Tests:
+* rules-r27-ordinary-test.js has 65 checks; the five new ones fail on r27.141.
+* logic-r27-basis-test.js counts fifteen groups, ten lists of switches and twenty-two familiar rules. It checks that absorption, Boolean absorption, the ⊥ laws, predicate congruence and the vacuous ∃ are off by default, and that each still works when switched on.
+* logic-r27-english-test.js, logic-r27-fol-test.js, logic-r27-stress-test.js and logical-theorem-r27-test.js switch the technical steps on where they test them. The proof map in logical-theorem uses absorption for its middle step, so that map switches absorption on.
+* Take-one-out: all 7 edits are caught.
+* No reading changes.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 26: dropping a "that" clause -- "Bob is glad that Mary left", so "Bob is glad"; "shorter" has two senses; colors for a subject said once and for dropped words (r27.141)
 
 The user, of "Bob is glad that Mary left, so Bob is glad": "Shouldn't it certify? The 'that' part of the sentence just tells us what it is that is making Bob glad." And of "The rope is shorter than the cable" giving "The cable is taller than the rope": "Perhaps not, as it should give 'The cable is longer than the rope'."

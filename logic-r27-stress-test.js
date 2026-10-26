@@ -1259,6 +1259,9 @@ window.__stress = (function () {
 
     /* ---------------- 2. formulas at random ---------------- */
     console.log('\n-- formulas at random --');
+    // Every rule's instances: the technical steps (absorption among them),
+    // off by default since r27.142, switched on for this section.
+    W.dom.window.eval('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true);');
     {
         const rand = seeded(20260917);
         const G = symbolicGenerator(rand);
@@ -1305,6 +1308,7 @@ window.__stress = (function () {
         ok(stats.unsound.length === 0, stats.steps + ' steps -- rule instances, their mutants, fallacies, objections -- and none certified that does not follow (' + stats.certified + ' certified)', sample(stats.unsound));
         ok(stats.incomplete.length === 0, stats.instances + ' instances of the rules, in every spelling, all certified', sample(stats.incomplete));
     }
+    W.dom.window.eval('state.logic = null; claimRulesCache = null;');
 
     /* ---------------- 3. English at random ---------------- */
     console.log('\n-- English at random --');

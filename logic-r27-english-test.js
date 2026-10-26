@@ -545,7 +545,7 @@ const MORE_RULES = [
     ['idempotence', ['P ∨ P'], 'P', 'idempotence (an extension, on by default; off, the dilemma on P -> P does it)'],
     ['proof by cases', ['P → P', 'P → P', 'P ∨ P'], 'P', 'P ∨ P by a dilemma on P → P: one consequent, so proof by cases'],
     ['constructive dilemma', ['P → Q', 'R → S', 'P ∨ R'], 'Q ∨ S', 'different consequents: the constructive dilemma proper'],
-    ['absorption', ['If it rains, then the ground is wet'], 'If it rains, then it rains and the ground is wet', 'Abs'],
+    [null, ['If it rains, then the ground is wet'], 'If it rains, then it rains and the ground is wet', 'Abs: a technical step, off by default since r27.142 (on, below)'],
     ['reductio', ['If God exists, then evil is an illusion', 'If God exists, then evil is not an illusion'], 'God does not exist', 'reductio'],
     ['consequentia mirabilis', ['P → ¬P'], '¬P', 'a claim that implies its own denial (a familiar step; the basis reductio takes two conditionals)'],
     [null, ['If God exists, then evil is an illusion', 'If God exists, then evil is real'], 'God does not exist', 'reductio needs a claim and its denial'],
@@ -723,6 +723,11 @@ function reportCorpus(name, res) {
             catch (e) { return 'ERR ' + e.message; }
         });`);
         const bad = MORE_RULES.map((c, i) => [c, Array.isArray(got) ? got[i] : undefined]).filter(([c, g]) => g !== c[0]);
+        // Absorption, a technical step since r27.142, switched on.
+        const abs = T(W, `claimOptionalInferences.add('absorption');
+            try { var r = certifyStep([parseClaim('If it rains, then the ground is wet')], [parseClaim('If it rains, then it rains and the ground is wet')], false); return r ? r.name : null; }
+            finally { claimOptionalInferences.delete('absorption'); }`);
+        ok(abs === 'absorption', 'absorption, switched on, takes its step in English', J(abs));
         ok(bad.length === 0, 'each equivalence and rule certifies its steps, in English and in symbols, and not the look-alikes (' + MORE_RULES.length + ')',
             bad.map(([c, g]) => c[3] + ': got ' + g + ', want ' + c[0]).join(' | '));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }

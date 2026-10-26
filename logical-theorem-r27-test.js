@@ -82,8 +82,13 @@ try {
  // Absorption is an extension now, so its instance is no automatic warrant;
  // with it on, it still takes its step. "P -> P" is proved from the basis in
  // six lines, Contradiction to Negation Elimination (logic-r27-basis-test.js).
+ // A technical step since r27.142, off by default: its conditional needs
+ // support; switched on, it does not.
+ check(call(x=>!logicalTheorem(x),'(P -> Q) -> (P -> (P & Q))') && !rule(['P -> Q'],'P -> (P & Q)'),'absorption, off by default, needs support');
+ call(()=>{ setDeductiveRule(['absorption'], true); });
  check(call(x=>logicalTheorem(x)?.rule.id,'(P -> Q) -> (P -> (P & Q))')==='absorption' && rule(['P -> Q'],'P -> (P & Q)')==='absorption',
-  'absorption is a familiar step now, and its conditional states that step, so it needs no support while the rule is on');
+  'absorption, switched on, and its conditional states that step, so it needs no support while the rule is on');
+ call(()=>{ setDeductiveRule(['absorption'], false); });
  check(call(x=>!!logicalTheorem(x),'(P & ~P) -> ⊥') && rule(['(P & ~P) -> ⊥'],'P -> (~P -> ⊥)')==='exportation' &&
   rule(['P -> (~P -> ⊥)','(~P -> ⊥) -> ~~P'],'P -> ~~P')==='hypothetical-syllogism' &&
   rule(['P -> ~~P','~~P -> P'],'P -> P')==='hypothetical-syllogism',
@@ -96,7 +101,10 @@ try {
   setDeductiveRule(['instance-restatement','instance-excluded-middle'], false);
   return on && !logicalTheorem('P -> P') && !logicalTheorem('P v ~P'); }),'extra rule instances, P -> P and P v ~P, when switched on');
  check(call(()=>parseClaim('⊥').kind==='bottom' && claimKey(parseClaim('⊥'))!==claimKey(parseClaim('P'))),'bottom is its own logical constant');
+ // The proof's middle step is absorption's, a technical step since r27.142:
+ // switched on for this map.
  const ui=call(()=>{
+  setDeductiveRule(['absorption'], true);
   const n=(id,type,texts,children=[])=>({id,type,texts:Array.isArray(texts)?texts:[texts],children,collapsed:[],x:30000,y:30000});
   const leaves=n('L','support',['P -> (P v P)']);
   const middle=n('S','support',['P -> (P & (P v P))','(P & (P v P)) -> P'],[leaves]);
@@ -118,6 +126,7 @@ try {
   deductiveLive=true;render();out.noteExcluded=document.querySelectorAll('.logical-theorem-tag').length===1;
   out.crossref=!!document.querySelector('#group-M .crossref-badge')&&!!document.querySelector('#group-M .logical-theorem-tag');
   state.trees[0].texts=['P'];render();out.edited=!document.querySelector('.logical-theorem-tag');
+  setDeductiveRule(['absorption'], false);
   return out;
  });
  check(ui.contradiction!=='established','contradictory premises cannot warrant bottom');check(ui.noteExcluded&&ui.crossref&&ui.edited,'notes excluded, reference badge coexists, edits remove stale tags');

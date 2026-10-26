@@ -74,14 +74,15 @@ try {
     console.log('\n-- the basis and its extensions --');
     {
         const groups = ev('return DEDUCTIVE_EXTENSIONS.map(function (g) { return g.id + ":" + g.on; });');
-        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'opposites:true', 'factive:true', 'relations:true', 'modifiers:true', 'negations:false', 'instances:false', 'catchall:false']),
-            'fourteen groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65), contraries and contradictories (r27.103), factive verbs (r27.134), relations (r27.136) and modifiers (r27.137) on by default, negations anywhere, extra rule instances and the catch-alls off', J(groups));
+        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'opposites:true', 'factive:true', 'relations:true', 'modifiers:true', 'technical:false', 'negations:false', 'instances:false', 'catchall:false']),
+            'fifteen groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65), contraries and contradictories (r27.103), factive verbs (r27.134), relations (r27.136) and modifiers (r27.137) on by default, the technical steps (r27.142), negations anywhere, extra rule instances and the catch-alls off', J(groups));
         const basisSet = ev('return [DEDUCTIVE_BASIS.has("modus-ponens"), DEDUCTIVE_AXIOMS.length, ["and-elim", "hypothetical-syllogism", "exportation", "quantifier-distribution", "null-quantification", "reductio", "universal-elimination", "existential-introduction", "existential-elimination"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && DEDUCTIVE_CORE.indexOf(id) >= 0; })];');
         const shared = ev('return DEDUCTIVE_EXTENSIONS.some(function (g) { return g.rules.some(function (id) { return DEDUCTIVE_BASIS.has(id); }); });');
         ok(basisSet[0] && basisSet[1] === 13 && basisSet[2] && !shared,
             'the basis is modus ponens and the axioms; every intro and elim rule is a core step, derivable from them, and no extension is in the basis', J(basisSet));
-        const outOfBasis = ev('var fam = DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "familiar"; })[0].rules; return ["absorption", "modus-ponens-together", "subalternation", "predicate-congruence", "constructive-dilemma"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && fam.indexOf(id) >= 0; });');
-        ok(outOfBasis, 'absorption, modus ponens on several conditions, subalternation, predicate congruence and the constructive dilemma are familiar steps, not basis rules');
+        // Absorption and predicate congruence technical steps since r27.142.
+        const outOfBasis = ev('var g = function (id) { return DEDUCTIVE_EXTENSIONS.filter(function (x) { return x.id === id; })[0].rules; }, fam = g("familiar"), tech = g("technical"); return ["modus-ponens-together", "subalternation", "constructive-dilemma"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && fam.indexOf(id) >= 0; }) && ["absorption", "predicate-congruence"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && tech.indexOf(id) >= 0; });');
+        ok(outOfBasis, 'modus ponens on several conditions, subalternation and the constructive dilemma are familiar steps, absorption and predicate congruence technical ones, none of them basis rules');
         coreOnly();
         const basis = [
             [['P -> Q', 'P'], 'Q', 'modus ponens'],
@@ -196,8 +197,12 @@ try {
         const exForms = [[['∀x (F(x) → G(x))'], '(∃x F(x)) → (∃x G(x))'], [['∃x P'], 'P']];
         ok(!refused(exForms).length, 'with every extension off, quantifier distribution\'s ∃ form and the vacuous ∃ are gone from the basis', refused(exForms).join(' ‖ '));
         defaults();
-        ok(rule(['∀x (F(x) → G(x))'], '(∃x F(x)) → (∃x G(x))') === 'quantifier distribution, anywhere' && rule(['∃x P'], 'P') === 'vacuous quantifier, anywhere',
-            'on by default, both are still one step, by the "anywhere" rules');
+        // The vacuous ∃ a technical step since r27.142, off by default.
+        const vacuousOff = rule(['∃x P'], 'P');
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true); return 1;');
+        ok(rule(['∀x (F(x) → G(x))'], '(∃x F(x)) → (∃x G(x))') === 'quantifier distribution, anywhere' && vacuousOff === null && rule(['∃x P'], 'P') === 'vacuous quantifier, anywhere',
+            'on by default, quantifier distribution\'s ∃ form is still one step, by the "anywhere" rule; the vacuous ∃ too, with the technical steps switched on');
+        defaults();
         coreOnly();
         // The work of the rules that discharge a supposition, done by known rules.
         // Two conditions' consequents joined: "A → (X → R)" and "A → X" give
@@ -242,8 +247,12 @@ try {
         ok(!dupLines.bad.length && dupLines.lines === 51 && !dupLines.absorbed,
             'absorption is derivable: "P → (P ∧ P)" in ' + dupLines.lines + ' lines from the basis alone, each certified, none of them absorption', J(dupLines.bad.slice(0, 2)));
         defaults();
-        ok(rule(['P → Q'], 'P → (P ∧ Q)') === 'absorption' && rule(['P → P'], 'P → (P ∧ P)') === 'absorption',
-            'on by default, absorption still takes its step in one line');
+        // A technical step since r27.142, off by default.
+        const absorbedOff = rule(['P → Q'], 'P → (P ∧ Q)');
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true); return 1;');
+        ok(absorbedOff === null && rule(['P → Q'], 'P → (P ∧ Q)') === 'absorption' && rule(['P → P'], 'P → (P ∧ P)') === 'absorption',
+            'off by default (a technical step), switched on, absorption still takes its step in one line');
+        defaults();
     }
 
     console.log('\n-- the steps added on 2026-09-23 --');
@@ -265,11 +274,16 @@ try {
             [['(A ∧ (A ∨ B)) ∨ C'], 'A ∨ C', 'Boolean absorption'],
             [['A ∨ ⊥'], 'A', '⊥ laws'],
             [['(A ∧ ¬A) ∨ B'], '⊥ ∨ B', '⊥ laws']];   // at the top, Contradiction claims it first
-        ok(!passes(swaps).length, 'Boolean absorption and the ⊥ laws, at any depth', passes(swaps).join(' ‖ '));
+        // Technical steps since r27.142, off by default.
+        const swapsOff = refused(swaps), congruenceOff = rule(['a = b'], 'F(a) ↔ F(b)');
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true); return 1;');
+        ok(!passes(swaps).length && !swapsOff.length, 'Boolean absorption and the ⊥ laws, at any depth, with the technical steps switched on (off, none of these steps)',
+            passes(swaps).join(' ‖ ') + ' / off: ' + swapsOff.join(' ‖ '));
         // The quantifier and identity steps the list was missing.
         ok(rule(['∀x F(x)'], '∃x F(x)') === 'subalternation' && !rule(['Every raven is black'], 'Some raven is black') &&
-            rule(['a = b'], 'F(a) ↔ F(b)') === 'predicate congruence',
-            'subalternation (unrestricted only) and predicate congruence');
+            rule(['a = b'], 'F(a) ↔ F(b)') === 'predicate congruence' && congruenceOff === null,
+            'subalternation (unrestricted only) and predicate congruence (a technical step, off by default)');
+        defaults();
         // Zero-premise shortcuts, off by default.
         ok(!thm('¬(P ∧ ¬P)') && !thm('P ∨ ¬P') && !thm('P → P'), 'the zero-premise shortcuts stay off by default');
         ev('setDeductiveRule(["instance-noncontradiction", "instance-excluded-middle", "instance-restatement"], true); return 1;');
@@ -659,9 +673,14 @@ try {
             'a pronoun the reading depends on -- the subject of a predication -- is still flagged');
         // A conditional that states any switched-on rule's step needs no
         // support; switch the rule off and it does.
+        // Absorption a technical step since r27.142: off by default, its
+        // conditional needs support; switched on, it does not.
+        const absorbOff = thm('(P → Q) → (P → (P ∧ Q))');
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true); return 1;');
         ok(thm('¬(P ∨ ¬P) → (¬P ∧ ¬¬P)') === 'De Morgan’s laws' && thm('((P ∨ Q) ∧ ¬P) → Q') === 'disjunctive syllogism' &&
-            thm('(P → Q) → (P → (P ∧ Q))') === 'absorption',
+            thm('(P → Q) → (P → (P ∧ Q))') === 'absorption' && absorbOff === null,
             'a rule instance follows the rules that are on, not the core ones only');
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, false); return 1;');
         ev('setDeductiveRule(["de-morgan"], false); return 1;');
         ok(!thm('¬(P ∨ ¬P) → (¬P ∧ ¬¬P)'), 'with De Morgan off, its conditional needs support again');
         defaults();
@@ -792,12 +811,13 @@ try {
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
         // Modal logic is a group the map switches on, not a base (r27.101);
         // "would" and "could" under it (r27.112).
-        ok(built.groups === 16 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, fourteen groups of steps, metaphysical necessity, and "would" and "could"', J(built));
+        ok(built.groups === 17 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
-        // Nine since r27.141: modifiers has dropping a "that" clause.
-        ok(built.rules === want && built.lists === 9, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want + ', ' + built.lists + ' lists');
+        // Nine since r27.141: modifiers has dropping a "that" clause. Ten
+        // since r27.142: the technical steps.
+        ok(built.rules === want && built.lists === 10, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want + ', ' + built.lists + ' lists');
         // A map with a modus tollens step.
         ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['It does not rain'], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ['If it rains, then the match is off', 'The match is not off'], collapsed: [], children: [] }] }]; render(); return 1;`);
@@ -805,13 +825,14 @@ try {
         ok(mt() === 'modus tollens', 'a modus tollens step, certified by default');
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         const off = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, n: Object.keys(state.logic.rules).length, stamped: !!state._logicVersion };');
-        // Twenty-four since r27.134 (the expository syllogism, "either way").
-        ok(mt() === null && !off.checked && !off.ind && off.n === 24 && off.stamped, 'Familiar steps switched off: its twenty-four rules off, stamped, and the step no longer certified', J(off));
+        // Twenty-four since r27.134 (the expository syllogism, "either way");
+        // twenty-two since r27.142 (absorption and predicate congruence technical steps).
+        ok(mt() === null && !off.checked && !off.ind && off.n === 22 && off.stamped, 'Familiar steps switched off: its twenty-two rules off, stamped, and the step no longer certified', J(off));
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         ok(mt() === 'modus tollens' && J(ev('return state.logic.rules;')) === '{}', 'and on again');
         ev('document.querySelector("[data-rule=\\"modus-tollens\\"]").click(); return 1;');
         const part = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, count: document.querySelector("[data-count=\\"familiar\\"]").textContent };');
-        ok(mt() === null && !part.checked && part.ind && part.count === '23 of 24', 'one rule of a group off: the group half on, "23 of 24"', J(part));
+        ok(mt() === null && !part.checked && part.ind && part.count === '21 of 22', 'one rule of a group off: the group half on, "21 of 22"', J(part));
         // Undo leaves the settings alone; the map's edits it undoes.
         ev('pushHistory(); state.trees[0].texts = ["It does not rain at all"]; render(); undo(); return 1;');
         const undone = ev('return { text: state.trees[0].texts[0], rules: state.logic.rules, inSnapshot: /modus-tollens/.test(historySnapshot()) };');

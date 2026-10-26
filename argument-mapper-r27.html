@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.141';
+    const APP_BUILD = '2026-10-26 r27.142';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6936,6 +6936,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob is glad that Mary left" gives "Bob is glad". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly"; nor "proud that", since "proud" alone can mean "vain".',
         relations: 'Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob" and "Al is not taller than Bob"; with "Al is taller than Cy", "Bob is taller than Cy"; "married to" goes both ways. "Shorter" can mean less tall or less long: "shorter in height than" gives "taller than".',
         factive: 'Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"; likewise "realizes", "proves", "regrets", "is aware that". Not "believes" or "says": what is believed can be false.',
+        technical: 'Steps from logic textbooks that arguments rarely take: absorption ("if A, then B" gives "if A, then A and B"), predicate congruence, Boolean absorption ("A or (A and B)" is A), the ⊥ laws, the rules of passage, and a vacuous quantifier inside a claim.',
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
         catchall: 'Anything truth tables show, including swapping a part for an equivalent one.' };
@@ -19046,11 +19047,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     // Quantifier distribution: "∀x (F(x) ∧ G(x))" is "∀x F(x) ∧ ∀x G(x)", and
-    // "∃x (F(x) ∨ G(x))" is "∃x F(x) ∨ ∃x G(x)".
+    // "∃x (F(x) ∨ G(x))" is "∃x F(x) ∨ ∃x G(x)". And of a kind (r27.142;
+    // they had not followed): "every raven is black and old" is "every raven
+    // is black and every raven is old" -- "∀x (R(x) → (F(x) ∧ G(x)))" -- and
+    // "some raven is black or white" is "some raven is black or some raven
+    // is white"; "no raven is black or white", "nothing is black or white",
+    // "no raven is black and no raven is white".
     function folDistributionRewrite(n) {
         const op = n.op === 'all' ? 'and' : n.op === 'some' ? 'or' : null;
-        if (!op || n.body.op !== op) return [];
-        return [folJoin(op, folParts(n.body, op).map(body => ({ op: n.op, v: n.v, body })))];
+        if (!op) return [];
+        const Q = body => ({ op: n.op, v: n.v, body }), not = x => ({ op: 'not', a: x }), out = [];
+        // "Nothing is A or B": "∀x ¬(A ∨ B)", each denied.
+        const each = b => b.op === 'and' ? folParts(b, 'and') : b.op === 'not' && b.a.op === 'or' ? folParts(b.a, 'or').map(not) : null;
+        if (n.body.op === op) out.push(folJoin(op, folParts(n.body, op).map(Q)));
+        if (n.op === 'all') {
+            const b = n.body.op === 'not' ? each(n.body) : null, k = n.body.op === 'imp' ? each(n.body.b) : null;
+            if (b) out.push(folJoin('and', b.map(Q)));
+            if (k) out.push(folJoin('and', k.map(c => Q({ op: 'imp', a: n.body.a, b: c }))));
+        }
+        if (n.op === 'some' && n.body.op === 'and') {
+            const parts = folParts(n.body, 'and'), last = parts[parts.length - 1];
+            if (parts.length > 1 && last.op === 'or') out.push(folJoin('or', folParts(last, 'or').map(d => Q(folJoin('and', parts.slice(0, -1).concat([d]))))));
+        }
+        return out;
     }
     // Quantifier distribution one way, of a whole formula: what "∀x (A → B)",
     // "∃x (A ∧ B)", "∀x A ∨ ∀x B" and "∀x (A ↔ B)" give.
@@ -19061,11 +19080,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             out.push({ op, a: Q('all', p.v, p.body.a), b: Q('all', p.v, p.body.b) }, { op, a: Q('some', p.v, p.body.a), b: Q('some', p.v, p.body.b) });
         }
         if (p.op === 'some' && p.body.op === 'and') out.push(folJoin('and', folParts(p.body, 'and').map(b => Q('some', p.v, b))));
+        // ... of a kind (r27.142): "some ravens are black and old" gives "some
+        // ravens are black and some ravens are old" -- the kind, its first
+        // parts, said with each of the rest.
+        if (p.op === 'some' && p.body.op === 'and') {
+            const parts = folParts(p.body, 'and');
+            for (let k = 1; k < parts.length - 1; k++)
+                out.push(folJoin('and', parts.slice(k).map(b => Q('some', p.v, folJoin('and', parts.slice(0, k).concat([b]))))));
+        }
         if (p.op === 'or') {
             const parts = folParts(p, 'or');
             if (parts.length > 1 && parts.every(q => q.op === 'all')) {
                 const v = folFresh('x', new Set([].concat(...parts.map(q => [...folNames(q)]))));
                 out.push(Q('all', v, folJoin('or', parts.map(q => folSubst(q.body, q.v, v)))));
+                // ... of one kind (r27.142): "every raven is black or every
+                // raven is white" gives "every raven is black or white".
+                const bodies = parts.map(q => folSubst(q.body, q.v, v));
+                if (bodies.every(b => b.op === 'imp' && folCanon(b.a) === folCanon(bodies[0].a)))
+                    out.push(Q('all', v, { op: 'imp', a: bodies[0].a, b: folJoin('or', bodies.map(b => b.b)) }));
             }
         }
         return out;
@@ -21413,21 +21445,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DEDUCTIVE_EXTENSIONS = [
         { id: 'core', label: 'Intro and elimination steps', on: true, rules: DEDUCTIVE_CORE.concat(['rule-instance-conditionals']) },
         { id: 'familiar', label: 'Familiar steps', on: true, rules: ['modus-ponens-together', 'modus-tollens', 'disjunctive-syllogism', 'conjunctive-syllogism',
-            'constructive-dilemma', 'destructive-dilemma', 'either-way', 'resolution', 'absorption', 'biconditional-to-conditional', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
+            'constructive-dilemma', 'destructive-dilemma', 'either-way', 'resolution', 'biconditional-to-conditional', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
             'universal-modus-ponens', 'universal-modus-tollens', 'expository-syllogism', 'universal-syllogism', 'existential-syllogism', 'subalternation',
-            'categorical-syllogism', 'identity-symmetry', 'identity-transitivity', 'predicate-congruence',
-            'equivalent-substitution'] },
+            'categorical-syllogism', 'identity-symmetry', 'identity-transitivity', 'equivalent-substitution'] },
         { id: 'replacement', label: 'Replacement rules', on: true, rules: ['de-morgan', 'transposition', 'material-implication', 'material-equivalence',
             'negated-conditional', 'negated-biconditional', 'conversion', 'contraposition', 'double-negation'] },
-        { id: 'structural', label: 'Order and grouping', on: true, rules: ['commutation', 'association', 'idempotence', 'distribution', 'boolean-absorption', 'bottom-laws'] },
-        { id: 'quantifier', label: 'Quantifier equivalences', on: true, rules: ['bound-variable-change', 'quantifier-negation', 'quantifier-commutation', 'rules-of-passage',
-            'quantifier-distribution-anywhere', 'null-quantification-anywhere'] },
+        { id: 'structural', label: 'Order and grouping', on: true, rules: ['commutation', 'association', 'idempotence', 'distribution'] },
+        { id: 'quantifier', label: 'Quantifier equivalences', on: true, rules: ['bound-variable-change', 'quantifier-negation', 'quantifier-commutation',
+            'quantifier-distribution-anywhere'] },
         { id: 'inside', label: 'Rules inside quantifiers', on: true, rules: ['under-quantifier'] },
         { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
         { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
         { id: 'factive', label: 'Word meaning: “knows that”', on: true, rules: ['factive'] },
         { id: 'relations', label: 'Word meaning: relations', on: true, rules: ['relations'] },
         { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers', 'that-clause'] },
+        // Steps of textbook systems that arguments rarely take, off (r27.142;
+        // the user: "Switch those to on-by-default that you think reflect
+        // ordinary reasoning"): absorption's "if A, then A and B" says
+        // nothing "if A, then B" does not; predicate congruence's "A(s) if
+        // and only if A(t)" is where identity substitution's step is said
+        // ("Twain wrote books", so "Clemens wrote books"); "A or (A and B)"
+        // is no one's "or"; ⊥ is not English; the rules of passage and the
+        // vacuous quantifier move a quantifier past words it does not bind,
+        // and the reader reads "if anyone comes, Bob leaves" as it is meant.
+        // On by a map, the check names the switch.
+        { id: 'technical', label: 'Technical steps', on: false,
+          rules: ['absorption', 'predicate-congruence', 'boolean-absorption', 'bottom-laws', 'rules-of-passage', 'null-quantification-anywhere'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },

@@ -62,6 +62,14 @@
  *    "lighter", "thinner" give no converse -- the check says how to say it
  *    -- but "shorter in length than" and "less tall than" do; a converse to
  *    them still follows, the premise giving the sense.
+ * 16. (r27.142) Quantifier distribution over a kind: "every raven is black
+ *    and old" is "every raven is black and every raven is old"; "some", "no"
+ *    and "nothing" with "or"; "some ... and" and "every ... or every" one
+ *    way. And the technical steps (the user: "Switch those to on-by-default
+ *    that you think reflect ordinary reasoning"): absorption, predicate
+ *    congruence, Boolean absorption, the ⊥ laws, the rules of passage and
+ *    the vacuous quantifier anywhere, a group off by default; resolution,
+ *    change of bound variable and quantifier distribution stay on.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -387,6 +395,34 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
         'not the wrong sense, nor the wrong way round; "shorter in length than" passed along', J(certified(WRONG)));
     const note = ev('return LOGIC_GROUP_GLOSSES.relations;');
     ok(/ "Shorter" can mean less tall or less long: "shorter in height than" gives "taller than"\.$/.test(note), 'the relations note says so', note);
+}
+
+console.log('\n-- 16. (r27.142) quantifier distribution over a kind; the technical steps --');
+{
+    const DIST = [[['Every raven is black and old.'], 'Every raven is black and every raven is old.'], [['Every raven is black and every raven is old.'], 'Every raven is black and old.'],
+        [['All ravens are black and old.'], 'All ravens are black, and all ravens are old.'], [['Some raven is black or white.'], 'Some raven is black or some raven is white.'],
+        [['Some raven is black or some raven is white.'], 'Some raven is black or white.'], [['No raven is black or white.'], 'No raven is black and no raven is white.'],
+        [['No raven is black and no raven is white.'], 'No raven is black or white.'], [['Nothing is black or white.'], 'Nothing is black and nothing is white.'],
+        [['Some ravens are black and old.'], 'Some ravens are black and some ravens are old.'],
+        [['Some black ravens are old and wise.'], 'Some black ravens are old and some black ravens are wise.'],
+        [['Every raven is black or every raven is white.'], 'Every raven is black or white.'], [['∀x (R(x) → (B(x) ∧ O(x)))'], '∀x (R(x) → B(x)) ∧ ∀x (R(x) → O(x))']];
+    ok(!misses(DIST, 'quantifier distribution, anywhere').length,
+        '"every raven is black and old" is "every raven is black and every raven is old"; "some", "no" and "nothing" with "or"; "some ... and" and "every ... or every" one way (they had not followed)',
+        J(misses(DIST, 'quantifier distribution, anywhere')));
+    const NOT = [[['Every raven is black or white.'], 'Every raven is black or every raven is white.'], [['Some raven is black and some raven is old.'], 'Some raven is black and old.'],
+        [['No raven is black and old.'], 'No raven is black and no raven is old.']];
+    ok(!certified(NOT).length, 'not "every ... or" split, nor two "some"s joined, nor "no ... and" split', J(certified(NOT)));
+    // The technical steps: off by default, the check naming the switch.
+    const g = ev(`var g = DEDUCTIVE_EXTENSIONS.find(function (x) { return x.id === 'technical'; }); return { label: g && g.label, on: g && g.on, rules: g && g.rules, gloss: LOGIC_GROUP_GLOSSES.technical };`);
+    ok(g.label === 'Technical steps' && g.on === false &&
+        J(g.rules) === J(['absorption', 'predicate-congruence', 'boolean-absorption', 'bottom-laws', 'rules-of-passage', 'null-quantification-anywhere']) &&
+        /^Steps from logic textbooks that arguments rarely take/.test(g.gloss || ''), 'a group of six technical steps, off by default, with its note', J(g));
+    const abs = step(['If it rains, the streets are wet.'], 'If it rains, then it rains and the streets are wet.');
+    ok(!abs.rule && abs.why === 'With absorption switched on in the Logic panel (Technical steps), the premises would give \u201cIf it rains, then it rains and the streets are wet\u201d.',
+        'off, the check names the switch', J(abs));
+    const ON = [[['Either Bob or Al did it.', 'Either Bob did not do it or Cy helped.'], 'Either Al did it or Cy helped.', 'resolution'], [['\u2203x B(x)'], '\u2203y B(y)', 'change of bound variable'],
+        [['Something is black or white.'], 'Something is black or something is white.', 'quantifier distribution, anywhere']];
+    ok(ON.every(([p, c, r]) => step(p, c).rule === r), 'resolution, change of bound variable and quantifier distribution stay on', J(ON.map(([p, c]) => step(p, c).rule)));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

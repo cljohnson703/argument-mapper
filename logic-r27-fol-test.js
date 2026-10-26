@@ -401,11 +401,14 @@ try {
             ['∀x ¬G(x)', [1]],
             ['∀x F(x)', [0, 2]]
         ]), 'quantifier negation, then disjunctive syllogism under ∀');
+        // The rules of passage a technical step since r27.142, switched on.
+        ev('setDeductiveRule(DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === "technical"; })[0].rules, true); return 1;');
         ok(check([
             ['∀x (P → F(x))', 'premise'], ['P', 'premise'],
             ['P → ∀x F(x)', [0]],
             ['∀x F(x)', [2, 1]]
-        ]), 'rules of passage, then modus ponens');
+        ]), 'rules of passage (switched on), then modus ponens');
+        ev('state.logic = null; return 1;');
         ok(thm('∀x (x = x)') === 'identity' && thm('a = a') === 'identity' && !thm('a = b'), 'E1 needs no support, closed or not');
         ok(!thm('P v ~P') && !thm('P -> P') && !thm('∀x (F(x) → F(x))') && !thm('∀x (F(x) ∨ ¬F(x))'), 'tautologies and restatements need support (they are proved), quantified or not');
     }
