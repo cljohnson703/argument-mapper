@@ -63,6 +63,14 @@
 //     of it is found, its pieces are -- an identity's names, a part of a
 //     phrase, a verb's object, contraries, "F(a)" and "a = b" in symbols;
 //     painted whole only where it is another wording of the conclusion.
+// (11) r27.133: a kind with parts, where it meets nothing whole, in its
+//     parts ("whoever" and "can vote", "every raven" and "sings"); "only",
+//     "none but" and "if something is ..., then it is ..." found by their
+//     words; words two clauses share ("Bob and Mary left") found for each,
+//     a shared word taking the color of the part that goes on, else of the
+//     one that meets, and words between that belong to neither left plain;
+//     a kind the conclusion denies goes on denied ("every raven", with
+//     "Poe is not a raven").
 //
 // Run:  node colors-r27-inference-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -826,6 +834,61 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(both.rule === 'conjunctive syllogism' && J(runs(both.boxes[0], /^ic-k/)) === J(['black']) && runs(both.boxes[0], /^ic-c/).includes('white') &&
             J(runs(both.boxes[1], /^ic-k/)) === J(['is black']),
             '"not both black and white": "black" meets the premise that says it, "white" goes on', J(both));
+    }
+
+    console.log('\n-- (r27.133) a kind in its parts; "only"; words two clauses share; a kind going on denied --');
+    {
+        // The class of the part of a box whose words are `w`.
+        const k = (b, w) => (b.find(p => p.slice(p.indexOf(': ') + 2).trim() === w) || '').split(': ')[0];
+        // A kind with parts, where it meets nothing whole: "whoever" (a
+        // person) and "can vote", "every raven" and "sings" -- they had been
+        // dimmed.
+        const who = paint(['Whoever can vote is a citizen.', 'Bob is a person.', 'Bob can vote.'], 'Bob is a citizen.');
+        ok(who.rule === 'universal modus ponens' && /^ic-k\d$/.test(k(who.boxes[0], 'Whoever')) && /^ic-k\d$/.test(k(who.boxes[0], 'can vote')) &&
+            k(who.boxes[0], 'Whoever') !== k(who.boxes[0], 'can vote') && k(who.boxes[0], 'Whoever') === k(who.boxes[1], 'is a person') &&
+            k(who.boxes[0], 'can vote') === k(who.boxes[2], 'can vote') && J(runs(who.boxes[0], /^ic-c/)) === J(['is a citizen']),
+            '"Whoever can vote": "whoever" meets "is a person", "can vote" meets "can vote", each in its own color', J(who));
+        const sings = paint(['Every raven that sings is black.', 'Poe is a raven.', 'Poe sings.'], 'Poe is black.');
+        ok(J(runs(sings.boxes[0], /^ic-k/)) === J(['Every raven', 'sings']) && k(sings.boxes[0], 'Every raven') === k(sings.boxes[1], 'is a raven') &&
+            k(sings.boxes[0], 'sings') === k(sings.boxes[2], 'sings') && runs(sings.boxes[0], /^ic-rest/).includes('that'),
+            '"Every raven that sings": "every raven" and "sings" meet the premises that say them, "that" between them', J(sings));
+        const whole = paint(['Every raven that sings is black.', 'Poe is a raven that sings.'], 'Poe is black.');
+        ok(J(runs(whole.boxes[0], /^ic-k0/)) === J(['Every raven that sings']) && J(runs(whole.boxes[1], /^ic-k0/)) === J(['is a raven that sings']) &&
+            J(runs(whole.boxes[1], /^ic-c/)) === J(['Poe']),
+            '... and whole where a premise says it whole: "is a raven that sings" (it had been dimmed)', J(whole));
+        // Said in another order than its reading's.
+        const only = paint(['Only citizens can vote.', 'Bob can vote.'], 'Bob is a citizen.');
+        const none = paint(['None but citizens can vote.', 'Bob can vote.'], 'Bob is a citizen.');
+        ok(only.rule === 'universal modus ponens' && J(only.boxes[0]) === J(['ic-rest: Only ', 'ic-c: citizens', 'ic-rest:  ', 'ic-k0: can vote', 'ic-rest: .']) &&
+            J(runs(none.boxes[0], /^ic-c/)) === J(['citizens']) && J(runs(none.boxes[0], /^ic-k0/)) === J(['can vote']),
+            '"Only citizens can vote", "None but citizens can vote": "can vote" meets, "citizens" goes on (they had gone uncolored)', J([only, none]));
+        const raven = paint(['If something is a raven, then it is black.', 'Poe is a raven.'], 'Poe is black.');
+        ok(J(runs(raven.boxes[0], /^ic-k0/)) === J(['is a raven']) && J(runs(raven.boxes[0], /^ic-c/)) === J(['is black']),
+            '"If something is a raven, then it is black": "is a raven" meets, "is black" goes on (it had gone uncolored)', J(raven));
+        // Words two clauses share: "Bob left" had taken all of "Bob and Mary
+        // left", and "Mary left" had gone unfound.
+        const mary = paint(['Bob and Mary left.'], 'Mary left.'), bob = paint(['Bob and Mary left.'], 'Bob left.');
+        ok(J(runs(mary.boxes[0], /^ic-u/)) === J(['Bob']) && J(runs(mary.boxes[0], /^ic-c/)) === J(['Mary left']) &&
+            J(runs(bob.boxes[0], /^ic-c/)) === J(['Bob', 'left']) && J(runs(bob.boxes[0], /^ic-u/)) === J(['Mary']) && runs(bob.boxes[0], /^ic-rest/).includes('and'),
+            '"Bob and Mary left": for "Mary left", "Mary left" goes on and "Bob" is dimmed; for "Bob left", "Bob" and "left" go on, "Mary" dimmed, "and" between', J([mary, bob]));
+        const danced = paint(['Bob sang and danced.'], 'Bob danced.');
+        ok(J(runs(danced.boxes[0], /^ic-c/)) === J(['Bob', 'danced']) && J(runs(danced.boxes[0], /^ic-u/)) === J(['sang']),
+            '"Bob sang and danced": "Bob" and "danced" go on, "sang" dimmed', J(danced));
+        const list = paint(['Bob is tall, rich and happy.'], 'Bob is rich.'), cy = paint(['Bob, Al and Cy left.'], 'Al left.');
+        ok(J(runs(list.boxes[0], /^ic-c/)) === J(['Bob is', 'rich']) && J(runs(list.boxes[0], /^ic-u/)) === J(['tall', 'happy']) &&
+            J(runs(cy.boxes[0], /^ic-c/)) === J(['Al', 'left']) && J(runs(cy.boxes[0], /^ic-u/)) === J(['Bob', 'Cy']),
+            'a list: "Bob is ... rich" goes on, "tall" and "happy" dimmed; "Bob, Al and Cy left": "Bob" found once the others are, past them', J([list, cy]));
+        const or = paint(['Either Bob or Al is guilty.', 'Bob is not guilty.'], 'Al is guilty.');
+        ok(J(runs(or.boxes[0], /^ic-k0/)) === J(['Bob']) && J(runs(or.boxes[0], /^ic-c/)) === J(['Al is guilty']),
+            '"Either Bob or Al is guilty": "Bob" meets "Bob is not guilty", "Al is guilty" goes on -- a word two parts share in the color of the one that goes on', J(or));
+        const both = paint(['Bob and Al did not both leave.', 'Bob left.'], 'Al did not leave.');
+        ok(J(runs(both.boxes[0], /^ic-k0/)) === J(['Bob']) && runs(both.boxes[0], /^ic-rest/).includes('not both') && runs(both.boxes[0], /ic-cn/)[0] === 'Al',
+            '"Bob and Al did not both leave": "Bob" meets "Bob left", "Al ... leave" goes on denied, and "not both", between the words of both, belongs to neither', J(both));
+        // A kind the conclusion denies goes on denied, as modus tollens's "if" part does.
+        const umt = paint(['Every raven is black.', 'Poe is not black.'], 'Poe is not a raven.');
+        const onlyMT = paint(['Only citizens can vote.', 'Bob is not a citizen.'], 'Bob cannot vote.');
+        ok(umt.rule === 'universal modus tollens' && umt.boxes[0][0] === 'ic-c ic-cn: Every raven' && J(runs(onlyMT.boxes[0], /ic-cn/)) === J(['can vote']),
+            '"Every raven" in "Every raven is black", with "Poe is not a raven", goes on denied (it went on plain); "can vote" in "Only citizens can vote", with "Bob cannot vote"', J([umt, onlyMT]));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

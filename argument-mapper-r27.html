@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.132';
+    const APP_BUILD = '2026-10-26 r27.133';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -31475,7 +31475,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Below a clause: for all or some of a kind, the kind with its quantifier
     // ("all ravens") and what is said of it ("black"); for one thing, the
     // thing ("Poe") and what is said of it ("a raven"). What is said carries
-    // whether its own words deny it.
+    // whether its own words deny it. A kind with parts has them too, for
+    // where it meets nothing whole (icRestrictor; r27.133).
     function icSplit(cl) {
         const made = cl.form.kind === 'not' && !cl.form.src && !cl.form.vpText;
         const f = cl.form.kind === 'not' && cl.form.inner ? cl.form.inner : cl.form;
@@ -31485,13 +31486,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // What is said, with its "is" (r27.118): "is a part of that
             // subject's mind" -- the "is" had been dimmed between the parts.
             const said = vp.replace(IC_COPULA, '');
-            return [{ key: 'p:' + f.subject, words: at > 0 ? src.slice(0, at).trim() : (f.np || '') },
-                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: vp || said, said: true, neg: icDenies(said) !== made }];
+            // Said in another order than the reading's -- "only citizens can
+            // vote", "if something is a raven, then it is black" -- each found
+            // by its own words (r27.133; they had gone uncolored).
+            const runs = at < 0 && !f.np ? icSplitRuns(src, f.subject, f.predicate) : null;
+            const kind = runs ? runs.subject : at > 0 ? src.slice(0, at).trim() : (f.np || '');
+            return [{ key: 'p:' + f.subject, words: kind, kids: icRestrictor(f.subject, kind) },
+                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made }];
         }
         if (f.kind === 'pred' && f.term && f.prop) {
             const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
             return [{ key: 't:' + f.term, words: cl.form.subjectText || f.subjectText || '' },
                     { key: 'p:' + String(f.prop).replace(/^\u00ac/, ''), words: vp || said, said: true, neg: icDenies(said) !== made }];
+        }
+        // "Poe is a raven that sings": one thing, and what is said of it
+        // whole, to meet "every raven that sings" (r27.133).
+        if (f.kind === 'and' && f.compound && (f.parts || []).length && f.parts.every(x => x.kind === 'pred' && x.term === f.parts[0].term)) {
+            const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
+            if (vp) return [{ key: 't:' + f.parts[0].term, words: cl.form.subjectText || f.subjectText || '' },
+                    { key: 'p:' + String(f.compound).replace(/^\u00ac/, ''), words: vp, said: true, neg: icDenies(said) !== made }];
         }
         return null;
     }
@@ -31505,6 +31518,54 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (let i = from || 0; i + t.length <= tokens.length; i++)
             if (t.every((w, k) => icSameWord(claimWord(tokens[i + k]), w))) return { at: i, end: i + t.length };
         return null;
+    }
+    // A kind's words and what is said of it, each found by its own in a
+    // clause that says them in another order than the reading's: "can vote"
+    // and "citizens" in "only citizens can vote"; "is a raven" and "is
+    // black" in "if something is a raven, then it is black" -- each with
+    // the "is", the "a", the "not" before it (r27.133).
+    function icSplitRuns(src, subject, predicate) {
+        const toks = claimTokens(String(src || ''));
+        const find = (prop, other) => {
+            const target = claimTokens(String(prop).replace(/^\u00ac/, '').replace(/^[=~]/, ''));
+            for (let from = 0, r; (r = icFindRun(toks, target, from)); from = r.at + 1) {
+                if (other && r.at < other.end && r.end > other.at) continue;
+                let at = r.at;
+                while (at > 0 && /^(?:a|an|the|not|never|is|are|was|were|am|be)$/.test(claimWord(toks[at - 1]))) at--;
+                if (other && at < other.end && r.end > other.at) at = r.at;
+                return { at, end: r.end };
+            }
+            return null;
+        };
+        const k = find(subject), p = k && find(predicate, k);
+        return k && p ? { subject: toks.slice(k.at, k.end).join(' '), said: toks.slice(p.at, p.end).join(' ') } : null;
+    }
+    // A kind's parts where its words have them, each a piece of its own --
+    // "every raven that sings" as "every raven" and "sings", "whoever can
+    // vote" as "whoever" (a person) and "can vote" -- for where the kind
+    // meets nothing whole: one premise saying that Poe is a raven, another
+    // that Poe sings (r27.133; the kind had been dimmed). The first part
+    // takes the quantifier before it, or, its own words not there, the
+    // words before the others ("whoever", "anyone" of "anyone who").
+    function icRestrictor(subject, words) {
+        const parts = claimPropParts(subject);
+        if (!parts || parts.length < 2 || !words) return null;
+        const toks = claimTokens(String(words)), low = toks.map(claimWord), runs = [];
+        let from = 0;
+        for (const q of parts) {
+            const r = icFindRun(toks, claimTokens(String(q).replace(/^[=~]/, '')), from);
+            runs.push(r);
+            if (r) from = r.end;
+        }
+        if (runs.slice(1).some(r => !r)) return null;
+        if (runs[0]) { if (low.slice(0, runs[0].at).every(w => /^(?:every|all|each|any|some|no|a|an|the)$/.test(w))) runs[0] = { at: 0, end: runs[0].end }; }
+        else {
+            let end = runs[1].at;
+            while (end > 0 && /^(?:that|who|whom|which)$/.test(low[end - 1])) end--;
+            if (!end) return null;
+            runs[0] = { at: 0, end };
+        }
+        return parts.map((q, k) => ({ key: 'p:' + q, words: toks.slice(runs[k].at, runs[k].end).join(' ') }));
     }
     // A clause in pieces (r27.123; the user: "is the proposition highlighter
     // working for all types of propositions? I want to make sure that both
@@ -31758,7 +31819,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 cParts.splice(0, cParts.length, ...objectParts(C, os.y, os.r.predicate));
             }
             const every = [].concat(...splits.map(list => [].concat(...list.filter(Boolean))));
-            splits.forEach((list, i) => list.forEach((parts, ci) => {
+            // In the conclusion, or where premises meet. A kind the
+            // conclusion denies of a thing goes on denied: "every raven" in
+            // "every raven is black", with "Poe is not a raven" (r27.133; it
+            // had gone on plain).
+            const place = (sp, pool) => {
+                const inC = cParts.find(x => x.key === sp.key);
+                if (inC) { sp.role = 'c'; sp.denied = !!inC.said && (sp.said ? sp.neg !== inC.neg : !!inC.neg); return; }
+                if (pool.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
+            };
+            splits.forEach((list, i) => list.forEach(parts => {
                 if (!parts) return;
                 parts.forEach(sp => {
                     // What it says, with more denials than another premise
@@ -31768,15 +31838,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         const d = icNegCount(sp.words) - icNegCount(x.words);
                         if (x.key === sp.key && x.said && d > sp.contra) sp.contra = d;
                     })); });
-                    const inC = cParts.find(x => x.key === sp.key);
-                    if (inC) { sp.role = 'c'; sp.denied = !!(sp.said && inC.said) && sp.neg !== inC.neg; return; }
-                    if (every.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
+                    place(sp, every);
                 });
+            }));
+            // A kind that meets nothing whole, in its parts (r27.133):
+            // "every raven" meets "Poe is a raven" and "sings" meets "Poe
+            // sings"; "whoever" meets "Bob is a person" and "can vote" meets
+            // "Bob can vote".
+            const kids = [].concat(...every.filter(sp => !sp.role && sp.kids).map(sp => sp.kids));
+            if (kids.length) {
+                const pool = every.concat(kids);
+                kids.forEach(k => place(k, pool));
+                every.forEach(sp => { if (!sp.role) place(sp, kids); });
+            }
+            splits.forEach((list, i) => list.forEach((parts, ci) => {
+                if (!parts) return;
+                const mine = [].concat(...parts.map(sp => !sp.role && sp.kids && sp.kids.some(k => k.role) ? sp.kids : [sp]));
                 // A clause none of whose parts meets anything stays whole: one
                 // color, not its subject apart ("learning that someone never
                 // really loved you", beside "there is nothing bad about ...")
                 // (r27.111).
-                if (parts.some(sp => sp.role)) clauses[i][ci].parts = parts;
+                if (mine.some(sp => sp.role)) clauses[i][ci].parts = mine;
             }));
         }
         // In pieces (r27.123): a premise of a certified step that nothing
@@ -31929,29 +32011,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Where a part's words stand among a box's: in order, most of them (the
     // check rewrites a few -- "he" as the name it stands for, "does sing" as
     // "sings"), none already another part's. Words from `from` on are tried
-    // first. The first and the last of the box's words, or null.
-    function icAlign(box, part, taken, from) {
+    // first; a word `free` marks is passed over for nothing (r27.133). The
+    // first and the last of the box's words, or null -- with the words
+    // matched (`matched`).
+    function icAlign(box, part, taken, from, free) {
         const m = part.length, need = m <= 2 ? m : Math.ceil(m * 0.6);
         const score = (b, p) => b.n === p.n ? 3 : b.s === p.s ? 2 : -1;
         const run = lo => {
             let best = null, prev = null;
             for (let i = lo; i <= box.length; i++) {
                 const cur = new Array(m + 1);
-                cur[0] = { h: 0, s: i, k: 0 };
-                const w = i > lo ? box[i - 1] : null, open = !!w && !taken[i - 1];
+                cur[0] = { h: 0, s: i, k: 0, got: null };
+                const w = i > lo ? box[i - 1] : null, open = !!w && !taken[i - 1], gap = free && free[i - 1] ? 0 : 1.5;
                 for (let j = 1; j <= m; j++) {
-                    let c = { h: cur[j - 1].h - 1.5, s: cur[j - 1].s, k: cur[j - 1].k };
+                    let c = { h: cur[j - 1].h - 1.5, s: cur[j - 1].s, k: cur[j - 1].k, got: cur[j - 1].got };
                     if (open) {
                         const d = prev[j - 1], sc = score(w, part[j - 1]), l = prev[j];
-                        if (d.h + sc > c.h) c = { h: d.h + sc, s: d.s, k: d.k + (sc > 0 ? 1 : 0) };
-                        if (l.h - 1.5 > c.h) c = { h: l.h - 1.5, s: l.s, k: l.k };
+                        if (d.h + sc > c.h) c = { h: d.h + sc, s: d.s, k: d.k + (sc > 0 ? 1 : 0), got: sc > 0 ? { at: i - 1, up: d.got } : d.got };
+                        if (l.h - gap > c.h) c = { h: l.h - gap, s: l.s, k: l.k, got: l.got };
                     }
                     cur[j] = c;
                 }
-                if (open && cur[m].k >= need && cur[m].h > 0 && (!best || cur[m].h > best.h)) best = { h: cur[m].h, s: cur[m].s, e: i - 1 };
+                if (open && cur[m].k >= need && cur[m].h > 0 && (!best || cur[m].h > best.h)) best = { h: cur[m].h, s: cur[m].s, e: i - 1, got: cur[m].got };
                 prev = cur;
             }
-            return best ? [best.s, best.e] : null;
+            if (!best) return null;
+            const hit = [best.s, best.e];
+            hit.matched = [];
+            for (let g = best.got; g; g = g.up) hit.matched.unshift(g.at);
+            return hit;
         };
         return (from > 0 && run(from)) || run(0);
     }
@@ -32121,14 +32209,52 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const cls = new Array(c.text.length).fill('ic-rest');
         const taken = new Array(c.words.length).fill(false);
         const first = {}, end = {}, contra = [], rejects = [], affirms = [], ifRuns = [];
-        let from = 0;
-        plan.parts.forEach(p => {
+        // Each part's words found: in order, none another's -- or, where two
+        // clauses share words ("Bob and Mary left": "Bob left", "Mary left";
+        // "Bob sang and danced"), among another's, with one of its own at
+        // least, passing for nothing over words another has (r27.133; "Bob
+        // left" had taken all four words, and "Mary left" had gone unfound).
+        const matched = new Array(c.words.length).fill(0), hits = [];
+        const find = (p, from) => {
             const part = icTokens(p.words);
-            const hit = part.length ? icAlign(c.words, part, taken, from) : null;
-            if (!hit) return;
+            if (!part.length) return null;
+            let hit = icAlign(c.words, part, taken, from), loose = false;
+            if (!hit) {
+                hit = icAlign(c.words, part, new Array(c.words.length).fill(false), from, matched.map(n => n > 0));
+                loose = true;
+                if (hit && !hit.matched.some(k => !matched[k])) hit = null;
+            }
+            if (!hit) return null;
             const [a, b] = icWiden(c.text, c.words[hit[0]].a, c.words[hit[1]].b);
             c.words.forEach((w, k) => { if (w.a >= a && w.b <= b) taken[k] = true; });
-            for (let i = a; i < b; i++) cls[i] = p.cls;
+            hit.matched.forEach(k => matched[k]++);
+            return { a, b, hit, loose };
+        };
+        let from = 0;
+        plan.parts.forEach((p, n) => { const h = find(p, from); if (h) { hits[n] = h; from = h.hit[1] + 1; } });
+        // ... and once all are found, those not found yet, past the others'
+        // words ("Bob" in "Bob, Al and Cy left").
+        plan.parts.forEach((p, n) => { if (!hits[n]) { const h = find(p, 0); if (h) hits[n] = h; } });
+        // Each painted from its first word to its last, but for words
+        // between that another part has ("and Mary" in "Bob and Mary left",
+        // for "Bob left") or that stand between another's too ("not both"
+        // in "Bob and Al did not both leave"); a word two parts share takes
+        // the color of the one that goes on, else of the one that meets.
+        const rank = k => /^ic-c/.test(k) ? 3 : /^ic-k/.test(k) ? 2 : k === 'ic-u' ? 1 : 0;
+        const between = (h, f) => { const m = h.hit.matched; for (let q = 0; q + 1 < m.length; q++) f(m[q], m[q + 1]); };
+        const inGap = new Array(c.words.length).fill(0);
+        hits.forEach(h => { if (h) between(h, (x, y) => { for (let k = x + 1; k < y; k++) inGap[k]++; }); });
+        const paint = (p, h) => {
+            const ws = c.words, skip = [];
+            between(h, (x, y) => { for (let k = x + 1; k < y; k++) if (matched[k] || inGap[k] > 1) { skip.push([ws[x].b, ws[y].a]); break; } });
+            for (let i = h.a; i < h.b; i++)
+                if (!skip.some(([x, y]) => i >= x && i < y) && (!h.loose || rank(p.cls) > rank(cls[i]))) cls[i] = p.cls;
+        };
+        plan.parts.forEach((p, n) => { if (hits[n] && !hits[n].loose) paint(p, hits[n]); });
+        plan.parts.forEach((p, n) => { if (hits[n] && hits[n].loose) paint(p, hits[n]); });
+        plan.parts.forEach((p, n) => {
+            if (!hits[n]) return;
+            const { a, b, hit } = hits[n];
             if (p.contra) contra.push([a, b, p.contra]);
             if (p.rejects) rejects.push([a, b, p.rejects]);
             if (p.affirm) {
@@ -32138,7 +32264,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (p.ctx && first[p.ctx] === undefined) first[p.ctx] = a;
             if (p.ctx) end[p.ctx] = b;
             if (p.ctx === 'if') ifRuns.push({ a, b, goes: /^ic-c/.test(p.cls) });
-            from = hit[1] + 1;
         });
         // A chain of ifs: the "if" before the part that carries on, the "then" before the other.
         const keepWord = (word, before, after = 0) => {

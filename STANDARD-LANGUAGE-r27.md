@@ -4,6 +4,17 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: the highlighter -- a kind in its parts; "only"; words two clauses share; a kind going on denied (r27.133)
+
+* "Whoever can vote is a citizen; Bob is a person; Bob can vote ∴ Bob is a citizen" had dimmed "Whoever can vote", "is a person" and "can vote", as if the step used none of them: the kind was matched whole, and no premise says "a person who can vote". A kind with parts that meets nothing whole is now taken in its parts: "whoever" meets "is a person" and "can vote" meets "can vote", each in its own color. Likewise "anyone who can vote", and "every raven that sings" beside "Poe is a raven" and "Poe sings".
+* "Poe is a raven that sings", beside "Every raven that sings is black", had been dimmed. It now meets the kind whole.
+* "Only citizens can vote", "None but citizens can vote" and "If something is a raven, then it is black" had gone uncolored in certified steps: their words are not in the order of their reading ("all who can vote are citizens"). Each part is now found by its own words: "can vote" meets, "citizens" goes on.
+* Words two clauses share. "Bob and Mary left" is read as "Bob left" and "Mary left". The first had been found across all four words, so "Mary left" went unfound: with "∴ Mary left" the whole box was dimmed, and with "∴ Bob left" all of it went on. Each part is now found for itself, past the words another part has: for "Mary left", "Mary left" goes on and "Bob" is dimmed. A word two parts share takes the color of the part that goes on, else of the part that meets. Words between them that belong to neither are left plain: the "and", the "not both" of "Bob and Al did not both leave". Likewise "Bob sang and danced", "Bob is tall, rich and happy", "Bob, Al and Cy left", "Either Bob or Al is guilty" and "Neither Bob nor Al left".
+* Universal modus tollens: "Every raven is black; Poe is not black ∴ Poe is not a raven" had left "Every raven" plain, though the conclusion denies it, while modus tollens underlines its "if" part. "Every raven" now goes on denied, with the red dashes, as "every raven" already did in "Poe loves every raven; Poe does not love Fido ∴ Fido is not a raven". So does "can vote" in "Only citizens can vote; Bob is not a citizen ∴ Bob cannot vote".
+* Not changed: "No ravens are white; Poe is a raven ∴ Poe is not white" still underlines "are white" as going on denied, as agreed in r27.75. That is put to the user again, since the conclusion agrees with what the premise says of ravens.
+
+Tests. colors-r27-inference-test.js (129: eleven new checks, each failing before). Take-one-out: 5 of the 6 edits are caught; the sixth removes a line the new code left unused. No reading changes: the highlighter reads nothing new. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 90 suites pass, and the public build's smoke test.
+
 ### October 26: the weather's "it" after "if", "unless", "when"; "it is Tuesday"; one sheep may be "it" (r27.132)
 
 The user's rule (r27.125): "it is cold" after a thing is asked, the weather among its readings, written with the "it" clause first.
