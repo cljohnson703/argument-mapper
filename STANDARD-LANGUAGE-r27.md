@@ -4,6 +4,17 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: a clause or a phrase set off by commas -- "Bob, who is rich, can pay" (r27.139)
+
+The user's rule: commas settle grouping. A "who" or "which" clause, or a phrase naming what the thing is, set off by commas after a name or "the ...", says something of it, a claim of its own. These had been read as one claim, with the note "a comma inside the subject sets off a phrase".
+
+* "Bob, who is rich, can pay" reads "Bob is rich, and Bob can pay"; "The dog, which barked, left" reads "The dog barked, and the dog left"; "Mark Twain, who wrote Huckleberry Finn, was born in Missouri" gives "Mark Twain wrote Huckleberry Finn".
+* "Bob, a doctor, can pay" reads "Bob is a doctor, and Bob can pay"; "Paris, the capital of France, is big", "Physicalism, the view that everything is physical, is popular" the same way.
+* Not "Bob, who I like, can pay", whose clause has a subject of its own; not a list ("Bob, the dog and the cat left"); not "Bob, however, can pay"; not inside an "if". A verb must follow the second comma, one the reader knows as a verb.
+* The syntax tree shows the box as read: "[the match] was scheduled for noon, and the match is canceled" for "The match, which was scheduled for noon, is canceled".
+
+Tests. syntax-r27-test.js (111: three new; the bracket of "The match, which was scheduled for noon, is canceled" is now the two claims). anaphora-r27-test.js: three checks had kept "Bob, the teacher,", "the dog, a terrier," and "Poe, which is a raven," read as one claim, guarding that the commas between adjectives (r27.87) and a "which" for what a clause says did not reach them; each is now two claims, and the "which" is still no clause's. Take-one-out: the one edit is caught. Of the 4,542 sentences from the suites, six read differently, each a clause or phrase set off by commas, now two claims. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 91 suites pass, and the public build's smoke test.
+
 ### October 26: overlapping rules made separate (r27.138)
 
 The user, of rules that take each other's steps when one is switched off: "How about both? Those that should be separate rules with separate steps are made so, and those that necessarily overlap are put under one switch." These are the first kind: a rule no longer takes a step that a narrower rule takes.

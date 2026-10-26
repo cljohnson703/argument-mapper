@@ -136,10 +136,12 @@ console.log('\n-- 5. adjectives before one noun --');
     const commas = read('The long, dark, windy road is dangerous.');
     ok(commas.kind === 'pred' && commas.term === 'the long, dark, windy road' && !commas.notes.length,
         'commas between adjectives set nothing off: "the long, dark, windy road" is the subject (it had been read as one claim)', J(commas));
+    // A phrase set off by commas still is set off, and since r27.139 it says
+    // what Bob is, a claim of its own (it had been read as one claim).
     const bob = read('Bob, the teacher, is tired.');
-    ok(bob.kind === 'atom' && bob.notes.some(n => /a comma inside the subject sets off a phrase/.test(n)), 'a phrase set off by commas still is: "Bob, the teacher,"', J(bob));
+    ok(bob.kind === 'and' && /^bob is the teacher, and Bob is tired$/i.test(bob.said) && !bob.notes.length, 'a phrase set off by commas still is: "Bob, the teacher," -- what Bob is, a claim of its own', J(bob));
     const dog = read('The dog, a terrier, barked.');
-    ok(dog.kind === 'atom', 'and "the dog, a terrier,"', J(dog));
+    ok(dog.kind === 'and' && /^the dog is a terrier, and the dog barked$/i.test(dog.said), 'and "the dog, a terrier,"', J(dog));
     const winding = read('The long and winding road leads to your door.');
     ok(winding.kind === 'pred' && winding.term === 'the long and winding road' && !winding.notes.length,
         '"the long and winding road" is one road: nothing asked of each, or of them together', J(winding));
@@ -198,8 +200,10 @@ console.log('\n-- 8. "which", "it", "this" for what a clause says --');
         'nor with "and it" (its note had said what "Poe is black" says, while it was read as Poe)');
     const car = read('Bob bought a car, which surprised Mary.');
     ok(car.notes.some(n => n === 'ambiguous: “it” may be “the car” or what “Bob bought a car” says'), 'after "a car", the car or what the clause says: asked', J(car));
+    // (Since r27.139 a claim of its own: "Poe is a raven, and Poe is black".)
     const setOff = read('Poe, which is a raven, is black.');
-    ok(setOff.kind === 'atom' && !setOff.notes.some(n => /“which”/.test(n)), 'a "which" set off inside the subject is not touched', J(setOff));
+    ok(setOff.kind === 'and' && /^poe is a raven, and Poe is black$/i.test(setOff.said) && !setOff.notes.some(n => /“which”/.test(n)),
+        'a "which" set off inside the subject is not what a clause says: Poe is a raven', J(setOff));
     const thisOne = read('Poe is black, and this surprises Mary.');
     ok(thisOne.notes.some(n => n === 'unread: read with “this” as what “Poe is black” says, the one it can be in this box'), '"this" with a verb after it: what the clause says', J(thisOne));
     const alone = read('This shows that God exists.');

@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.138';
+    const APP_BUILD = '2026-10-26 r27.139';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10852,7 +10852,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // white". A full stop after an abbreviation ("etc.", "et al.") ends
             // no sentence.
             .replace(/(\b[a-z0-9][a-z0-9'’-]+|[)\]"”’])\.\s+(?=[A-Z“"(])/g, (m, w) => CLAIM_ABBREVIATION_STOP.test(w) ? m : w + '; ')
-            .trim();
+            .trim()
+            // "Bob, who is rich, can pay": the commas set the clause off, and
+            // what it says of Bob is a claim of its own -- "Bob is rich, and
+            // Bob can pay"; "Bob, a doctor, can pay": "Bob is a doctor, and
+            // Bob can pay" (r27.139; the user: commas settle grouping. They
+            // had been read as one claim). Of a name, or of "the ...", "my
+            // ..."; the clause with a verb of its own first ("Bob, who I
+            // like," is not of this kind); a verb after it.
+            .replace(/^([A-Z][\w'’-]*(?: [A-Z][\w'’-]*)*|(?:The|My|Your|His|Her|Our|Their|This|That) [a-z][\w'’-]*(?: [a-z][\w'’-]*)?), (?:(?:who|which) ([^,;]+)|((?:a|an|the) [^,;]+)), ([^,;]+)$/,
+                (m, x, said, np, rest) => {
+                    const verb = w => /^(?:is|are|was|were|am|has|have|had|can|could|will|would|shall|should|may|might|must|do|does|did)$/.test(w) ||
+                        claimSynWord(w).knownVerb;
+                    const first = t => String(t).trim().split(/\s+/)[0].toLowerCase();
+                    if (/^(?:If|When|Whenever|Unless|Because|Since|Although|Though|While|After|Before|Until|Once|As|And|Or|But|So|Then|Whether|It|There)$/.test(x.split(' ')[0]) ||
+                        !verb(first(rest)) || (said && !verb(first(said)))) return m;
+                    const again = /^(?:The|My|Your|His|Her|Our|Their|This|That) /.test(x) ? x.charAt(0).toLowerCase() + x.slice(1) : x;
+                    return x + ' ' + (said ? said.trim() : 'is ' + np.trim()) + ', and ' + again + ' ' + rest.trim();
+                });
         return expandClaimContractions(claimDropShorthands(markClaimSpelling(claimResolvePronouns(plain))).replace(/[’‘]/g, "'"))
             // "Alice and Bob each ate the pizza": said of each -- "both Alice
             // and Bob ate the pizza". Not the "each" of "each other".

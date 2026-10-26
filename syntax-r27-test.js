@@ -71,7 +71,8 @@ console.log('\n-- subjects --');
         ['A series of lights and control circuitry can produce consciousness.', '[a series of lights and control circuitry] can produce consciousness'],
         ['The book on the table is red.', '[the book on the table] is red'],
         ['The man who left cried.', '[the man who left] cried'],
-        ['The match, which was scheduled for noon, is canceled.', '[the match, which was scheduled for noon,] is canceled'],
+        // Since r27.139 two claims, the commas setting the clause off.
+        ['The match, which was scheduled for noon, is canceled.', '[the match] was scheduled for noon, and the match is canceled'],
         ['The fact that the vase is broken surprised Mary.', '[the fact that the vase is broken] surprised mary'],
         ['The price increases were large.', '[the price increases] were large'],
         ['The dog bites the man.', '[the dog] bites the man'],
@@ -782,6 +783,26 @@ console.log('\n-- "both" after a subject; "not only ... but also" (r27.131) --')
         step(['Bob and Al did not both leave.'], 'Bob did not leave.') === '? not recognized' &&
         step(['Bob is not only rich but also happy.'], 'Bob is rich.') === '✓ conjunction elimination',
         'so "Bob left" follows; "not both" with "Bob left" gives "Al did not leave", and De Morgan gives "not both"; "not both" alone gives neither denial');
+}
+
+console.log('\n-- a clause or a phrase set off by commas: "Bob, who is rich, can pay" (r27.139) --');
+{
+    // The commas set it off, and what it says of Bob is a claim of its own
+    // (the user: commas settle grouping). These had been read as one claim.
+    const keys = ['Bob, who is rich, can pay.', 'Bob, a doctor, can pay.', 'The dog, which barked, left.', 'Paris, the capital of France, is big.',
+        'My brother, who lives in Paris, is rich.'].map(key);
+    ok(J(keys) === J(['C[P:bob|=rich;P:bob|~can pay]', 'C[P:bob|=doctor;P:bob|~can pay]', 'C[P:the dog|~did barked;P:the dog|~did left]',
+        'C[P:paris|=capital of france;P:paris|=big]', 'C[P:my brother|~live in paris;P:my brother|=rich]']),
+        'a "who" or "which" clause, or a phrase naming what it is, set off by commas: two claims of one thing', J(keys));
+    const kinds = ev(`return ['Bob, who I like, can pay.', 'Bob, the dog and the cat left.', 'Bob, however, can pay.', 'If Bob, who is rich, pays then Al leaves.']
+        .map(function (t) { return parseClaim(t).kind; });`);
+    ok(J(kinds) === J(['atom', 'and', 'pred', 'if']), 'not "who I like", whose verb is not its own; not a list; not "however"; not inside an "if"', J(kinds));
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+    ok(step(['Bob, who is rich, can pay.'], 'Bob is rich.') === '✓ conjunction elimination' && step(['Bob, a doctor, can pay.'], 'Bob is a doctor.') === '✓ conjunction elimination' &&
+        step(['Mark Twain, who wrote Huckleberry Finn, was born in Missouri.'], 'Mark Twain wrote Huckleberry Finn.') === '✓ conjunction elimination',
+        'so "Bob is rich", "Bob is a doctor", "Mark Twain wrote Huckleberry Finn" follow');
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
