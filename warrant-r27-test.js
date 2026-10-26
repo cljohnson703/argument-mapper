@@ -378,13 +378,20 @@ try {
         }`, noun);
         check(result, 'unchanging noun distinguishes number, denial, and unresolved modal subject: ' + noun);
     }
+    // "Noisy" until r27.132, a word the weather's "it" takes (the user's
+    // r27.125): "the sheep is hungry and it is noisy" may be the sheep or the
+    // surroundings, and is asked, as "the dog is hungry and it is noisy" is.
+    // The number is checked with a word that is no weather's.
     for (const [sentence,explicit] of [
-        ['The sheep is hungry and it is noisy', 'The sheep is hungry and the sheep is noisy'],
+        ['The sheep is hungry and it is white', 'The sheep is hungry and the sheep is white'],
+        ['The sheep are hungry and they are white', 'The sheep are hungry and the sheep are white'],
         ['The sheep are hungry and they are noisy', 'The sheep are hungry and the sheep are noisy']
     ]) {
         check(call(`input => claimKey(parseClaim(input.sentence)) === claimKey(parseClaim(input.explicit))`, {sentence,explicit}),
             'local pronoun carries the antecedent number: ' + sentence);
     }
+    check(call(`() => parseClaimFull('The sheep is hungry and it is noisy').notes.some(n => n.kind === 'ambiguous' && /the sheep.*or the surroundings/.test(n.message))`),
+        'one sheep and "it is noisy": the sheep, or the surroundings -- asked');
     check(call(`() => !!certifyStep(['Every sheep is observable', 'The sheep is a sheep'].map(parseClaim), [parseClaim('The sheep is observable')], false)`),
         'invariant singular noun remains eligible for universal instantiation');
     check(call(`() => !certifyStep(['Every sheep is observable', 'The sheep are sheep'].map(parseClaim), [parseClaim('The sheep is observable')], false)`),

@@ -4,6 +4,39 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: the weather's "it" after "if", "unless", "when"; "it is Tuesday"; one sheep may be "it" (r27.132)
+
+The user's rule (r27.125): "it is cold" after a thing is asked, the weather among its readings, written with the "it" clause first.
+
+* "The game is cancelled unless it is sunny" had offered "the game is sunny" and "the fact that the game is cancelled is sunny", neither the one meant. The weather's reading had been written only after "and", or for "if A, then it is cold". Now its clause goes first after "if", "unless", "when" and the like: "Unless it is sunny, the game is cancelled", "If it is cold, the game is cancelled", "When it is sunny, the game is on".
+* Read back, "Unless it is sunny, the game is cancelled" had read "it" as the game: the check that keeps a weather's "it" had its own, shorter list of the weather's words, without "sunny". The two lists are one now.
+* A day of the week is the time's: "The street is wet and it is Tuesday" asks whether "it" is the street or the time.
+* "The sheep is hungry and it is cold" had asked nothing: "the sheep" had been many only, so "it" could be nothing in the box but the weather. "The sheep is", one sheep, may now be "it", and so it is asked, as with "the dog". That changed an old check, "The sheep is hungry and it is noisy" read as the sheep: "noisy" is a word of the surroundings, and the sentence now asks. The check of a pronoun's number now uses "white", and a new one says the "noisy" sentence asks.
+
+Tests. anaphora-r27-test.js (115: the weather after "if", "unless", "when"; the time; one sheep); warrant-r27-test.js (the number check with "white", and "noisy" asked). Take-one-out: each of the 5 edits is caught. Of the 4,542 sentences from the suites, only the sheep's reads differently. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 90 suites pass, and the public build's smoke test.
+
+### October 26: "both" after a subject, "not both", and "not only ... but also" (r27.131)
+
+The user: "parse language into its syntactical components correctly".
+
+* "Bob and Mary both left" had kept "both" in what was said ("both left"), so "Bob left" did not follow. "Both" or "each" after the subject now says it of each, as "both Bob and Mary" does; so too "Bob and Mary have both left".
+* "Bob and Al did not both leave" had been read as neither leaving, with a verb "bothed leave". "Not" before "both" now denies that both did, so with "Bob left" it gives "Al did not leave" (conjunctive syllogism). "Bob did not leave or Al did not leave" gives it by De Morgan's laws, and it gives neither denial alone. "Bob and Al both did not leave", "not" after "both", denies it of each.
+* "Bob is not only rich but also happy" had asked whether Bob is "not both only rich and happy"; "Bob is not only rich, but he is also happy" had been read as a denial. "Not only ... but" now says both: "Bob is rich", "Bob is happy". "Not only is Bob rich, but ..." was read so already; "Bob is not only rich", with no "but", is as before.
+* Found beside it: "Bob, Al and Cy each left" had been made "both Bob, Al and Cy left", and read as Bob's "al". A list of three or more takes no "both".
+
+Tests. syntax-r27-test.js (108: "both" after a subject; "not only ... but also"). Take-one-out: each of the 4 edits is caught. The 4,542 sentences from the suites read as before. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 90 suites pass, and the public build's smoke test.
+
+### October 26: "they" of one person, bound as "he" is; "that student" for a condition's "a student" (r27.130)
+
+The user writes "they" of one person, and the students do. Of the fixes proposed: "I agree with you on everything."
+
+* "If anyone cheats, they will be caught" had been "✗ no referent", and "If someone cheats, they will be caught" was read as one claim. With "he", both had been read as "everyone who cheats will be caught". Now "they" is bound as "he" is, said in the singular: "they lose" is "loses", "they are punished" is "is punished", "they will be caught" as it is.
+* A denied consequent is read as "no one who ...": "If someone cheats, they do not win" says what "no one who cheats wins" says. It had been read as one claim, with "he" too, since "everyone who cheats does not win" asks which "not" is meant.
+* "If a student cheats, that student will be caught" -- "that student", "this student" -- is the student of the condition, as "he" would be (every student that cheats will be caught). It had been read as one claim.
+* Not "the student": "If an AI system is consulted, then the AI system is reliable" keeps its words, the same in each box, for the modus ponens r27.119 gave it. Binding it so had broken that step of the Extended Mind map, which its suite caught.
+
+Tests. anaphora-r27-test.js (112: "they" of one person; "that student"). Take-one-out: each of the 6 edits is caught. The 4,542 sentences from the suites read as before. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 90 suites pass, and the public build's smoke test.
+
 ### October 26: the opposites list made sound -- a word of two senses, verbs of change, an outcome of nothing, a pair of persons only (r27.129)
 
 The user asked for "a complete dictionary of English contraries and contradictories". Of the fixes proposed: "I agree with you on everything."

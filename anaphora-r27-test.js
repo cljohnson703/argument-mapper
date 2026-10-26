@@ -475,6 +475,65 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         'and only what the words left open: "while" read as one claim is no guess, and is not said', J(kept));
 }
 
+console.log('\n-- "they" of one person; "the student" of "a student" (r27.130) --');
+{
+    // The user: "highlight ... parse language into its syntactical components
+    // correctly"; of the fixes proposed, "I agree with you on everything".
+    // "If anyone cheats, they will be caught" had been "✗ no referent", and
+    // "if someone cheats, they will be caught" read as one claim -- with "he"
+    // both were read. "They" is how one person is spoken of here.
+    const tag = (ps, c) => step(ps, c).tag;
+    const they = [
+        [['If anyone cheats, they will be caught.', 'Bob is a person.', 'Bob cheats.'], 'Bob will be caught.'],
+        [['If someone cheats, they will be caught.', 'Bob is a person.', 'Bob cheats.'], 'Bob will be caught.'],
+        [['If someone cheats, they lose.', 'Bob is a person.', 'Bob cheats.'], 'Bob loses.'],
+        [['If someone is late, they are punished.', 'Bob is a person.', 'Bob is late.'], 'Bob is punished.'],
+        [['If someone cheats, they do not win.', 'Bob is a person.', 'Bob cheats.'], 'Bob does not win.'],
+        [['If someone cheats, they will not be trusted.', 'Bob is a person.', 'Bob cheats.'], 'Bob will not be trusted.'],
+        [['If someone cheats, he does not win.', 'Bob is a person.', 'Bob cheats.'], 'Bob does not win.']].map(([ps, c]) => tag(ps, c));
+    ok(they.every(t => t === '✓ universal modus ponens'),
+        '"they" bound by "someone" or "anyone" in a condition, as "he" is, in the singular ("they lose": "loses"); denied, "no one who ..." ("he does not win" had been read as one claim too)', J(they));
+    const said = ev(`var r = parseClaimFull('If someone cheats, they do not win.'); return { key: claimKey(r.form).replace(/\\uE000/g, ''), notes: r.notes.map(function (n) { return n.message; }) };`);
+    ok(said.key === 'U:(=person&~cheat)|¬~win' && said.notes.length === 1 &&
+        said.notes[0] === '"they" is read as the "someone" in the condition, so the box says what "no one who cheats wins" says', 'and says so', J(said));
+    const the = [
+        [['If a student cheats, that student will be caught.', 'Bob is a student.', 'Bob cheats.'], 'Bob will be caught.'],
+        [['If a student cheats, that student does not pass.', 'Bob is a student.', 'Bob cheats.'], 'Bob does not pass.']].map(([ps, c]) => tag(ps, c));
+    ok(J(the) === J(['✓ universal modus ponens', '✓ universal modus ponens']),
+        '"that student", after "if a student ...", is that student, as "he" would be (it had been read as one claim)', J(the));
+    const notes = ev(`return parseClaimFull('If a student cheats, that student will be caught.').notes.map(function (n) { return n.message; });`);
+    ok(notes[0] === '"that student" is read as what the condition speaks of, so the box says what "every student that cheats will be caught" says', 'and says so, in its words', J(notes));
+    // "The AI system" keeps its words, the same in each box, for the step
+    // r27.119 made modus ponens: "the student" is not bound so.
+    const kept = ev(`return ['If a student cheats, the student will be caught.', 'If a student cheats, the teacher will be angry.'].map(function (t) { return claimKey(parseClaim(t)).replace(/\\uE000/g, ''); });`);
+    ok(J(kept) === J(['I(P:a student|~cheat>P:the student|~will be caught)', 'I(P:a student|~cheat>P:the teacher|~will be angry)']),
+        '"the student" keeps its words (the r27.119 modus ponens of "the AI system"), and "the teacher" is not the student', J(kept));
+}
+
+console.log('\n-- the weather\'s "it" after "if", "unless", "when"; "it is Tuesday" (r27.132) --');
+{
+    // "The game is cancelled unless it is sunny" had offered "the game is
+    // sunny" and "the fact that the game is cancelled is sunny" -- neither
+    // meant -- and no weather: r27.125 wrote the weather's reading only
+    // after "and", or for "if A, then it is cold".
+    const asked = t => ev(`var n = parseClaimFull(${J(t)}).notes.filter(function (x) { return x.kind === 'ambiguous'; }).pop();
+        return n ? n.message.replace(/\\uE000/g, '') + ' | ' + n.readings.map(claimLabel).join(' / ') : null;`);
+    const got = ['The game is cancelled unless it is sunny.', 'The game is cancelled if it is cold.', 'The game is on when it is sunny.',
+        'The street is wet and it is Tuesday.', 'The sheep is hungry and it is cold.'].map(asked);
+    ok(J(got) === J(['“it” may be “the game” or the weather | The game is cancelled unless the game is sunny. / Unless it is sunny, the game is cancelled.',
+        '“it” may be “the game” or the weather | The game is cancelled if the game is cold. / If it is cold, the game is cancelled.',
+        '“it” may be “the game” or the weather | The game is on when the game is sunny. / When it is sunny, the game is on.',
+        '“it” may be “the street” or the time | The street is wet and the street is Tuesday. / It is Tuesday and the street is wet.',
+        '“it” may be “the sheep” or the weather | The sheep is hungry and the sheep is cold. / It is cold and the sheep is hungry.']),
+        'the weather\'s reading puts its clause first, after "unless", "if" or "when" too; a day of the week is the time\'s; one sheep may be "it"', J(got));
+    const back = ev(`return ['Unless it is sunny, the game is cancelled.', 'If it is sunny, the game is cancelled.'].map(function (t) { var r = parseClaimFull(t);
+        return claimKey(r.form).replace(/\\uE000/g, '') + ' ' + r.notes.length; });`);
+    ok(J(back) === J(['D[P:the game|=canceled;P:it|=sunny] 0', 'I(P:it|=sunny>P:the game|=canceled) 0']),
+        'and read back, its "it" is the weather\'s: "unless it is sunny" had read "it" as the game', J(back));
+    ok(asked('The game is cancelled if it is spicy.') === '“it” may be “the game” or what “The game is cancelled” says | The game is cancelled if the game is spicy. / The game is cancelled if the fact that the game is cancelled is spicy.',
+        '"spicy" is no weather, as before');
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

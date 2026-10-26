@@ -756,6 +756,34 @@ console.log('\n-- a clause after "after", "before", "as" (r27.128) --');
         'a step that follows either way follows; "sent", with no object after it, says which letters are meant');
 }
 
+console.log('\n-- "both" after a subject; "not only ... but also" (r27.131) --');
+{
+    // "Bob and Mary both left" had kept "both" in what was said ("both left"),
+    // so "Bob left" did not follow; "Bob and Al did not both leave" had been
+    // read as neither leaving, with a verb "bothed leave"; "Bob is not only
+    // rich but also happy" had asked whether Bob is "not both only rich and
+    // happy"; "Bob, Al and Cy each left" had been "both Bob, Al and Cy left".
+    const keys = ['Bob and Mary both left.', 'Bob and Mary have both left.', 'Bob and Al did not both leave.', "Bob and Al didn't both leave.",
+        'Bob and Al both did not leave.', 'Bob and Mary are not both tall.', 'Bob, Al and Cy each left.',
+        'Bob is not only rich but also happy.', 'Bob not only sings but also dances.', 'Bob is not only rich, but he is also happy.', 'Not only Bob but also Mary left.'].map(key);
+    ok(J(keys) === J(['C[P:bob|~did left;P:mary|~did left]', 'C[P:bob|~have left;P:mary|~have left]', 'N(C[P:bob|~did left;P:al|~did left])',
+        'N(C[P:bob|~did left;P:al|~did left])', 'C[N(P:bob|~did left);N(P:al|~did left)]', 'N(C[P:bob|=tall;P:mary|=tall])',
+        'C[P:bob|~did left;P:al|~did left;P:cy|~did left]', 'C[P:bob|=rich;P:bob|=happy]', 'C[P:bob|~sing;P:bob|~dance]', 'C[P:bob|=rich;P:bob|=happy]',
+        'C[P:bob|~did left;P:mary|~did left]']),
+        '"both" after the subject says it of each; "not" before "both" denies that both did, after it denies it of each; "not only ... but also" says both', J(keys));
+    ok(J(['Not only is Bob rich, but he is also happy.', 'Bob is not only rich.'].map(key)) === J(['C[P:bob|=rich;P:bob|=happy]', 'N(P:bob|=only rich)']),
+        'the inverted "not only is Bob rich, but ..." as before; "not only" with no "but" is left as it was');
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support',
+        texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+    ok(step(['Bob and Mary both left.'], 'Bob left.') === '✓ conjunction elimination' &&
+        step(['Bob and Al did not both leave.', 'Bob left.'], 'Al did not leave.') === '✓ conjunctive syllogism' &&
+        step(['Bob did not leave or Al did not leave.'], 'Bob and Al did not both leave.') === '✓ De Morgan’s laws' &&
+        step(['Bob and Al did not both leave.'], 'Bob did not leave.') === '? not recognized' &&
+        step(['Bob is not only rich but also happy.'], 'Bob is rich.') === '✓ conjunction elimination',
+        'so "Bob left" follows; "not both" with "Bob left" gives "Al did not leave", and De Morgan gives "not both"; "not both" alone gives neither denial');
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.129';
+    const APP_BUILD = '2026-10-26 r27.132';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9835,7 +9835,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // "its" has its own slot: it may be the thing an "it" is, or another.
     const CLAIM_PRONOUN_KIND = Object.assign(Object.create(null), { he: 'm', him: 'm', his: 'm', she: 'f', her: 'f', it: 'n', its: 'q', they: 'p', them: 'p', their: 'p' });
-    const CLAIM_AMBIENT_WORDS = /^(?:cold|hot|warm|cool|chilly|mild|humid|windy|sunny|cloudy|foggy|stormy|rainy|wet|dry|dark|light|late|early|noon|midnight|night|day|morning|evening|freezing|icy|quiet|noisy|time)$/;
+    // The days of the week too: "the street is wet and it is Tuesday" (r27.132).
+    const CLAIM_AMBIENT_WORDS = /^(?:cold|hot|warm|cool|chilly|mild|humid|windy|sunny|cloudy|foggy|stormy|rainy|wet|dry|dark|light|late|early|noon|midnight|night|day|morning|evening|freezing|icy|quiet|noisy|time|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/;
     // Words whose full stop ends no sentence: "etc.", "et al.", "cf.".
     const CLAIM_ABBREVIATION_STOP = /^(?:etc|vs|al|cf|ca|approx|ch|pp|vol|vols|no|nos|fig|figs|eq|eqs|op|cit|ibid|viz|resp|esp|incl|dept|est|ed|eds|trans|repr|cont|sec|para|art|ff|seq|var|sp|spp)$/i;
     // A phrase that may point back: "that road", "this very road", "those
@@ -10010,8 +10011,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (p >= 0 && !claimPluralWord(base(np[p].l))) add({ at: x.at, k0: k, k1, words: say(p + 1), kind: CLAIM_HE_OR_SHE_ANIMALS.has(base(np[p].l)) ? 'animal' : 'person', indef });
             const head = np[np.length - 1];
             if (/'s$/.test(head.l)) return;
-            // "The sheep": one, or many.
+            // "The sheep": one, or many -- one where its verb says so ("the
+            // sheep is hungry and it is noisy": "it" may be the sheep, or
+            // the surroundings, asked; it had been many only, and "it" had
+            // nothing to be but the surroundings) (r27.132).
             if (CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'many', indef });
+            if (CLAIM_INVARIANT_NOUNS.has(head.l) && toks[k1 + 1] && /^(?:is|was|has|does|isn't|wasn't|hasn't|doesn't)$/.test(toks[k1 + 1].l))
+                add({ at: x.at, k0: k, k1, words: say(np.length), kind: CLAIM_HE_OR_SHE_ANIMALS.has(head.l) ? 'animal' : 'thing', indef });
             if (claimPluralWord(head.l) && !CLAIM_INVARIANT_NOUNS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'many', indef });
             else if (!CLAIM_HE_OR_SHE_NOUNS.has(head.l) && !CLAIM_HE_OR_SHE_ANIMALS.has(head.l)) add({ at: x.at, k0: k, k1, words: say(np.length), kind: 'thing', indef });
         });
@@ -10348,6 +10354,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 text = t.slice(0, at) + (head ? it.charAt(0).toUpperCase() + it.slice(1) : it) + (c.by === ';' ? '; ' : ' ' + c.by + ' ') +
                     (head && !opener && !/^I\b/.test(was) ? was.charAt(0).toLowerCase() + was.slice(1) : was) + t.slice(itEnd);
             }
+            // "The game is cancelled if it is sunny", "... unless it is
+            // cold", "... when it is late": its clause put first -- "If it is
+            // sunny, the game is cancelled" (r27.132; the readings offered
+            // had been "the game is sunny" and "the fact that the game is
+            // cancelled is sunny", neither the one meant).
+            else if (clauses.length === 2 && p.ci === 1 && /^(?:if|unless|when|whenever|because|since|although|though|after|before|until|once|while)$/.test(c.by || '') &&
+                toks[p.k - 1] && toks[p.k - 1].l === c.by) {
+                const before = t.slice(0, toks[p.k - 1].at).replace(/[\s,]+$/, ''), opener = cands.find(x => x.k0 === clauses[0].from && x.name);
+                if (before) text = c.by.charAt(0).toUpperCase() + c.by.slice(1) + ' ' + it + ', ' +
+                    (opener || /^I\b/.test(before) ? before : before.charAt(0).toLowerCase() + before.slice(1)) + t.slice(itEnd);
+            }
             if (!text || text === t) return null;
             claimAmbientDepth++;
             try { return claimPronounReadingsUncached(text).none ? text : null; } finally { claimAmbientDepth--; }
@@ -10526,7 +10543,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const texts = picks.map(chosen => rewrite(editsOf(chosen))).filter(x => x !== t).concat(ambientText ? [ambientText] : []);
         // What to say of the first that may be more than one.
         const many = slots.findIndex((x, i) => choices[i].length > 1);
-        const ambientSay = !ambientText ? '' : /^(?:late|early|noon|midnight|night|day|morning|evening|time)$/.test(slots[0].members[0].ambient) ? 'the time'
+        const ambientSay = !ambientText ? '' : /^(?:late|early|noon|midnight|night|day|morning|evening|time|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/.test(slots[0].members[0].ambient) ? 'the time'
             : /^(?:dark|light|quiet|noisy)$/.test(slots[0].members[0].ambient) ? 'the surroundings' : 'the weather';
         const message = ambientText
             ? quote(slots[0].members[0].w) + ' may be ' + choices[0].slice(0, 3).map(say).join(' or ') + (choices[0].length > 3 ? ', or more' : '') +
@@ -10835,7 +10852,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return expandClaimContractions(claimDropShorthands(markClaimSpelling(claimResolvePronouns(plain))).replace(/[’‘]/g, "'"))
             // "Alice and Bob each ate the pizza": said of each -- "both Alice
             // and Bob ate the pizza". Not the "each" of "each other".
-            .replace(/^((?:\S+ ){0,3}\S+) and ((?:\S+ ){0,3}?\S+?),? each,? (?!other\b)(?=[a-z\uE000])/, (m, a, b) => /^(?:both|either|neither)$/.test(a.split(' ')[0]) ? m : 'both ' + a + ' and ' + b + ' ')
+            // A list of three or more takes no "both": "Bob, Al and Cy each
+            // left" had been "both Bob, Al and Cy left", and read as Bob's
+            // "al" (r27.131).
+            .replace(/^((?:\S+ ){0,3}\S+) and ((?:\S+ ){0,3}?\S+?),? each,? (?!other\b)(?=[a-z\uE000])/, (m, a, b) => /^(?:both|either|neither)$/.test(a.split(' ')[0]) ? m : (/,/.test(a) ? '' : 'both ') + a + ' and ' + b + ' ')
             // Explicit regional spellings only; preserve marked proper names and unknown words.
             .replace(/(?<![\w\uE000'-])[a-z]+(?![\w\uE000'-])/g, w => CLAIM_VENDOR_MORPHOLOGY.spellings[w] || w)
             // "We do conclude that P", "Poe does sing": an emphatic "do" in an
@@ -10898,6 +10918,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // asked, as with ", and" -- not read into the "then" unasked.
             .replace(/\s*;\s*or\s+/g, ', or ')
             .replace(/\s*;\s*(?:(?:and|but|yet)\s+)?(?:(?:moreover|however|furthermore|additionally|also|in addition|besides|still|nonetheless|nevertheless)\s*,?\s*)?/g, ', and ')
+            // "Bob is not only rich but also happy": both -- "not only"
+            // denies nothing where "but" follows it (r27.131). It had been
+            // asked whether Bob is "not both only rich and happy", and "Bob
+            // is not only rich, but he is also happy" read as a denial. Not
+            // "not only is Bob rich, but ...", read so already.
+            .replace(/\bnot only\s+(?!(?:is|are|am|was|were|do|does|did|has|have|had|can|could|will|would|shall|should|must|may|might)\b)(?=[^.;]*?\bbut\b)/g, '')
             // "But" is "and" -- its comma kept, which says where the clauses
             // part ("Poe flies, but he sings if it rains": the user's commas).
             .replace(/(,?)\s+(?:and yet|and also|but also|but|whereas)\s+/g, (m, comma) => comma + ' and ')
@@ -13659,7 +13685,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimLocalReferences(form, antecedents = []) {
         if (!form || form.unresolvedReference) return form;
         const pronoun = /\b(?:he|she|they|him|her|them|his|their|its)\b/;
-        const dummyIt = prop => /^(?:~(?:(?:had|has|have|was|will|would|could|might|did) (?:have )?(?:been )?)?(?:rain|rained|raining|snow|snowed|snowing|hail|hailed|hailing|pour|poured|pouring|drizzle|drizzled|drizzling|thunder|thundered|thundering|seem|appear|follow)\b|=(?:cold|hot|warm|cool|late|early|raining|snowing|hailing|pouring|drizzling|thundering|dark|light)$)/.test(prop.replace(/^¬/, ''));
+        // The weather's words are the pronoun reader's (CLAIM_AMBIENT_WORDS):
+        // "unless it is sunny, the game is cancelled" had read "it" as the
+        // game, "sunny" being no word of this list (r27.132).
+        const ambient = prop => { const m = /^¬?=\uE000?([a-z]+)$/.exec(prop); return !!m && CLAIM_AMBIENT_WORDS.test(m[1]); };
+        const dummyIt = prop => ambient(prop) || /^(?:~(?:(?:had|has|have|was|will|would|could|might|did) (?:have )?(?:been )?)?(?:rain|rained|raining|snow|snowed|snowing|hail|hailed|hailing|pour|poured|pouring|drizzle|drizzled|drizzling|thunder|thundered|thundering|seem|appear|follow)\b|=(?:raining|snowing|hailing|pouring|drizzling|thundering)$)/.test(prop.replace(/^¬/, ''));
         // Asked once a box, offering the box with each someone the pronoun
         // may be in its place; an answer is read by parseClaimFull.
         const flag = () => {
@@ -15349,15 +15379,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const who = said0 ? claimClauseStart(String(said0.term)) : '';
         if (form.conds.length === 1 && !form.counterfactual && one && one.kind === 'some' && one.subject === CLAIM_PERSON && one.vp &&
             /^(?:he|she|they|that person|this person|the person)$/.test(who) && !claimTokens(said0.prop.slice(1)).some(w => pronoun.test(claimWord(w)))) {
-            const vp = String(then.vpText || ''), said = who === 'they' ? (/^(?:are|were)\s/.test(vp) ? vp.replace(/^are/, 'is').replace(/^were/, 'was') : null) : vp;
-            const every = said && claimQuietly(() => readClaim('everyone who ' + one.vp + ' ' + said));
+            // Denied, "no one who ...": "if someone cheats, they do not win"
+            // is "no one who cheats wins" -- "everyone who cheats does not
+            // win" would ask which "not" is meant (r27.130).
+            const vp = String(then.vpText || ''), denied = then.kind === 'not', all = denied ? 'no one who ' : 'everyone who ';
+            const said = denied ? claimAffirmedOfOne(vp, who === 'they') : who === 'they' ? claimTheyAsOne(vp) : vp;
+            const every = said && claimQuietly(() => readClaim(all + one.vp + ' ' + said));
             if (every && every.kind === 'all') {
-                claimUnread('"' + who + '" is read as the "' + (one.pronoun || 'someone') + '" in the condition, so the box says what "everyone who ' +
+                claimUnread('"' + who + '" is read as the "' + (one.pronoun || 'someone') + '" in the condition, so the box says what "' + all +
                     claimShowWords(one.vp) + ' ' + claimShowWords(said) + '" says', true);
                 return Object.assign(every, { boundPronoun: true });
             }
         }
-        if (!form.conds.some(indefinite) || !mentions(form.cons)) return null;
+        // "If a student cheats, that student will be caught": "that
+        // student" is the one the condition speaks of, as "he" would be
+        // (r27.130; it had been read as one claim). Not "the student": "if
+        // an AI system is consulted, then the AI system is reliable" keeps
+        // its words, the same in each box, for modus ponens (r27.119).
+        const c0 = form.conds[0], a0 = c0 && c0.kind === 'pred' && /^(?:a|an|any)\s+(.+)$/.exec(claimClauseStart(String(c0.term || '')));
+        const theOne = a0 ? new RegExp('^(?:that|this)\\s+' + a0[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') : null;
+        const namesBack = f => { const q = claimPredicationOf(f && f.kind === 'not' ? f.inner : f); return !!theOne && !!q && theOne.test(claimClauseStart(String(q.term))); };
+        if (!form.conds.some(indefinite) || !(mentions(form.cons) || namesBack(form.cons))) return null;
         const c = form.conds[0], cons = form.cons, leaf = claimPredicationOf(cons.kind === 'not' ? cons.inner : cons);
         if (form.conds.length === 1 && c.kind === 'some' && c.subject === CLAIM_ANY && leaf && claimWord(leaf.term) === 'it' &&
             !claimTokens(leaf.prop.slice(1)).some(w => pronoun.test(claimWord(w)))) {
@@ -15374,19 +15416,43 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return m ? m[1] + ' that ' + c.vpText : null;
         })();
         if (form.conds.length === 1 && !form.counterfactual && condKind &&
-            leaf && /^(?:it|he|she|they)$/.test(claimWord(leaf.term)) &&
+            leaf && (/^(?:it|he|she|they)$/.test(claimWord(leaf.term)) || namesBack(cons)) &&
             !claimTokens(leaf.prop.slice(1)).some(w => pronoun.test(claimWord(w)))) {
             const subject = restrictorProp(claimTokens(condKind));
             if (subject && subject.charAt(0) === '=') {
-                claimUnread('"' + claimWord(leaf.term) + '" is read as what the condition speaks of, so the box says what "every ' +
+                claimUnread('"' + claimShowWords(claimClauseStart(String(leaf.term))) + '" is read as what the condition speaks of, so the box says what "every ' +
                     condKind + ' ' + (cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText || '') + '" says', true);
                 return { kind: 'all', subject, predicate: cons.kind === 'not' ? negateClaimProp(leaf.prop) : leaf.prop,
-                    np: condKind, vp: cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText, pronoun: null, restrictorVp: null };
+                    np: condKind, vp: cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText, pronoun: null, restrictorVp: null, boundPronoun: true };
             }
         }
         claimUnread('a pronoun pointing back to "something", "someone" or "a …" in the "if" part is not read');
         claimAmbiguous('it is not clear who or what the pronoun means: name it', [], true);
         return Object.assign(claimAtom(text), { unresolvedReference: true });
+    }
+    // What "they" says, said of one person (r27.130; the user: "they/them"
+    // is how one person is spoken of here): "are caught" is "is caught",
+    // "lose" is "loses", "do not lose" is "does not lose"; "will be caught"
+    // and "lost" stay as they are. Null where the words do not say.
+    function claimTheyAsOne(vp) {
+        const w = String(vp || '').trim().split(/\s+/), v = w[0] || '';
+        const one = { are: 'is', were: 'was', have: 'has', do: 'does', "aren't": "isn't", "weren't": "wasn't", "haven't": "hasn't", "don't": "doesn't" };
+        if (one[v]) w[0] = one[v];
+        else if (!CLAIM_VERB_MARKERS.has(v) && claimPastStem(v) === null) {
+            const x = claimSynWord(v);
+            if (!x.verb || x.closed || x.s) return null;
+            w[0] = claimThirdPerson(v);
+        }
+        return w.join(' ');
+    }
+    // A denied consequent, affirmed and said of one person (r27.130): "does
+    // not win" is "wins", "did not win" is "won", "are not punished" (of
+    // "they") is "is punished", "will not be caught" is "will be caught".
+    function claimAffirmedOfOne(vp, they) {
+        const w = claimWithoutDenial(claimTokens(vp)).map(claimWord);
+        if (/^(?:do|does)$/.test(w[0]) && w[1]) return [claimThirdPerson(w[1])].concat(w.slice(2)).join(' ');
+        if (w[0] === 'did' && w[1]) return [claimPastForm(w[1])].concat(w.slice(2)).join(' ');
+        return they ? claimTheyAsOne(w.join(' ')) : w.join(' ');
     }
     // A gerund that names a proposition -- "Poe's being a raven", "Poe being
     // black", "Poe's not being a raven" -- as its clause, or null.
@@ -18128,6 +18194,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimUnread('a subject joined by "and" or "or" is not read here');
             return claimAtom(s);
         }
+        // "Bob and Mary both left", "Bob and Mary have both left", "Bob, Al
+        // and Cy each left": "both" or "each" after the subject says it of
+        // each, as "both Bob and Mary" does; "Bob and Al did not both
+        // leave": "not" before "both" denies that both did (r27.131; the
+        // user: "parse language into its syntactical components correctly").
+        // The "both" had stayed in what was said ("both left"), and "did not
+        // both leave" had been read as neither leaving.
+        let denyBoth = false;
+        if (kind === 'and' && !marked) {
+            const vw = vp.map(claimWord), at = vw.findIndex((w, i) => /^(?:both|each)$/.test(w) && i + 1 < vw.length &&
+                vw.slice(0, i).every(x => CLAIM_VERB_MARKERS.has(x) || x === 'not'));
+            if (at >= 0 && (vw[at] !== 'both' || names.length === 2)) {
+                const not = vw.slice(0, at).indexOf('not');
+                vp = vp.filter((_, i) => i !== at && i !== not);
+                marked = true;
+                denyBoth = not >= 0;
+            }
+        }
         // A plural with no determiner is no individual: "ravens", "black ravens".
         const barePlural = n => n.length > 0 && claimPluralWord(n[n.length - 1]) && !/^\uE000/.test(n[n.length - 1]) &&
             !/^(?:the|this|that|these|those|my|your|his|her|its|our|their)$/.test(claimWord(n[0])) && !/'s$/.test(claimWord(n[0])) &&
@@ -18141,7 +18225,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!forms.every(Boolean)) return null;
             return kind === 'neither' ? claimList('and', forms.map(negateClaim)) : claimList(kind, forms);
         };
-        if (kind !== 'and' || marked) return each() || claimAtom(s);
+        if (kind !== 'and' || marked) { const f = each(); return f ? (denyBoth ? negateClaim(f) : f) : claimAtom(s); }
         const only = claimTogetherOnly(vp);
         if (only) {
             claimUnread('"' + vp.map(claimWord).join(' ') + '" is said of the two together: ' + only);
