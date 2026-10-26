@@ -4,6 +4,13 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: existential introduction from an object of a kind -- "Bob loves a raven", so "Bob loves something" (r27.140)
+
+* "Bob loves a raven" gives "Bob loves something" (a raven is something) and "Something is a raven"; "Bob hit some poodle", "Bob hit something". "Bob loves Mary", so "Bob loves something", was there; an object of a kind was not.
+* Not "Bob loves someone": a raven need not be a person. Not "every raven", of which there may be none; not another kind; not "almost hit"; not after a verb like "fears", whose object may be no real raven. "Does not love a raven" and "taller than a poodle" still ask which they mean, as before.
+
+Tests. rules-r27-ordinary-test.js (48: two new, failing on r27.139). Take-one-out: both edits are caught. No reading changes. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 91 suites pass, and the public build's smoke test.
+
 ### October 26: a clause or a phrase set off by commas -- "Bob, who is rich, can pay" (r27.139)
 
 The user's rule: commas settle grouping. A "who" or "which" clause, or a phrase naming what the thing is, set off by commas after a name or "the ...", says something of it, a claim of its own. These had been read as one claim, with the note "a comma inside the subject sets off a phrase".

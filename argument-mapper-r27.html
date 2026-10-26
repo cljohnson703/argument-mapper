@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.139';
+    const APP_BUILD = '2026-10-26 r27.140';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -20284,10 +20284,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 claimObjectTerm(t, x.words) && claimDenies(C, applyClaimProp(x.slot.restrictor, t)));
         });
     }
+    // ... and from an object of a kind (r27.140): "Bob loves a raven" gives
+    // "Bob loves something" -- a raven is something -- and "something is a
+    // raven". Of "a", "an", "some" or "at least one" as nothing else ("hit
+    // a poodle", not "is taller than a poodle"); not "someone", which a
+    // raven need not be; not under a denial.
+    function claimObjectKindIntroduction(p, C) {
+        const a = claimObjectSaid(p);
+        if (!a || a.denied || !claimObjectFrame(a.prop)) return false;
+        const tokens = claimTokens(a.words), lower = tokens.map(claimWord), f = { tokens, lower };
+        for (let at = 1; at < lower.length; at++) {
+            const x = claimObjectAsWritten(tokens, lower, at, lower.length);
+            if (!x || x.what !== 'some' || !claimObjectPlace(f, x.at, x.end) || lower.slice(0, at).some(w => CLAIM_OBJECT_APPROXIMATE.test(w))) continue;
+            // "Something is a raven".
+            if (C.kind === 'some' && C.subject === CLAIM_ANY && typeof C.predicate === 'string' && claimPropMatch(C.predicate, x.kind)) return true;
+            // "Bob loves something": the same verb, "something" in the object's place.
+            const c = claimObjectSaid(C);
+            if (!c || c.denied || !claimObjectAbout(a, c)) continue;
+            const cl = claimTokens(c.words).map(claimWord);
+            if (cl.length === at + 1 && cl[at] === 'something' && lower.slice(0, at).every((w, k) => k === 0 ? baseClaimVerb(w) === baseClaimVerb(cl[0]) : w === cl[k])) return true;
+        }
+        return false;
+    }
     // Existential introduction, the case in the object's place: "Poe loves
     // Fido and Fido is a raven": "Poe loves a raven"; "Poe loves Fido": "Poe
     // loves something".
     function claimObjectIntroduction(P, C) {
+        if (P.length === 1 && claimObjectKindIntroduction(P[0], C)) return true;
         const c = claimObjectSaid(C);
         if (!c || c.denied || P.length !== 1) return false;
         const f = claimObjectFrame(c.prop);

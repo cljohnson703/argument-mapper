@@ -49,6 +49,9 @@
  *    switched off, the constructive dilemma, substitution of equivalents and
  *    double-negation replacement no longer take their steps; nor does
  *    contraposition take conversion's. Each still takes its own.
+ * 14. (r27.140) Existential introduction from an object of a kind: "Bob
+ *    loves a raven", so "Bob loves something" and "something is a raven".
+ *    Not "someone", not "every raven", not "almost", not after "fears".
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -313,6 +316,15 @@ console.log('\n-- 13. (r27.138) overlapping rules made separate --');
     ok(OWN.every(([p, c, name]) => step(p, c).rule === name), 'each still takes its own: the dilemma with two consequents, a substitution inside a claim, contraposition with "non-", conversion', J(OWN.map(([p, c]) => step(p, c).rule)));
     const conv = without('conversion', () => step(['No dogs are cats.'], 'No cats are dogs.'));
     ok(conv.rule !== 'contraposition', 'with conversion off, contraposition does not take its step (a rule under a quantifier is the user\'s to decide)', J(conv));
+}
+
+console.log('\n-- 14. (r27.140) existential introduction from an object of a kind --');
+{
+    const KIND = [[['Bob loves a raven.'], 'Bob loves something.'], [['Bob loves a raven.'], 'Something is a raven.'], [['Bob hit some poodle.'], 'Bob hit something.']];
+    ok(!misses(KIND, 'existential introduction').length, '"Bob loves a raven" gives "Bob loves something" and "something is a raven" (they had not)', J(misses(KIND, 'existential introduction')));
+    const NOT = [[['Bob loves a raven.'], 'Bob loves someone.'], [['Bob loves every raven.'], 'Bob loves something.'], [['Bob loves a raven.'], 'Something is a crow.'],
+        [['Bob almost hit a poodle.'], 'Bob hit something.'], [['Bob fears a raven.'], 'Something is a raven.']];
+    ok(!certified(NOT).length, 'not "someone", which a raven need not be; not "every raven", of which there may be none; not another kind; not "almost"; not after "fears"', J(certified(NOT)));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
