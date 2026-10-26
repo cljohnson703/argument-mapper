@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: dropping a "that" clause -- "Bob is glad that Mary left", so "Bob is glad"; "shorter" has two senses; colors for a subject said once and for dropped words (r27.141)
+
+The user, of "Bob is glad that Mary left, so Bob is glad": "Shouldn't it certify? The 'that' part of the sentence just tells us what it is that is making Bob glad." And of "The rope is shorter than the cable" giving "The cable is taller than the rope": "Perhaps not, as it should give 'The cable is longer than the rope'."
+
+* Dropping a "that" clause, a rule of word meaning in the modifiers group: "Bob is glad that Mary left" gives "Bob is glad", in any tense ("was glad"), and after "might be". The same holds for pleased, surprised, upset, grateful, relieved, worried, ashamed, angry and the like.
+* The rule leaves out "happy", "content", "proud", "confident", "sorry", "afraid", "aware", "conscious", "satisfied", "anxious" and "positive", since each can say more on its own. The check says what: "On its own, ‘proud’ can mean “vain”, which ‘proud that …’ need not." "Bob is sorry that you feel that way" is no apology.
+* Not under "not": Bob may not be glad that Mary left and still be glad.
+* "Shorter", "lighter" and "thinner" each have two senses: less tall or less long, less heavy or less dark, less thick or less fat. A premise does not say which, so they give no converse. The check says so and shows how to say the sense meant: "The rope is shorter in length than the cable" gives "The cable is longer than the rope".
+* A converse to these words still follows, because the premise's word gives the sense: "Bob is taller than Al", so "Al is shorter than Bob".
+* New converse pairs:
+  * "shorter in height than" and "taller than"; "shorter in length than" and "longer than"
+  * "lighter in weight than" and "heavier than"; "lighter in color than" and "darker than"
+  * "darker than" and "lighter than"; "fatter than" and "thinner than"
+* "Less tall than" is the converse of "taller than", for any word: "less big" and "bigger", "less heavy" and "heavier", "less good" and "better".
+* The colors for "Bob, who is rich, can pay", with "Bob can pay": "Bob" now goes on with "can pay". Since r27.139 the box reads "Bob is rich, and Bob can pay", and "Bob" had been dimmed along with "who is rich".
+* A step that drops words lights the words kept and dims the words dropped. In "Bob ran quickly", "Bob ran" is lit and "quickly" dimmed; r27.137 had dimmed "ran quickly" whole. In "Bob is glad that Mary left", "that Mary left" is dimmed.
+
+Tests:
+* rules-r27-ordinary-test.js has 60 checks, twelve of them new. The pairs of converses now number 29, and a word of two senses gives none. The modifiers group now has two rules, so the switched-off check names its switch as one of two.
+* colors-r27-inference-test.js has 132 checks; the three new ones fail on r27.140.
+* logic-r27-deductive-test.js lists the new optional rule, and logic-r27-basis-test.js counts nine lists of switches.
+* Take-one-out: all 16 edits are caught.
+* No reading changes.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 26: existential introduction from an object of a kind -- "Bob loves a raven", so "Bob loves something" (r27.140)
 
 * "Bob loves a raven" gives "Bob loves something" (a raven is something) and "Something is a raven"; "Bob hit some poodle", "Bob hit something". "Bob loves Mary", so "Bob loves something", was there; an object of a kind was not.

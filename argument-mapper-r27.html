@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.140';
+    const APP_BUILD = '2026-10-26 r27.141';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6933,8 +6933,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         inside: 'Rules used inside "every" or "some": "every raven is black and old" gives "every raven is black".',
         able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse.',
         opposites: 'Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse (contraries); "lack" and "have" deny each other both ways (contradictories).',
-        modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly".',
-        relations: 'Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob" and "Al is not taller than Bob"; with "Al is taller than Cy", "Bob is taller than Cy"; "married to" goes both ways.',
+        modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob is glad that Mary left" gives "Bob is glad". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly"; nor "proud that", since "proud" alone can mean "vain".',
+        relations: 'Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob" and "Al is not taller than Bob"; with "Al is taller than Cy", "Bob is taller than Cy"; "married to" goes both ways. "Shorter" can mean less tall or less long: "shorter in height than" gives "taller than".',
         factive: 'Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"; likewise "realizes", "proves", "regrets", "is aware that". Not "believes" or "says": what is believed can be false.',
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
@@ -20974,13 +20974,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         ['richer than', 'poorer than'], ['stronger than', 'weaker than'], ['higher than', 'lower than'], ['earlier than', 'later than'],
         ['greater than', 'less than'], ['better than', 'worse than'], ['wider than', 'narrower than'], ['thicker than', 'thinner than'],
         ['deeper than', 'shallower than'], ['louder than', 'quieter than'], ['above', 'below'], ['before', 'after'], ['north of', 'south of'],
-        ['east of', 'west of'], ['parent of', 'child of'], ['ancestor of', 'descendant of']];
+        ['east of', 'west of'], ['parent of', 'child of'], ['ancestor of', 'descendant of'],
+        // The sense said (r27.141): "shorter in length than", "lighter in color than".
+        ['taller than', 'shorter in height than'], ['longer than', 'shorter in length than'], ['heavier than', 'lighter in weight than'],
+        ['darker than', 'lighter in color than'], ['darker than', 'lighter than'], ['fatter than', 'thinner than']];
+    // Words of two senses (r27.141; the user, of "The rope is shorter than
+    // the cable" giving "The cable is taller than the rope": "Perhaps not, as
+    // it should give 'The cable is longer than the rope'"): a premise does
+    // not say which, so no converse from one -- though one to one, the
+    // premise's word giving its sense ("Bob is taller than Al", so "Al is
+    // shorter than Bob"). The check says how to say it, by the converse
+    // wanted.
+    const CLAIM_RELATION_TWO_SENSES = Object.assign(Object.create(null), {
+        'shorter than': { senses: 'less tall or less long', say: { 'taller than': 'shorter in height than', 'longer than': 'shorter in length than' } },
+        'lighter than': { senses: 'less heavy or less dark', say: { 'heavier than': 'lighter in weight than', 'darker than': 'lighter in color than' } },
+        'thinner than': { senses: 'less thick or less fat', say: { 'thicker than': 'less thick than', 'fatter than': 'less fat than' } } });
+    // The comparative of a short word, as it is spelled (r27.141): "less tall
+    // than" and "taller than" are converses, "less big" and "bigger", "less
+    // heavy" and "heavier", "less good" and "better".
+    function claimComparativeOf(adj) {
+        const odd = Object.assign(Object.create(null), { good: ['better'], well: ['better'], bad: ['worse'], far: ['farther', 'further'] });
+        if (odd[adj]) return odd[adj];
+        if (/e$/.test(adj)) return [adj + 'r'];
+        if (/[^aeiou]y$/.test(adj)) return [adj.slice(0, -1) + 'ier'];
+        if (/^[^aeiou]*[aeiou][^aeiouwxy]$/.test(adj)) return [adj + adj.slice(-1) + 'er'];
+        return [adj + 'er'];
+    }
     const CLAIM_RELATION_SYMMETRIC = new Set(['married to', 'next to', 'near', 'beside', 'adjacent to', 'similar to', 'equal to', 'different from',
         'sibling of', 'cousin of', 'spouse of', 'neighbor of', 'neighbour of', 'meet', 'marry']);
     // "Taller than", "more famous than" and the like pass along and never go
     // back -- not "other than" or "rather than"; nor do "above", "before",
     // "north of", "ancestor of", "part of"; "equal to" passes along too.
-    const claimComparative = rel => /^(?:(?:more|less) [a-z-]+|[a-z-]+er|less|fewer) than$/.test(rel) && !/^(?:other|rather) than$/.test(rel);
+    const claimComparative = rel => /^(?:(?:more|less) [a-z-]+|[a-z-]+er(?: in [a-z]+)?|less|fewer) than$/.test(rel) && !/^(?:other|rather) than$/.test(rel);
     const CLAIM_RELATION_ORDERS = new Set(['above', 'below', 'before', 'after', 'north of', 'south of', 'east of', 'west of', 'ancestor of', 'descendant of', 'part of']);
     const claimRelationTransitive = rel => claimComparative(rel) || CLAIM_RELATION_ORDERS.has(rel) || rel === 'equal to';
     const claimRelationAsymmetric = rel => claimComparative(rel) || CLAIM_RELATION_ORDERS.has(rel) || rel === 'parent of' || rel === 'child of';
@@ -20991,7 +21016,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const denied = !!f && f.kind === 'not' && !!f.inner && f.inner.kind === 'pred';
         const g = denied ? f.inner : f;
         if (!g || g.kind !== 'pred' || typeof g.prop !== 'string' || g.term == null) return null;
-        const m = /^=((?:(?:more|less) [a-z-]+ |[a-z-]+ )than|(?:north|south|east|west|ancestor|descendant|parent|child|sibling|cousin|spouse|neighbou?r|part) of|(?:married|next|similar|equal|adjacent) to|different from|near|beside|above|below|before|after) (.+)$/.exec(g.prop)
+        const m = /^=((?:(?:more|less) [a-z-]+ |[a-z-]+ (?:in [a-z]+ )?)than|(?:north|south|east|west|ancestor|descendant|parent|child|sibling|cousin|spouse|neighbou?r|part) of|(?:married|next|similar|equal|adjacent) to|different from|near|beside|above|below|before|after) (.+)$/.exec(g.prop)
             || /^~(?:did )?(meet|met|marry|married) (.+)$/.exec(g.prop);
         if (!m) return null;
         const left = claimUnmarked(String(g.term)).trim(), right = claimUnmarked(m[2]).trim();
@@ -21008,10 +21033,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (P.length === 1) {
             const p = claimRelationSaid(P[0]);
             if (!p || p.left !== c.right || p.right !== c.left) return null;
-            if (p.denied === c.denied && CLAIM_RELATION_CONVERSES.some(([a, b]) => (p.rel === a && c.rel === b) || (p.rel === b && c.rel === a)))
+            if (p.denied === c.denied && !CLAIM_RELATION_TWO_SENSES[p.rel] && CLAIM_RELATION_CONVERSES.some(([a, b]) => (p.rel === a && c.rel === b) || (p.rel === b && c.rel === a)))
                 return { kind: 'converse', rel: p.rel, to: c.rel };
             const more = /^(more|less) ([a-z-]+) than$/.exec(p.rel), less = /^(more|less) ([a-z-]+) than$/.exec(c.rel);
             if (p.denied === c.denied && more && less && more[1] !== less[1] && more[2] === less[2]) return { kind: 'converse', rel: p.rel, to: c.rel };
+            // "Al is less tall than Bob", "Bob is taller than Al" (r27.141).
+            const lessOf = rel => { const m = /^less ([a-z-]+) than$/.exec(rel); return m ? claimComparativeOf(m[1]).map(w => w + ' than') : []; };
+            if (p.denied === c.denied && (lessOf(p.rel).includes(c.rel) || lessOf(c.rel).includes(p.rel))) return { kind: 'converse', rel: p.rel, to: c.rel };
             if (p.denied === c.denied && p.rel === c.rel && CLAIM_RELATION_SYMMETRIC.has(p.rel)) return { kind: 'symmetric', rel: p.rel };
             if (!p.denied && c.denied && p.rel === c.rel && claimRelationAsymmetric(p.rel)) return { kind: 'asymmetric', rel: p.rel };
             return null;
@@ -21047,6 +21075,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return i === b.length;
     }
+    // A "that" clause dropped (r27.141; the user, of "Bob is glad that Mary
+    // left, so Bob is glad": "The 'that' part of the sentence just tells us
+    // what it is that is making Bob glad"): the words before it said, as
+    // they were. Of the words whose bare form keeps their sense -- not
+    // "happy" or "content" (with one's life), "proud" (vain), "confident"
+    // (sure of oneself), "sorry" ("Bob is sorry that you feel that way" is
+    // no apology), "afraid" ("I'm afraid that you're wrong"), "aware" or
+    // "conscious" (awake; "unaware" alone reads "not aware"), "satisfied"
+    // (content), "anxious" (nervous), "positive" (upbeat); not under a denial: "Bob is not glad that Mary
+    // left" leaves him glad of something else.
+    const CLAIM_THAT_CLAUSE_DROP = new Set(('glad pleased displeased surprised angry upset disappointed ashamed worried convinced thankful grateful ' +
+        'relieved annoyed delighted shocked amazed astonished hopeful horrified embarrassed furious frightened scared excited dissatisfied adamant').split(' '));
+    // ... and those whose bare form can say more, with what it can say.
+    const CLAIM_THAT_CLAUSE_MORE = Object.assign(Object.create(null), { happy: 'happy with one’s life', unhappy: 'unhappy with one’s life', content: 'content with one’s life',
+        proud: 'vain', confident: 'sure of oneself', sorry: 'apologizing', afraid: 'frightened', aware: 'awake', conscious: 'awake',
+        satisfied: 'content', anxious: 'nervous', positive: 'upbeat' });
+    // The word whose "that" clause the conclusion leaves out, or null.
+    function claimThatClauseWord(P, C) {
+        const p = P.length === 1 ? P[0] : null;
+        if (!p || p.kind !== 'pred' || !C || C.kind !== 'pred' || p.term !== C.term || !p.vpText || !C.vpText) return null;
+        const a = claimTokens(String(p.vpText).toLowerCase()).map(claimWord), b = claimTokens(String(C.vpText).toLowerCase()).map(claimWord);
+        const n = b.length;
+        return n > 1 && a.length > n + 1 && a[n] === 'that' && b.every((w, i) => w === a[i]) &&
+            !b.some(w => /^(?:not|never|no|hardly|scarcely|barely)$/.test(w) || /n[’']t$/.test(w)) ? b[n - 1] : null;
+    }
+    const claimThatClauseDropped = (P, C) => CLAIM_THAT_CLAUSE_DROP.has(claimThatClauseWord(P, C));
     // The step named by its relation, as contraries are by their pair.
     const CLAIM_RELATION_RULES = new Map();
     function claimRelationRule(step) {
@@ -21148,6 +21202,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'modifiers', name: 'dropping a modifier', optional: true,
           gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall" -- not "almost", "allegedly" or "hardly", nor under "not"',
           test: (P, C) => claimModifierDropped(P, C) },
+        // A "that" clause dropped (r27.141): a rule of word meaning.
+        { id: 'that-clause', name: 'dropping a ‘that’ clause', optional: true,
+          gloss: '"Bob is glad that Mary left" gives "Bob is glad"; likewise pleased, surprised, upset, grateful, worried… -- not "happy", "proud" or "sorry", whose bare word says more, nor under "not"',
+          test: (P, C) => claimThatClauseDropped(P, C) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
           // Not of the whole claim: double-negation elimination (r27.138).
@@ -21369,7 +21427,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
         { id: 'factive', label: 'Word meaning: “knows that”', on: true, rules: ['factive'] },
         { id: 'relations', label: 'Word meaning: relations', on: true, rules: ['relations'] },
-        { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers'] },
+        { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers', 'that-clause'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },
@@ -23609,6 +23667,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         ' once it is shown that ‘' + claimRecase(claimShowWords(of), premiseTexts[0]).replace(/^./, c => c.toUpperCase()) + ' is a ' + step.sort + '’.' });
                 if (step && !step.sort) return Object.assign(none, { contraries: step,
                     text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
+            }
+        }
+        // A "that" clause dropped from a word whose bare form can say more
+        // (r27.141): "Bob is proud that Mary won" does not give "Bob is
+        // proud", which can mean "vain".
+        if (!attack && reads.every(r => r.form) && premiseTexts.length === 1) {
+            const w = claimThatClauseWord([reads[0].form], reads[1].form);
+            if (w && CLAIM_THAT_CLAUSE_MORE[w]) {
+                const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
+                return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, thatClause: w,
+                    text: 'On its own, ‘' + w + '’ can mean “' + CLAIM_THAT_CLAUSE_MORE[w] + '”, which ‘' + w + ' that …’ need not; so ' +
+                        said(premiseTexts[0]) + ' does not give ' + said(conclusionText) + '.' };
+            }
+        }
+        // A converse from a word of two senses (r27.141): "The rope is
+        // shorter than the cable" does not give "The cable is taller than the
+        // rope"; "The rope is shorter in height than the cable" would.
+        if (!attack && reads.every(r => r.form) && premiseTexts.length === 1) {
+            const p = claimRelationSaid(reads[0].form), c = claimRelationSaid(reads[1].form), two = p && CLAIM_RELATION_TWO_SENSES[p.rel];
+            const fix = two && c && p.left === c.right && p.right === c.left && p.denied === c.denied ? two.say[c.rel] : null;
+            if (fix) {
+                const said = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
+                const word = p.rel.replace(/ than$/, ''), plain = stripClaimMarkup(premiseTexts[0]);
+                const at = new RegExp('\\b' + word + ' than\\b', 'i'), would = at.test(plain) ? plain.replace(at, fix) : null;
+                return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, twoSenses: p.rel,
+                    text: '\u2018' + word + '\u2019 can mean ' + two.senses + ', so ' + said(premiseTexts[0]) + ' does not give ' + said(conclusionText) +
+                        (would ? '; ' + said(would) + ' would.' : '.') };
             }
         }
         // A rule this map has switched off (r27.135; the user: "for all
@@ -32189,6 +32274,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (mine.some(l => l.length)) {
                 const cPieces = [].concat(...cClauses.map(x => flat(icPieces(x))));
                 const opposite = !!(step.rule && step.rule.id === 'opposites');
+                // Words dropped (r27.141): of what is said, the words the
+                // conclusion keeps go on, those it drops do not -- "ran" in
+                // "Bob ran quickly", with "Bob ran"; "is glad" in "Bob is glad
+                // that Mary left", with "Bob is glad" ("ran quickly" had been
+                // dimmed whole). In place of its own pieces, where none is found.
+                const dropped = !!(step.rule && /^(?:modifiers|that-clause)$/.test(step.rule.id));
+                const keptWords = p => {
+                    const kept = cPieces.find(x => x.said && /^p:/.test(x.key)), theirs = kept ? claimTokens(kept.words).map(w => w.toLowerCase()) : [];
+                    const runs = [];
+                    let j = 0;
+                    claimTokens(p.words).forEach(w => {
+                        const keep = j < theirs.length && w.toLowerCase() === theirs[j], last = runs[runs.length - 1];
+                        if (keep) j++;
+                        if (last && last.keep === keep) last.words.push(w); else runs.push({ keep, words: [w] });
+                    });
+                    if (!theirs.length || j < theirs.length || runs.every(r => r.keep)) return false;
+                    p.kids = runs.map((r, k) => Object.assign({ key: 'w:' + k + ':' + r.words.join(' ').toLowerCase(), words: r.words.join(' '), said: false, neg: false, form: p.form },
+                        r.keep ? { role: 'c' } : {}));
+                    return true;
+                };
                 const elsewhere = (i, key) => [].concat(...mine.map((l, j) => j === i ? [] : [].concat(...l.map(x => flat(x.ps))))).filter(p => p.key === key);
                 const resolve = (i, p) => {
                     const inC = cPieces.find(x => x.key === p.key);
@@ -32201,7 +32306,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     }
                     if ((p.kids || []).map(k => resolve(i, k)).some(Boolean)) return true;
                     if ((p.slot && cPieces.some(x => x.key === p.slot)) || (opposite && p.said && /^p:/.test(p.key) && cPieces.some(x => x.said && /^p:/.test(x.key)))) { p.role = 'c'; return true; }
-                    return false;
+                    return dropped && p.said && /^p:/.test(p.key) && keptWords(p);
                 };
                 const has = p => !!p.role || (p.kids || []).some(has);
                 mine.forEach((l, i) => l.forEach(({ cl, ps }) => {
@@ -32341,7 +32446,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     let c = { h: cur[j - 1].h - 1.5, s: cur[j - 1].s, k: cur[j - 1].k, got: cur[j - 1].got };
                     if (open) {
                         const d = prev[j - 1], sc = score(w, part[j - 1]), l = prev[j];
-                        if (d.h + sc > c.h) c = { h: d.h + sc, s: d.s, k: d.k + (sc > 0 ? 1 : 0), got: sc > 0 ? { at: i - 1, up: d.got } : d.got };
+                        if (d.h + sc > c.h) c = { h: d.h + sc, s: d.s, k: d.k + (sc > 0 ? 1 : 0), got: sc > 0 ? { at: i - 1, j: j - 1, up: d.got } : d.got };
                         if (l.h - gap > c.h) c = { h: l.h - gap, s: l.s, k: l.k, got: l.got };
                     }
                     cur[j] = c;
@@ -32352,7 +32457,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!best) return null;
             const hit = [best.s, best.e];
             hit.matched = [];
-            for (let g = best.got; g; g = g.up) hit.matched.unshift(g.at);
+            // The part's words passed over before its first match, none of
+            // the box's in their place (r27.141): its first match starts it.
+            hit.lead = 0;
+            for (let g = best.got; g; g = g.up) { hit.matched.unshift(g.at); hit.lead = g.j; }
+            if (hit.matched[0] !== best.s) hit.lead = 0;
             return hit;
         };
         return (from > 0 && run(from)) || run(0);
@@ -32566,6 +32675,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         plan.parts.forEach((p, n) => { if (hits[n] && !hits[n].loose) paint(p, hits[n]); });
         plan.parts.forEach((p, n) => { if (hits[n] && hits[n].loose) paint(p, hits[n]); });
+        // A subject the reading says again where the box says it once ("Bob,
+        // who is rich, can pay": "Bob is rich, and Bob can pay"): the words a
+        // part passed over before its own, found just before it among
+        // another part's, take its color where it goes on, or meets
+        // (r27.141; "Bob" had been dimmed with "who is rich").
+        plan.parts.forEach((p, n) => {
+            const h = hits[n];
+            if (!h || h.loose || !h.hit.lead) return;
+            const lead = icTokens(p.words).slice(0, h.hit.lead), at = [];
+            let k = h.hit[0] - 1;
+            for (let q = lead.length - 1; q >= 0; q--) {
+                while (k >= 0 && !(matched[k] && (c.words[k].n === lead[q].n || c.words[k].s === lead[q].s))) k--;
+                if (k < 0) return;
+                at.unshift(k--);
+            }
+            // Words side by side ("Mark Twain") one stretch, the space between too.
+            const runs = [];
+            at.forEach(w => { const last = runs[runs.length - 1]; if (last && last[1] === w - 1) last[1] = w; else runs.push([w, w]); });
+            runs.forEach(([x, y]) => { for (let i = c.words[x].a; i < c.words[y].b; i++) if (rank(p.cls) > rank(cls[i])) cls[i] = p.cls; });
+        });
         plan.parts.forEach((p, n) => {
             if (!hits[n]) return;
             const { a, b, hit } = hits[n];

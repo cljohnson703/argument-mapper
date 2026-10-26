@@ -71,6 +71,12 @@
 //     one that meets, and words between that belong to neither left plain;
 //     a kind the conclusion denies goes on denied ("every raven", with
 //     "Poe is not a raven").
+// (12) r27.141: a subject the reading says twice where the box says it once
+//     ("Bob, who is rich, can pay": "Bob is rich, and Bob can pay") goes on
+//     with the part that goes on, "Mark Twain" one stretch; a step that
+//     drops words ("Bob ran quickly", so "Bob ran"; "Bob is glad that Mary
+//     left", so "Bob is glad") lights the words kept and dims those
+//     dropped.
 //
 // Run:  node colors-r27-inference-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -889,6 +895,27 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         const onlyMT = paint(['Only citizens can vote.', 'Bob is not a citizen.'], 'Bob cannot vote.');
         ok(umt.rule === 'universal modus tollens' && umt.boxes[0][0] === 'ic-c ic-cn: Every raven' && J(runs(onlyMT.boxes[0], /ic-cn/)) === J(['can vote']),
             '"Every raven" in "Every raven is black", with "Poe is not a raven", goes on denied (it went on plain); "can vote" in "Only citizens can vote", with "Bob cannot vote"', J([umt, onlyMT]));
+    }
+
+    console.log('\n-- (r27.141) a subject said once, read twice; words dropped --');
+    {
+        // "Bob" had been dimmed with "who is rich", as if it were none of "Bob can pay".
+        const rich = paint(['Bob, who is rich, can pay.'], 'Bob can pay.'), doctor = paint(['Bob, a doctor, can pay.'], 'Bob can pay.');
+        const twain = paint(['Mark Twain, a writer, was funny.'], 'Mark Twain was funny.');
+        ok(rich.rule === 'conjunction elimination' && J(rich.boxes[0]) === J(['ic-c: Bob', 'ic-u: , who is rich', 'ic-rest: , ', 'ic-c: can pay', 'ic-rest: .']) &&
+            J(runs(doctor.boxes[0], /^ic-c/)) === J(['Bob', 'can pay']) && J(runs(doctor.boxes[0], /^ic-u/)) === J([', a doctor']) &&
+            J(runs(twain.boxes[0], /^ic-c/)) === J(['Mark Twain', 'was funny']),
+            '"Bob, who is rich, can pay", with "Bob can pay": "Bob" goes on with "can pay", "who is rich" dimmed (it had dimmed "Bob" too); "Bob, a doctor,"; "Mark Twain" one stretch',
+            J([rich, doctor, twain]));
+        // A step that drops words: "ran quickly" had been dimmed whole.
+        const ran = paint(['Bob ran quickly.'], 'Bob ran.'), tall = paint(['Bob is very tall.'], 'Bob is tall.'), store = paint(['Bob quickly ran to the store.'], 'Bob ran to the store.');
+        const glad = paint(['Bob is glad that Mary left.'], 'Bob is glad.');
+        ok(ran.rule === 'dropping a modifier' && J(runs(ran.boxes[0], /^ic-c/)) === J(['Bob ran']) && J(runs(ran.boxes[0], /^ic-u/)) === J(['quickly']) &&
+            J(runs(tall.boxes[0], /^ic-c/)) === J(['Bob is', 'tall']) && J(runs(tall.boxes[0], /^ic-u/)) === J(['very']) &&
+            J(runs(store.boxes[0], /^ic-c/)) === J(['Bob', 'ran to the store']) && J(runs(store.boxes[0], /^ic-u/)) === J(['quickly']),
+            'a modifier dropped: "Bob ran" goes on, "quickly" dimmed (it had dimmed "ran quickly"); "very" in "very tall"; "quickly" before the verb', J([ran, tall, store]));
+        ok(glad.rule === 'dropping a \u2018that\u2019 clause' && J(runs(glad.boxes[0], /^ic-c/)) === J(['Bob is glad']) && J(runs(glad.boxes[0], /^ic-u/)) === J(['that Mary left']),
+            'a "that" clause dropped: "Bob is glad" goes on, "that Mary left" dimmed', J(glad));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

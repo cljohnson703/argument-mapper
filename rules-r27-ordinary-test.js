@@ -52,6 +52,16 @@
  * 14. (r27.140) Existential introduction from an object of a kind: "Bob
  *    loves a raven", so "Bob loves something" and "something is a raven".
  *    Not "someone", not "every raven", not "almost", not after "fears".
+ * 15. (r27.141) A "that" clause dropped: "Bob is glad that Mary left", so
+ *    "Bob is glad" (the user: "The 'that' part of the sentence just tells
+ *    us what it is that is making Bob glad"); not "happy", "proud" or
+ *    "sorry", whose bare word can say more -- the check says what -- nor
+ *    under "not". Relations of two senses ("The rope is shorter than the
+ *    cable" had given "The cable is taller than the rope"; the user: "it
+ *    should give 'The cable is longer than the rope'"): "shorter",
+ *    "lighter", "thinner" give no converse -- the check says how to say it
+ *    -- but "shorter in length than" and "less tall than" do; a converse to
+ *    them still follows, the premise giving the sense.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -241,19 +251,23 @@ console.log('\n-- 10. a rule switched off: which switch gives the step --');
 
 console.log('\n-- 11. (r27.136) relations --');
 {
-    const pairs = ev(`var objectOf = function (w) { return ' '; }, out = { gives: [], back: [] };
+    // From a word of two senses ("shorter": than the taller, or than the
+    // longer), none (r27.141; section 15).
+    const pairs = ev(`var objectOf = function (w) { return ' '; }, out = { gives: [], back: [], two: [] };
         CLAIM_RELATION_CONVERSES.forEach(function (e) {
             var art = function (w) { return /of$/.test(w) ? 'a ' : ''; };
             [[e[0], e[1]], [e[1], e[0]]].forEach(function (ab) {
                 var one = __step(['Kim is ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is ' + art(ab[1]) + ab[1] + ' Kim.');
                 var name = 'converses \u2018' + ab[0] + '\u2019 and \u2018' + ab[1] + '\u2019';
-                if (!one || one.rule !== name) out.gives.push('Kim is ' + ab[0] + ' Lee / Lee is ' + ab[1] + ' Kim: ' + (one && one.rule));
                 var no = __step(['Kim is not ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is not ' + art(ab[1]) + ab[1] + ' Kim.');
+                if (CLAIM_RELATION_TWO_SENSES[ab[0]]) { if ((one && one.rule) || (no && no.rule)) out.two.push(ab[0] + ' / ' + ab[1]); return; }
+                if (!one || one.rule !== name) out.gives.push('Kim is ' + ab[0] + ' Lee / Lee is ' + ab[1] + ' Kim: ' + (one && one.rule));
                 if (!no || no.rule !== name) out.back.push('not: ' + ab[0] + ' / ' + ab[1] + ': ' + (no && no.rule));
             });
         });
         out.pairs = CLAIM_RELATION_CONVERSES.length; return out;`);
-    ok(pairs.pairs === 23 && !pairs.gives.length && !pairs.back.length, 'every pair of converses both ways, and denied, named by the pair (' + pairs.pairs + ' pairs)', J(pairs));
+    ok(pairs.pairs === 29 && !pairs.gives.length && !pairs.back.length && !pairs.two.length,
+        'every pair of converses both ways, and denied, named by the pair (' + pairs.pairs + ' pairs) -- but none from a word of two senses', J(pairs));
     const MORE = [[['Bob is more famous than Al.'], 'Al is less famous than Bob.'], [['Five is greater than three.'], 'Three is less than five.'],
         [['The meeting is before lunch.'], 'Lunch is after the meeting.'], [['Bob is the parent of Al.'], 'Al is a child of Bob.']];
     ok(MORE.every(([p, c]) => /^converses /.test(step(p, c).rule || '')), '"more famous" and "less famous"; numbers; "the parent of" and "a child of"', J(MORE.map(([p, c]) => step(p, c).rule)));
@@ -293,10 +307,11 @@ console.log('\n-- 12. (r27.137) dropping a modifier --');
     ok(!certified(NOT).length, 'not "almost" or "hardly", not under "not", not "behaved badly", not "family", not a phrase, not added, not of another', J(certified(NOT)));
     const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'modifiers'; }), g = DEDUCTIVE_EXTENSIONS[at];
         return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'relations'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
-    ok(g.label === 'Word meaning: modifiers' && g.on === true && J(g.rules) === J(['modifiers']) && g.after && /^Word meaning, not logic: "Bob ran quickly" gives "Bob ran"/.test(g.gloss || ''),
+    // Since r27.141 with dropping a "that" clause (section 15).
+    ok(g.label === 'Word meaning: modifiers' && g.on === true && J(g.rules) === J(['modifiers', 'that-clause']) && g.after && /^Word meaning, not logic: "Bob ran quickly" gives "Bob ran"/.test(g.gloss || ''),
         'a group of its own, "Word meaning: modifiers", after relations, on by default, with its note', J(g));
     const off = without('modifiers', () => step(['Bob ran quickly.'], 'Bob ran.'));
-    ok(!off.rule && off.why === 'With Word meaning: modifiers switched on in the Logic panel, the premises would give “Bob ran” by dropping a modifier.', 'switched off: the check names the switch', J(off));
+    ok(!off.rule && off.why === 'With dropping a modifier switched on in the Logic panel (Word meaning: modifiers), the premises would give “Bob ran”.', 'switched off: the check names the switch', J(off));
 }
 
 console.log('\n-- 13. (r27.138) overlapping rules made separate --');
@@ -325,6 +340,53 @@ console.log('\n-- 14. (r27.140) existential introduction from an object of a kin
     const NOT = [[['Bob loves a raven.'], 'Bob loves someone.'], [['Bob loves every raven.'], 'Bob loves something.'], [['Bob loves a raven.'], 'Something is a crow.'],
         [['Bob almost hit a poodle.'], 'Bob hit something.'], [['Bob fears a raven.'], 'Something is a raven.']];
     ok(!certified(NOT).length, 'not "someone", which a raven need not be; not "every raven", of which there may be none; not another kind; not "almost"; not after "fears"', J(certified(NOT)));
+}
+
+console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses --');
+{
+    const GLAD = [[['Bob is glad that Mary left.'], 'Bob is glad.'], [['Bob was glad that Mary left.'], 'Bob was glad.'],
+        [['The man is grateful that Mary came.'], 'The man is grateful.'], [['Bob might be relieved that Mary left.'], 'Bob might be relieved.'],
+        [['Bob is very glad that Mary left.'], 'Bob is very glad.']];
+    ok(!misses(GLAD, 'dropping a \u2018that\u2019 clause').length, '"Bob is glad that Mary left" gives "Bob is glad", in any tense, after "might be" too (it had not)',
+        J(misses(GLAD, 'dropping a \u2018that\u2019 clause')));
+    ok(step(['Bob is glad that Mary left.'], 'Mary left.').rule === 'factive verbs', '... and still gives "Mary left", by factive verbs');
+    const NOT = [[['Bob is not glad that Mary left.'], 'Bob is not glad.'], [['Bob is glad.'], 'Bob is glad that Mary left.'], [['Bob is glad that Mary left.'], 'Al is glad.'],
+        [['Bob believes that Mary left.'], 'Bob believes.'], [['Bob is certain that Mary left.'], 'Bob is certain.'], [['Bob is unaware that Mary left.'], 'Bob is unaware.'],
+        [['Bob is happy that Mary left.'], 'Bob is happy.'], [['Bob is proud that Mary won.'], 'Bob is proud.'], [['Bob is sorry that you feel that way.'], 'Bob is sorry.']];
+    ok(!certified(NOT).length, 'not under "not", not added, not of another, not "believes" or "certain", not "unaware" (alone, read "not aware"); not "happy", "proud" or "sorry"',
+        J(certified(NOT)));
+    const proud = step(['Bob is proud that Mary won.'], 'Bob is proud.'), sorry = step(['Bob is sorry that you feel that way.'], 'Bob is sorry.');
+    ok(proud.why === 'On its own, \u2018proud\u2019 can mean \u201cvain\u201d, which \u2018proud that \u2026\u2019 need not; so \u201cBob is proud that Mary won\u201d does not give \u201cBob is proud\u201d.' &&
+        /^On its own, \u2018sorry\u2019 can mean \u201capologizing\u201d/.test(sorry.why), '"proud" and "sorry": the check says what the bare word can say', J([proud, sorry]));
+    const g = ev(`var g = DEDUCTIVE_EXTENSIONS.find(function (x) { return x.id === 'modifiers'; }); return { rules: g.rules, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
+    ok(J(g.rules) === J(['modifiers', 'that-clause']) && /"Bob is glad that Mary left" gives "Bob is glad"/.test(g.gloss), 'a rule of the modifiers group, in its note', J(g));
+    const off = without('that-clause', () => step(['Bob is glad that Mary left.'], 'Bob is glad.'));
+    ok(!off.rule && off.why === 'With dropping a \u2018that\u2019 clause switched on in the Logic panel (Word meaning: modifiers), the premises would give \u201cBob is glad\u201d.',
+        'switched off: the check names the switch', J(off));
+    // Relations of two senses.
+    const TWO = [[['The rope is shorter than the cable.'], 'The cable is taller than the rope.'], [['The rope is shorter than the cable.'], 'The cable is longer than the rope.'],
+        [['The paint is lighter than the wall.'], 'The wall is heavier than the paint.'], [['Bob is thinner than Al.'], 'Al is thicker than Bob.'],
+        [['Al is not shorter than Bob.'], 'Bob is not taller than Al.']];
+    ok(!certified(TWO).length, '"shorter", "lighter", "thinner": no converse from them ("The rope is shorter than the cable" had given "The cable is taller than the rope")', J(certified(TWO)));
+    const rope = step(...TWO[0]), thin = step(...TWO[3]);
+    ok(rope.why === '\u2018shorter\u2019 can mean less tall or less long, so \u201cThe rope is shorter than the cable\u201d does not give \u201cThe cable is taller than the rope\u201d; \u201cThe rope is shorter in height than the cable\u201d would.' &&
+        /; \u201cBob is less thick than Al\u201d would\.$/.test(thin.why), 'the check says which senses, and how to say the one wanted', J([rope, thin]));
+    const SAID = [[['The rope is shorter in length than the cable.'], 'The cable is longer than the rope.'], [['Al is shorter in height than Bob.'], 'Bob is taller than Al.'],
+        [['The box is lighter in weight than the crate.'], 'The crate is heavier than the box.'], [['Bob is taller than Al.'], 'Al is shorter in height than Bob.'],
+        [['Bob is taller than Al.'], 'Al is shorter than Bob.'], [['The wall is darker than the paint.'], 'The paint is lighter than the wall.'],
+        [['Bob is fatter than Al.'], 'Al is thinner than Bob.']];
+    ok(SAID.every(([p, c]) => /^converses /.test(step(p, c).rule || '')), 'the sense said ("shorter in length than"), or a converse to the word, the premise giving its sense',
+        J(SAID.map(([p, c]) => step(p, c).rule)));
+    const LESS = [[['Al is less tall than Bob.'], 'Bob is taller than Al.'], [['Bob is bigger than Al.'], 'Al is less big than Bob.'],
+        [['The box is less heavy than the crate.'], 'The crate is heavier than the box.'], [['The road is less wide than the river.'], 'The river is wider than the road.'],
+        [['Al is less good than Bob.'], 'Bob is better than Al.']];
+    ok(LESS.every(([p, c]) => /^converses /.test(step(p, c).rule || '')), '"less tall than" and "taller than", "less big" and "bigger", "less heavy" and "heavier", "less good" and "better"',
+        J(LESS.map(([p, c]) => step(p, c).rule)));
+    const WRONG = [[['Bob is taller than Al.'], 'Al is shorter in length than Bob.'], [['Al is less tall than Bob.'], 'Bob is shorter than Al.']];
+    ok(!certified(WRONG).length && /^transitive /.test(step(['The rope is shorter in length than the cable.', 'The cable is shorter in length than the pole.'], 'The rope is shorter in length than the pole.').rule || ''),
+        'not the wrong sense, nor the wrong way round; "shorter in length than" passed along', J(certified(WRONG)));
+    const note = ev('return LOGIC_GROUP_GLOSSES.relations;');
+    ok(/ "Shorter" can mean less tall or less long: "shorter in height than" gives "taller than"\.$/.test(note), 'the relations note says so', note);
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

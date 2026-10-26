@@ -398,10 +398,10 @@ const MAP = [
         // The optional ones, kept apart: the word-meaning rules (r27.85: ab
         // esse ad posse beside "-able"; r27.103: contraries and
         // contradictories; r27.134: factive verbs; r27.136: relations;
-        // r27.137: dropping a modifier),
+        // r27.137: dropping a modifier; r27.141: dropping a "that" clause),
         // double-negation replacement and its "anywhere" partner, the
         // zero-premise shortcuts, and the catch-alls.
-        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'factive verbs', 'relations', 'dropping a modifier', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'factive verbs', 'relations', 'dropping a modifier', 'dropping a \u2018that\u2019 clause', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
             'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
             'instances up to the replacements'];
         const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);
