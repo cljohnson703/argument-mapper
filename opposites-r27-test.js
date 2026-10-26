@@ -59,7 +59,11 @@ console.log('\n-- 1. every pair, both ways --');
         var gives = [], reverse = [], wrong = [], names = [];
         CLAIM_OPPOSITES.forEach(function (e) {
             [[e.a, e.b], [e.b, e.a]].forEach(function (ab) {
-                var say = e.verb ? verb : adj, one = __step([say(ab[0], false)], say(ab[1], true)), back = __step([say(ab[0], true)], say(ab[1], false));
+                // A pair contradictory only of things of a sort ("guilty" and
+                // "innocent", of a person) takes, from a denial, a premise
+                // that shows it (r27.129).
+                var say = e.verb ? verb : adj, one = __step([say(ab[0], false)], say(ab[1], true)),
+                    back = __step([say(ab[0], true)].concat(e.sort ? ['Kim is a ' + e.sort + '.'] : []), say(ab[1], false));
                 var name = (e.both ? 'contradictories' : 'contraries') + ' \\u2018' + ab[0] + '\\u2019 and \\u2018' + ab[1] + '\\u2019';
                 if (!one || one.rule !== name) gives.push(say(ab[0], false) + ' / ' + say(ab[1], true) + ': ' + (one && one.rule));
                 if (e.both && (!back || back.rule !== name)) reverse.push(say(ab[0], true) + ' / ' + say(ab[1], false) + ': ' + (back && back.rule));
@@ -68,7 +72,10 @@ console.log('\n-- 1. every pair, both ways --');
             });
         });
         return { pairs: CLAIM_OPPOSITES.length, both: CLAIM_OPPOSITES.filter(function (e) { return e.both; }).length, gives: gives, reverse: reverse, wrong: wrong };`);
-    ok(r.pairs === 78 && r.both === 8, 'a list of 78 pairs, 8 of them contradictories', J({ pairs: r.pairs, both: r.both }));
+    // 78 until r27.129, when "dangerous" and "safe", "rise" and "fall",
+    // "increase" and "decrease" went (the user, of the fixes proposed: "I
+    // agree with you on everything").
+    ok(r.pairs === 75 && r.both === 8, 'a list of 75 pairs, 8 of them contradictories', J({ pairs: r.pairs, both: r.both }));
     ok(r.gives.length === 0, 'each word gives the denial of its pair, both ways, the step named by its pair as the words come', J(r.gives));
     ok(r.reverse.length === 0, 'a contradictory pair: each one\'s denial gives the other', J(r.reverse));
     ok(r.wrong.length === 0, 'a contrary pair: never ("Kim is not unhappy" does not give "Kim is happy")', J(r.wrong));
@@ -174,6 +181,35 @@ console.log('\n-- 5. "tall" and "short"; a noun after "a" --');
     ok(step(['Mary is a good person.'], 'Mary is not a bad person.').rule === 'contraries ‘good’ and ‘bad’', '"a good person": an adjective before its noun, as before');
     const note = ev('return [DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === "opposites"; }).gloss, CLAIM_OPPOSITES.length];');
     ok(note[0].indexOf('a list of ' + note[1] + ' pairs') === 0 && /“?"tall" and "short"/.test(note[0]), 'the rule\'s note counts the pairs as the list has them, and names "tall" and "short"', J(note));
+}
+
+console.log('\n-- 6. a word of two senses, verbs of change, an outcome, a sort (r27.129) --');
+{
+    // The user: "has a complete dictionary of English contraries and
+    // contradictories" -- and, of the fixes proposed, "I agree with you on
+    // everything". Each of these had been certified, and none follows.
+    const gone = [['Bob is dangerous.', 'Bob is not safe.'], ['The stock rose today.', 'The stock did not fall today.'],
+        ['Prices increased this year.', 'Prices did not decrease this year.'], ['Bob won.', 'Bob did not lose.'], ['The rock is not guilty.', 'The rock is innocent.']]
+        .map(([p, c]) => step([p], c).rule);
+    ok(gone.every(r => !r), '"Bob is dangerous" does not give "Bob is not safe" (safe in his bunker); "rose" not "did not fall" (both in a day); "won" not "did not lose" (two games); "the rock is not guilty" not "innocent"', J(gone));
+    const kept = [['Mary lost the race.', 'Mary did not win the race.'], ['Bob passed the exam.', 'Bob did not fail the exam.'],
+        ['The man was guilty.', 'The man was not innocent.'], ['The man was innocent.', 'The man was not guilty.'], ['Bob is not married.', 'Bob is unmarried.']]
+        .map(([p, c]) => step([p], c).rule);
+    ok(J(kept) === J(['contraries ‘lose’ and ‘win’', 'contraries ‘pass’ and ‘fail’', 'contradictories ‘guilty’ and ‘innocent’', 'contradictories ‘innocent’ and ‘guilty’',
+        'contradictories ‘married’ and ‘unmarried’']), 'an outcome of what it is of; "guilty" and "innocent" deny each other of anything', J(kept));
+    const shown = step(['The man was not guilty.', 'The man is a person.'], 'The man was innocent.');
+    const unused = step(['The man was guilty.', 'The man is a person.'], 'The man was not innocent.');
+    ok(shown.rule === 'contradictories ‘guilty’ and ‘innocent’' && !unused.rule && /is not needed/.test(unused.why),
+        'from "not guilty", "innocent" takes a premise that the man is a person -- and only there is it used', J([shown, unused]));
+    const hint = step(['Socrates was not guilty.'], 'Socrates was innocent.');
+    ok(!hint.rule && hint.why === '‘guilty’ and ‘innocent’ are contradictories only of a person: “Socrates was not guilty” gives “Socrates was innocent” once it is shown that ‘Socrates is a person’.',
+        'without it, the hint says what it needs', J(hint));
+    // Nor is either offered as the claim between two rules.
+    const between = [step(['Bob won.', 'If Bob did not lose, then Al is happy.'], 'Al is happy.'),
+        step(['The man was not guilty.', 'If the man was innocent, then the trial was fair.'], 'The trial was fair.'),
+        step(['Mary lost the race.', 'If Mary did not win the race, then Al is sad.'], 'Al is sad.')].map(s => s.why);
+    ok(!/takes two steps/.test(between[0]) && !/takes two steps/.test(between[1]) && /First, “Mary lost the race” gives “Mary did not win the race” by contraries ‘lose’ and ‘win’\./.test(between[2]),
+        'no step between "Bob won" and "Bob did not lose", nor "not guilty" and "innocent"; "lost the race", "did not win the race" still', J(between));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

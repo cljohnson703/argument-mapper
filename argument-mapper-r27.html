@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.128';
+    const APP_BUILD = '2026-10-26 r27.129';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -20611,19 +20611,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // the other word says which: "short" beside "tall" or "long", "light"
     // beside "heavy" or "dark", "hard" beside "soft" or "easy" (r27.110; the
     // user, 2026-10-20, "Sounds good", a small risk of equivocation taken).
+    // Not here either (r27.129; the user, of the fixes proposed: "I agree
+    // with you on everything"): "safe" beside "dangerous", which says no
+    // more than that a thing is not in danger ("Bob is dangerous" and safe
+    // in his bunker); and verbs of change, "rise" and "fall", "increase"
+    // and "decrease", which one thing can do both of in a day. Of an
+    // outcome -- "win" and "lose", "pass" and "fail", "succeed" and "fail"
+    // -- only with what it is of ("Mary won the race"): "Bob won" and "Bob
+    // lost" can both be so, of two games. "Guilty" and "innocent" are
+    // contradictories of a person only: of a rock, neither is so, and a step
+    // from "not guilty" to "innocent" takes a premise that it is a person.
     const CLAIM_OPPOSITES = [
         ['contradictory', 'verb', 'lack/have lack/possess'],
-        ['contradictory', 'word', 'absent/present guilty/innocent married/unmarried distinct_from/identical_to distinct_from/identical_with different_from/same_as'],
+        ['contradictory', 'word', 'absent/present married/unmarried distinct_from/identical_to distinct_from/identical_with different_from/same_as'],
+        ['contradictory', 'word-person', 'guilty/innocent'],
         ['contrary', 'word', 'unhappy/happy immoral/moral unjust/just unfair/fair dishonest/honest irrational/rational illogical/logical unreasonable/reasonable ' +
             'unwise/wise unethical/ethical unkind/kind unpleasant/pleasant unhealthy/healthy unwilling/willing unfriendly/friendly unimportant/important ' +
             'disloyal/loyal impolite/polite unpopular/popular sad/happy bad/good evil/good wrong/right cold/hot cold/warm poor/rich small/large small/big ' +
-            'young/old new/old weak/strong dry/wet empty/full difficult/easy dangerous/safe ugly/beautiful foolish/wise dirty/clean low/high late/early ' +
+            'young/old new/old weak/strong dry/wet empty/full difficult/easy ugly/beautiful foolish/wise dirty/clean low/high late/early ' +
             'slow/fast expensive/cheap closed/open asleep/awake dead/alive dead/living odd/even contingent/necessary short/tall short/long light/heavy light/dark hard/soft hard/easy enemy_of/friend_of'],
-        ['contrary', 'verb', 'reject/accept disagree/agree disbelieve/believe lose/win fail/pass fail/succeed forget/remember disobey/obey forbid/allow ' +
-            'forbid/permit prohibit/allow prohibit/permit decrease/increase fall/rise exclude/include']
+        ['contrary', 'verb', 'reject/accept disagree/agree disbelieve/believe forget/remember disobey/obey forbid/allow ' +
+            'forbid/permit prohibit/allow prohibit/permit exclude/include'],
+        ['contrary', 'verb-object', 'lose/win fail/pass fail/succeed']
     ].flatMap(([kind, pos, list]) => list.split(' ').map(p => {
         const [a, b] = p.split('/').map(w => w.replace(/_/g, ' '));
-        return { a, b, both: kind === 'contradictory', verb: pos === 'verb' };
+        return { a, b, both: kind === 'contradictory', verb: /^verb/.test(pos), object: pos === 'verb-object', sort: pos === 'word-person' ? 'person' : null };
     }));
     // Where a predicate opens with a listed word: for each, { pair, side,
     // copula, lead, past, rest } -- "~will be dead" is "will be", "dead",
@@ -20695,7 +20707,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // -- the words, and whether they are contradictories -- or null. With
     // `reversed`, also the step that takes contraries for contradictories
     // ("Mary is not happy", so "Mary is unhappy"), marked so.
-    function claimOppositeStep(p, c, reversed) {
+    // `shown`: a second premise, that the thing is of the pair's sort ("the
+    // man is a person"), for a pair that is contradictory only of things of
+    // that sort -- used where it is needed, and only there (r27.129).
+    function claimOppositeStep(p, c, reversed, shown) {
         const a = claimOppositeSaid(p), b = claimOppositeSaid(c);
         if (!a || !b || a.of !== b.of || a.denied === b.denied) return null;
         const rest = r => claimUnmarked(r).toLowerCase();
@@ -20703,12 +20718,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const e0 = CLAIM_OPPOSITES[x.pair];
             if (x.pair !== y.pair || x.side === y.side || x.copula !== y.copula || x.lead !== y.lead || x.past !== y.past || rest(x.rest) !== rest(y.rest)) continue;
             if (x.copula && (claimOppositeNoun(a.vp, x.side ? e0.b : e0.a) || claimOppositeNoun(b.vp, y.side ? e0.b : e0.a))) continue;
+            // An outcome, of what it is of: "won the race", not "won" (r27.129).
+            if (e0.object && !rest(x.rest).trim()) continue;
             const e = CLAIM_OPPOSITES[x.pair], step = { from: x.side ? e.b : e.a, to: y.side ? e.b : e.a, both: e.both };
-            if (!a.denied) return step;
-            if (e.both) return step;
-            if (reversed) return Object.assign(step, { reversed: true });
+            if (!a.denied || (e.both && !e.sort)) { if (shown) continue; return step; }
+            if (e.both) {
+                if (shown && claimOppositeSortShown(shown, p, e.sort)) return step;
+                if (!shown && reversed) return Object.assign(step, { reversed: true, sort: e.sort });
+                continue;
+            }
+            if (!shown && reversed) return Object.assign(step, { reversed: true });
         }
         return null;
+    }
+    // Does `shown` say that what `p` is about is a thing of the sort: "the
+    // man is a person", beside "the man was not guilty" (r27.129)?
+    function claimOppositeSortShown(shown, p, sort) {
+        const inner = p && (p.kind === 'not' ? p.inner : p);
+        const term = t => claimUnmarked(String(t)).trim().toLowerCase();
+        return !!shown && !!inner && shown.kind === 'pred' && inner.kind === 'pred' && typeof shown.prop === 'string' &&
+            claimPropCanon(shown.prop) === claimPropCanon('=' + sort) && term(shown.term) === term(inner.term);
     }
     // A step of opposites as its rule: named by its pair, as the words come.
     const CLAIM_OPPOSITE_RULES = new Map();
@@ -20785,8 +20814,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Contraries and contradictories, a list of pairs (r27.103): a rule of
         // word meaning, its own step, named by its pair.
         { id: 'opposites', name: 'contraries and contradictories', optional: true,
-          gloss: 'a list of 78 pairs: contraries such as "sad" and "happy", "tall" and "short", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
-          test: (P, C) => P.length === 1 && !!claimOppositeStep(P[0], C) },
+          gloss: 'a list of 75 pairs: contraries such as "sad" and "happy", "tall" and "short", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
+          test: (P, C) => (P.length === 1 && !!claimOppositeStep(P[0], C)) || (P.length === 2 && [0, 1].some(i => !!claimOppositeStep(P[i], C, false, P[1 - i]))) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
           test: (P, C) => claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C) },
@@ -22055,7 +22084,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // Contraries and contradictories: named by the pair (r27.103).
         if (rule && rule.id === 'opposites') {
-            for (const C of conclusions) { const step = claimOppositeStep(premises[0], C); if (step) return claimOppositeRule(step); }
+            for (const C of conclusions) {
+                const step = premises.length === 1 ? claimOppositeStep(premises[0], C) : [0, 1].map(i => claimOppositeStep(premises[i], C, false, premises[1 - i])).find(Boolean);
+                if (step) return claimOppositeRule(step);
+            }
         }
         // "Anything that is a mental state of a subject is a part of that
         // subject's mind" and its case, "the records are mental states of
@@ -23201,7 +23233,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     text: 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give ' + target + ' by ' + rule.name + '.' });
             } else {
                 const step = C.map(c => claimOppositeStep(P[0], c, true)).find(x => x && x.reversed);
-                if (step) return Object.assign(none, { contraries: step,
+                // "The man was not guilty", so "the man was innocent": once it
+                // is shown that the man is a person (r27.129).
+                const of = step && step.sort && P[0] ? P[0].subjectText || (P[0].inner && P[0].inner.subjectText) : null;
+                if (of) return Object.assign(none, { contraries: step,
+                    text: '‘' + step.from + '’ and ‘' + step.to + '’ are contradictories only of a ' + step.sort + ': ' + said(premiseTexts[0]) + ' gives ' + target +
+                        ' once it is shown that ‘' + claimRecase(claimShowWords(of), premiseTexts[0]).replace(/^./, c => c.toUpperCase()) + ' is a ' + step.sort + '’.' });
+                if (step && !step.sort) return Object.assign(none, { contraries: step,
                     text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
             }
         }

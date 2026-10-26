@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: the opposites list made sound -- a word of two senses, verbs of change, an outcome of nothing, a pair of persons only (r27.129)
+
+The user asked for "a complete dictionary of English contraries and contradictories". Of the fixes proposed: "I agree with you on everything."
+
+* Before growing the list, it had to stop certifying steps that do not follow. Each of these had been certified:
+  - "Bob is dangerous", so "Bob is not safe" (a dangerous man in his bunker is safe);
+  - "The stock rose today", so "The stock did not fall today" (it can do both before lunch);
+  - "Prices increased this year", so "Prices did not decrease this year";
+  - "Bob won", so "Bob did not lose" (two games);
+  - "The rock is not guilty", so "The rock is innocent".
+* Now:
+  - "dangerous" and "safe" are no pair: "safe" may only say that a thing is not in danger.
+  - "Rise" and "fall", "increase" and "decrease" are gone: one thing does both in a day.
+  - An outcome is opposed only with what it is of: "Mary lost the race" gives "Mary did not win the race"; "Bob won" gives nothing.
+  - "Guilty" and "innocent" deny each other of anything ("the man was guilty", so "not innocent"). But from "not guilty" to "innocent" takes a premise that it is a person: "The man was not guilty" and "The man is a person" give "The man was innocent". Without that premise, the hint says so: "‘guilty’ and ‘innocent’ are contradictories only of a person: “Socrates was not guilty” gives “Socrates was innocent” once it is shown that ‘Socrates is a person’." Where the step needs no such premise, a premise that gives it is not needed, as for any step.
+* 75 pairs, 8 of them contradictories (78 before).
+
+Tests. opposites-r27-test.js (29: a word of two senses, verbs of change, an outcome, a sort; the count and the "each one's denial gives the other" check, now with the sort premise where a pair has one). Take-one-out: each of the 7 edits is caught. The 4,542 sentences from the suites read as before. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 90 suites pass, and the public build's smoke test.
+
 ### October 26: a clause after "after", "before", "as" belongs to the verb, not the subject (r27.128)
 
 The user: "parse language into its syntactical components correctly". Of the fixes proposed: "I agree with you on everything."
