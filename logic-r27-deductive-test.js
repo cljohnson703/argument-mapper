@@ -381,11 +381,11 @@ const MAP = [
         const STANDARD = ['Contradiction', 'predicate congruence', 'subalternation', 'identity symmetry',
             'identity transitivity', 'identity introduction', 'identity substitution', 'modus ponens',
             'modus ponens, conditions together', 'modus tollens', 'hypothetical syllogism', 'proof by cases',
-            'constructive dilemma', 'destructive dilemma', 'biconditional elimination', 'substitution of equivalents', 'biconditional introduction',
+            'constructive dilemma', 'destructive dilemma', 'either way', 'biconditional elimination', 'substitution of equivalents', 'biconditional introduction',
             'conjunction introduction', 'conjunction elimination', 'disjunction introduction', 'disjunctive syllogism',
             'conjunctive syllogism', 'resolution', 'explosion', 'double-negation elimination',
             'existential introduction', 'existential elimination', 'universal elimination', 'universal modus ponens',
-            'universal modus tollens', 'universal syllogism', 'existential syllogism', 'categorical syllogism',
+            'universal modus tollens', 'expository syllogism', 'universal syllogism', 'existential syllogism', 'categorical syllogism',
             'reductio', 'rule instances', 'negation introduction', 'indirect proof',
             'consequentia mirabilis', 'biconditional to conditional', 'absorption', 'change of bound variable', 'Quantifier Commutation',
             'vacuous quantifier', 'vacuous quantifier, anywhere', 'rules of passage', 'quantifier distribution',
@@ -397,9 +397,10 @@ const MAP = [
             'an unsound argument', 'a rule under a quantifier'];
         // The optional ones, kept apart: the word-meaning rules (r27.85: ab
         // esse ad posse beside "-able"; r27.103: contraries and
-        // contradictories), double-negation replacement and its "anywhere"
-        // partner, the zero-premise shortcuts, and the catch-alls.
-        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+        // contradictories; r27.134: factive verbs), double-negation
+        // replacement and its "anywhere" partner, the zero-premise shortcuts,
+        // and the catch-alls.
+        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'factive verbs', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
             'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
             'instances up to the replacements'];
         const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);

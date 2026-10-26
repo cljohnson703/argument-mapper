@@ -122,11 +122,13 @@ console.log('\n-- 4. two rules in one step --');
         'modus ponens twice: the claim between, the premises of each step, and where to put it', J(chain));
     ok(both(null, 'The ground is wet.', ['If it rains, then the ground is wet.', 'It rains.'], ['If the ground is wet, then the game is off.'], 'The game is off.', ['modus ponens', 'modus ponens']),
         'and each step, so built, follows');
-    const ei = step(['Poe is a raven.', 'Poe is black.'], 'Some raven is black.');
-    ok(ei.why === 'Getting to “Some raven is black” takes two steps. First, “Poe is a raven” and “Poe is black” give “Poe is a raven and Poe is black” by conjunction introduction. ' +
-        'Then “Poe is a raven and Poe is black” gives “Some raven is black” by existential introduction. ' +
-        'Add “Poe is a raven and Poe is black” as a box of its own, with “Poe is a raven” and “Poe is black” under it.', 'conjunction introduction, then existential introduction', J(ei));
-    ok(/give “Poe is a raven and Poe is black” by conjunction introduction/.test(step(['Poe is black.', 'Poe is a raven.'], 'Some raven is black.').why),
+    // "Some raven is black" from these is one step since r27.134 (the
+    // expository syllogism); "something is a black raven" still takes two.
+    const ei = step(['Poe is a raven.', 'Poe is black.'], 'Something is a black raven.');
+    ok(ei.why === 'Getting to “Something is a black raven” takes two steps. First, “Poe is a raven” and “Poe is black” give “Poe is black and Poe is a raven” by conjunction introduction. ' +
+        'Then “Poe is black and Poe is a raven” gives “Something is a black raven” by existential introduction. ' +
+        'Add “Poe is black and Poe is a raven” as a box of its own, with “Poe is a raven” and “Poe is black” under it.', 'conjunction introduction, then existential introduction', J(ei));
+    ok(/give “Poe is black and Poe is a raven” by conjunction introduction/.test(step(['Poe is black.', 'Poe is a raven.'], 'Something is a black raven.').why),
         'the conjunction in the order that gives it, whatever order the premises have');
     const again = step(['All ravens are black.', 'Poe is a raven.'], 'Poe is a black raven.');
     ok(again.why === 'Getting to “Poe is a black raven” takes two steps. First, “All ravens are black” and “Poe is a raven” give “Poe is black” by universal modus ponens. ' +
@@ -164,7 +166,7 @@ console.log('\n-- 6. no route, no hint --');
     ok(!da.rule && !/two steps|holds two claims/.test(da.why), 'nor for denying the antecedent in a box of two claims', J(da));
     const nobody = step(['Socrates is wise.'], 'Everyone is wise.');
     ok(!nobody.rule && !/once it is shown|do not show|two steps/.test(nobody.why), 'nor from one case to all', J(nobody));
-    ok(!step(['Socrates is a man, and all men are mortal.'], 'Socrates is mortal.').rule && !step(['Poe is a raven.', 'Poe is black.'], 'Some raven is black.').rule,
+    ok(!step(['Socrates is a man, and all men are mortal.'], 'Socrates is mortal.').rule && !step(['Poe is a raven.', 'Poe is black.'], 'Something is a black raven.').rule,
         'and the steps it speaks of stay uncertified: one rule per step');
 }
 
@@ -339,22 +341,22 @@ console.log('\n-- 10. a fallacy\'s tag, and the verdict (r27.100) --');
 
 console.log('\n-- 11. what someone knows, shows or believes (r27.100) --');
 {
+    // Since r27.134 what is known or shown is so, by factive verbs (the user:
+    // "Maybe the T axiom could be on by default"): a step of its own, where
+    // the checker had had no rule.
     ok(step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why ===
         'With “All men are mortal” for “We know that all men are mortal”, the premises would give “Socrates is mortal” by universal modus ponens. ' +
-        'But getting from the one to the other takes a rule for “know”, and the checker has none yet: such rules belong to epistemic logic.',
-        '"we know that": what would follow with the claim itself, and the rule it takes');
+        'But getting from the one to the other is a step of its own, by factive verbs: add “All men are mortal” as a box of its own, with “We know that all men are mortal” under it.',
+        '"we know that": what would follow with the claim itself, and the step it takes');
     ok(step(['Everyone agrees that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why ===
         'With “All men are mortal” for “Everyone agrees that all men are mortal”, the premises would give “Socrates is mortal” by universal modus ponens. ' +
         'But “Everyone agrees that all men are mortal” does not give “All men are mortal”: what is agreed on can be false.', '"everyone agrees that": what is agreed on can be false');
     ok(step(['Mary believes that God exists.'], 'God exists.').why === '“Mary believes that God exists” does not give “God exists”: what is believed can be false.' &&
-        step(['We know that God exists.'], 'God exists.').why ===
-        'Getting from “We know that God exists” to “God exists” takes a rule for “know”, and the checker has none yet: such rules belong to epistemic logic.' &&
-        step(['Studies have shown that smoking causes cancer.'], 'Smoking causes cancer.').why ===
-        'Getting from “Studies have shown that smoking causes cancer” to “Smoking causes cancer” takes a rule for “show”, and the checker has none yet.' &&
-        /takes a rule for “know”/.test(step(['It is known that God exists.'], 'God exists.').why),
-        'from the claim alone: "believes", "know", "have shown", "it is known"');
-    ok(['Mary believes that God exists.', 'We know that God exists.'].every(t => !step([t], 'God exists.').rule) &&
-        !step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.').rule, 'and nothing is certified');
+        ['We know that God exists.', 'Studies have shown that smoking causes cancer.', 'It is known that God exists.'].every((t, i) =>
+            step([t], i === 1 ? 'Smoking causes cancer.' : 'God exists.').rule === 'factive verbs'),
+        'from the claim alone: "believes" gives nothing; "know", "have shown", "it is known" give it, by factive verbs');
+    ok(!step(['Mary believes that God exists.'], 'God exists.').rule && !step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.').rule,
+        'and what is believed, or a step of two, is not certified');
     ok(!/what is|takes a rule/.test(step(['Mary denies that God exists.'], 'God does not exist.').why) &&
         !/what is|takes a rule/.test(step(['Nobody believes that God exists.'], 'God does not exist.').why) &&
         !/what is|takes a rule/.test(step(['Mary does not believe that God exists.'], 'God does not exist.').why),

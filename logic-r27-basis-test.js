@@ -74,8 +74,8 @@ try {
     console.log('\n-- the basis and its extensions --');
     {
         const groups = ev('return DEDUCTIVE_EXTENSIONS.map(function (g) { return g.id + ":" + g.on; });');
-        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'opposites:true', 'negations:false', 'instances:false', 'catchall:false']),
-            'eleven groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65) and contraries and contradictories (r27.103) on by default, negations anywhere, extra rule instances and the catch-alls off', J(groups));
+        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'opposites:true', 'factive:true', 'negations:false', 'instances:false', 'catchall:false']),
+            'twelve groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65), contraries and contradictories (r27.103) and factive verbs (r27.134) on by default, negations anywhere, extra rule instances and the catch-alls off', J(groups));
         const basisSet = ev('return [DEDUCTIVE_BASIS.has("modus-ponens"), DEDUCTIVE_AXIOMS.length, ["and-elim", "hypothetical-syllogism", "exportation", "quantifier-distribution", "null-quantification", "reductio", "universal-elimination", "existential-introduction", "existential-elimination"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && DEDUCTIVE_CORE.indexOf(id) >= 0; })];');
         const shared = ev('return DEDUCTIVE_EXTENSIONS.some(function (g) { return g.rules.some(function (id) { return DEDUCTIVE_BASIS.has(id); }); });');
         ok(basisSet[0] && basisSet[1] === 13 && basisSet[2] && !shared,
@@ -792,8 +792,8 @@ try {
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
         // Modal logic is a group the map switches on, not a base (r27.101);
         // "would" and "could" under it (r27.112).
-        ok(built.groups === 13 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, eleven groups of steps, metaphysical necessity, and "would" and "could"', J(built));
+        ok(built.groups === 14 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, twelve groups of steps, metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
         ok(built.rules === want && built.lists === 8, 'a switch for each rule of a group with more than one', built.rules + ' of ' + want + ', ' + built.lists + ' lists');
@@ -804,12 +804,13 @@ try {
         ok(mt() === 'modus tollens', 'a modus tollens step, certified by default');
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         const off = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, n: Object.keys(state.logic.rules).length, stamped: !!state._logicVersion };');
-        ok(mt() === null && !off.checked && !off.ind && off.n === 22 && off.stamped, 'Familiar steps switched off: its twenty-two rules off, stamped, and the step no longer certified', J(off));
+        // Twenty-four since r27.134 (the expository syllogism, "either way").
+        ok(mt() === null && !off.checked && !off.ind && off.n === 24 && off.stamped, 'Familiar steps switched off: its twenty-four rules off, stamped, and the step no longer certified', J(off));
         ev('document.getElementById("logic-group-familiar").click(); return 1;');
         ok(mt() === 'modus tollens' && J(ev('return state.logic.rules;')) === '{}', 'and on again');
         ev('document.querySelector("[data-rule=\\"modus-tollens\\"]").click(); return 1;');
         const part = ev('var g = document.getElementById("logic-group-familiar"); return { checked: g.checked, ind: g.indeterminate, count: document.querySelector("[data-count=\\"familiar\\"]").textContent };');
-        ok(mt() === null && !part.checked && part.ind && part.count === '21 of 22', 'one rule of a group off: the group half on, "21 of 22"', J(part));
+        ok(mt() === null && !part.checked && part.ind && part.count === '23 of 24', 'one rule of a group off: the group half on, "23 of 24"', J(part));
         // Undo leaves the settings alone; the map's edits it undoes.
         ev('pushHistory(); state.trees[0].texts = ["It does not rain at all"]; render(); undo(); return 1;');
         const undone = ev('return { text: state.trees[0].texts[0], rules: state.logic.rules, inSnapshot: /modus-tollens/.test(historySnapshot()) };');

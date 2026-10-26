@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.133';
+    const APP_BUILD = '2026-10-26 r27.134';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6933,6 +6933,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         inside: 'Rules used inside "every" or "some": "every raven is black and old" gives "every raven is black".',
         able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse.',
         opposites: 'Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse (contraries); "lack" and "have" deny each other both ways (contradictories).',
+        factive: 'Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"; likewise "realizes", "proves", "regrets", "is aware that". Not "believes" or "says": what is believed can be false.',
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
         catchall: 'Anything truth tables show, including swapping a part for an equivalent one.' };
@@ -9847,7 +9848,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Words that say a phrase was named before: "the aforementioned road".
     const CLAIM_NAMED_BEFORE = /^(?:aforementioned|aforesaid|above|above-mentioned|abovementioned|said)$/;
     const claimThatTakesClause = w => CLAIM_ATTITUDE_WORD.test(w) || claimVerbBases(w).concat([CLAIM_IRREGULAR_PAST[w] || '']).some(b => CLAIM_ATTITUDE_VERBS.has(b)) ||
-        CLAIM_CONTENT_NOUNS.has(w) || CLAIM_CLAUSE_ADJECTIVES.has(w) || /^(?:so|such|now|given|provided|providing|except|in|than|is|was|are|were|be|been|being)$/.test(w);
+        CLAIM_CONTENT_NOUNS.has(w) || CLAIM_CLAUSE_ADJECTIVES.has(w) || CLAIM_PERSON_CLAUSE_ADJECTIVES.has(w) ||
+        /^(?:so|such|now|given|provided|providing|except|in|than|is|was|are|were|be|been|being)$/.test(w);
     // A word that takes a clause ("learn", "learning", "learned"), in any
     // of its forms.
     const claimAttitudeWord = w => !!claimAttitudeBase(w) || CLAIM_ATTITUDE_VERBS.has(w) ||
@@ -11494,6 +11496,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'theory', 'argument', 'requirement', 'condition', 'observation', 'insight', 'discovery', 'result', 'finding', 'truth', 'likelihood',
         'probability', 'certainty', 'danger', 'risk', 'problem', 'way', 'grounds', 'ground', 'supposition', 'contention', 'impression', 'feeling']);
     const CLAIM_RELATIVE_HEADS = /^(?:everything|something|anything|nothing|everyone|someone|anyone|nobody|everybody|somebody|anybody|those|one|ones|whatever|whoever)$/;
+    // What a person may be "that" a claim is so: "glad that Mary left",
+    // "aware that it rained" -- a claim after them, not a relative clause
+    // ("glad that Mary left" had been "glad, and Mary left Bob") (r27.134).
+    const CLAIM_PERSON_CLAUSE_ADJECTIVES = new Set(('aware unaware glad sorry happy unhappy pleased displeased surprised angry upset disappointed proud ' +
+        'ashamed afraid worried convinced confident conscious thankful grateful relieved annoyed delighted shocked amazed astonished hopeful ' +
+        'positive horrified embarrassed furious frightened scared excited anxious content satisfied dissatisfied adamant').split(' '));
     // Words a claim follows with "that", "whether" or "if" ("clear that Mary
     // left", "known that", "hard to say whether"): what follows is a claim of
     // its own, not a clause about a thing.
@@ -12168,7 +12176,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // One inside another relative clause is that clause's: "student who
         // reads books that Mary wrote" (below).
         const nestedObjRel = objRel > 0 && /\b(?:that|who|which|whom)\b/.test(claimUnmarked(tokens.slice(0, objRel).join(' ')));
-        if (objRel > 0 && !nestedObjRel && (claimClauseHead(words.slice(0, objRel)) || words.slice(0, objRel).some(w => /^(?:so|such)$/.test(w)))) return null;
+        if (objRel > 0 && !nestedObjRel && (claimClauseHead(words.slice(0, objRel)) || CLAIM_PERSON_CLAUSE_ADJECTIVES.has(words[objRel - 1]) ||
+            words.slice(0, objRel).some(w => /^(?:so|such)$/.test(w)))) return null;
         if (objRel > 0 && !nestedObjRel) {
             const head = normalizeClaimTerm(tokens.slice(0, objRel).join(' ')), rel = claimObjectRelativeProp(tokens.slice(objRel + 1));
             if (!head || !rel || /\b(?:that|who|which|whom)\b/.test(claimUnmarked(head))) return null;
@@ -12182,7 +12191,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !CLAIM_PREPOSITIONS.has(words[i - 1]) && !CLAIM_OBJECT_PREPOSITIONS.has(words[i - 1]) && !CLAIM_VERB_MARKERS.has(words[i + 2] || '') &&
             // "Learning that someone never loved you": what is learned, no
             // relative clause; nor one whose subject is "someone" (r27.108).
-            !(w === 'that' && claimAttitudeWord(words[i - 1])) &&
+            // Nor "glad that the dog left" (r27.134).
+            !(w === 'that' && (claimAttitudeWord(words[i - 1]) || CLAIM_PERSON_CLAUSE_ADJECTIVES.has(words[i - 1]))) &&
             !/^(?:someone|somebody|something|everyone|everybody|everything|anyone|anybody|anything|nobody|nothing)$/.test(words[i + 1]) &&
             !CLAIM_NOUN_DETERMINERS.test(words[i + 1]) && !CLAIM_SUBJECT_PRONOUNS.has(words[i + 1]) && !/^(?:we|you|they|i|he|she|it|a|an)$/.test(words[i + 1]) &&
             !/^\uE000/.test(tokens[i + 1]) && !CLAIM_FUNCTION_WORDS.has(words[i + 1]));
@@ -19947,6 +19957,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         knows('notice', 'notice notices noticed');
         knows('see', 'see sees saw seen');
         knows('discover', 'discover discovers discovered');
+        // ... and regretting or forgetting that P, being aware or glad that P (r27.134).
+        knows('regret', 'regret regrets regretted');
+        knows('forget', 'forget forgets forgot forgotten');
+        knows('be aware', 'aware');
+        'glad sorry happy pleased surprised proud ashamed relieved disappointed upset thankful grateful'.split(' ').forEach(a => shows('be ' + a, a));
         shows('prove', 'prove proves proved proven');
         shows('show', 'show shows showed shown');
         shows('demonstrate', 'demonstrate demonstrates demonstrated');
@@ -19996,6 +20011,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const info = CLAIM_THAT_VERBS.get(verb.toLowerCase());
         if (!info || !/[A-Za-z]/.test(clause)) return null;
         return Object.assign({ clause: clause.charAt(0).toUpperCase() + clause.slice(1) }, info);
+    }
+    // The claim a box says is known, shown or regretted -- "Bob knows that
+    // Mary left", "Bob is glad that Mary left": "Mary left" -- read from its
+    // words, as the box has them; or null. Only where its verb is the
+    // box's own: not "the man who knows that Mary left is sad" (r27.134).
+    function claimFactiveClaim(f) {
+        if (!f || f.kind !== 'pred' || !f.src || !f.vpText) return null;
+        const w = claimThatClause(f.src);
+        if (!w || !w.factive || !(' ' + String(f.vpText).toLowerCase()).endsWith(' that ' + w.clause.toLowerCase())) return null;
+        return parseClaim(w.clause);
     }
     // Existential introduction with its case short: "Socrates is wise" gives
     // "someone is wise" once Socrates is shown to be a person -- from
@@ -20900,6 +20925,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'opposites', name: 'contraries and contradictories', optional: true,
           gloss: 'a list of 75 pairs: contraries such as "sad" and "happy", "tall" and "short", "dead" and "alive", "reject" and "accept"; contradictories such as "lack" and "have", "absent" and "present", "distinct from" and "identical to"',
           test: (P, C) => (P.length === 1 && !!claimOppositeStep(P[0], C)) || (P.length === 2 && [0, 1].some(i => !!claimOppositeStep(P[i], C, false, P[1 - i]))) },
+        // What is known is so (r27.134; the user, of knowledge's T axiom:
+        // "Maybe the T axiom could be on by default"): "Bob knows that Mary
+        // left" gives "Mary left", and so do "realizes", "discovered",
+        // "proved", "regrets", "is aware" and "is glad that". Not "believes",
+        // "says" or "hopes" -- what is believed can be false -- nor a denial:
+        // "Bob does not know that Mary left" gives nothing.
+        { id: 'factive', name: 'factive verbs', optional: true,
+          gloss: '"X knows that A" gives A; likewise realizes, discovers, proves, shows, regrets, forgets, is aware and is glad that A -- not believes, says or hopes',
+          test: (P, C) => { if (P.length !== 1) return false; const f = claimFactiveClaim(P[0]); return !!f && claimKeyMatch(f, C); } },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
           test: (P, C) => claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C) },
@@ -21105,8 +21139,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DEDUCTIVE_EXTENSIONS = [
         { id: 'core', label: 'Intro and elimination steps', on: true, rules: DEDUCTIVE_CORE.concat(['rule-instance-conditionals']) },
         { id: 'familiar', label: 'Familiar steps', on: true, rules: ['modus-ponens-together', 'modus-tollens', 'disjunctive-syllogism', 'conjunctive-syllogism',
-            'constructive-dilemma', 'destructive-dilemma', 'resolution', 'absorption', 'biconditional-to-conditional', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
-            'universal-modus-ponens', 'universal-modus-tollens', 'universal-syllogism', 'existential-syllogism', 'subalternation',
+            'constructive-dilemma', 'destructive-dilemma', 'either-way', 'resolution', 'absorption', 'biconditional-to-conditional', 'negation-introduction', 'indirect-proof', 'consequentia-mirabilis',
+            'universal-modus-ponens', 'universal-modus-tollens', 'expository-syllogism', 'universal-syllogism', 'existential-syllogism', 'subalternation',
             'categorical-syllogism', 'identity-symmetry', 'identity-transitivity', 'predicate-congruence',
             'equivalent-substitution'] },
         { id: 'replacement', label: 'Replacement rules', on: true, rules: ['de-morgan', 'transposition', 'material-implication', 'material-equivalence',
@@ -21117,6 +21151,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'inside', label: 'Rules inside quantifiers', on: true, rules: ['under-quantifier'] },
         { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
         { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
+        { id: 'factive', label: 'Word meaning: “knows that”', on: true, rules: ['factive'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },
@@ -21725,6 +21760,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                       return denied(conds) || (conds.length < all.length && denied(all));
                   }));
           }) },
+        // "Either way" (r27.134; the user: "we can add it as an optional
+        // rule"): proof by cases without "A or not A" said.
+        { id: 'either-way', name: 'either way',
+          gloss: '"if A, then C" and "if not A, then C" give C',
+          test: (P, C) => P.length === 2 && P.every(p => p.kind === 'if' && !p.counterfactual) && claimViewChoices(P).some(([x, y]) =>
+              claimDenies(x.conds[0], y.conds[0]) && claimSame(x.cons, C) && claimSame(y.cons, C)) },
         { id: 'biconditional-elimination', name: 'biconditional elimination',
           gloss: '"A if and only if B" and A give B; "not A" gives "not B"',
           test: (P, C) => P.length === 2 && [0, 1].some(i => {
@@ -21828,10 +21869,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                   return t !== null && claimKeyMatch(applyClaimProp(C.predicate, t), p);
               }
               // "Poe is a raven and Poe is black": some raven is black; "Poe is a
-              // black raven and flies": some black raven flies.
+              // black raven and flies": some black raven flies. In either order
+              // (r27.134): "Socrates is wise and Socrates is a man", so "some
+              // man is wise"; "Poe is a black raven", so "some raven is black".
               if (p.kind !== 'and') return false;
               const t = claimTermOf(p.parts[0]);
-              return t !== null && claimKeyMatch(makeClaimJunction('and', [applyClaimProp(C.subject, t), applyClaimProp(C.predicate, t)]), p);
+              if (t === null) return false;
+              const kind = applyClaimProp(C.subject, t), said = applyClaimProp(C.predicate, t);
+              return claimKeyMatch(makeClaimJunction('and', [kind, said]), p) || claimKeyMatch(makeClaimJunction('and', [said, kind]), p);
           } },
         { id: 'existential-elimination', name: 'existential elimination',
           gloss: '"something is F" and "anything F gives P" give P',
@@ -21882,6 +21927,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                           claimsPairOff(rest.filter((_, m) => m !== j), kase.parts.filter((_, m) => m !== k).map(p => x => claimKeyMatch(p, x))))));
               })) || claimObjectModusTollens(P, C);
           } },
+        // The existential twin of universal modus ponens (r27.134; the user:
+        // "if expository syllogism is a known rule, we can add it"): "Bob is a
+        // student" and "Bob passed", so "some student passed" -- one step, as
+        // we reason, where it had taken conjunction introduction and then
+        // existential introduction.
+        { id: 'expository-syllogism', name: 'expository syllogism',
+          gloss: '"a is F" and "a is G" give "some F is G"',
+          test: (P, C) => P.length === 2 && C.kind === 'some' && C.subject !== CLAIM_ANY && [0, 1].some(i => {
+              const t = claimTermOf(P[i]);
+              return t !== null && claimKeyMatch(applyClaimProp(C.subject, t), P[i]) && claimKeyMatch(applyClaimProp(C.predicate, t), P[1 - i]);
+          }) },
         // A map's stand-ins for universal introduction and existential
         // elimination, which need an arbitrary instance or a supposition.
         { id: 'universal-syllogism', name: 'universal syllogism',
@@ -23557,9 +23613,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // itself in its place, and why the box does not give that claim.
             .concat(wrapped ? (() => {
                 const box = said(premiseTexts[wrapped.at]), claim = said(wrapped.clause);
-                const why = wrapped.factive ? 'takes a rule for “' + wrapped.lemma + '”, and the checker has none yet' + (wrapped.epistemic ? ': such rules belong to epistemic logic.' : '.')
+                // What is known: a step of its own, by factive verbs, or
+                // their group switched on (r27.134; there had been no rule).
+                const on = claimRuleOn('factive');
+                const why = wrapped.factive ? (on ? 'is a step of its own, by factive verbs: add ' + claim + ' as a box of its own, with ' + box + ' under it.'
+                        : 'takes factive verbs, switched off in the Logic panel.')
                     : box + ' does not give ' + claim + ': what is ' + wrapped.participle + ' can be false.';
-                if (wrapped.same) return [wrapped.factive ? 'Getting from ' + box + ' to ' + claim + ' ' + why : why];
+                if (wrapped.same) return [!wrapped.factive ? why : on ? 'Getting from ' + box + ' to ' + claim + ' takes factive verbs, which do not read ' + box + '.'
+                    : 'With Word meaning: “knows that” switched on in the Logic panel, ' + box + ' would give ' + claim + ' by factive verbs.'];
                 return ['With ' + claim + ' for ' + box + ', the premises would give ' + target + ' by ' + wrapped.rule.name + '. But ' +
                     (wrapped.factive ? 'getting from the one to the other ' : '') + why];
             })() : [])

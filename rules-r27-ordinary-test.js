@@ -1,0 +1,158 @@
+'use strict';
+/**
+ * Rules of ordinary reasoning (r27.134; the user asked that the app have "all
+ * the basic logical rules that we use in ordinary reasoning", and agreed to
+ * add those missing, with: "if expository syllogism is a known rule, we can
+ * add it to optional rules"; of factives, "Maybe the T axiom could be on by
+ * default"; of "either way", "we can add it as an optional rule").
+ *
+ *   node rules-r27-ordinary-test.js [argument-mapper-r27.html]
+ *
+ * 1. Factive verbs: "X knows that A" gives A, in every tense, whatever A is;
+ *    likewise "realizes", "discovered", "proved", "regrets", "is aware that",
+ *    "is glad that". Not "believes", nor a denial, nor a "that" inside the
+ *    subject. A group of its own, on by default; off, the check says so; a
+ *    step of two says which box is missing.
+ * 2. "Glad that", "sorry that", "aware that" take a claim, not a relative
+ *    clause: "Bob is glad that Mary left" had been "Bob is glad, and Mary left
+ *    Bob", and gave "Mary left Bob".
+ * 3. The expository syllogism: "a is F" and "a is G" give "some F is G", in
+ *    either order, denied ("some F is not G"), and with "someone".
+ * 4. "Either way": "if A, then C" and "if not A, then C" give C; with "A or
+ *    not A" said, proof by cases did already.
+ * 5. Existential introduction in either order: "Socrates is wise and
+ *    Socrates is a man", "Poe is a black raven", so "some man is wise", "some
+ *    raven is black".
+ * 6. Each a switch: off, its step is not certified.
+ */
+const fs = require('fs');
+const { JSDOM, VirtualConsole } = require('jsdom');
+const errors = [], vc = new VirtualConsole(); vc.on('jsdomError', e => errors.push(String(e && (e.detail || e.message || e)).split('\n')[0]));
+const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-mapper-r27.html', 'utf8'), {
+    runScripts: 'dangerously', pretendToBeVisual: true, url: 'https://localhost/ordinary-rules-test', virtualConsole: vc,
+    beforeParse(w) {
+        w.matchMedia = () => ({ matches: false, addListener() {}, addEventListener() {} });
+        w.ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+        const ctx = new Proxy({}, { get: (_, p) => p === 'measureText' ? (() => ({ width: 40 })) : (() => ctx) });
+        w.HTMLCanvasElement.prototype.getContext = () => ctx;
+        w.alert = () => {}; w.confirm = () => true; w.prompt = () => null;
+    }
+});
+const W = dom.window, J = JSON.stringify;
+const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+let passed = 0, failed = 0;
+function ok(cond, label, detail) {
+    if (cond) { passed++; console.log('  ✓ ' + label); }
+    else { failed++; console.log('  ✗ FAIL: ' + label + (detail ? ' — ' + detail : '')); }
+}
+// A step: its rule's name, and what the check says of it.
+W.eval(`window.__step = function (premises, conclusion, type) {
+    var trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], children: [{ id: 'A', type: type || 'support', texts: premises, collapsed: [], children: [] }] }];
+    var st = collectDeductiveSteps(trees)[0];
+    return st ? { rule: st.rule ? st.rule.name : null, why: st.why && st.why.text || '' } : null;
+};`);
+const step = (premises, conclusion, type) => ev('return __step(' + J(premises) + ', ' + J(conclusion) + ', ' + J(type || 'support') + ');');
+// Each [premises, conclusion] whose step is not certified by `rule`.
+const misses = (cases, rule) => cases.map(([p, c]) => [p, c, step(p, c)]).filter(([, , r]) => !r || r.rule !== rule).map(([p, c, r]) => p.join(' / ') + ' ∴ ' + c + ': ' + (r && r.rule));
+// ... and those certified at all.
+const certified = cases => cases.map(([p, c]) => [p, c, step(p, c)]).filter(([, , r]) => r && r.rule).map(([p, c, r]) => p.join(' / ') + ' ∴ ' + c + ': ' + r.rule);
+// With a rule switched off.
+const without = (id, f) => { ev('setDeductiveRule(' + J(id) + ', false); return 1;'); try { return f(); } finally { ev('setDeductiveRule(' + J(id) + ', true); return 1;'); } };
+
+console.log('\n-- 1. factive verbs --');
+{
+    const FACTIVE = [
+        [['Bob knows that Mary left.'], 'Mary left.'], [['Bob knew that Mary was here.'], 'Mary was here.'],
+        [['Bob has known that Mary left.'], 'Mary left.'], [['Bob realizes that the door is locked.'], 'The door is locked.'],
+        [['Bob discovered that the dog bit Mary.'], 'The dog bit Mary.'], [['Bob noticed that it was raining.'], 'It was raining.'],
+        [['Bob remembers that Mary left.'], 'Mary left.'], [['Bob learned that Mary left.'], 'Mary left.'],
+        [['Bob regrets that he lied.'], 'Bob lied.'], [['Bob forgot that Mary left.'], 'Mary left.'],
+        [['Bob proved that the theorem is true.'], 'The theorem is true.'], [['The study showed that smoking causes cancer.'], 'Smoking causes cancer.'],
+        [['Bob is aware that Mary left.'], 'Mary left.'], [['Bob is glad that Mary left.'], 'Mary left.'], [['Bob is sorry that Mary left.'], 'Mary left.'],
+        [['It is known that Mary left.'], 'Mary left.'],
+        // Whatever is known: a quantifier, a conditional, a denial, a compound.
+        [['Mary knows that all men are mortal.'], 'All men are mortal.'], [['Bob knows that if it rains, the game is off.'], 'If it rains, the game is off.'],
+        [['Bob knows that Mary did not leave.'], 'Mary did not leave.'], [['Bob knows that Mary left and Al cried.'], 'Mary left and Al cried.'],
+        [['Bob knows that some ravens are white.'], 'Some ravens are white.']];
+    ok(!misses(FACTIVE, 'factive verbs').length, 'what is known, realized, discovered, proved, regretted, forgotten, or what one is aware or glad of, is so (' + FACTIVE.length + ' steps)', J(misses(FACTIVE, 'factive verbs')));
+    const NOT = [
+        [['Bob believes that Mary left.'], 'Mary left.'], [['Bob thinks that Mary left.'], 'Mary left.'], [['Bob says that Mary left.'], 'Mary left.'],
+        [['Bob hopes that Mary left.'], 'Mary left.'], [['Bob is sure that Mary left.'], 'Mary left.'], [['Bob is afraid that Mary left.'], 'Mary left.'],
+        [['Bob does not know that Mary left.'], 'Mary left.'], [['Bob is unaware that Mary left.'], 'Mary left.'],
+        [['The man who knows that Mary left is sad.'], 'Mary left.'], [['Bob knows that Mary left.'], 'Al left.']];
+    ok(!certified(NOT).length, 'not what is believed, said, hoped, or one is sure or afraid of; not a denial, nor a "that" inside the subject', J(certified(NOT)));
+    const off = without('factive', () => step(['Bob knows that Mary left.'], 'Mary left.'));
+    ok(!off.rule && off.why === 'With Word meaning: “knows that” switched on in the Logic panel, “Bob knows that Mary left” would give “Mary left” by factive verbs.',
+        'switched off: not certified, and the check says what would give it', J(off));
+    const two = step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.');
+    ok(!two.rule && /universal modus ponens\. But getting from the one to the other is a step of its own, by factive verbs: add “All men are mortal” as a box of its own, with “We know that all men are mortal” under it\.$/.test(two.why),
+        'a step of two: the box to add (it had said the checker had no rule for "know")', J(two));
+    const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'factive'; }), g = DEDUCTIVE_EXTENSIONS[at];
+        return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'opposites'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.factive };`);
+    ok(g.label === 'Word meaning: “knows that”' && g.on === true && J(g.rules) === J(['factive']) && g.after && /^Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"/.test(g.gloss || ''),
+        'a group of its own, "Word meaning: “knows that”", after contraries and contradictories, on by default, with its note', J(g));
+}
+
+console.log('\n-- 2. "glad that", "sorry that", "aware that": a claim after them --');
+{
+    const f = ev(`return ['Bob is glad that Mary left.', 'Bob is sorry that Mary left.', 'Bob is aware that Mary left.', 'Bob is proud that his son won.'].map(function (t) { var f = parseClaim(t); return f.kind + ' ' + (f.prop || ''); });`);
+    ok(f.every(x => /^pred =(?:glad|sorry|aware|proud) that /.test(x)), 'one claim about Bob, the claim after "that" whole (it had been "Bob is glad, and Mary left Bob")', J(f));
+    const gone = step(['Bob is glad that Mary left.'], 'Mary left Bob.');
+    ok(!gone.rule, '... and "Bob is glad that Mary left" no longer gives "Mary left Bob"', J(gone));
+    const dog = ev(`return ['A dog barked, and Bob is glad that dog left.', 'A dog barked, and Bob knows that dog left.', 'Bob is glad that the dog left.'].map(function (t) {
+        var f = parseClaim(t), last = f.kind === 'and' ? f.parts[f.parts.length - 1] : f; return f.kind + ' ' + (f.kind === 'and' ? f.parts.length : '') + ' ' + (last.prop || ''); });`);
+    ok(/^and 2 =glad that /.test(dog[0]) && /^and 2 ~know that /.test(dog[1]) && /^pred  =glad that the dog left$/.test(dog[2]),
+        '"glad that dog left" read as "knows that dog left" is: a claim after "that" (it had been "glad, and Bob dog-left", or the box one claim)', J(dog));
+    const noun = ev(`var f = parseClaim('Bob is a man that Mary loves.'); return f.kind;`);
+    ok(noun === 'and', 'a noun before "that" still heads a relative clause: "Bob is a man that Mary loves"', noun);
+}
+
+console.log('\n-- 3. the expository syllogism --');
+{
+    const EXPOSITORY = [
+        [['Bob is a student.', 'Bob passed.'], 'Some student passed.'], [['Bob passed.', 'Bob is a student.'], 'Some student passed.'],
+        [['Bob is a student.', 'Bob did not pass.'], 'Some student did not pass.'], [['Bob is a person.', 'Bob loves Mary.'], 'Someone loves Mary.'],
+        [['Socrates is wise.', 'Socrates is a man.'], 'Some man is wise.']];
+    ok(!misses(EXPOSITORY, 'expository syllogism').length, '"a is F" and "a is G" give "some F is G" in one step, either order, denied, and with "someone" (they had taken two)', J(misses(EXPOSITORY, 'expository syllogism')));
+    const NOT = [[['Bob is a student.', 'Al passed.'], 'Some student passed.'], [['Bob is a student.', 'Bob passed.'], 'Every student passed.'],
+        [['Bob is a student.', 'Bob passed.'], 'Some student did not pass.']];
+    ok(!certified(NOT).length, 'not of two things, not "every", not the denial', J(certified(NOT)));
+    const off = without('expository-syllogism', () => step(['Bob is a student.', 'Bob passed.'], 'Some student passed.'));
+    ok(!off.rule && /takes two steps/.test(off.why), 'switched off: two steps, as before', J(off));
+}
+
+console.log('\n-- 4. "either way" --');
+{
+    const EITHER = [
+        [['If it rains, then the game is off.', 'If it does not rain, then the game is off.'], 'The game is off.'],
+        [['If it does not rain, the game is off.', 'If it rains, the game is off.'], 'The game is off.'],
+        [['If Bob left, then Mary cried.', 'If Bob did not leave, then Mary cried.'], 'Mary cried.']];
+    ok(!misses(EITHER, 'either way').length, '"if A, then C" and "if not A, then C" give C', J(misses(EITHER, 'either way')));
+    const NOT = [[['If it rains, then the game is off.', 'If it snows, then the game is off.'], 'The game is off.'],
+        [['If it rains, then the game is off.', 'If it does not rain, then the game is on.'], 'The game is off.']];
+    ok(!certified(NOT).length, 'not with two conditions that do not deny each other, nor two different consequents', J(certified(NOT)));
+    const cases = step(['If it rains, then the game is off.', 'If it does not rain, then the game is off.', 'It rains or it does not rain.'], 'The game is off.');
+    ok(cases.rule === 'proof by cases', 'with "it rains or it does not rain" said, proof by cases, as it was', J(cases));
+    const off = without('either-way', () => step(['If it rains, then the game is off.', 'If it does not rain, then the game is off.'], 'The game is off.'));
+    ok(!off.rule, 'switched off: not certified', J(off));
+}
+
+console.log('\n-- 5. existential introduction in either order --');
+{
+    const EI = [[['Socrates is wise and Socrates is a man.'], 'Some man is wise.'], [['Poe is a black raven.'], 'Some raven is black.'],
+        [['Socrates is a man and Socrates is wise.'], 'Some man is wise.'], [['Poe is a raven and Poe is black.'], 'Some raven is black.']];
+    ok(!misses(EI, 'existential introduction').length, '"Socrates is wise and Socrates is a man" and "Poe is a black raven" give "some man is wise" and "some raven is black" (they had not)', J(misses(EI, 'existential introduction')));
+    const NOT = [[['Socrates is wise and Plato is a man.'], 'Some man is wise.'], [['Poe is a black raven.'], 'Every raven is black.']];
+    ok(!certified(NOT).length, 'not of two things, not "every"', J(certified(NOT)));
+}
+
+console.log('\n-- 6. in the Familiar steps --');
+{
+    const fam = ev(`return DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === 'familiar'; })[0].rules;`);
+    ok(fam.indexOf('expository-syllogism') === fam.indexOf('universal-modus-tollens') + 1 && fam.indexOf('either-way') === fam.indexOf('destructive-dilemma') + 1,
+        'the expository syllogism beside universal modus tollens, "either way" beside the destructive dilemma, both familiar steps, on by default', J(fam));
+}
+
+ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
+console.log('\n' + passed + ' passed, ' + failed + ' failed');
+process.exit(failed ? 1 : 0);

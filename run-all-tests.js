@@ -108,6 +108,7 @@ const SUITES = [
     'opposites-r27-test.js',
     'extended-mind-r27-test.js',
     'named-claims-r27-test.js',
+    'rules-r27-ordinary-test.js',
     'collab-r26-firebase-test.js',
 ];
 
