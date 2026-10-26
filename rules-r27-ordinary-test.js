@@ -24,6 +24,15 @@
  *    Socrates is a man", "Poe is a black raven", so "some man is wise", "some
  *    raven is black".
  * 6. Each a switch: off, its step is not certified.
+ * 7. (r27.135) The universal syllogism after a verb: "Poe loves every
+ *    raven" and "every crow is a raven" give "Poe loves every crow"; "loves
+ *    no raven", "loves no crow". Not the other way, nor from "every" to "no".
+ * 8. "There are dogs" says that some dogs exist: with "all dogs are
+ *    mammals", "some dogs are mammals".
+ * 9. Every categorical syllogism that is not valid is named by the rule of
+ *    the syllogism it breaks first; "some ... are not" converted too.
+ * 10. Any rule a map has switched off: the check says which switch would
+ *    give the step -- not the catch-alls.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -81,8 +90,9 @@ console.log('\n-- 1. factive verbs --');
         [['Bob does not know that Mary left.'], 'Mary left.'], [['Bob is unaware that Mary left.'], 'Mary left.'],
         [['The man who knows that Mary left is sad.'], 'Mary left.'], [['Bob knows that Mary left.'], 'Al left.']];
     ok(!certified(NOT).length, 'not what is believed, said, hoped, or one is sure or afraid of; not a denial, nor a "that" inside the subject', J(certified(NOT)));
+    // (Since r27.135 said as for any rule switched off.)
     const off = without('factive', () => step(['Bob knows that Mary left.'], 'Mary left.'));
-    ok(!off.rule && off.why === 'With Word meaning: “knows that” switched on in the Logic panel, “Bob knows that Mary left” would give “Mary left” by factive verbs.',
+    ok(!off.rule && off.why === 'With Word meaning: “knows that” switched on in the Logic panel, the premises would give “Mary left” by factive verbs.',
         'switched off: not certified, and the check says what would give it', J(off));
     const two = step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.');
     ok(!two.rule && /universal modus ponens\. But getting from the one to the other is a step of its own, by factive verbs: add “All men are mortal” as a box of its own, with “We know that all men are mortal” under it\.$/.test(two.why),
@@ -117,8 +127,10 @@ console.log('\n-- 3. the expository syllogism --');
     const NOT = [[['Bob is a student.', 'Al passed.'], 'Some student passed.'], [['Bob is a student.', 'Bob passed.'], 'Every student passed.'],
         [['Bob is a student.', 'Bob passed.'], 'Some student did not pass.']];
     ok(!certified(NOT).length, 'not of two things, not "every", not the denial', J(certified(NOT)));
+    // (Until r27.135, "takes two steps"; since, the switch that gives it.)
     const off = without('expository-syllogism', () => step(['Bob is a student.', 'Bob passed.'], 'Some student passed.'));
-    ok(!off.rule && /takes two steps/.test(off.why), 'switched off: two steps, as before', J(off));
+    ok(!off.rule && off.why === 'With expository syllogism switched on in the Logic panel (Familiar steps), the premises would give “Some student passed”.',
+        'switched off: not certified, and the check names the switch', J(off));
 }
 
 console.log('\n-- 4. "either way" --');
@@ -151,6 +163,61 @@ console.log('\n-- 6. in the Familiar steps --');
     const fam = ev(`return DEDUCTIVE_EXTENSIONS.filter(function (g) { return g.id === 'familiar'; })[0].rules;`);
     ok(fam.indexOf('expository-syllogism') === fam.indexOf('universal-modus-tollens') + 1 && fam.indexOf('either-way') === fam.indexOf('destructive-dilemma') + 1,
         'the expository syllogism beside universal modus tollens, "either way" beside the destructive dilemma, both familiar steps, on by default', J(fam));
+}
+
+console.log('\n-- 7. (r27.135) the universal syllogism after a verb --');
+{
+    const OBJECT = [
+        [['Poe loves every raven.', 'Every crow is a raven.'], 'Poe loves every crow.'], [['Every crow is a raven.', 'Poe loves all ravens.'], 'Poe loves all crows.'],
+        [['Poe loves no raven.', 'Every crow is a raven.'], 'Poe loves no crow.'], [['Poe does not love any raven.', 'Every crow is a raven.'], 'Poe does not love any crow.']];
+    ok(!misses(OBJECT, 'universal syllogism').length, '"loves every raven" and "every crow is a raven" give "loves every crow"; "loves no raven", "loves no crow" (they had not)', J(misses(OBJECT, 'universal syllogism')));
+    const NOT = [[['Poe loves every raven.', 'Every raven is a bird.'], 'Poe loves every bird.'], [['Poe loves no raven.', 'Every raven is a bird.'], 'Poe loves no bird.'],
+        [['Poe loves no raven.', 'Every crow is a raven.'], 'Poe loves every crow.'], [['Poe loves every raven.', 'Every crow is a raven.'], 'Poe loves no crow.'],
+        [['Poe fears every raven.', 'Every crow is a raven.'], 'Poe fears every crow.']];
+    ok(!certified(NOT).length, 'not to a wider kind, not from "every" to "no" or back, not after a verb like "fears"', J(certified(NOT)));
+}
+
+console.log('\n-- 8. "there are dogs" --');
+{
+    const THERE = [[['All dogs are mammals.', 'There are dogs.'], 'Some dogs are mammals.'], [['There are dogs.', 'All dogs are mammals.'], 'Some mammals are dogs.']];
+    ok(!misses(THERE, 'categorical syllogism').length, '"there are dogs", with "all dogs are mammals", gives "some dogs are mammals", as "some dogs exist" does (it had not)', J(misses(THERE, 'categorical syllogism')));
+    const fallacy = step(['All dogs are mammals.'], 'Some dogs are mammals.');
+    ok(!fallacy.rule && /existential fallacy/.test(fallacy.why), 'without it, still the existential fallacy', J(fallacy));
+}
+
+console.log('\n-- 9. every invalid categorical syllogism named --');
+{
+    const named = cases => cases.map(([p, c, name]) => [p, c, name, step(p, c)]).filter(([, , name, r]) => !r || r.rule || !r.why.includes('that is ' + name)).map(([p, c, name, r]) => p.join(' / ') + ' ∴ ' + c + ' -- ' + name + ': ' + J(r));
+    const FALLACIES = [
+        [['All cats are mammals.', 'No dogs are cats.'], 'No dogs are mammals.', 'the fallacy of illicit major'],
+        [['All dogs are mammals.', 'All dogs are pets.'], 'All pets are mammals.', 'the fallacy of illicit minor'],
+        [['No dogs are cats.', 'No cats are birds.'], 'No dogs are birds.', 'the fallacy of exclusive premises'],
+        [['All dogs are mammals.', 'No fish are dogs.'], 'Some fish are mammals.', 'the fallacy of an affirmative conclusion from a negative premise'],
+        [['All dogs are mammals.', 'All mammals are animals.'], 'Some animals are not dogs.', 'the fallacy of a negative conclusion from affirmative premises'],
+        [['All mammals are animals.', 'All dogs are mammals.'], 'No dogs are animals.', 'the fallacy of illicit major'],
+        [['Some ravens are black.', 'Some ravens fly.'], 'Some black things fly.', 'the fallacy of undistributed middle'],
+        [['All dogs are mammals.', 'All poodles are dogs.'], 'Some poodles are mammals.', 'the existential fallacy'],
+        [['Some ravens are not black.'], 'Some black things are not ravens.', 'the fallacy of illicit conversion'],
+        // Named before r27.135, as they were.
+        [['All dogs are mammals.', 'All cats are mammals.'], 'All cats are dogs.', 'the fallacy of undistributed middle'],
+        [['All ravens are black.'], 'All black things are ravens.', 'the fallacy of illicit conversion']];
+    ok(!named(FALLACIES).length, 'illicit major, illicit minor, exclusive premises, an affirmative conclusion from a negative premise and the reverse, undistributed middle, the existential fallacy, "some ... not" converted (they had been "? not recognized")', J(named(FALLACIES)));
+    const tag = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['No dogs are mammals.'], collapsed: [], children: [{ id: 'A', type: 'support', texts: ['All cats are mammals.', 'No dogs are cats.'], collapsed: [], children: [] }] }];
+        return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
+    ok(/illicit major/.test(tag) && /\u2717/.test(tag), 'the tag names it: "✗ illicit major"', tag);
+    const valid = step(['No mammals are fish.', 'All dogs are mammals.'], 'No dogs are fish.');
+    ok(!!valid.rule, 'a valid mood is not named a fallacy (Celarent)', J(valid));
+}
+
+console.log('\n-- 10. a rule switched off: which switch gives the step --');
+{
+    const mt = without('modus-tollens', () => step(['If it rains, then the game is off.', 'The game is not off.'], 'It does not rain.'));
+    ok(!mt.rule && mt.why === 'With modus tollens switched on in the Logic panel (Familiar steps), the premises would give “It does not rain”.',
+        'a rule of a group, switched off on its own: its name, and its group', J(mt));
+    const either = without('either-way', () => step(['If it rains, then the game is off.', 'If it does not rain, then the game is off.'], 'The game is off.'));
+    ok(!either.rule && /^With either way switched on in the Logic panel \(Familiar steps\)/.test(either.why), '"either way" too', J(either));
+    const catchall = step(['If it rains, then it is cold.', 'If it is cold, then it snows.', 'It rains.'], 'It snows.');
+    ok(!/switched on/.test(catchall.why), 'not the catch-alls, which give whatever truth tables do: "takes two steps" says more', J(catchall));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

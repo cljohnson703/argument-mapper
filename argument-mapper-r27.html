@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.134';
+    const APP_BUILD = '2026-10-26 r27.135';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -19178,6 +19178,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // standard form.
     const claimCanonTerms = f => Object.assign({}, f, { subject: claimPropCanon(f.subject), predicate: claimPropCanon(f.predicate) });
     function claimCategoricalValid(P, C) {
+        // "There are dogs" says what "some dogs exist" says (r27.135): with
+        // "all dogs are mammals", "some dogs are mammals".
+        P = P.map(p => p && p.kind === 'some' && p.subject === CLAIM_ANY && typeof p.predicate === 'string' && p.predicate.charAt(0) === '='
+            ? { kind: 'some', subject: p.predicate, predicate: '~exist' } : p);
         const forms = P.concat([C]).map(claimCanonTerms);
         P = forms.slice(0, -1); C = forms[forms.length - 1];
         if (P.length !== 2 || !forms.every(f => (f.kind === 'all' || f.kind === 'some') && f.subject !== CLAIM_ANY && f.subject !== CLAIM_PERSON &&
@@ -20146,6 +20150,48 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         if (P.length === 1 && P[0].kind === 'some' && all(C) && C.subject === P[0].subject && C.predicate === P[0].predicate)
             return { at: [0], says: 'what holds of some need not hold of all', tag: 'some to all' };
+        // "Some ravens are not black", so "some black things are not ravens":
+        // converted, as "all" is not, though "some" and "no" are (r27.135).
+        if (P.length === 1 && P[0].kind === 'some' && C.kind === 'some' && typeof P[0].predicate === 'string' && typeof C.predicate === 'string' &&
+            P[0].predicate.charAt(0) === '\u00ac' && C.predicate.charAt(0) === '\u00ac' && claimPropMatch(C.predicate.slice(1), P[0].subject) &&
+            claimPropMatch(C.subject, P[0].predicate.slice(1)))
+            return { at: [0], name: 'the fallacy of illicit conversion' };
+        // Any other categorical syllogism that is not valid: the first of
+        // the rules of the syllogism it breaks (r27.135; only undistributed
+        // middle and the existential fallacy had been named).
+        if (P.length === 2) {
+            const name = claimSyllogismFallacy(P, C);
+            if (name) return { at: [0, 1], name, existential: name === 'the existential fallacy' };
+        }
+        return null;
+    }
+    // The rule of the syllogism two "all/some/no" premises and a conclusion
+    // break, if it is not valid: the middle term said of all of its kind in
+    // one premise at least; a term said of all of its kind in the
+    // conclusion said so in its premise (illicit major, minor); not two
+    // denials; a denial in a premise for a denial in the conclusion, and
+    // only then; and "some" not from two "all"s, which do not say that
+    // there are any -- or null.
+    function claimSyllogismFallacy(P, C) {
+        const ok = f => !!f && (f.kind === 'all' || f.kind === 'some') && typeof f.subject === 'string' && typeof f.predicate === 'string' &&
+            f.subject !== CLAIM_ANY && f.subject !== CLAIM_PERSON && f.subject.charAt(0) !== '\u00ac';
+        if (P.length !== 2 || !P.concat([C]).every(ok) || claimCategoricalValid(P, C)) return null;
+        const [a, b, c] = P.concat([C]).map(claimCanonTerms);
+        const term = p => p.replace(/^\u00ac/, ''), denies = f => f.predicate.charAt(0) === '\u00ac', terms = f => [f.subject, term(f.predicate)];
+        const S = c.subject, Pt = term(c.predicate), all = [...new Set([].concat(terms(a), terms(b), terms(c)))];
+        if (all.length !== 3 || S === Pt) return null;
+        const M = all.find(t => t !== S && t !== Pt);
+        const major = [a, b].find(f => terms(f).includes(Pt) && terms(f).includes(M)), minor = [a, b].find(f => f !== major && terms(f).includes(S) && terms(f).includes(M));
+        if (!major || !minor) return null;
+        // Said of all of its kind: the subject of "all" or "no", what "no" or "some ... not" denies.
+        const everyOne = (f, t) => (f.kind === 'all' && f.subject === t) || (denies(f) && term(f.predicate) === t);
+        if (!everyOne(major, M) && !everyOne(minor, M)) return 'the fallacy of undistributed middle';
+        if (everyOne(c, Pt) && !everyOne(major, Pt)) return 'the fallacy of illicit major';
+        if (everyOne(c, S) && !everyOne(minor, S)) return 'the fallacy of illicit minor';
+        if (denies(a) && denies(b)) return 'the fallacy of exclusive premises';
+        if ((denies(a) || denies(b)) && !denies(c)) return 'the fallacy of an affirmative conclusion from a negative premise';
+        if (!denies(a) && !denies(b) && denies(c)) return 'the fallacy of a negative conclusion from affirmative premises';
+        if (a.kind === 'all' && b.kind === 'all' && c.kind === 'some') return 'the existential fallacy';
         return null;
     }
     // Whether a form holds a modal claim anywhere.
@@ -20334,6 +20380,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return null;
     }
     function claimObjectSyllogism(P, C) { return !!claimObjectSyllogismParts(P, C); }
+    // ... and of every or no thing of a kind, to every or no thing of a kind
+    // inside it (r27.135): "Poe loves every raven" and "every crow is a
+    // raven", so "Poe loves every crow"; "Poe fears no raven", so "Poe fears
+    // no crow". The rule runs the other way: from the conclusion's kind to
+    // the premise's.
+    function claimObjectUniversalSyllogism(P, C) {
+        const c = claimObjectSaid(C), every = d => /^(?:every|each|all|any)$/.test(d), none = d => /^(?:no|any)$/.test(d);
+        if (!c || P.length !== 2 || !claimObjectFrame(c.prop)) return false;
+        for (const i of [0, 1]) {
+            const a = claimObjectSaid(P[i]), u = P[1 - i];
+            if (!a || !a.denied !== !c.denied || !claimObjectAbout(a, c) || !claimObjectFrame(a.prop) || !u || u.kind !== 'all' ||
+                typeof u.subject !== 'string' || typeof u.predicate !== 'string' || u.subject === CLAIM_ANY) continue;
+            const n = claimDonkeyNoun(u);
+            if (n && !CLAIM_DONKEY_ANY.has(n)) continue;
+            const tokens = claimTokens(a.words), f = { tokens, lower: tokens.map(claimWord) };
+            for (const { a: x, c: y } of claimObjectSplits(a.words, c.words)) {
+                // "Every" and "every", or, denied, "no" and "no" ("does not fear any raven").
+                if (!(c.denied ? none(x.det) && none(y.det) : every(x.det) && every(y.det)) || !claimObjectPlace(f, x.at, x.end) ||
+                    f.lower.slice(0, x.at).some(w => CLAIM_OBJECT_APPROXIMATE.test(w) || /^(?:barely|scarcely)$/.test(w))) continue;
+                if ((n ? claimDonkeyInstances(u, [{ kind: 'pred', term: '', prop: y.kind }, { kind: 'pred', term: '', prop: x.kind }]) : [u])
+                    .some(r => claimPropMatch(r.subject, y.kind) && claimPropMatch(r.predicate, x.kind))) return true;
+            }
+        }
+        return false;
+    }
     // Under a quantifier the premise and conclusion share: "every philosopher
     // loves every raven" and "Fido is a raven": "every philosopher loves Fido"
     // -- the rule of the object, of an arbitrary thing of the kind.
@@ -21941,10 +22012,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // A map's stand-ins for universal introduction and existential
         // elimination, which need an arbitrary instance or a supposition.
         { id: 'universal-syllogism', name: 'universal syllogism',
-          gloss: 'every F is G and every G is H, so every F is H',
-          test: (P, C) => C.kind === 'all' && P.length === 2 && [0, 1].some(i =>
+          gloss: 'every F is G and every G is H, so every F is H; after a verb too ("loves every raven" and "every crow is a raven", so "loves every crow")',
+          test: (P, C) => (C.kind === 'all' && P.length === 2 && [0, 1].some(i =>
               P[i].kind === 'all' && P[1 - i].kind === 'all' && claimPropMatch(P[i].subject, C.subject) &&
-              claimPropMatch(P[i].predicate, P[1 - i].subject) && claimPropMatch(P[1 - i].predicate, C.predicate)) },
+              claimPropMatch(P[i].predicate, P[1 - i].subject) && claimPropMatch(P[1 - i].predicate, C.predicate))) || claimObjectUniversalSyllogism(P, C) },
         { id: 'existential-syllogism', name: 'existential syllogism',
           gloss: 'some F is G and every G is H, so some F is H; after a verb too ("hit some poodle", so "hit some dog")',
           test: (P, C) => (C.kind === 'some' && P.length === 2 && [0, 1].some(i =>
@@ -23383,6 +23454,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
             }
         }
+        // A rule this map has switched off (r27.135; the user: "for all
+        // inferences that are not validated by the base logic, ... the option
+        // to turn on the optional rule that would validate the inference"):
+        // with them all on, would the step follow? Then which switch gives it.
+        // Not the catch-alls nor the extra rule instances, which give
+        // whatever truth tables do, and say less than what follows here; nor
+        // order and grouping, which the check says below ("the two differ
+        // only in the order or grouping of their parts").
+        if (reads.every(r => r.form)) {
+            const off = [].concat(...DEDUCTIVE_EXTENSIONS.filter(g => !['catchall', 'instances', 'structural'].includes(g.id)).map(g => g.rules))
+                .filter(id => !claimRuleOn(id) && !claimOptionalInferences.has(id));
+            if (off.length) {
+                let rule = null;
+                off.forEach(id => claimOptionalInferences.add(id));
+                try { rule = certifyStep(reads.slice(0, -1).map(r => r.form), claimStepConclusions(reads[reads.length - 1].form, attack, weak), attack); }
+                finally { off.forEach(id => claimOptionalInferences.delete(id)); }
+                const group = rule && off.includes(rule.id) ? DEDUCTIVE_EXTENSIONS.find(g => g.rules.includes(rule.id)) : null;
+                if (group) {
+                    const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
+                    const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
+                    return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, switchedOff: rule,
+                        text: group.rules.length === 1 ? 'With ' + group.label + ' switched on in the Logic panel, the premises would give ' + target + ' by ' + rule.name + '.'
+                            : 'With ' + rule.name + ' switched on in the Logic panel (' + group.label + '), the premises would give ' + target + '.' };
+                }
+            }
+        }
         // A rule worded "a person ... that person", its case given, but not
         // that the one it is said of is a person: what it would give once that
         // is shown, as for "everyone" (r27.118). And a premise the step does not
@@ -23619,8 +23716,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const why = wrapped.factive ? (on ? 'is a step of its own, by factive verbs: add ' + claim + ' as a box of its own, with ' + box + ' under it.'
                         : 'takes factive verbs, switched off in the Logic panel.')
                     : box + ' does not give ' + claim + ': what is ' + wrapped.participle + ' can be false.';
-                if (wrapped.same) return [!wrapped.factive ? why : on ? 'Getting from ' + box + ' to ' + claim + ' takes factive verbs, which do not read ' + box + '.'
-                    : 'With Word meaning: “knows that” switched on in the Logic panel, ' + box + ' would give ' + claim + ' by factive verbs.'];
+                if (wrapped.same) return [!wrapped.factive ? why : 'Getting from ' + box + ' to ' + claim + ' takes factive verbs, which do not read ' + box + '.'];
                 return ['With ' + claim + ' for ' + box + ', the premises would give ' + target + ' by ' + wrapped.rule.name + '. But ' +
                     (wrapped.factive ? 'getting from the one to the other ' : '') + why];
             })() : [])
