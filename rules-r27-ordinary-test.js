@@ -33,6 +33,22 @@
  *    the syllogism it breaks first; "some ... are not" converted too.
  * 10. Any rule a map has switched off: the check says which switch would
  *    give the step -- not the catch-alls.
+ * 11. (r27.136) Relations: every pair of converses both ways ("Bob is taller
+ *    than Al", "Al is shorter than Bob"), denied too, and "more" and "less";
+ *    what is symmetric ("married to") both ways; what is transitive passed
+ *    along, any comparative; what is asymmetric denied the other way round.
+ *    Not "taller" both ways, not "similar to" or "parent of" passed along,
+ *    not "a man", not "loves". A group of its own, on by default.
+ * 12. (r27.137) Dropping a modifier: "Bob ran quickly", so "Bob ran"; "Bob is
+ *    very tall", so "Bob is tall". Not "almost", "hardly"; not under "not";
+ *    not "behaved badly"; not a noun in -ly ("family"), nor a phrase. A
+ *    group of its own, on by default.
+ * 13. (r27.138) Overlapping rules made separate (the user: "Those that should
+ *    be separate rules with separate steps are made so"): with proof by
+ *    cases, biconditional elimination or double-negation elimination
+ *    switched off, the constructive dilemma, substitution of equivalents and
+ *    double-negation replacement no longer take their steps; nor does
+ *    contraposition take conversion's. Each still takes its own.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -218,6 +234,85 @@ console.log('\n-- 10. a rule switched off: which switch gives the step --');
     ok(!either.rule && /^With either way switched on in the Logic panel \(Familiar steps\)/.test(either.why), '"either way" too', J(either));
     const catchall = step(['If it rains, then it is cold.', 'If it is cold, then it snows.', 'It rains.'], 'It snows.');
     ok(!/switched on/.test(catchall.why), 'not the catch-alls, which give whatever truth tables do: "takes two steps" says more', J(catchall));
+}
+
+console.log('\n-- 11. (r27.136) relations --');
+{
+    const pairs = ev(`var objectOf = function (w) { return ' '; }, out = { gives: [], back: [] };
+        CLAIM_RELATION_CONVERSES.forEach(function (e) {
+            var art = function (w) { return /of$/.test(w) ? 'a ' : ''; };
+            [[e[0], e[1]], [e[1], e[0]]].forEach(function (ab) {
+                var one = __step(['Kim is ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is ' + art(ab[1]) + ab[1] + ' Kim.');
+                var name = 'converses \u2018' + ab[0] + '\u2019 and \u2018' + ab[1] + '\u2019';
+                if (!one || one.rule !== name) out.gives.push('Kim is ' + ab[0] + ' Lee / Lee is ' + ab[1] + ' Kim: ' + (one && one.rule));
+                var no = __step(['Kim is not ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is not ' + art(ab[1]) + ab[1] + ' Kim.');
+                if (!no || no.rule !== name) out.back.push('not: ' + ab[0] + ' / ' + ab[1] + ': ' + (no && no.rule));
+            });
+        });
+        out.pairs = CLAIM_RELATION_CONVERSES.length; return out;`);
+    ok(pairs.pairs === 23 && !pairs.gives.length && !pairs.back.length, 'every pair of converses both ways, and denied, named by the pair (' + pairs.pairs + ' pairs)', J(pairs));
+    const MORE = [[['Bob is more famous than Al.'], 'Al is less famous than Bob.'], [['Five is greater than three.'], 'Three is less than five.'],
+        [['The meeting is before lunch.'], 'Lunch is after the meeting.'], [['Bob is the parent of Al.'], 'Al is a child of Bob.']];
+    ok(MORE.every(([p, c]) => /^converses /.test(step(p, c).rule || '')), '"more famous" and "less famous"; numbers; "the parent of" and "a child of"', J(MORE.map(([p, c]) => step(p, c).rule)));
+    const SYM = [[['Bob is married to Al.'], 'Al is married to Bob.'], [['Bob is next to Al.'], 'Al is next to Bob.'], [['Bob met Al.'], 'Al met Bob.'],
+        [['Bob is a sibling of Al.'], 'Al is a sibling of Bob.'], [['Bob is not married to Al.'], 'Al is not married to Bob.']];
+    ok(SYM.every(([p, c]) => /^symmetric /.test(step(p, c).rule || '')), 'what goes both ways: "married to", "next to", "met", "a sibling of", denied too', J(SYM.map(([p, c]) => step(p, c).rule)));
+    const TRANS = [[['Bob is taller than Al.', 'Al is taller than Cy.'], 'Bob is taller than Cy.'], [['Al is taller than Cy.', 'Bob is taller than Al.'], 'Bob is taller than Cy.'],
+        [['Bob is smarter than Al.', 'Al is smarter than Cy.'], 'Bob is smarter than Cy.'], [['The wheel is part of the car.', 'The car is part of the fleet.'], 'The wheel is part of the fleet.'],
+        [['Bob is an ancestor of Al.', 'Al is an ancestor of Cy.'], 'Bob is an ancestor of Cy.']];
+    ok(TRANS.every(([p, c]) => /^transitive /.test(step(p, c).rule || '')), 'passed along: any comparative ("smarter than"), "part of", "an ancestor of", either order', J(TRANS.map(([p, c]) => step(p, c).rule)));
+    ok(/^asymmetric /.test(step(['Bob is taller than Al.'], 'Al is not taller than Bob.').rule || '') && /^asymmetric /.test(step(['Bob is the parent of Al.'], 'Al is not the parent of Bob.').rule || ''),
+        'never back: "Al is not taller than Bob", "Al is not the parent of Bob"');
+    const NOT = [[['Bob is taller than Al.'], 'Al is taller than Bob.'], [['Bob is similar to Al.', 'Al is similar to Cy.'], 'Bob is similar to Cy.'],
+        [['Bob is the parent of Al.', 'Al is the parent of Cy.'], 'Bob is the parent of Cy.'], [['Bob is taller than Al.'], 'Al is longer than Bob.'],
+        [['Bob is taller than a man.'], 'A man is shorter than Bob.'], [['Bob is married to Al.'], 'Al is not married to Bob.'], [['Bob loves Al.'], 'Al loves Bob.'],
+        [['Bob is other than Al.', 'Al is other than Cy.'], 'Bob is other than Cy.']];
+    ok(!certified(NOT).length, 'not "taller" both ways, not "similar to" or "parent of" passed along, not the wrong converse, not "a man", not "married to" denied, not "loves", not "other than"', J(certified(NOT)));
+    const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'relations'; }), g = DEDUCTIVE_EXTENSIONS[at];
+        return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'factive'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.relations };`);
+    ok(g.label === 'Word meaning: relations' && g.on === true && J(g.rules) === J(['relations']) && g.after && /^Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob"/.test(g.gloss || ''),
+        'a group of its own, "Word meaning: relations", after "knows that", on by default, with its note', J(g));
+    const off = without('relations', () => step(['Bob is taller than Al.'], 'Al is shorter than Bob.'));
+    ok(!off.rule && off.why === 'With Word meaning: relations switched on in the Logic panel, the premises would give “Al is shorter than Bob” by converses ‘taller than’ and ‘shorter than’.',
+        'switched off: the check names the switch', J(off));
+}
+
+console.log('\n-- 12. (r27.137) dropping a modifier --');
+{
+    const DROP = [
+        [['Bob ran quickly.'], 'Bob ran.'], [['Bob quickly ran.'], 'Bob ran.'], [['Bob ran quickly to the store.'], 'Bob ran to the store.'],
+        [['Bob opened the door carefully.'], 'Bob opened the door.'], [['Bob carefully opened the door.'], 'Bob opened the door.'],
+        [['Bob is very tall.'], 'Bob is tall.'], [['Bob ran very quickly.'], 'Bob ran.'], [['Bob left yesterday.'], 'Bob left.'], [['Bob ran fast.'], 'Bob ran.']];
+    ok(!misses(DROP, 'dropping a modifier').length, 'a word of manner, time or degree left out, before or after the verb, one or two (they had not followed)', J(misses(DROP, 'dropping a modifier')));
+    const NOT = [[['Bob almost won.'], 'Bob won.'], [['Bob hardly ran.'], 'Bob ran.'], [['Bob did not run quickly.'], 'Bob did not run.'],
+        [['Bob behaved badly.'], 'Bob behaved.'], [['Bob visited family.'], 'Bob visited.'], [['Bob ran to the store.'], 'Bob ran.'], [['Bob ran.'], 'Bob ran quickly.'],
+        [['Bob ran quickly.'], 'Al ran.']];
+    ok(!certified(NOT).length, 'not "almost" or "hardly", not under "not", not "behaved badly", not "family", not a phrase, not added, not of another', J(certified(NOT)));
+    const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'modifiers'; }), g = DEDUCTIVE_EXTENSIONS[at];
+        return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'relations'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
+    ok(g.label === 'Word meaning: modifiers' && g.on === true && J(g.rules) === J(['modifiers']) && g.after && /^Word meaning, not logic: "Bob ran quickly" gives "Bob ran"/.test(g.gloss || ''),
+        'a group of its own, "Word meaning: modifiers", after relations, on by default, with its note', J(g));
+    const off = without('modifiers', () => step(['Bob ran quickly.'], 'Bob ran.'));
+    ok(!off.rule && off.why === 'With Word meaning: modifiers switched on in the Logic panel, the premises would give “Bob ran” by dropping a modifier.', 'switched off: the check names the switch', J(off));
+}
+
+console.log('\n-- 13. (r27.138) overlapping rules made separate --');
+{
+    const OFF = [
+        ['proof-by-cases', ['It rains or it snows.', 'If it rains, then the game is off.', 'If it snows, then the game is off.'], 'The game is off.', 'proof by cases'],
+        ['biconditional-elimination', ['Bob left if and only if Al cried.', 'Bob left.'], 'Al cried.', 'biconditional elimination'],
+        ['biconditional-elimination', ['Bob left if and only if Al cried.', 'Bob did not leave.'], 'Al did not cry.', 'biconditional elimination'],
+        ['negation-elimination', ['It is not the case that it is not the case that Bob left.'], 'Bob left.', 'double-negation elimination']];
+    const handed = OFF.map(([id, p, c, name]) => [id, without(id, () => step(p, c))]).filter(([, r]) => r.rule);
+    ok(!handed.length, 'switched off, proof by cases, biconditional elimination and double-negation elimination take their steps with them: the constructive dilemma, substitution of equivalents and double-negation replacement had taken them', J(handed));
+    const said = OFF.map(([id, p, c, name]) => without(id, () => step(p, c)).why).filter(w => !/^With .* switched on in the Logic panel \(Intro and elimination steps\), the premises would give /.test(w));
+    ok(!said.length, '... and the check names the switch', J(said));
+    const OWN = [[['It rains or it snows.', 'If it rains, then the game is off.', 'If it snows, then the road is closed.'], 'The game is off or the road is closed.', 'constructive dilemma'],
+        [['Bob left if and only if Al cried.', 'Bob left and Cy sang.'], 'Al cried and Cy sang.', 'substitution of equivalents'],
+        [['All dogs are mammals.'], 'All non-mammals are non-dogs.', 'contraposition'], [['No dogs are cats.'], 'No cats are dogs.', 'conversion']];
+    ok(OWN.every(([p, c, name]) => step(p, c).rule === name), 'each still takes its own: the dilemma with two consequents, a substitution inside a claim, contraposition with "non-", conversion', J(OWN.map(([p, c]) => step(p, c).rule)));
+    const conv = without('conversion', () => step(['No dogs are cats.'], 'No cats are dogs.'));
+    ok(conv.rule !== 'contraposition', 'with conversion off, contraposition does not take its step (a rule under a quantifier is the user\'s to decide)', J(conv));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

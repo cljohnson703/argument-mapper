@@ -2974,7 +2974,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-26 r27.135';
+    const APP_BUILD = '2026-10-26 r27.138';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6933,6 +6933,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         inside: 'Rules used inside "every" or "some": "every raven is black and old" gives "every raven is black".',
         able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse.',
         opposites: 'Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse (contraries); "lack" and "have" deny each other both ways (contradictories).',
+        modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly".',
+        relations: 'Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob" and "Al is not taller than Bob"; with "Al is taller than Cy", "Bob is taller than Cy"; "married to" goes both ways.',
         factive: 'Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"; likewise "realizes", "proves", "regrets", "is aware that". Not "believes" or "says": what is believed can be false.',
         negations: 'Add or remove "not not" anywhere in a claim.',
         instances: '"If … then" claims that state a rule\'s step.',
@@ -20920,6 +20922,99 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimPropCanon(shown.prop) === claimPropCanon('=' + sort) && term(shown.term) === term(inner.term);
     }
     // A step of opposites as its rule: named by its pair, as the words come.
+    // Relations, a list (r27.136; the user agreed to "a 'Word meaning:
+    // relations' group, built like the opposites one"): pairs of converses,
+    // each said of the two things the other way round ("Bob is taller than
+    // Al", "Al is shorter than Bob"); and which go both ways (symmetric),
+    // pass along (transitive), or never go back (asymmetric). As with
+    // contraries, a word of two senses ("shorter": than the taller, or than
+    // the longer) is read in the sense the other word gives it.
+    const CLAIM_RELATION_CONVERSES = [['taller than', 'shorter than'], ['longer than', 'shorter than'], ['older than', 'younger than'],
+        ['bigger than', 'smaller than'], ['larger than', 'smaller than'], ['heavier than', 'lighter than'], ['faster than', 'slower than'],
+        ['richer than', 'poorer than'], ['stronger than', 'weaker than'], ['higher than', 'lower than'], ['earlier than', 'later than'],
+        ['greater than', 'less than'], ['better than', 'worse than'], ['wider than', 'narrower than'], ['thicker than', 'thinner than'],
+        ['deeper than', 'shallower than'], ['louder than', 'quieter than'], ['above', 'below'], ['before', 'after'], ['north of', 'south of'],
+        ['east of', 'west of'], ['parent of', 'child of'], ['ancestor of', 'descendant of']];
+    const CLAIM_RELATION_SYMMETRIC = new Set(['married to', 'next to', 'near', 'beside', 'adjacent to', 'similar to', 'equal to', 'different from',
+        'sibling of', 'cousin of', 'spouse of', 'neighbor of', 'neighbour of', 'meet', 'marry']);
+    // "Taller than", "more famous than" and the like pass along and never go
+    // back -- not "other than" or "rather than"; nor do "above", "before",
+    // "north of", "ancestor of", "part of"; "equal to" passes along too.
+    const claimComparative = rel => /^(?:(?:more|less) [a-z-]+|[a-z-]+er|less|fewer) than$/.test(rel) && !/^(?:other|rather) than$/.test(rel);
+    const CLAIM_RELATION_ORDERS = new Set(['above', 'below', 'before', 'after', 'north of', 'south of', 'east of', 'west of', 'ancestor of', 'descendant of', 'part of']);
+    const claimRelationTransitive = rel => claimComparative(rel) || CLAIM_RELATION_ORDERS.has(rel) || rel === 'equal to';
+    const claimRelationAsymmetric = rel => claimComparative(rel) || CLAIM_RELATION_ORDERS.has(rel) || rel === 'parent of' || rel === 'child of';
+    // A relation said of two things: "Bob is taller than Al" --
+    // { rel: 'taller than', left: 'bob', right: 'al', denied } -- or null. Of
+    // two things only: not "every dog", nor "a dog".
+    function claimRelationSaid(f) {
+        const denied = !!f && f.kind === 'not' && !!f.inner && f.inner.kind === 'pred';
+        const g = denied ? f.inner : f;
+        if (!g || g.kind !== 'pred' || typeof g.prop !== 'string' || g.term == null) return null;
+        const m = /^=((?:(?:more|less) [a-z-]+ |[a-z-]+ )than|(?:north|south|east|west|ancestor|descendant|parent|child|sibling|cousin|spouse|neighbou?r|part) of|(?:married|next|similar|equal|adjacent) to|different from|near|beside|above|below|before|after) (.+)$/.exec(g.prop)
+            || /^~(?:did )?(meet|met|marry|married) (.+)$/.exec(g.prop);
+        if (!m) return null;
+        const left = claimUnmarked(String(g.term)).trim(), right = claimUnmarked(m[2]).trim();
+        if (!left || !right || left === right || /^(?:every|each|all|any|some|a|an|no|several|many|most|few)\b/.test(right)) return null;
+        const rel = { met: 'meet', married: 'marry' }[m[1]] || m[1];
+        return { rel, left, right, denied };
+    }
+    // What a relation's meaning gives, from one premise or two: its converse,
+    // the same said the other way round, its denial the other way round, or
+    // it passed along -- { kind, rel, to } or null.
+    function claimRelationStep(P, C) {
+        const c = claimRelationSaid(C);
+        if (!c) return null;
+        if (P.length === 1) {
+            const p = claimRelationSaid(P[0]);
+            if (!p || p.left !== c.right || p.right !== c.left) return null;
+            if (p.denied === c.denied && CLAIM_RELATION_CONVERSES.some(([a, b]) => (p.rel === a && c.rel === b) || (p.rel === b && c.rel === a)))
+                return { kind: 'converse', rel: p.rel, to: c.rel };
+            const more = /^(more|less) ([a-z-]+) than$/.exec(p.rel), less = /^(more|less) ([a-z-]+) than$/.exec(c.rel);
+            if (p.denied === c.denied && more && less && more[1] !== less[1] && more[2] === less[2]) return { kind: 'converse', rel: p.rel, to: c.rel };
+            if (p.denied === c.denied && p.rel === c.rel && CLAIM_RELATION_SYMMETRIC.has(p.rel)) return { kind: 'symmetric', rel: p.rel };
+            if (!p.denied && c.denied && p.rel === c.rel && claimRelationAsymmetric(p.rel)) return { kind: 'asymmetric', rel: p.rel };
+            return null;
+        }
+        if (P.length !== 2 || c.denied || !claimRelationTransitive(c.rel)) return null;
+        const [a, b] = P.map(claimRelationSaid);
+        if (!a || !b || a.denied || b.denied || a.rel !== c.rel || b.rel !== c.rel) return null;
+        return [[a, b], [b, a]].some(([x, y]) => x.left === c.left && x.right === y.left && y.right === c.right) ? { kind: 'transitive', rel: c.rel } : null;
+    }
+    // A modifier dropped (r27.137; the user, of "Bob ran quickly to the store,
+    // so Bob ran to the store": "Where would this be? In the semantics
+    // option?"): what a box says with a word of manner, time or degree left
+    // out -- "Bob ran quickly", so "Bob ran"; "Bob is very tall", so "Bob is
+    // tall". Not a word that says it may not be so ("almost won",
+    // "allegedly stole", "hardly ran"); not under a denial ("Bob did not run
+    // quickly" does not give "Bob did not run"); not after a verb whose
+    // manner it completes ("Bob behaved badly" does not give "Bob behaved").
+    const CLAIM_MODIFIER_KEEP = new Set(('almost nearly practically virtually allegedly apparently seemingly supposedly reportedly purportedly ' +
+        'ostensibly possibly probably perhaps maybe presumably arguably surely likely unlikely hardly scarcely rarely seldom never sometimes ' +
+        'occasionally falsely hypothetically theoretically potentially partly partially nominally technically somewhat slightly not no').split(' '));
+    const CLAIM_MODIFIER_DROP = new Set('fast hard well again already still also too even just today yesterday tomorrow here there now then early late very extremely quite so'.split(' '));
+    const CLAIM_MANNER_VERBS = /^(?:behave[sd]?|behaving|treat(?:s|ed|ing)?|fare[sd]?|faring|do|does|did|done|doing|go|goes|went|gone|going|act(?:s|ed|ing)?|word(?:s|ed|ing)?|phrase[sd]?|phrasing)$/;
+    function claimModifierDropped(P, C) {
+        const p = P.length === 1 ? P[0] : null;
+        if (!p || p.kind !== 'pred' || !C || C.kind !== 'pred' || p.term !== C.term || !p.vpText || !C.vpText) return false;
+        const a = claimTokens(String(p.vpText).toLowerCase()).map(claimWord), b = claimTokens(String(C.vpText).toLowerCase()).map(claimWord);
+        if (!b.length || b.length >= a.length || a.some(w => CLAIM_MANNER_VERBS.test(w))) return false;
+        const modifier = w => !CLAIM_MODIFIER_KEEP.has(w) && (CLAIM_MODIFIER_DROP.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w)));
+        let i = 0;
+        for (const w of a) {
+            if (i < b.length && w === b[i]) i++;
+            else if (!modifier(w)) return false;
+        }
+        return i === b.length;
+    }
+    // The step named by its relation, as contraries are by their pair.
+    const CLAIM_RELATION_RULES = new Map();
+    function claimRelationRule(step) {
+        const say = w => '\u2018' + ({ meet: 'met', marry: 'married' }[w] || w) + '\u2019';
+        const name = step.kind === 'converse' ? 'converses ' + say(step.rel) + ' and ' + say(step.to) : step.kind + ' ' + say(step.rel);
+        if (!CLAIM_RELATION_RULES.has(name)) CLAIM_RELATION_RULES.set(name, Object.assign({}, DEDUCTIVE_OPTIONAL_RULES.find(r => r.id === 'relations'), { name }));
+        return CLAIM_RELATION_RULES.get(name);
+    }
     const CLAIM_OPPOSITE_RULES = new Map();
     function claimOppositeRule(step) {
         const name = (step.both ? 'contradictories' : 'contraries') + ' \u2018' + step.from + '\u2019 and \u2018' + step.to + '\u2019';
@@ -21005,9 +21100,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'factive', name: 'factive verbs', optional: true,
           gloss: '"X knows that A" gives A; likewise realizes, discovers, proves, shows, regrets, forgets, is aware and is glad that A -- not believes, says or hopes',
           test: (P, C) => { if (P.length !== 1) return false; const f = claimFactiveClaim(P[0]); return !!f && claimKeyMatch(f, C); } },
+        // Relations (r27.136): a rule of word meaning, named by its relation.
+        { id: 'relations', name: 'relations', optional: true,
+          gloss: 'converses ("Bob is taller than Al", "Al is shorter than Bob"), symmetric ("married to"), transitive ("taller than": "Bob is taller than Al" and "Al is taller than Cy" give "Bob is taller than Cy"), asymmetric ("Al is not taller than Bob")',
+          test: (P, C) => !!claimRelationStep(P, C) },
+        // A modifier dropped (r27.137): a rule of word meaning.
+        { id: 'modifiers', name: 'dropping a modifier', optional: true,
+          gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall" -- not "almost", "allegedly" or "hardly", nor under "not"',
+          test: (P, C) => claimModifierDropped(P, C) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
           gloss: '"not not A" is A, anywhere in a claim',
-          test: (P, C) => claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C) },
+          // Not of the whole claim: double-negation elimination (r27.138).
+          test: (P, C) => (claimRestated(P, C) === 'double-negation' || claimReplaces('double-negation', P, C)) &&
+              !DEDUCTIVE_RULES.find(r => r.id === 'negation-elimination').test(P, C) },
         { id: 'negation-elimination-anywhere', name: 'double-negation elimination, anywhere', optional: true,
           gloss: 'removes any even number of "not"s in a row, anywhere in a claim',
           test: (P, C) => claimReplaces('negation-elimination', P, C) },
@@ -21223,6 +21328,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
         { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
         { id: 'factive', label: 'Word meaning: “knows that”', on: true, rules: ['factive'] },
+        { id: 'relations', label: 'Word meaning: relations', on: true, rules: ['relations'] },
+        { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers'] },
         { id: 'negations', label: 'Negations anywhere', on: false, rules: ['negation-elimination-anywhere'] },
         { id: 'instances', label: 'Extra rule instances', on: false,
           rules: ['instance-restatement', 'instance-excluded-middle', 'instance-noncontradiction', 'instance-up-to-replacement'] },
@@ -21812,9 +21919,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'proof-by-cases', name: 'proof by cases',
           gloss: '"A or B", "if A, then C" and "if B, then C" give C',
           test: (P, C) => claimDilemma(P, C, true) },
+        // Not where C and D are one claim: proof by cases (r27.138; it had
+        // taken those steps when proof by cases was switched off).
         { id: 'constructive-dilemma', name: 'constructive dilemma',
           gloss: '"A or B", "if A, then C" and "if B, then D" give "C or D"',
-          test: (P, C) => claimDilemma(P, C, false) },
+          test: (P, C) => claimDilemma(P, C, false) && !claimDilemma(P, C, true) },
         { id: 'destructive-dilemma', name: 'destructive dilemma',
           gloss: '"not C or not D", "if A, then C" and "if B, then D" give "not A or not B"',
           test: (P, C) => withPrincipalClaim(P, p => p.kind === 'or', (dis, rest) => {
@@ -21854,8 +21963,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'equivalent-substitution', name: 'substitution of equivalents',
           gloss: 'either side of "A if and only if B" can stand for the other: with "A and C", it gives "B and C"',
           test: (P, C) => P.length === 2 && [0, 1].some(i => {
+              // Inside a larger claim: of the side itself, or its denial,
+              // biconditional elimination (r27.138).
               const sides = claimBiconditionalSides(P[i]), x = P[1 - i];
-              return !!sides && !claimSame(x, C) && [0, 1].some(t => claimSwapsEquivalent(x, C, sides[t], sides[1 - t]));
+              return !!sides && !claimSame(x, C) && [0, 1].some(t => !claimSame(x, sides[t]) && !claimDenies(x, sides[t]) && claimSwapsEquivalent(x, C, sides[t], sides[1 - t]));
           }) },
         { id: 'biconditional-introduction', name: 'biconditional introduction',
           gloss: '"if A, then B" and "if B, then A" give "A if and only if B"',
@@ -22104,7 +22215,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           test: (P, C) => claimReplaces('conversion', P, C) },
         { id: 'contraposition', name: 'contraposition',
           gloss: '"all F are G" is "everything that is not G is not F", anywhere in a claim',
-          test: (P, C) => claimReplaces('contraposition', P, C) },
+          // Not where it is conversion: "no dogs are cats", so "no cats are
+          // dogs" (r27.138).
+          test: (P, C) => claimReplaces('contraposition', P, C) && !claimReplaces('conversion', P, C) },
         { id: 'de-morgan', name: 'De Morgan’s laws',
           gloss: '"not both A and B" is "not A or not B", and "not either A or B" is "not A and not B", anywhere in a claim',
           test: (P, C) => claimReplaces('de-morgan', P, C) },
@@ -22292,6 +22405,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (rule && rule.id === 'categorical-syllogism') {
             const C = conclusions.find(c => claimCategoricalValid(premises, c));
             return claimSyllogismRule(C && claimSyllogismMood(premises, C));
+        }
+        // Relations: named by the relation (r27.136).
+        if (rule && rule.id === 'relations') {
+            for (const C of conclusions) { const step = claimRelationStep(premises, C); if (step) return claimRelationRule(step); }
         }
         // Contraries and contradictories: named by the pair (r27.103).
         if (rule && rule.id === 'opposites') {

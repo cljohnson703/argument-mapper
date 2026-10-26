@@ -4,6 +4,43 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 26: overlapping rules made separate (r27.138)
+
+The user, of rules that take each other's steps when one is switched off: "How about both? Those that should be separate rules with separate steps are made so, and those that necessarily overlap are put under one switch." These are the first kind: a rule no longer takes a step that a narrower rule takes.
+
+* The constructive dilemma, not where both consequents are one claim: that is proof by cases. Switched off, proof by cases had handed its steps to the dilemma.
+* Substitution of equivalents, only inside a larger claim: with "A if and only if B", "A" itself or "not A" is biconditional elimination's, which had handed them over when switched off.
+* Double-negation replacement, not of a whole claim: "it is not the case that it is not the case that Bob left", so "Bob left", is double-negation elimination's.
+* Contraposition, not of a conversion: "No dogs are cats", so "No cats are dogs", is conversion's, which had passed to contraposition when switched off.
+* With these switched off, the check now names the switch (r27.135). Each rule still takes its own steps.
+* Not yet: those that overlap of necessity -- identity transitivity, which is substitution into "b = c"; the syllogisms named both by figure ("universal syllogism") and by mood ("Barbara"); a rule under a quantifier that takes a step a rule switched off would ("transposition under ∀" for conversion). Their switches, and an "Advanced" group, are a change to the Logic panel, put to the user first.
+
+Tests. rules-r27-ordinary-test.js (46: four new, three failing on r27.137). Take-one-out: each of the 4 edits is caught. No reading changes. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 91 suites pass, and the public build's smoke test.
+
+### October 26: dropping a modifier (r27.137)
+
+The user, of "Bob ran quickly to the store, so Bob ran to the store": "Where would this be? In the semantics option?" A group of its own in the Logic panel, "Word meaning: modifiers", after relations, on by default.
+
+* A word of manner, time or degree left out: "Bob ran quickly" gives "Bob ran"; "Bob carefully opened the door", "Bob opened the door"; "Bob ran quickly to the store", "Bob ran to the store"; "Bob left yesterday", "Bob left"; "Bob is very tall", "Bob is tall". One or more at once ("Bob ran very quickly", "Bob ran").
+* Not a word that says it may not be so: "almost", "nearly", "allegedly", "apparently", "supposedly", "possibly", "probably", "hardly", "rarely", "never" and the like. "Bob almost won" does not give "Bob won".
+* Not under a denial: "Bob did not run quickly" does not give "Bob did not run".
+* Not after a verb whose manner word completes it: "Bob behaved badly" does not give "Bob behaved", which says he behaved well; likewise "treat", "fare", "do", "go", "act", "word", "phrase".
+* Not a noun in -ly ("Bob visited family"), nor a phrase ("Bob ran to the store" does not give "Bob ran": "to the store" may be what "ran" needs, as "on" is in "relies on"). A non-subsective adjective was already asked: "a former president need not be a president".
+
+Tests. rules-r27-ordinary-test.js (42: four new). logic-r27-deductive-test.js: dropping a modifier among the optional rules. logic-r27-basis-test.js: fourteen groups. Take-one-out: each of the 4 edits is caught. No reading changes. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 91 suites pass, and the public build's smoke test.
+
+### October 26: relations -- converses, symmetric, transitive, asymmetric (r27.136)
+
+The user agreed to "a 'Word meaning: relations' group, built like the opposites one". It is a group of its own in the Logic panel, after "knows that", on by default, its steps named by their relation.
+
+* Converses, 23 pairs: "Bob is taller than Al" gives "Al is shorter than Bob", and back; denied too ("Bob is not taller than Al", "Al is not shorter than Bob"). Older and younger, bigger or larger and smaller, heavier and lighter, faster and slower, richer and poorer, stronger and weaker, higher and lower, earlier and later, greater and less, better and worse, wider and narrower, thicker and thinner, deeper and shallower, louder and quieter, longer and shorter; "above" and "below", "before" and "after", "north of" and "south of", "east of" and "west of", "parent of" and "child of", "ancestor of" and "descendant of". "More famous than" and "less famous than", for any adjective. As with contraries, a word of two senses is read in the sense the other word gives it: "shorter" than the taller, or than the longer.
+* Symmetric: "married to", "next to", "near", "beside", "adjacent to", "similar to", "equal to", "different from", "a sibling of", "a cousin of", "a spouse of", "a neighbor of"; the verbs "met" and "married". "Bob is married to Al" gives "Al is married to Bob".
+* Transitive: every comparative ("taller than", "smarter than", "more famous than"), "above", "before", "north of", "an ancestor of", "part of", "equal to". "Bob is taller than Al" and "Al is taller than Cy" give "Bob is taller than Cy".
+* Asymmetric: every comparative and every order, "parent of" and "child of". "Bob is taller than Al" gives "Al is not taller than Bob".
+* Not "taller" both ways; not "similar to" or "parent of" passed along; not of "a man", which is no one thing; not "loves", which the list does not have; not "other than".
+
+Tests. rules-r27-ordinary-test.js (38: eight new, for every pair both ways and denied, each kind, what does not follow, the panel and the switch). logic-r27-deductive-test.js: relations among the optional rules. logic-r27-basis-test.js: thirteen groups. Take-one-out: each of the 5 edits is caught. No reading changes. Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit. All 91 suites pass, and the public build's smoke test.
+
 ### October 26: the universal syllogism after a verb; "there are dogs"; every invalid syllogism named; a rule switched off says so (r27.135)
 
 * The universal syllogism after a verb: "Poe loves every raven" and "Every crow is a raven" give "Poe loves every crow"; "Poe loves no raven" (or "does not love any raven") gives "Poe loves no crow". The existential one ("hit some poodle", so "hit some dog") was there; this is its twin, narrowing the object where that one widens it. Not after a verb like "fears", whose object may be no real raven, nor to a wider kind, nor from "every" to "no".
