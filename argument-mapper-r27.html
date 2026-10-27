@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.153';
+    const APP_BUILD = '2026-10-27 r27.156';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10523,14 +10523,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const subjectBinds = p => {
             const q = binder(p), kd = CLAIM_PRONOUN_KIND[p.l];
             if (!q || !(kd === 'm' || kd === 'f' ? q.kind === 'person' || q.kind === 'animal' : kd === 'p' || q.kind === 'thing' || q.kind === 'animal')) return false;
-            // Past the phrase it opens, "who" clause and all: "every student
-            // who loves her mother", "every student who knows Mary loves her"
-            // say nothing of each one's own (r27.150; r27.149 had kept the
-            // pronoun, and so said nothing).
+            // Past the phrase it opens, "who" clause and all, a verb there
+            // that takes a claim does not count: "every student who knows Mary
+            // loves her" says nothing of each one's own (r27.150).
             const end = claimSynChoose(synWs, claimSynNounPhrases(synWs, q.k0));
-            if (end < 0 || p.k < end) return false;
+            if (end < 0) return false;
             const next = toks[p.k + 1], possessive = /^(?:their|his|its)$/.test(p.l) ||
                 (p.l === 'her' && !!next && /^[a-z]/.test(next.w) && !claimSynClosed(next.l) && !CLAIM_VERB_MARKERS.has(next.l));
+            // In the "who" clause itself, the same way: "every student who
+            // loves their mother", "everyone who thinks they will win" --
+            // each one's own (r27.156; the user: "Let's fix these"; it had
+            // said "their" points to nothing).
+            if (p.k < end) {
+                const rel = toks.findIndex((y, k) => k > q.k0 && k < p.k && /^(?:who|that|which)$/.test(y.l));
+                return rel > 0 && (possessive || toks.slice(rel + 1, p.k).some(y => claimAttitudeWord(y.l)));
+            }
             return possessive || toks.slice(end, p.k).some(y => claimAttitudeWord(y.l));
         };
         for (let i = slots.length - 1; i >= 0; i--) {
@@ -17202,13 +17209,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Something is a dog and a pet": some dog is a pet, as "something
             // is a dog and barks" is some dog that barks (r27.152; the user:
             // "Sure"). Marked: where both boxes spell out the "and", the swap
-            // is commutation, not conversion.
-            if (j && j.copula && !j.negated && j.kind === 'and' && j.parts.length === 2 && quant === 'some' && pronoun &&
+            // is commutation, not conversion. "Nothing is a dog and a cat":
+            // no dog is a cat (r27.155; the user: "Sure").
+            if (j && j.copula && !j.negated && j.kind === 'and' && j.parts.length === 2 && (quant === 'some' || quant === 'no') && pronoun &&
                 subject === CLAIM_ANY && j.parts.every(p => !claimCopulaVerbPart(claimTokens(p)[0], j.head[0]))) {
                 const q = tokens.slice(0, tokens.length - vp.length).join(' '), is = j.head.join(' ');
                 const plain = p => { const t = claimTokens(p); return t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1).join(' ') : p; };
                 const read = readClaim((q + ' that ' + is + ' ' + plain(j.parts[0]) + ' ' + is + ' ' + plain(j.parts[1])).replace(/\s+/g, ' ').trim());
-                if (read && read.kind === 'some') return Object.assign({}, read, { spelled: true });
+                if (read && read.kind === (quant === 'no' ? 'all' : 'some')) return Object.assign({}, read, { spelled: true });
             }
             // "Every raven is black and then flies": read whole, as "every
             // raven sings and then flies" is (it had asked about "a black fly").
@@ -17224,6 +17232,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             else if (shared) return claimSharedTailQuestion(shared, j.parts, j.kind, s, tokens.slice(0, tokens.length - vp.length), j.head,
                 quant === 'all' && j.kind === 'and', j.negated);
         }
+        // ... and in the kind (r27.156): "every student who loves their
+        // mother" -- of Bob, "a student who loves Bob's mother".
+        subject = claimBindOwn(subject, subject, !!np && np.some(t => claimKnownPlural(t)));
         const predicate = claimBindOwn(quant === 'no' ? claimWithAnyAsSome(() => verbPhraseProp(claimAttitudeVp(vp))) : verbPhraseProp(claimAttitudeVp(vp)), subject,
             /^(?:are|were|have|do|don't|aren't|weren't|haven't)$/.test(claimWord(vp[0] || '')) || (!!np && np.some(t => claimKnownPlural(t))));
         if (!subject || !predicate) return null;
@@ -17565,6 +17576,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // A clause inside it, with its own verb: "who reads books that
                     // Mary wrote", "who thinks that Poe is black".
                     if (ws[q].rel && claimSynOpensClause(ws, q)) {
+                        let r = q + 1;
+                        while (r < ws.length && claimSynVerbStart(ws, r, '?') !== 'strong') r++;
+                        if (r < ws.length) { past = claimSynGroupEnd(ws, r); q = past - 1; continue; }
+                    }
+                    // A claim its verb takes, with no "that": "who thinks they will
+                    // win | cheats" -- "they" can be no object (r27.156; it had
+                    // ended the phrase, "everyone who thinks they").
+                    if (q === object && claimAttitudeWord(ws[own].w) && /^(?:i|he|she|we|they)$/.test(ws[q].w)) {
                         let r = q + 1;
                         while (r < ws.length && claimSynVerbStart(ws, r, '?') !== 'strong') r++;
                         if (r < ws.length) { past = claimSynGroupEnd(ws, r); q = past - 1; continue; }
@@ -19521,8 +19540,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     (form.subjectNumber && form.subjectNumber !== 'singular' ? '#' + form.subjectNumber : '') + '|' + (form.possible ? '◇' : '') + words(claimSelfSaid(d ? d.prop : form.prop, claimSelfTerm(form)));
                 return d && d.denied ? 'N(' + k + ')' : k;
             }
-            case 'all': return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
-            case 'some': return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
+            // Spelled out ("something is black and old", "nothing is a dog and
+            // a cat"), its two parts in any order while order is forgotten
+            // (r27.156; the order hint had not seen them).
+            case 'all': if (claimUnorderedKeys && form.spelled) return 'U&:' + [form.subject, String(form.predicate).replace(/^¬/, '')].map(p => words(claimPropCanon(p))).sort().join('|');
+                return (claimExactVariables && form.v ? 'U@' + form.v + ':' : 'U:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
+            case 'some': if (claimUnorderedKeys && form.spelled) return 'E&:' + [form.subject, form.predicate].map(p => words(claimPropCanon(p))).sort().join('|');
+                return (claimExactVariables && form.v ? 'E@' + form.v + ':' : 'E:') + words(claimSelfSaid(claimPropCanon(form.subject))) + '|' + words(claimSelfSaid(claimPropCanon(claimWouldProp(form.predicate))));
             case 'not': {
                 // "It is not the case that Bob would choose to stay": "Bob could choose not to stay".
                 const d = form.inner && form.inner.kind === 'pred' ? claimWouldDual(form.inner.prop) : null;
@@ -22109,7 +22133,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const denials = f => words(f).filter(w => /^(?:not|no|none|nothing|nobody|neither|nor)$/.test(w)).length;
         const lexical = f => words(f).filter(w => CLAIM_EXACT_DENIALS[w] || /^non-?[a-z]{3,}$/.test(w)).length;
         const quantified = f => f.kind === 'all' || f.kind === 'some';
-        if (quantified(C) && (denials(P[0]) || denials(C))) return 'quantifier-negation';
+        // Not where both spell out the "and" ("nothing is a dog and a
+        // cat", "nothing is a cat and a dog"): they differ in order (r27.156).
+        if (quantified(C) && (denials(P[0]) || denials(C)) && !(P[0].spelled && C.spelled)) return 'quantifier-negation';
         // A modal claim in two wordings: its word changed ("not possible",
         // "necessary ... not") is modal duality; only a denial denied, double
         // negation; the same word, one claim said twice.
@@ -22186,6 +22212,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return !claimsSameInOrder(x.parts, y.parts) && sameClaims(x.parts, y.parts);
         if (x.kind === 'if' && y.kind === 'if' && !!x.counterfactual === !!y.counterfactual && x.conds.length > 1 && x.conds.length === y.conds.length)
             return claimSame(x.cons, y.cons) && !claimsSameInOrder(x.conds, y.conds) && sameClaims(x.conds, y.conds);
+        // "Nothing is a dog and a cat", "nothing is a cat and a dog": each
+        // read as "no dog is a cat", its "and" spelled out (r27.155).
+        if (x.kind === 'all' && y.kind === 'all' && x.spelled && y.spelled && /^¬=/.test(String(x.predicate)) && /^¬=/.test(String(y.predicate)) &&
+            claimPropMatch(x.subject, y.predicate.slice(1)) && claimPropMatch(y.subject, x.predicate.slice(1)) && !claimPropMatch(x.subject, y.subject)) return true;
         if ((x.kind === 'all' || x.kind === 'some') && x.kind === y.kind)
             return (claimPropMatch(x.subject, y.subject) && claimPropsPermuted(x.predicate, y.predicate)) ||
                 (claimPropMatch(x.predicate, y.predicate) && claimPropsPermuted(x.subject, y.subject));
@@ -24758,6 +24788,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const parent = forms[forms.length - 1];
                 results.push(forms.every(Boolean) && parent ? certifyStep(forms.slice(0, -1), claimStepConclusions(parent, attack, weak), attack) : null);
             }
+            // "Most" and "in general", which the check does not read, decided
+            // by "all" and "some": where the step follows on both, it follows
+            // on those too, and the question plays no role (r27.154; the
+            // user: "Sure"; "ravens are black and old" had asked).
+            const said = entries[0].note.readings.map(String), all = said.findIndex(r => /^all /.test(r)), some = said.findIndex(r => /^some /.test(r));
+            if (all >= 0 && some >= 0 && results[all] && results[some]) continue;
             if (entries[0].note.canScope ? !results[0] && results.some(Boolean) : results.some(Boolean) && !results.every(Boolean))
                 return { entries, derives: results.map((rule, r) => rule ? { reading: r, rule } : null).filter(Boolean) };
         }
@@ -32419,7 +32455,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // The kind in one spelling: "everyone who cheats" meets "a person
             // who cheats" (r27.149; they had been dimmed).
             return [{ key: 'p:' + claimPropCanon(f.subject), words: kind, kids: icRestrictor(f.subject, kind) },
-                    { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made }];
+                    // What is said, in one spelling too: "is a black bird" meets
+                    // "Poe is a black bird" (r27.156; it had been dimmed).
+                    { key: 'p:' + claimPropCanon(String(f.predicate).replace(/^\u00ac/, '')), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made }];
         }
         if (f.kind === 'pred' && f.term && f.prop) {
             const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
@@ -32758,10 +32796,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // conclusion's thing: "believes that they are smart" goes on as
             // "believes that he is smart" (r27.149).
             const filled = sp => /\uE004/.test(sp.key) ? cParts.filter(t => /^t:/.test(t.key)).map(t => 'p:' + claimFillBound(sp.key.slice(2), t.key.slice(2))) : [];
+            // A compound the conclusion says in its parts: "is a black bird"
+            // goes on as "Poe is a black bird", read as black and a bird
+            // (r27.156; it had been dimmed).
+            const pieces = sp => { const m = /^p:\((.+)\)$/.exec(sp.key); return m && !/[()]/.test(m[1]) ? m[1].split('&').map(x => 'p:' + x) : null; };
+            // A part with a pronoun its kind binds meets the case's part, said
+            // of the case's thing: "loves their mother" meets "loves his
+            // mother" of Bob (r27.156).
+            const meets = (a, b) => a.key === b.key || (/\uE004/.test(a.key) && filled(a).some(k => claimUnmarked(k) === claimUnmarked(b.key))) ||
+                (/\uE004/.test(b.key) && filled(b).some(k => claimUnmarked(k) === claimUnmarked(a.key)));
             const place = (sp, pool) => {
-                const inC = cParts.find(x => x.key === sp.key || filled(sp).includes(x.key));
+                const inC = cParts.find(x => x.key === sp.key || filled(sp).includes(x.key)) ||
+                    (pieces(sp) && pieces(sp).every(k => cParts.some(x => x.key === k)) ? cParts.find(x => x.key === pieces(sp)[0]) : null);
                 if (inC) { sp.role = 'c'; sp.denied = !!inC.said && (sp.said ? sp.neg !== inC.neg : !!inC.neg); return; }
-                if (pool.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
+                const partner = pool.find(x => x !== sp && meets(sp, x));
+                if (partner) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key || x.key === partner.key, { key: sp.key }); }
             };
             splits.forEach((list, i) => list.forEach(parts => {
                 if (!parts) return;

@@ -150,6 +150,19 @@
  *    the other voice. Not where "by" may say where or how ("by the river",
  *    "by mail"), nor where two phrases like "every" and "some" change places,
  *    nor "fits" or "married", whose passives say other things.
+ * 28. (r27.154) A generic's "most" and "in general", which the check does
+ *    not read, decided by "all" and "some" (the user: "Sure"): "Ravens are
+ *    birds and black" -> "Ravens are black" no longer asks what "ravens"
+ *    means; "Ravens are black" and "Poe is a raven" -> "Poe is black" still
+ *    asks.
+ * 29. (r27.155) "Nothing is a dog and a cat" is "no dog is a cat" (the user:
+ *    "Sure"), the mirror of section 26: the swap is commutation where both
+ *    boxes spell out the "and", conversion where one or neither does.
+ * 30. (r27.156) The four gaps (the user: "Let's fix these"): with
+ *    commutation off, the spelled-out swap says why it is refused; a pronoun
+ *    in the "who" clause bound ("every student who loves their mother is
+ *    kind"); "everyone who thinks they will win | cheats"; and, in the colors
+ *    suite, "is a black bird" goes on.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -749,10 +762,13 @@ console.log('\n-- 24. (r27.150) a pronoun in a "who" clause; the subject is the 
     ok(J(read) === J([['The woman who met Mary loves Mary.'], ['The man that Mary loves hates Mary.'], ['The man who bought the car sold the car.']]),
         'the subject of "loves her" is the whole phrase before it, "who" clause and all: "the woman who met Mary loves her" -- Mary (it had been the woman); ' +
         '"sold it" -- the car (it had said "it" points to nothing)', J(read));
-    const told = ev(`return ['Every student who loves her mother is kind.', 'Every student who thinks that she is smart is happy.', 'Everyone who believes that the earth is flat loves her.'].map(function (s) {
+    // Since r27.156 a pronoun in the "who" clause itself is the quantifier's
+    // own ("every student who loves her mother", section 30); one past the
+    // clause, after a verb in it that takes a claim, is not.
+    const told = ev(`return ['Everyone who believes that the earth is flat loves her.'].map(function (s) {
         return !!claimPronounReadingsUncached(s).missing; });`);
-    ok(J(told) === J([true, true, true]),
-        'a pronoun in the "who" clause, or after a verb there that takes a claim, is not the quantifier\'s own: "her" has nothing to refer to, as before ' +
+    ok(J(told) === J([true]),
+        'after a verb in the "who" clause that takes a claim, a pronoun past the clause is not the quantifier\'s own: "her" has nothing to refer to, as before ' +
         '(r27.149 had kept it and said nothing)', J(told));
 }
 
@@ -823,6 +839,54 @@ console.log('\n-- 27. (r27.153) active and passive; the indirect object --');
         return r;`);
     ok(!off.rule && /With active and passive switched on in the Logic panel \(Replacement rules\)/.test(off.why) && J(off.panel) === J(['active-passive', 'indirect-object']),
         'in the Logic panel with the replacement rules; switched off, the check names the switch', J(off));
+}
+
+console.log('\n-- 28. (r27.154) "most" and "in general" decided by "all" and "some" --');
+{
+    const AND = [[['Ravens are birds and black.'], 'Ravens are black.'], [['Ravens are black and old.'], 'Ravens are black.'], [['Dogs bark and bite.'], 'Dogs bark.']];
+    ok(!misses(AND, 'conjunction elimination').length, 'half of an "and" said of ravens follows whatever "ravens" means: no question (it had asked, the check reading no "most" or "in general")',
+        J(misses(AND, 'conjunction elimination')));
+    const poe = step(['Ravens are black.', 'Poe is a raven.'], 'Poe is black.');
+    ok(!poe.rule && /may mean all of them, some, most, or what holds in general/.test(poe.why), 'where it follows on "all" only, it still asks', J(poe));
+}
+
+console.log('\n-- 29. (r27.155) "nothing is a dog and a cat" is "no dog is a cat" --');
+{
+    const named = [[['Nothing is a dog and a cat.'], 'No cat is a dog.'], [['No dog is a cat.'], 'Nothing is a cat and a dog.'],
+        [['Nothing is a dog and a cat.'], 'Nothing is a cat and a dog.'], [['No dog is a cat.'], 'No cat is a dog.']].map(([p, c]) => step(p, c).rule);
+    ok(J(named) === J(['conversion', 'conversion', 'commutation', 'conversion']),
+        'the swap is commutation where both boxes spell out the "and", conversion where one or neither does', J(named));
+    const off = ev(`var one = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
+            { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : null; };
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
+        var r = [one(['Nothing is a dog and a cat.'], 'Nothing is a cat and a dog.'), one(['Nothing is a dog and a cat.'], 'No cat is a dog.')];
+        state.logic = null; claimRulesCache = null; return r;`);
+    ok(J(off) === J(['commutation', null]), 'with conversion switched off, the spelled-out swap still passes, and the other does not', J(off));
+    const mp = step(['If no dog is a cat, Bob is wrong.', 'Nothing is a dog and a cat.'], 'Bob is wrong.');
+    const rex = step(['Nothing is a dog and a cat.', 'Rex is a dog.'], 'Rex is not a cat.');
+    ok(mp.rule === 'modus ponens' && rex.rule === 'universal modus ponens', 'one claim: modus ponens across the two wordings; of Rex, universal modus ponens', J([mp, rex]));
+}
+
+console.log('\n-- 30. (r27.156) the four gaps --');
+{
+    const off = ev(`var why = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
+            { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : st.why && st.why.text; };
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['commutation'], false);
+        var r = [why(['Something is black and old.'], 'Something is old and black.'), why(['Nothing is a dog and a cat.'], 'Nothing is a cat and a dog.')];
+        state.logic = null; claimRulesCache = null; return r;`);
+    ok(off.every(w => /^The two differ only in the order or grouping of their parts/.test(String(w))),
+        'with commutation switched off, the spelled-out swap says why it is refused (it had said nothing; "nothing" had been called quantifier negation)', J(off));
+    const BOUND = [[['Every student who loves their mother is kind.', 'Bob is a student who loves his mother.'], 'Bob is kind.'],
+        [['Every student who loves her mother is kind.', 'Mary is a student who loves her mother.'], 'Mary is kind.'],
+        [['Everyone who thinks they will win cheats.', 'Bob is a person who thinks he will win.'], 'Bob cheats.']];
+    ok(!misses(BOUND, 'universal modus ponens').length, 'a pronoun in the "who" clause, bound by its quantifier: of Bob, "his mother" -- universal modus ponens (it had said "their" points to nothing)',
+        J(misses(BOUND, 'universal modus ponens')));
+    const other = step(['Every student who loves their mother is kind.', 'Bob is a student who loves Al\'s mother.'], 'Bob is kind.');
+    ok(!other.rule, 'not someone else\'s mother', J(other));
+    const subject = ev(`return ['Everyone who thinks they will win cheats.', 'Everyone who thinks that Bob will win cheats.'].map(function (s) {
+        var t = claimTokens(normalizeClaimText(s).replace(/[.]$/, '')); return claimUnmarked(t.slice(0, claimSynSubjectEnd(t)).join(' ')); });`);
+    ok(J(subject) === J(['everyone who thinks they will win', 'everyone who thinks that bob will win']),
+        '"everyone who thinks they will win | cheats": "they" can be no object, so the claim "thinks" takes runs to its verb (it had been "everyone who thinks they | will win cheats")', J(subject));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

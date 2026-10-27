@@ -960,6 +960,16 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'the clause said in the other voice goes on, not denied (it had been dimmed); likewise the indirect object moved', J([voice, to]));
     }
 
+    console.log('\n-- (r27.156) "is a black bird"; a pronoun bound in the "who" clause --');
+    {
+        const bird = paint(['Every raven is a black bird.', 'Poe is a raven.'], 'Poe is a black bird.');
+        const mother = paint(['Every student who loves their mother is kind.', 'Bob is a student who loves his mother.'], 'Bob is kind.');
+        ok(bird.rule === 'universal modus ponens' && runs(bird.boxes[0], /^ic-c/).join('') === 'is a black bird' &&
+            mother.rule === 'universal modus ponens' && J(runs(mother.boxes[0], /^ic-k0/)) === J(['Every student who loves their mother']) &&
+            J(runs(mother.boxes[1], /^ic-k0/)) === J(['is a student who loves his mother']),
+            '"is a black bird" goes on (it had been dimmed); "every student who loves their mother" meets "is a student who loves his mother"', J([bird, mother]));
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
     console.log('\n' + pass + ' passed, ' + fail + ' failed');

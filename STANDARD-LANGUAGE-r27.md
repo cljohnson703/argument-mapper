@@ -4,6 +4,60 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: four gaps closed (r27.156)
+
+The user: "Let's fix these."
+
+* With commutation switched off, the step from "Something is black and old" to "Something is old and black" was refused with no reason. Now the check says: "The two differ only in the order or grouping of their parts: commutation or association makes the one the other." Likewise "Nothing is a dog and a cat" to "Nothing is a cat and a dog", which had been said to follow "by quantifier negation".
+* A pronoun inside a "who" clause, bound by its quantifier. "Every student who loves their mother is kind" and "Bob is a student who loves his mother" give "Bob is kind", by universal modus ponens. Likewise "her" ("every student who loves her mother"), and "they" after a verb there that takes a claim ("everyone who thinks they will win").
+  * Before, the check said "their" had nothing to refer to.
+  * Not someone else's mother: "Bob is a student who loves Al's mother" does not give it.
+  * A pronoun past the clause is not bound this way: in "everyone who believes that the earth is flat loves her", "her" still has nothing to refer to.
+* "Everyone who thinks they will win cheats" is read as "everyone who thinks they will win" doing the cheating. "They" can be no object of "thinks", so the claim "thinks" takes runs to its own verb. It had been read as "everyone who thinks they" doing "will win cheats".
+* Colors:
+  * "Every raven is a black bird" and "Poe is a raven" give "Poe is a black bird": "is a black bird" goes on. It had been dimmed, the box's "black bird" read whole and the conclusion's as "black" and "a bird".
+  * "Every student who loves their mother" meets "is a student who loves his mother".
+
+Tests:
+* rules-r27-ordinary-test.js has 131 checks; three of the four new ones (section 30) fail on r27.155, and the fourth guards someone else's mother. Section 24's check now holds only "everyone who believes that the earth is flat loves her"; its other two sentences are bound since this release (section 30).
+* colors-r27-inference-test.js has 139 checks; the new one fails on r27.155.
+* Take-one-out: each of the 8 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 27: "nothing is a dog and a cat" is "no dog is a cat" (r27.155)
+
+The user: "Sure", to the mirror image of r27.152.
+
+* "Nothing is a dog and a cat" says what "No dog is a cat" says. They are one claim, so a step may use either wording: "If no dog is a cat, Bob is wrong" and "Nothing is a dog and a cat" give "Bob is wrong" by modus ponens. And "Nothing is a dog and a cat" with "Rex is a dog" gives "Rex is not a cat".
+* Where both boxes spell out the "and", the swap is commutation: "Nothing is a dog and a cat" gives "Nothing is a cat and a dog". Where one box or neither does, it is conversion: "Nothing is a dog and a cat" gives "No cat is a dog" by conversion. So with conversion switched off, the spelled-out swap still passes.
+* The step from "No dog is a cat" to "Nothing is a dog and a cat" is quantifier negation: "nothing is a dog and a cat" is "it is not the case that something is a dog and a cat".
+* Only "nothing": "no one is a student and a singer" is read as before.
+
+Tests:
+* rules-r27-ordinary-test.js: two of the three new checks (section 29) fail on r27.154; the third guards the swap with conversion switched off.
+* Take-one-out: each of the 3 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.156 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
+### October 27: "most" and "in general" decided by "all" and "some" (r27.154)
+
+The user: "Sure".
+
+* A bare plural ("ravens") may mean all of them, some, most, or what holds in general. The check reads the step's boxes each way, the same way in both, and asks only where the answer changes the verdict.
+* It does not read "most" or "generally" at all. So the step from "Ravens are birds and black" to "Ravens are black" seemed to turn on the answer, and it asked, though half of an "and" follows on every reading. Likewise "Ravens are black and old" to "Ravens are black", and "Dogs bark and bite" to "Dogs bark".
+* Now, where a step follows on both "all" and "some", it is taken to follow on "most" and "in general" too, and the check does not ask.
+* It still asks where the readings differ: "Ravens are black" and "Poe is a raven" give "Poe is black" only on "all". It asks, too, wherever there is no "all" and "some" to decide by: "a student" after "if" (r27.145) still asks.
+
+Tests:
+* rules-r27-ordinary-test.js: the first of the two new checks (section 28) fails on r27.153; the second guards "Poe is black".
+* Take-one-out: the one change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.156 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: active and passive, and the indirect object (r27.153)
 
 The user: "Sure", to a named step for each, with each box keeping its wording.
