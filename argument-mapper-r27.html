@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.149';
+    const APP_BUILD = '2026-10-27 r27.150';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10300,6 +10300,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let j = p.k - 2;
             while (j >= 0 && (CLAIM_VERB_MARKERS.has(toks[j].l) || /^(?:not|never|also|then|still|really|just|always|often|already|again)$/.test(toks[j].l) || /^[a-z]{3,}ly$/.test(toks[j].l))) j--;
             if (j < 0 || (p.ii >= 0 && j < inner[p.ii].from)) return null;
+            // The whole phrase before the verb, "who" clause and all: "the
+            // woman who met Mary loves her", "the man that Mary loves hates
+            // her", "every student who knows Mary loves her" -- not "Mary",
+            // inside it (r27.150; "Mary" had been ruled out, and "her" read
+            // as the woman).
+            const c = clauses[p.ci];
+            if (c && j > c.from && toks.slice(c.from + 1, j).some(y => /^(?:who|whom|which|that)$/.test(y.l)) &&
+                claimSynChoose(synWs, claimSynNounPhrases(synWs, c.from)) === j + 1) {
+                const head = cands.find(x => x.k0 === c.from && x.k1 < j && !x.fact);
+                return head ? { cand: head } : {};
+            }
             const pron = open.find(q => q.k === j);
             if (pron) return { pron };
             const site = nameSites.find(x => x.at === toks[j].at);
@@ -10504,9 +10515,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const subjectBinds = p => {
             const q = binder(p), kd = CLAIM_PRONOUN_KIND[p.l];
             if (!q || !(kd === 'm' || kd === 'f' ? q.kind === 'person' || q.kind === 'animal' : kd === 'p' || q.kind === 'thing' || q.kind === 'animal')) return false;
+            // Past the phrase it opens, "who" clause and all: "every student
+            // who loves her mother", "every student who knows Mary loves her"
+            // say nothing of each one's own (r27.150; r27.149 had kept the
+            // pronoun, and so said nothing).
+            const end = claimSynChoose(synWs, claimSynNounPhrases(synWs, q.k0));
+            if (end < 0 || p.k < end) return false;
             const next = toks[p.k + 1], possessive = /^(?:their|his|its)$/.test(p.l) ||
                 (p.l === 'her' && !!next && /^[a-z]/.test(next.w) && !claimSynClosed(next.l) && !CLAIM_VERB_MARKERS.has(next.l));
-            return possessive || toks.slice(q.k0 + 1, p.k).some(y => claimAttitudeWord(y.l));
+            return possessive || toks.slice(end, p.k).some(y => claimAttitudeWord(y.l));
         };
         for (let i = slots.length - 1; i >= 0; i--) {
             const own = slots[i].members.map(binder);

@@ -123,6 +123,12 @@
  *    loves Mary thinks she is smart": Mary), nor "everyone loves him". And
  *    "everyone who cheats | thinks Bob will win": the verb that takes the
  *    claim had been read into the subject.
+ * 24. (r27.150) A pronoun in a "who" clause is not the quantifier's own, and
+ *    the subject of a verb is the whole phrase before it: "every student who
+ *    knows Mary loves her" -- Mary, so of Bob, "Bob loves Mary"; "the woman
+ *    who met Mary loves her" -- Mary (it had been the woman); "every student
+ *    who loves her mother is kind" -- "her" has nothing to refer to, as before
+ *    r27.149, which had kept it and said nothing.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -709,6 +715,24 @@ console.log('\n-- 23. (r27.149) a quantifier binds a pronoun in its own verb phr
     ok(J(subjects) === J(['everyone who cheats', 'the man who left', 'people who eat meat', 'the woman who fears change']),
         '"everyone who cheats | thinks Bob will win", "the man who left | says Bob will win" (the verb that takes the claim had been read into the subject); ' +
         '"people who eat meat | smoke", as before', J(subjects));
+}
+
+console.log('\n-- 24. (r27.150) a pronoun in a "who" clause; the subject is the whole phrase --');
+{
+    const HER = [[['Every student who knows Mary loves her.', 'Bob is a student who knows Mary.'], 'Bob loves Mary.'],
+        [['No student who knows Mary hates her.', 'Bob is a student who knows Mary.'], 'Bob does not hate Mary.']];
+    ok(!misses(HER, 'universal modus ponens').length, '"every student who knows Mary loves her": "her" is Mary -- universal modus ponens ' +
+        '(r27.149 had kept "her" and said nothing; before, Mary had been ruled out as the subject of "loves her")', J(misses(HER, 'universal modus ponens')));
+    const read = ev(`return ['The woman who met Mary loves her.', 'The man that Mary loves hates her.', 'The man who bought the car sold it.'].map(function (s) {
+        return claimPronounReadingsUncached(s).texts; });`);
+    ok(J(read) === J([['The woman who met Mary loves Mary.'], ['The man that Mary loves hates Mary.'], ['The man who bought the car sold the car.']]),
+        'the subject of "loves her" is the whole phrase before it, "who" clause and all: "the woman who met Mary loves her" -- Mary (it had been the woman); ' +
+        '"sold it" -- the car (it had said "it" points to nothing)', J(read));
+    const told = ev(`return ['Every student who loves her mother is kind.', 'Every student who thinks that she is smart is happy.', 'Everyone who believes that the earth is flat loves her.'].map(function (s) {
+        return !!claimPronounReadingsUncached(s).missing; });`);
+    ok(J(told) === J([true, true, true]),
+        'a pronoun in the "who" clause, or after a verb there that takes a claim, is not the quantifier\'s own: "her" has nothing to refer to, as before ' +
+        '(r27.149 had kept it and said nothing)', J(told));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

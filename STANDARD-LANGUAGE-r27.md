@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: a pronoun in a "who" clause, and the subject of its verb (r27.150)
+
+A fix to r27.149, and an older mistake found with it.
+
+* r27.149 took a pronoun after "every" as each one's own even where the "who" clause held the pronoun, or held the verb that takes a claim. So "every student who loves her mother is kind", "every student who knows Mary loves her" and "everyone who believes that the earth is flat loves her" kept the pronoun and said nothing. Before, they had said that "her" has nothing to refer to.
+  * Now the pronoun is each one's own only after the whole phrase "every" opens, "who" clause and all. It still has to come after a verb there that takes a claim, or be "their", "his", "her" or "its" before a noun.
+  * "Every student who loves her mother is kind" says again that "her" has nothing in the box to refer to. Reading "her" there as each student's own is not done yet.
+* The subject of a verb is the whole phrase before it, "who" clause and all.
+  * "Mary" in "the woman who met Mary loves her" had been taken for the subject of "loves her" and ruled out, so "her" was the woman. Now "her" is Mary.
+  * Likewise "the man that Mary loves hates her" (Mary, not the man) and "the man who bought the car sold it" (the car; it had said "it" points to nothing).
+  * "Every student who knows Mary loves her" and "Bob is a student who knows Mary" give "Bob loves Mary", by universal modus ponens.
+* No sentence in the corpus reads differently.
+
+Tests:
+* rules-r27-ordinary-test.js has 107 checks; the three new ones fail on r27.149.
+* Take-one-out: both edits are caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: a quantifier binds a pronoun in its own verb phrase (r27.149)
 
 The next item of the queue: "Everyone who cheats thinks they will win".
