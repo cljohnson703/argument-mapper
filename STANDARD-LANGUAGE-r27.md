@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: active and passive, and the indirect object (r27.153)
+
+The user: "Sure", to a named step for each, with each box keeping its wording.
+
+* Two new replacement rules, on by default, under Replacement rules in the Logic panel:
+  * **active and passive**: "Bob wrote the book" is "The book was written by Bob".
+    * Likewise "Mary loves Bob" and "Bob is loved by Mary"; "has read" and "has been read"; "will read" and "will be read".
+    * Also with "not" ("Bob did not write the book", "The book was not written by Bob") and with one "every" or "some" ("Bob read every book", "Every book was read by Bob").
+  * **indirect object**: "Bob gave Mary a book" is "Bob gave a book to Mary"; likewise "send", "show", "tell", "offer", "lend", "sell" and the like.
+  * Each works anywhere in a claim: "If the book was written by Bob, Al is wrong" gives "If Bob wrote the book, Al is wrong".
+  * The verbs' forms ("wrote", "written") come from the word-form data the app already imports (language-data/verbs.json). build-morphology-data.js now keeps each irregular verb's past and participle.
+* Each box keeps its wording. "If Bob wrote the book, Al is wrong" and "The book was written by Bob" do not give "Al is wrong" in one step. The check says: "“The book was written by Bob.” says what “Bob wrote the book” says, in the other voice: with “Bob wrote the book” as a box of its own, the premises would give “Al is wrong” by modus ponens."
+* Not taken, and the check says why:
+  * Where "by" may say where or how, not who: "The house was built by the river", "The letter was sent by mail", "The work was finished by noon".
+  * Where two phrases like "some" and "every" change places: "Some student loves every teacher" and "Every teacher is loved by some student". One of them can be true when the other is false. ("Every student loves a teacher" already asks whether it means one teacher for everyone.)
+* Not for "fits", "suits", "resembles", "costs", "weighs", "lacks", "means" or "married", whose passives say other things: "The dress fits Mary" is not "Mary is fitted by the dress".
+* Colors: a clause said in the other voice goes on, as conversion's does. It had been dimmed.
+
+Tests:
+* rules-r27-ordinary-test.js has 122 checks; five of the six new ones fail on r27.152 (the sixth guards "fits" and "married").
+* colors-r27-inference-test.js has 138 checks; the new one fails on r27.152.
+* logic-r27-deductive-test.js: the two new rules among the Standard package's.
+* Take-one-out: each of the 8 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: "something is a dog and a pet" is "some dog is a pet" (r27.152)
 
 The user: "Sure".

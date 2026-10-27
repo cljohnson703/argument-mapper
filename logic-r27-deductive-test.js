@@ -390,6 +390,8 @@ const MAP = [
             'consequentia mirabilis', 'biconditional to conditional', 'absorption', 'change of bound variable', 'Quantifier Commutation',
             'vacuous quantifier', 'vacuous quantifier, anywhere', 'rules of passage', 'quantifier distribution',
             'quantifier distribution, anywhere', 'quantifier negation', 'conversion', 'contraposition',
+            // r27.153: the other voice, and the indirect object moved.
+            'active and passive', 'indirect object',
             'De Morgan’s laws', 'transposition', 'Negated Conditional', 'Negated Biconditional',
             'material implication', 'material equivalence', 'exportation', 'Boolean absorption',
             '⊥ laws', 'distribution', 'commutation', 'association',

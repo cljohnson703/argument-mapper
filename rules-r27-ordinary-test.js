@@ -142,6 +142,14 @@
  *    boxes spell out the "and", the swap is commutation; where one or neither
  *    does, conversion -- so with conversion switched off, the spelled-out
  *    swap still passes and the others do not.
+ * 27. (r27.153) Active and passive, and the indirect object, as named
+ *    replacement steps (the user: "Sure" to A): "Bob wrote the book" is "the
+ *    book was written by Bob", "Bob gave Mary a book" is "Bob gave a book to
+ *    Mary", anywhere in a claim. Each box keeps its wording: modus ponens
+ *    across voices is not taken, and the check says what the premise says in
+ *    the other voice. Not where "by" may say where or how ("by the river",
+ *    "by mail"), nor where two phrases like "every" and "some" change places,
+ *    nor "fits" or "married", whose passives say other things.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -783,6 +791,38 @@ console.log('\n-- 26. (r27.152) "something is a dog and a pet" is "some dog is a
     ok(mp.rule === 'modus ponens' && !same.rule && /only repeats/.test(same.why), 'one claim: modus ponens across the two wordings; the one as a reason for the other only repeats it', J([mp, same]));
     const someone = step(['Someone is a student and a singer.'], 'Someone is a singer and a student.');
     ok(someone.rule === 'commutation', '"someone is a student and a singer", so "someone is a singer and a student": commutation, as before', J(someone));
+}
+
+console.log('\n-- 27. (r27.153) active and passive; the indirect object --');
+{
+    const VOICE = [[['Bob wrote the book.'], 'The book was written by Bob.'], [['The book was written by Bob.'], 'Bob wrote the book.'],
+        [['Mary loves Bob.'], 'Bob is loved by Mary.'], [['Bob did not write the book.'], 'The book was not written by Bob.'],
+        [['Bob has read the book.'], 'The book has been read by Bob.'], [['Bob will read the book.'], 'The book will be read by Bob.'],
+        [['Bob read every book.'], 'Every book was read by Bob.'], [['If the book was written by Bob, Al is wrong.'], 'If Bob wrote the book, Al is wrong.']];
+    ok(!misses(VOICE, 'active and passive').length, 'the other voice, each tense, with "not", under "every", inside an "if": active and passive', J(misses(VOICE, 'active and passive')));
+    const TO = [[['Bob gave Mary a book.'], 'Bob gave a book to Mary.'], [['Bob gave a book to Mary.'], 'Bob gave Mary a book.'],
+        [['Bob did not give Mary the book.'], 'Bob did not give the book to Mary.']];
+    ok(!misses(TO, 'indirect object').length, '"gave Mary a book" and "gave a book to Mary": indirect object', J(misses(TO, 'indirect object')));
+    const mp = step(['If Bob wrote the book, Al is wrong.', 'The book was written by Bob.'], 'Al is wrong.');
+    ok(!mp.rule && /says what “Bob wrote the book” says, in the other voice: with “Bob wrote the book” as a box of its own, the premises would give “Al is wrong” by modus ponens/.test(mp.why),
+        'each box keeps its wording: modus ponens across voices is not taken, and the check says what the premise says in the other voice', J(mp));
+    const where = step(['The house was built by the river.'], 'The river built the house.');
+    const how = step(['The letter was sent by mail.'], 'Mail sent the letter.');
+    const scope = step(['Some student loves every teacher.'], 'Every teacher is loved by some student.');
+    ok(!where.rule && /may say where, not who/.test(where.why) && !how.rule && /may say how or when, not who/.test(how.why) &&
+        !scope.rule && /one of them can be true when the other is false/.test(scope.why),
+        'not "by the river" (where), "by mail" (how), nor "some student" and "every teacher" changing places -- each said', J([where, how, scope]));
+    const NOT = [[['The dress fits Mary.'], 'Mary is fitted by the dress.'], [['Bob married Mary.'], 'Mary was married by Bob.']];
+    ok(!certified(NOT).length, 'not "fits" or "married", whose passives say other things', J(certified(NOT)));
+    const off = ev(`var st = function (ps, c) { return collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
+            { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; };
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['active-passive'], false);
+        var s = st(['Bob wrote the book.'], 'The book was written by Bob.'), r = { rule: s.rule && s.rule.name, why: s.why && s.why.text };
+        state.logic = null; claimRulesCache = null;
+        r.panel = DEDUCTIVE_EXTENSIONS.find(function (g) { return g.id === 'replacement'; }).rules.filter(function (id) { return id === 'active-passive' || id === 'indirect-object'; });
+        return r;`);
+    ok(!off.rule && /With active and passive switched on in the Logic panel \(Replacement rules\)/.test(off.why) && J(off.panel) === J(['active-passive', 'indirect-object']),
+        'in the Logic panel with the replacement rules; switched off, the check names the switch', J(off));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

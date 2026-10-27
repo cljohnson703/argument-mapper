@@ -951,6 +951,15 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'one claim in two wordings: "some dog is a pet" meets "Something is a dog and a pet" (the step had not been certified)', J(mp));
     }
 
+    console.log('\n-- (r27.153) active and passive; the indirect object --');
+    {
+        const voice = paint(['If the book was written by Bob, Al is wrong.'], 'If Bob wrote the book, Al is wrong.');
+        const to = paint(['Bob gave Mary a book.'], 'Bob gave a book to Mary.');
+        ok(voice.rule === 'active and passive' && runs(voice.boxes[0], /^ic-c/).join('') === 'If the book was written by Bob, Al is wrong' && !voice.boxes[0].some(p => /ic-cn/.test(p)) &&
+            to.rule === 'indirect object' && runs(to.boxes[0], /^ic-c/).join('') === 'Bob gave Mary a book' && !to.boxes[0].some(p => /ic-cn/.test(p)),
+            'the clause said in the other voice goes on, not denied (it had been dimmed); likewise the indirect object moved', J([voice, to]));
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
     console.log('\n' + pass + ' passed, ' + fail + ' failed');

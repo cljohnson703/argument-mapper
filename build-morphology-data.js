@@ -69,7 +69,17 @@ for (const [base,pairs] of Object.entries(reviewed.pastAlternatives)) {
     }
 }
 audit.reviewed = reviewed;
-const data = {past, plurals, participles:[...participles].sort(), spellings, presentBases, pastVariants, compoundPlurals:reviewed.compoundPlurals};
+// Each irregular verb's past and participle, every pair the source gives in
+// one word, for saying a claim in the other voice (r27.153): "write" wrote,
+// written. Not "be", "have", "do" or "lie", as above; which pair a box
+// means is left to its words.
+const verbForms = {};
+for (const [base, forms] of Object.entries(verbs)) {
+    if (!word(base) || ['be','have','do','lie'].includes(base)) continue;
+    const pairs = forms.filter(([p, q]) => word(p) && word(q));
+    if (pairs.length) verbForms[base] = pairs;
+}
+const data = {past, plurals, participles:[...participles].sort(), spellings, presentBases, pastVariants, compoundPlurals:reviewed.compoundPlurals, verbForms};
 // The app looks the user's own words up in these tables, so each is made
 // without a prototype: "constructor" finds nothing, as any word not listed.
 const table = value => Array.isArray(value) ? JSON.stringify(value) : 'Object.assign(Object.create(null), ' + JSON.stringify(value) + ')';
