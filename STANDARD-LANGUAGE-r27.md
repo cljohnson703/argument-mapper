@@ -4,6 +4,77 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: "no one is a student and a teacher" is "no student is a teacher" (r27.160)
+
+The user: "Go ahead and fix these."
+
+* "No one is a student and a teacher" says what "No student is a teacher" says, as "Nothing is a dog and a cat" says what "No dog is a cat" says (r27.155), where each noun names people only, so that the "one" adds nothing. So "No one is a student and a teacher" gives "No teacher is a student" by conversion, and with "Bob is a student", "Bob is not a teacher" by universal modus ponens. Likewise "nobody".
+* And "Someone is a student and a teacher" says what "Some student is a teacher" says, so that the two are still joined by quantifier negation: "It is not the case that someone is a student and a teacher" gives "No one is a student and a teacher". Likewise "somebody".
+* Not where a noun may name more than people. "No one is a dog and a pet" is not "No dog is a pet": no person is a dog. "No one is a student and a singer" is not "No student is a singer": a bird may sing. These read as before.
+* The swaps ("No one is a teacher and a student") are commutation, as before.
+
+Tests:
+* rules-r27-ordinary-test.js has 141 checks; the first of the two new ones (section 34) fails on r27.159, and the second guards what is read as before.
+* Take-one-out: the one change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 27: the progressive in the other voice (r27.159)
+
+The user: "Go ahead and fix these."
+
+* "Bob is reading the book" is "The book is being read by Bob", by active and passive. Likewise "was reading" and "was being read", with "not", of many ("The boys are watching the dog"), and inside an "if".
+* Not "is having lunch", "is going home" or "is being kind": verbs whose passive says another thing, or nothing. Not with the tense changed: "Bob is reading the book" does not give "The book is read by Bob". And, as in the other tenses, not "by the river", nor where "every" and "a" change places.
+
+Tests:
+* rules-r27-ordinary-test.js has 139 checks; the first of the two new ones (section 33) fails on r27.158, and the second guards the steps not taken.
+* Take-one-out: each of the 6 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.160 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
+### October 27: "bought Mary a book" gives "bought a book for Mary" (r27.158)
+
+The user: "Go ahead and fix these."
+
+* "Bob bought Mary a book" gives "Bob bought a book for Mary", by indirect object. Likewise "baked", "built", "cooked", "got", "ordered", "poured" and others, in each tense, under "every", after "then", and in an "and" or an "or".
+* One way only. "Bob bought a book for Mary" does not give "Bob bought Mary a book": "for Mary" may say on whose behalf, the book someone else's. ("Gave a book to Mary" and "gave Mary a book" are still one claim.)
+* So only where the claim says it. Not after "not" or "never", nor after "no", "few" or "only", nor in what "if" puts first: "If Bob bought Mary a book, Al is glad" does not give "If Bob bought a book for Mary, Al is glad".
+* Not "made", "found", "called", "kept" or "left", whose second phrase may say what the first is made or found to be: "Bob made Mary a star" is not "Bob made a star for Mary". Nor "saved", "spared", "played" or "rented" ("played Mary a trick").
+* And two steps r27.153 took wrongly are refused. "The war left Mary a widow" had given "The war left a widow to Mary", and "Bob threw Mary a party" had given "Bob threw a party to Mary", both by indirect object. "Leave" is off the list, as its second phrase may say what the first is left as; so "Bob left Mary a fortune" no longer gives "Bob left a fortune to Mary" either. "Throw" stays, but not with "a party", "a fit", "a tantrum", "a look", "a glance" or "a punch": "Bob threw Mary the ball" still gives "Bob threw the ball to Mary".
+* Colors: "Bob bought Mary a book" goes on to "Bob bought a book for Mary".
+
+Tests:
+* rules-r27-ordinary-test.js has 137 checks; the first and third of the three new ones (section 32) fail on r27.157, and the second guards the steps not taken.
+* colors-r27-inference-test.js has 140 checks; the new one fails on r27.157.
+* Take-one-out: each of the 5 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.160 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
+### October 27: "most" decided by "all" and "some" only where that is sure (r27.157)
+
+The user: "Whatever you think is best and keeps the reasoning valid."
+
+* r27.154 took a step that follows on "all" and on "some" to follow on "most" and "in general" too. That is not so in general. "Ravens are black" and "Black ravens are big" give "Ravens are big" on "all", and on "some" (the black raven that is big), but not on "most": of 100 ravens, 60 black and 31 of those big. The check does not read that step yet, so nothing wrong had passed; but a reading added later could have let such a step through.
+* Now the check takes it so only where it is sure, by an argument that holds for every such step, not by trying some:
+  * The plural is said only in premises: "most" says more than "some", so what follows on "some" follows on "most".
+  * Or only in the box a support is for: "all" says more than "most", so what follows on "all" follows on "most".
+  * Or in one premise and the box a support is for, each the whole of its box, in words that nothing else in the step uses ("Ravens are birds and black" to "Ravens are black"). Then, as the step follows on "all", each raven the premise is true of is one the box is true of: else a world where that raven is the only one makes the premise true of all ravens and the box not. So where the premise holds of most ravens, or of ravens in general, so does the box.
+  * And in each, the plural is nowhere denied or put after "if", and the step is no objection whose box has the plural, and no weak one.
+* Elsewhere the check asks, as it did before r27.154. "Ravens are birds that chase ravens" to "Ravens are birds" asks again: it follows, but not by these arguments ("ravens" is in the predicate too).
+* Where it is sure, the step now follows, by its rule on "all". "Ravens are birds" and "Every bird is an animal" give "Ravens are animals" by universal syllogism; likewise "No bird is a fish" gives "Ravens are not fish". Since r27.154 these had been "not recognized": the question was gone, and the words as written give nothing.
+* Counting "most" ("60 of 100 ravens are black") is left for later.
+
+Tests:
+* rules-r27-ordinary-test.js has 134 checks; the first and last of the three new ones (section 31) fail on r27.156 (the last because the function it checks is new), and the middle one guards "black ravens are big".
+* logic-r27-english-test.js: "All black things are dark" and "Ravens are black" now give "Ravens are dark", by universal syllogism. Its check that a generic is never one thing a quantifier's case is about had this step follow by no rule; it now has it follow by universal syllogism, and still never by universal modus ponens. The changed check fails on r27.156.
+* Take-one-out: each of the 4 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.160 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: four gaps closed (r27.156)
 
 The user: "Let's fix these."

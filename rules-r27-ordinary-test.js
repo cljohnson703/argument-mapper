@@ -163,6 +163,27 @@
  *    in the "who" clause bound ("every student who loves their mother is
  *    kind"); "everyone who thinks they will win | cheats"; and, in the colors
  *    suite, "is a black bird" goes on.
+ * 31. (r27.157) Section 28's "most" and "in general" taken from "all" and
+ *    "some" only where that is sure (the user: "Whatever you think is best
+ *    and keeps the reasoning valid"), and there the step follows: "Ravens
+ *    are birds" and "Every bird is an animal" give "Ravens are animals" by
+ *    universal syllogism (it had been "not recognized"). Not sure, and
+ *    asked: the plural in more than one premise, in another box, or denied.
+ * 32. (r27.158) "Bob bought Mary a book" gives "Bob bought a book for
+ *    Mary", by indirect object (the user: "Go ahead and fix these") -- one
+ *    way only, as "for Mary" may say on whose behalf, and only where the
+ *    claim says it: not after "not", "no" or "if"; not "made" or "found".
+ *    And not "the war left Mary a widow" to "the war left a widow to Mary",
+ *    nor "threw Mary a party" to "threw a party to Mary".
+ * 33. (r27.159) The progressive in the other voice (the user: "Go ahead and
+ *    fix these"): "Bob is reading the book" is "the book is being read by
+ *    Bob", by active and passive. Not "is having lunch", nor with the tense
+ *    changed.
+ * 34. (r27.160) "No one is a student and a teacher" is "no student is a
+ *    teacher", and "someone is a student and a teacher" "some student is a
+ *    teacher", where each noun names people only (the user: "Go ahead and
+ *    fix these"). Not "no one is a dog and a pet", nor "a student and a
+ *    singer".
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -887,6 +908,76 @@ console.log('\n-- 30. (r27.156) the four gaps --');
         var t = claimTokens(normalizeClaimText(s).replace(/[.]$/, '')); return claimUnmarked(t.slice(0, claimSynSubjectEnd(t)).join(' ')); });`);
     ok(J(subject) === J(['everyone who thinks they will win', 'everyone who thinks that bob will win']),
         '"everyone who thinks they will win | cheats": "they" can be no object, so the claim "thinks" takes runs to its verb (it had been "everyone who thinks they | will win cheats")', J(subject));
+}
+
+console.log('\n-- 31. (r27.157) "most" from "all" and "some" only where that is sure --');
+{
+    const SYL = [[['Ravens are birds.', 'Every bird is an animal.'], 'Ravens are animals.'], [['Ravens are birds.', 'No bird is a fish.'], 'Ravens are not fish.']];
+    ok(!misses(SYL, 'universal syllogism').length, 'sure to follow however "ravens" is read, the step follows, by its rule on "all" (it had been "not recognized")',
+        J(misses(SYL, 'universal syllogism')));
+    const pin = step(['Ravens are black.', 'Black ravens are big.'], 'Ravens are big.');
+    ok(!pin.rule, '"ravens are black" and "black ravens are big" do not give "ravens are big": it follows on "all" and on "some", not on "most"', J(pin));
+    const sure = ev(`var f = function (texts, boxes, all, some) {
+            var A = all.map(function (t) { return t && parseClaim(t); }), S = some.map(function (t) { return t && parseClaim(t); });
+            return claimGenericSure(boxes.map(function (b) { return { box: b, note: { subject: 'ravens' } }; }), texts, A, S, false); };
+        return [
+            f(['Ravens are birds.', 'Every bird is an animal.', 'Ravens are animals.'], [0, 2],
+                ['all ravens are birds', 'every bird is an animal', 'all ravens are animals'], ['some ravens are birds', 'every bird is an animal', 'some ravens are animals']),
+            f(['Ravens are black.', 'Black ravens are big.', 'Ravens are big.'], [0, 2], ['all ravens are black', null, 'all ravens are big'], ['some ravens are black', null, 'some ravens are big']),
+            f(['Ravens are black.', 'Ravens are big.', 'Ravens are black and big.'], [0, 1, 2],
+                ['all ravens are black', 'all ravens are big', 'all ravens are black and big'], ['some ravens are black', 'some ravens are big', 'some ravens are black and big']),
+            f(['It is not the case that ravens are white.', 'Ravens are black.'], [0, 1],
+                ['it is not the case that all ravens are white', 'all ravens are black'], ['it is not the case that some ravens are white', 'some ravens are black'])];`);
+    ok(J(sure) === J([true, false, false, false]),
+        'sure: one premise and the box, each all of its claim, and no other box saying "ravens" -- not with another box naming ravens, the plural in two premises, or denied', J(sure));
+}
+
+console.log('\n-- 32. (r27.158) "bought Mary a book" gives "bought a book for Mary" --');
+{
+    const FOR = [[['Bob bought Mary a book.'], 'Bob bought a book for Mary.'], [['Bob baked Mary a cake.'], 'Bob baked a cake for Mary.'],
+        [['Every boy bought Mary a book.'], 'Every boy bought a book for Mary.'], [['Bob will buy Mary a book.'], 'Bob will buy a book for Mary.'],
+        [['If Al is happy, Bob bought Mary a book.'], 'If Al is happy, Bob bought a book for Mary.'], [['Bob bought Mary a book and Al left.'], 'Bob bought a book for Mary and Al left.']];
+    ok(!misses(FOR, 'indirect object').length, 'with "for": indirect object, in each tense, under "every", after "then", in an "and"', J(misses(FOR, 'indirect object')));
+    const NOT = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob did not buy Mary a book.'], 'Bob did not buy a book for Mary.'],
+        [['Bob never bought Mary a book.'], 'Bob never bought a book for Mary.'], [['No boy bought Mary a book.'], 'No boy bought a book for Mary.'],
+        [['If Bob bought Mary a book, Al is glad.'], 'If Bob bought a book for Mary, Al is glad.'],
+        [['It is not the case that Bob bought Mary a book.'], 'It is not the case that Bob bought a book for Mary.'],
+        [['Bob made Mary a star.'], 'Bob made a star for Mary.'], [['Bob found Mary a job.'], 'Bob found a job for Mary.']];
+    ok(!certified(NOT).length, 'one way only ("for Mary" may say on whose behalf), and only where the claim says it -- not after "not", "never", "no" or "if"; not "made" or "found", whose second phrase may say what the first is made or found to be',
+        J(certified(NOT)));
+    const LEFT = [[['The war left Mary a widow.'], 'The war left a widow to Mary.'], [['Bob threw Mary a party.'], 'Bob threw a party to Mary.'],
+        [['Bob threw a party to Mary.'], 'Bob threw Mary a party.']];
+    const BALL = [[['Bob threw Mary the ball.'], 'Bob threw the ball to Mary.'], [['Bob threw the ball to Mary.'], 'Bob threw Mary the ball.']];
+    ok(!certified(LEFT).length && !misses(BALL, 'indirect object').length,
+        'not "the war left Mary a widow" to "the war left a widow to Mary", nor "threw Mary a party" to "threw a party to Mary" (both had been indirect object); "threw Mary the ball" still is',
+        J([certified(LEFT), misses(BALL, 'indirect object')]));
+}
+
+console.log('\n-- 33. (r27.159) the progressive in the other voice --');
+{
+    const PROG = [[['Bob is reading the book.'], 'The book is being read by Bob.'], [['The book is being read by Bob.'], 'Bob is reading the book.'],
+        [['Bob was writing the letter.'], 'The letter was being written by Bob.'], [['Bob is not reading the book.'], 'The book is not being read by Bob.'],
+        [['The boys are watching the dog.'], 'The dog is being watched by the boys.'], [['Bob is running the race.'], 'The race is being run by Bob.'],
+        [['If Bob is reading the book, Al is wrong.'], 'If the book is being read by Bob, Al is wrong.']];
+    ok(!misses(PROG, 'active and passive').length, '"is reading" and "is being read by": active and passive, present and past, with "not", of many, inside an "if"',
+        J(misses(PROG, 'active and passive')));
+    const NOT = [[['Bob is having lunch.'], 'Lunch is being had by Bob.'], [['Bob is reading the book.'], 'The book is read by Bob.'],
+        [['The house is being built by the river.'], 'The river is building the house.'], [['Every boy is reading a book.'], 'A book is being read by every boy.']];
+    ok(!certified(NOT).length, 'not "is having lunch"; not with the tense changed; not "by the river", nor "every" and "a" changing places', J(certified(NOT)));
+}
+
+console.log('\n-- 34. (r27.160) "no one is a student and a teacher" is "no student is a teacher" --');
+{
+    const named = [[['No one is a student and a teacher.'], 'No teacher is a student.'], [['Nobody is a student and a teacher.'], 'No teacher is a student.'],
+        [['No one is a student and a teacher.', 'Bob is a student.'], 'Bob is not a teacher.'], [['If no student is a teacher, Al is wrong.', 'No one is a student and a teacher.'], 'Al is wrong.'],
+        [['Someone is a student and a teacher.'], 'Some teacher is a student.'], [['No student is a teacher.'], 'No one is a student and a teacher.']].map(([p, c]) => step(p, c).rule);
+    ok(J(named) === J(['conversion', 'conversion', 'universal modus ponens', 'modus ponens', 'conversion', 'quantifier negation']),
+        'one claim in two wordings, of people: conversion, universal modus ponens and modus ponens across them; "no student is a teacher" to "no one is a student and a teacher" is quantifier negation (each had not been recognized)', J(named));
+    const kept = [[['No one is a student and a teacher.'], 'No one is a teacher and a student.'], [['Someone is a student and a teacher.'], 'Someone is a teacher and a student.'],
+        [['It is not the case that someone is a student and a teacher.'], 'No one is a student and a teacher.'], [['No one is a student and a singer.'], 'No one is a singer and a student.'],
+        [['No one is a dog and a pet.'], 'No dog is a pet.'], [['No one is a student and a singer.'], 'No student is a singer.']].map(([p, c]) => step(p, c).rule);
+    ok(J(kept) === J(['commutation', 'commutation', 'quantifier negation', 'commutation', null, null]),
+        'the swaps are still commutation, and "someone" and "no one" still quantifier negation; not "no one is a dog and a pet" (no person is a dog), nor "a student and a singer" (a bird may sing)', J(kept));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

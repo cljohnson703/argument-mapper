@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.156';
+    const APP_BUILD = '2026-10-27 r27.160';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -17210,9 +17210,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // is a dog and barks" is some dog that barks (r27.152; the user:
             // "Sure"). Marked: where both boxes spell out the "and", the swap
             // is commutation, not conversion. "Nothing is a dog and a cat":
-            // no dog is a cat (r27.155; the user: "Sure").
+            // no dog is a cat (r27.155; the user: "Sure"). Of people, "no one
+            // is a student and a teacher" likewise, where each noun names
+            // people only -- "no student is a teacher" -- and "someone is a
+            // student and a teacher", "some student is a teacher" (r27.160;
+            // the user: "Go ahead and fix these"). Not "no one is a dog and a
+            // pet" (no person is a dog), nor "a student and a singer" (a bird
+            // may sing): read as before.
+            const bare = p => { const t = claimTokens(p); return j && t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1) : t; };
             if (j && j.copula && !j.negated && j.kind === 'and' && j.parts.length === 2 && (quant === 'some' || quant === 'no') && pronoun &&
-                subject === CLAIM_ANY && j.parts.every(p => !claimCopulaVerbPart(claimTokens(p)[0], j.head[0]))) {
+                (subject === CLAIM_ANY || subject === CLAIM_PERSON && j.parts.every(p => claimPersonOnly(['is'].concat(bare(p))))) &&
+                j.parts.every(p => !claimCopulaVerbPart(claimTokens(p)[0], j.head[0]))) {
                 const q = tokens.slice(0, tokens.length - vp.length).join(' '), is = j.head.join(' ');
                 const plain = p => { const t = claimTokens(p); return t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1).join(' ') : p; };
                 const read = readClaim((q + ' that ' + is + ' ' + plain(j.parts[0]) + ' ' + is + ' ' + plain(j.parts[1])).replace(/\s+/g, ' ').trim());
@@ -20884,6 +20892,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     const claimVerbPasts = b => CLAIM_VENDOR_MORPHOLOGY.verbForms[b] ? claimUnique(CLAIM_VENDOR_MORPHOLOGY.verbForms[b].map(f => f[0])) : claimRegularPast(b);
     const claimVerbParticiples = b => CLAIM_VENDOR_MORPHOLOGY.verbForms[b] ? claimUnique(CLAIM_VENDOR_MORPHOLOGY.verbForms[b].map(f => f[1])) : claimRegularPast(b);
+    // A plain form's -ing form, by the spelling rules: "read" reading, "write"
+    // writing, "run" running, "lie" lying, "see" seeing (r27.159).
+    const claimVerbIng = b => b === 'be' || /(?:ee|ye|oe)$/.test(b) ? b + 'ing' : /ie$/.test(b) ? b.slice(0, -2) + 'ying'
+        : /[^aeiou]e$/.test(b) ? b.slice(0, -1) + 'ing'
+        : CLAIM_DOUBLING_VERBS.has(b) || (/^[^aeiou]*[aeiou][b-df-hj-np-tv-z]$/.test(b) && !/[wxy]$/.test(b)) ? b + b.slice(-1) + 'ing' : b + 'ing';
+    // The plain forms an -ing word may be of -- each that gives it back. Not
+    // "something", "nothing" ("this is something else").
+    const claimIngBases = w => !/^[a-z]{2,}ing$/.test(w) || /thing$/.test(w) || claimSynWord(w).closed ? []
+        : claimUnique([w.slice(0, -3), w.slice(0, -3) + 'e', w.slice(0, -4), w.slice(0, -4) + 'ie']).filter(b => b.length > 1 && claimVerbIng(b) === w);
+    // "Is" or "was" for a phrase: "I am", "they are", "Bob was".
+    const claimBeOf = (ws, past) => { const w = claimWord(ws[ws.length - 1] || '');
+        return /^(?:i|me)$/.test(w) ? (past ? 'was' : 'am') : claimPluralWords(ws) ? (past ? 'were' : 'are') : (past ? 'was' : 'is'); };
     const claimVerbS = b => /(?:s|sh|ch|x|z|o)$/.test(b) ? b + 'es' : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ies' : b + 's';
     // Each verb a word may be: as a participle, a past, a present in -s, or plain.
     const claimParticipleBases = w => claimUnique((CLAIM_PARTICIPLE_VERBS[w] || []).concat(claimRegularBases(w, 'ed')));
@@ -20931,6 +20951,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let j = by - 2, tense = null, aux = null, neg = false;
             if (l[j] === 'been') { j--; if (l[j] === 'not') { neg = true; j--; } if (/^(?:has|have|had)$/.test(l[j])) { tense = 'perfect'; aux = l[j]; } }
             else if (l[j] === 'be') { j--; if (l[j] === 'not') { neg = true; j--; } if (/^(?:will|would|can|could|may|might|must|shall|should)$/.test(l[j])) { tense = 'modal'; aux = l[j]; } }
+            // "Is being read by", "was not being read by" (r27.159).
+            else if (l[j] === 'being') { j--; if (l[j] === 'not') { neg = true; j--; } if (/^(?:is|are|am|was|were)$/.test(l[j])) { tense = 'progressive'; aux = l[j]; } }
             else { if (l[j] === 'not') { neg = true; j--; } if (/^(?:is|are|am|was|were)$/.test(l[j])) { tense = /^(?:was|were)$/.test(l[j]) ? 'past' : 'present'; aux = l[j]; } }
             if (!tense || j !== 0) return out;
             const after = vp.slice(by + 1), cut = after.findIndex((x, i) => i > 0 && CLAIM_AFTER_OBJECT.test(claimWord(x)));
@@ -20945,6 +20967,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const groups = tense === 'present' ? [neg ? [pl ? 'do' : 'does', 'not', base] : [pl ? base : claimVerbS(base)]]
                     : tense === 'past' ? (neg ? [['did', 'not', base]] : claimVerbPasts(base).map(p => [p]))
                     : tense === 'perfect' ? [[aux === 'had' ? 'had' : pl ? 'have' : 'has'].concat(neg ? ['not'] : [], [pp])]
+                    : tense === 'progressive' ? [[claimBeOf(agent, /^(?:was|were)$/.test(aux))].concat(neg ? ['not'] : [], [claimVerbIng(base)])]
                     : [[aux].concat(neg ? ['not'] : [], [base])];
                 groups.forEach(g => claimMovedPhrase(agent, false, false).forEach(a => claimMovedPhrase(subject, true, true).forEach(o =>
                     say(a.concat(g, o, rest), blocked, { by: agent.join(' '), pair: [subject.join(' '), agent.join(' ')] }))));
@@ -20956,12 +20979,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (/^(?:did|does|do)$/.test(l[0]) && l[1] === 'not') { tense = l[0] === 'did' ? 'past' : 'present'; neg = true; i = 2; }
         else if (/^(?:has|have|had)$/.test(l[0]) && (CLAIM_PARTICIPLES.has(l[l[1] === 'not' ? 2 : 1]) || /[a-z]{2}ed$/.test(l[l[1] === 'not' ? 2 : 1] || ''))) { tense = 'perfect'; aux = l[0]; neg = l[1] === 'not'; i = neg ? 2 : 1; }
         else if (/^(?:will|would|can|could|may|might|must|shall|should)$/.test(l[0])) { tense = 'modal'; aux = l[0]; neg = l[1] === 'not'; i = neg ? 2 : 1; }
+        else if (/^(?:is|are|am|was|were)$/.test(l[0]) && claimIngBases(l[l[1] === 'not' ? 2 : 1] || '').length) { tense = 'progressive'; aux = l[0]; neg = l[1] === 'not'; i = neg ? 2 : 1; }
         const v = l[i];
         if (!v || CLAIM_VOICE_NOT_VERBS.test(v)) return out;
         const objectAll = vp.slice(i + 1), cut = objectAll.findIndex((x, k) => k > 0 && CLAIM_AFTER_OBJECT.test(claimWord(x)));
         const object = cut > 0 ? objectAll.slice(0, cut) : objectAll, rest = cut > 0 ? objectAll.slice(cut) : [];
         if (!claimWholePhrase(object) || !claimWholePhrase(subject)) return out;
         const bases = tense === 'perfect' ? claimParticipleBases(v)
+            : tense === 'progressive' ? claimIngBases(v).filter(b => !CLAIM_VOICE_NOT_VERBS.test(b))
             : tense ? [v] : claimUnique(claimPastBases(v).concat(claimPluralWords(subject) ? [v] : claimRegularBases(v, 's')));
         const blocked = subject.length > 1 && CLAIM_BY_PLACES.has(claimWord(subject[subject.length - 1])) ? 'place'
             : claimQuantifiedWords(subject) && claimQuantifiedWords(object) ? 'scope' : null;
@@ -20970,6 +20995,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const past = !tense && claimPastBases(v).includes(base), present = !tense && !past;
             const be = tense === 'perfect' ? [aux === 'had' ? 'had' : pl ? 'have' : 'has'].concat(neg ? ['not'] : [], ['been'])
                 : tense === 'modal' ? [aux].concat(neg ? ['not'] : [], ['be'])
+                : tense === 'progressive' ? [claimBeOf(object, /^(?:was|were)$/.test(aux))].concat(neg ? ['not'] : [], ['being'])
                 : [(tense === 'past' || past) ? (pl ? 'were' : 'was') : (pl ? 'are' : 'is')].concat(neg ? ['not'] : []);
             if (present && !(v === base || v === claimVerbS(base))) return;
             claimVerbParticiples(base).forEach(pp => claimMovedPhrase(object, false, false).forEach(o => claimMovedPhrase(subject, true, true).forEach(a =>
@@ -20978,8 +21004,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     // The indirect object moved: "gave Mary a book", "gave a book to Mary".
+    // Not "leave" (r27.158): "the war left Mary a widow" says what Mary was
+    // left as, and is not "the war left a widow to Mary". Nor "throw" with
+    // what is no thing thrown: "threw Mary a party" is not "threw a party to
+    // Mary".
     const CLAIM_DATIVE_VERBS = new Set(('give send show tell offer lend sell hand pass bring teach pay owe promise throw award grant feed serve write ' +
-        'read mail leave loan assign deny email').split(' '));
+        'read mail loan assign deny email').split(' '));
+    const CLAIM_NOT_THROWN = /^(?:party|parties|fit|fits|tantrum|tantrums|look|looks|glance|glances|punch|punches)$/;
     function claimDativeSwaps(f) {
         const parts = claimSaidParts(f);
         if (!parts || !parts.subject.length) return [];
@@ -20989,7 +21020,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const v = l[i], bases = claimUnique(claimPastBases(v).concat(claimParticipleBases(v), claimRegularBases(v, 's'), [v]));
         if (!bases.some(b => CLAIM_DATIVE_VERBS.has(b))) return out;
         const head = vp.slice(0, i + 1), r = vp.slice(i + 1), lr = r.map(claimWord);
-        const say = (a, b, to) => out.push({ text: subject.concat(head, to ? a.concat(['to'], b) : a.concat(b)).join(' '),
+        const say = (a, b, to) => (to ? a : b).length && bases.includes('throw') && CLAIM_NOT_THROWN.test(claimWord((to ? a : b)[(to ? a : b).length - 1])) ? null : out.push({ text: subject.concat(head, to ? a.concat(['to'], b) : a.concat(b)).join(' '),
             blocked: claimQuantifiedWords(a) && claimQuantifiedWords(b) ? 'scope' : null, pair: [a.join(' '), b.join(' ')] });
         const t = lr.indexOf('to');
         // "a book to Mary": "Mary a book" -- not "it to Mary", "Mary it".
@@ -21005,6 +21036,49 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // As a rewrite, anywhere in a claim: each way not blocked, read.
     const claimSaidOtherwise = (f, swaps) => !f || !f.src || !/^(?:pred|not|all|some)$/.test(f.kind) ? []
         : swaps(f).filter(x => !x.blocked).map(x => parseClaim(claimSentenceOf(x.text))).filter(Boolean);
+    // "Bob bought Mary a book" gives "Bob bought a book for Mary" -- and not
+    // back: "for Mary" may say on whose behalf, the book someone else's
+    // (r27.158; the user: "Go ahead and fix these"). Not "make", "find",
+    // "call", "keep" or "leave", whose second phrase may say what the first
+    // is made or found to be ("made Mary a star"), nor "save", "spare",
+    // "play" or "rent" ("played Mary a trick"). One way, so only where a
+    // claim says it (claimRewritesSaid): not with "not" or "never" in its
+    // verb phrase, nor after "no", "few" or "only".
+    const CLAIM_FOR_DATIVE_VERBS = new Set(('buy bake build cook fetch get grab knit order pour sew fix prepare design draw paint pick choose ' +
+        'earn win book reserve sing').split(' '));
+    function claimForDativeSwaps(f) {
+        const parts = claimSaidParts(f);
+        if (!parts || !parts.subject.length) return [];
+        const { subject, vp } = parts, l = vp.map(claimWord), out = [];
+        if (subject.some(x => /^(?:no|nobody|nothing|none|neither|nor|few|fewer|only|not|never|hardly|scarcely|barely|at)$/.test(claimWord(x)))) return out;
+        let i = 0;
+        while (i < l.length - 1 && /^(?:did|does|do|has|have|had|will|would|can|could|may|might|must|shall|should)$/.test(l[i])) i++;
+        const v = l[i], bases = claimUnique(claimPastBases(v).concat(claimParticipleBases(v), claimRegularBases(v, 's'), [v]));
+        if (!bases.some(b => CLAIM_FOR_DATIVE_VERBS.has(b))) return out;
+        const head = vp.slice(0, i + 1), r = vp.slice(i + 1);
+        if (r.some(x => /^(?:to|for|not|never)$/.test(claimWord(x)))) return out;
+        for (let e = 1; e < r.length; e++)
+            if (claimWholePhrase(r.slice(0, e)) && claimWholePhrase(r.slice(e)))
+                out.push({ text: subject.concat(head, r.slice(e), ['for'], r.slice(0, e)).join(' '),
+                    blocked: claimQuantifiedWords(r.slice(0, e)) && claimQuantifiedWords(r.slice(e)) ? 'scope' : null, pair: [r.slice(0, e).join(' '), r.slice(e).join(' ')] });
+        return out;
+    }
+    // Both ways of moving an indirect object, for the colors.
+    const claimIndirectObjectSwaps = f => claimDativeSwaps(f).concat(f && f.kind !== 'not' ? claimForDativeSwaps(f) : []);
+    // A one-way rewrite, where a claim says what it rewrites: not under
+    // "not", nor in what "if" puts first, nor in an "if and only if"
+    // (r27.158). "If Bob bought Mary a book, she is glad" does not give "if
+    // Bob bought a book for Mary, she is glad".
+    function claimRewritesSaid(form, rewrite) {
+        if (!form || typeof form !== 'object') return [];
+        const out = form.kind === 'not' ? [] : rewrite(form).filter(Boolean);
+        if ((form.kind === 'and' || form.kind === 'or') && !form.iff && Array.isArray(form.parts))
+            form.parts.forEach((part, i) => claimRewritesSaid(part, rewrite).forEach(r =>
+                out.push(makeClaimJunction(form.kind, form.parts.map((p, j) => j === i ? claimGroupedIn(form.kind, r) : p)))));
+        else if (form.kind === 'if' && !form.counterfactual && form.cons)
+            claimRewritesSaid(form.cons, rewrite).forEach(r => out.push(makeClaimConditional(form.conds, r)));
+        return out;
+    }
     const CLAIM_EQUIVALENCES = {
         // Active and passive, the indirect object (r27.153).
         'active-passive': f => claimSaidOtherwise(f, claimVoiceSwaps),
@@ -22771,8 +22845,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: '"Bob wrote the book" is "the book was written by Bob", anywhere in a claim -- not where "by" may say where ("by the river"), nor where "every" and "a" change places',
           test: (P, C) => claimReplaces('active-passive', P, C) },
         { id: 'indirect-object', name: 'indirect object',
-          gloss: '"gave Mary a book" is "gave a book to Mary", anywhere in a claim',
-          test: (P, C) => claimReplaces('indirect-object', P, C) },
+          gloss: '"gave Mary a book" is "gave a book to Mary", anywhere in a claim; "bought Mary a book" gives "bought a book for Mary", not back',
+          test: (P, C) => claimReplaces('indirect-object', P, C) ||
+              P.length === 1 && !!P[0] && claimRewritesSaid(P[0], f => claimSaidOtherwise(f, claimForDativeSwaps)).some(r => claimSame(r, C)) },
         { id: 'de-morgan', name: 'De Morgan’s laws',
           gloss: '"not both A and B" is "not A or not B", and "not either A or B" is "not A and not B", anywhere in a claim',
           test: (P, C) => claimReplaces('de-morgan', P, C) },
@@ -24758,6 +24833,58 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return rule;
     }
+    // Where the readings "all" and "some" of a box differ -- the plural's
+    // own places -- each said (1) or denied (-1), "if" taken as a denial of
+    // what it puts first; null where the two are not one shape.
+    function claimGenericPlaces(a, s, sign, out) {
+        if (!a || !s || typeof a !== 'object' || typeof s !== 'object') return null;
+        if (a.kind === 'all' && s.kind === 'some' && a.subject === s.subject) { out.push({ sign }); return out; }
+        if (a.kind !== s.kind) return null;
+        if (a.kind === 'not') return claimGenericPlaces(a.inner, s.inner, -sign, out);
+        if ((a.kind === 'and' || a.kind === 'or') && !a.iff && !s.iff && Array.isArray(a.parts) && Array.isArray(s.parts) && a.parts.length === s.parts.length)
+            return a.parts.every((x, k) => claimGenericPlaces(x, s.parts[k], sign, out)) ? out : null;
+        if (a.kind === 'if' && !a.counterfactual && !s.counterfactual && Array.isArray(a.conds) && Array.isArray(s.conds) && a.conds.length === s.conds.length)
+            return a.conds.every((x, k) => claimGenericPlaces(x, s.conds[k], -sign, out)) && claimGenericPlaces(a.cons, s.cons, sign, out) ? out : null;
+        let same = false;
+        try { same = JSON.stringify(a) === JSON.stringify(s); } catch (e) { same = false; }
+        return same ? out : null;
+    }
+    // Whether a step that follows on "all" and on "some" is sure to follow on
+    // "most" and "in general" too (r27.157; the user: "Whatever you think is
+    // best and keeps the reasoning valid"). Not always: "ravens are black"
+    // and "black ravens are big" give "ravens are big" on "all", and on
+    // "some" (the black raven that is big), but not on "most" -- of 100
+    // ravens, 60 black and 31 of those big. It is sure where the plural is
+    // said, nowhere denied or put after "if", and
+    // - only in premises: "most" says more than "some", so what follows on
+    //   "some" follows on "most";
+    // - only in the box a support is for: "all" says more than "most", so
+    //   what follows on "all" follows on "most" (on "some", where there are
+    //   none);
+    // - or in one premise and the box a support is for, each the whole of
+    //   its box, the plural of plain words that nothing else in the step --
+    //   no other box, neither predicate -- uses: then, as the step follows
+    //   on "all", each raven the premise is true of is one the box is true of
+    //   (else a world where that raven is the only one says "all" of the
+    //   premise and not of the box), and so the box is true of most ravens,
+    //   or of ravens in general, where the premise is.
+    function claimGenericSure(entries, texts, A, S, attack) {
+        const last = A.length - 1, boxes = entries.map(e => e.box).filter((b, k, all) => all.indexOf(b) === k);
+        const places = boxes.map(i => claimGenericPlaces(A[i], S[i], 1, []));
+        if (places.some(p => !p || !p.length || p.some(x => x.sign < 0))) return false;
+        const premises = boxes.filter(i => i !== last);
+        if (!boxes.includes(last)) return true;
+        if (attack) return false;
+        if (!premises.length) return true;
+        if (premises.length !== 1 || entries.length !== 2) return false;
+        const p = premises[0], a = A[p], c = A[last];
+        if (a.kind !== 'all' || c.kind !== 'all' || S[p].kind !== 'some' || S[last].kind !== 'some' || a.subject !== c.subject ||
+            a.restrictorVp || c.restrictorVp || a.pronoun || c.pronoun || !/^=[a-z]/.test(String(a.subject))) return false;
+        const plain = String(a.subject).slice(1).split(' ').concat(String(entries[0].note.subject || '').replace(/\uE000/g, '').trim().toLowerCase().split(/\s+/));
+        if (plain.some(w => !/^[a-z][a-z-]+$/.test(w) || /^(?:that|which|who|whom|whose|of|with|without|in|on|at|by|for|from|to|and|or|not|no|non)$/.test(w))) return false;
+        const says = x => String(x || '').toLowerCase().split(/[^a-z-]+/).some(w => plain.some(v => w.indexOf(v) >= 0));
+        return !texts.some((t, i) => i !== p && i !== last && says(t)) && !says(a.predicate) && !says(c.predicate);
+    }
     // Whether a generic's answer decides a step. Every box of the step is read
     // the same way for each subject -- all, some, most, in general, as its
     // question offers them -- and the step is tried on each. Where it follows
@@ -24775,8 +24902,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key).push({ box: i, note: n });
         }));
+        let every = null;
         for (const entries of groups.values()) {
-            const count = entries[0].note.readings.length, results = [];
+            const count = entries[0].note.readings.length, results = [], read = [];
             for (let r = 0; r < count; r++) {
                 const forms = texts.map((t, i) => {
                     const mine = entries.filter(e => e.box === i);
@@ -24785,19 +24913,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     mine.forEach(e => { sites[e.note.site] = r; });
                     return parseClaim(t, { sites });
                 });
+                read.push(forms);
                 const parent = forms[forms.length - 1];
                 results.push(forms.every(Boolean) && parent ? certifyStep(forms.slice(0, -1), claimStepConclusions(parent, attack, weak), attack) : null);
             }
             // "Most" and "in general", which the check does not read, decided
             // by "all" and "some": where the step follows on both, it follows
             // on those too, and the question plays no role (r27.154; the
-            // user: "Sure"; "ravens are black and old" had asked).
+            // user: "Sure"; "ravens are black and old" had asked) -- where
+            // that is sure (claimGenericSure, r27.157), and then the step
+            // follows, by its rule on "all": { every }. ("Ravens are birds"
+            // and "every bird is an animal" give "ravens are animals"; it had
+            // been "not recognized", the question gone and the words as
+            // written giving nothing.)
             const said = entries[0].note.readings.map(String), all = said.findIndex(r => /^all /.test(r)), some = said.findIndex(r => /^some /.test(r));
-            if (all >= 0 && some >= 0 && results[all] && results[some]) continue;
+            if (all >= 0 && some >= 0 && results[all] && results[some] && groups.size === 1 && !weak &&
+                claimGenericSure(entries, texts, read[all], read[some], attack)) { every = results[all]; continue; }
             if (entries[0].note.canScope ? !results[0] && results.some(Boolean) : results.some(Boolean) && !results.every(Boolean))
                 return { entries, derives: results.map((rule, r) => rule ? { reading: r, rule } : null).filter(Boolean) };
         }
-        return null;
+        return every ? { every } : null;
     }
     // A bare plural or a comparison's "a" after a verb, asked where a step
     // turns on it (r27.120; the user: "If it's strictly speaking ambiguous,
@@ -25053,6 +25188,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             const every = claimEveryReadingRule(premiseTexts, conclusionText, attack, weak);
                             if (every) { found.rule = every; found.everyReading = true; }
                         }
+                        // Likewise a generic sure to follow however it is read:
+                        // by its rule on "all" (r27.157).
+                        const generic = !asks && !warrantTarget ? claimGenericRole(premiseTexts, conclusionText, attack, weak) : null;
+                        if (generic && generic.every && !found.rule) { found.rule = generic.every; found.everyReading = true; }
                         const spaces = claimExtraSpaces(premiseTexts.concat([conclusionText || '']));
                         if (found.rule && spaces.length) {
                             found.nearMiss = { rule: found.rule, pairs: [], spaces };
@@ -25067,7 +25206,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         // it, and says which readings give it.
                         // A bare plural or a comparison's "a" after a verb whose answer
                         // decides the step: the same, its questions together (r27.120).
-                        const role = !asks && !warrantTarget ? claimGenericRole(premiseTexts, conclusionText, attack, weak) ||
+                        const role = !asks && !warrantTarget ? (generic && !generic.every ? generic : null) ||
                             (!found.rule ? claimObjectRole(premiseTexts, conclusionText, attack, weak) : null) : null;
                         if (role && (found.rule || !found.why || !found.why.ambiguous.some(a => a.generic))) {
                             found.rule = null;
@@ -32734,7 +32873,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const P = claimDefinitePremises(claimDonkeyPremises(step.premises, step.conclusion), step.conclusion, true);
         // A clause in the other voice, or with its indirect object moved,
         // where that is the step: it goes on (r27.153; it had been dimmed).
-        const swaps = !step.rule ? null : step.rule.id === 'active-passive' ? claimVoiceSwaps : step.rule.id === 'indirect-object' ? claimDativeSwaps : null;
+        const swaps = !step.rule ? null : step.rule.id === 'active-passive' ? claimVoiceSwaps : step.rule.id === 'indirect-object' ? claimIndirectObjectSwaps : null;
         const reworded = (a, b) => !!swaps && claimSaidOtherwise(a, swaps).some(r => claimSame(r, b));
         const same = (a, b) => claimSame(a, b) || claimDenies(a, b) || reworded(a, b);
         const groupsOf = P.map(() => []);

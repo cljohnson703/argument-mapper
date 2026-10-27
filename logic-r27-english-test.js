@@ -678,7 +678,10 @@ function reportCorpus(name, res) {
             'words that are exactly denials deny ("invalid", "non-physical", "unable to"), and "able to" is "can"; contraries and look-alikes do not', J([d.exact, d.contraries]));
         ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true && /should as presumably/.test(d.hedge.why || '') && /only denies the box it objects to: a denial is not an argument/.test(d.hedge.why || ''),
             '"We can\'t leave" against "We should be able to leave" is flagged: on the hedge reading it only denies its box, which is no argument', J(d.hedge));
-        ok(J(d.generic) === J([null, null, null, null]) && d.individual === 'universal modus ponens',
+        // Since r27.157, "all black things are dark" and "ravens are black" give
+        // "ravens are dark" however "ravens" is read: by universal syllogism,
+        // the rule on "all" -- never universal modus ponens, of one thing.
+        ok(J(d.generic) === J([null, 'universal syllogism', null, null]) && d.individual === 'universal modus ponens',
             'a generic, an indefinite, and "it" are never one thing a quantifier\'s case is about; a name is', J([d.generic, d.individual]));
         ok(d.forms && d.forms.hoped === false && d.forms.hopped === true && d.forms.learnt === true && d.forms.men === 'universal modus ponens' && d.forms.news === null,
             'past tenses key by their own past form ("hoped" is not "hopped"; "learnt" is "learned"), irregular plurals match, and "news" is not the plural of "new"', J(d.forms));
