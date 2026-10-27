@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.144';
+    const APP_BUILD = '2026-10-27 r27.145';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13037,8 +13037,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         if (/^(?:thing|things)$/.test(text)) return CLAIM_ANY;
         if (/^(?:person|people|persons)$/.test(text)) return CLAIM_PERSON;
-        const lexical = claimPhraseDenial(text), prop = claimNounProp(lexical.text);
+        const lexical = claimPhraseDenial(text), prop = claimNounProp(claimInnerArticlesDropped(lexical.text));
         return lexical.denied ? negateClaimProp(prop) : prop;
+    }
+    // Inside a kind, "a" and "an" dropped as a verb phrase drops them (r27.145):
+    // "every tool that is used by a carpenter" names the kind "the saw is a
+    // tool that is used by a carpenter" says the saw is of ("is tool that is
+    // used by carpenter"). They had differed by "a", and universal modus
+    // ponens did not take the step. Not the first word, nor the letter "A",
+    // nor one last or before "and", "or" or a verb.
+    function claimInnerArticlesDropped(text) {
+        return String(text || '').replace(/(\s)(?:a|an)\s+(?=([a-z][\w'\u2019-]*))/g, (m, sp, next) =>
+            /^(?:and|or|nor|but|then)$/.test(next) || CLAIM_VERB_MARKERS.has(next) ? m : sp);
     }
     // A conditional whose consequent is itself a conditional takes on its
     // conditions: "if X, then if Y, then Z" is "if X, and if Y, then Z"
@@ -15442,11 +15452,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // "If a student cheats, that student will be caught": "that
         // student" is the one the condition speaks of, as "he" would be
-        // (r27.130; it had been read as one claim). Not "the student": "if
-        // an AI system is consulted, then the AI system is reliable" keeps
-        // its words, the same in each box, for modus ponens (r27.119).
+        // (r27.130; it had been read as one claim). "The student" too
+        // (r27.145; the user chose it over keeping "the student" for one
+        // fixed thing, which the Extended Mind step of r27.119 had used:
+        // that step follows now by its case, claimDefiniteStep).
         const c0 = form.conds[0], a0 = c0 && c0.kind === 'pred' && /^(?:a|an|any)\s+(.+)$/.exec(claimClauseStart(String(c0.term || '')));
-        const theOne = a0 ? new RegExp('^(?:that|this)\\s+' + a0[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') : null;
+        const theOne = a0 ? new RegExp('^(?:that|this|the)\\s+' + a0[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') : null;
         const namesBack = f => { const q = claimPredicationOf(f && f.kind === 'not' ? f.inner : f); return !!theOne && !!q && theOne.test(claimClauseStart(String(q.term))); };
         if (!form.conds.some(indefinite) || !(mentions(form.cons) || namesBack(form.cons))) return null;
         const c = form.conds[0], cons = form.cons, leaf = claimPredicationOf(cons.kind === 'not' ? cons.inner : cons);
@@ -15470,7 +15481,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const subject = restrictorProp(claimTokens(condKind));
             if (subject && subject.charAt(0) === '=') {
                 claimUnread('"' + claimShowWords(claimClauseStart(String(leaf.term))) + '" is read as what the condition speaks of, so the box says what "every ' +
-                    condKind + ' ' + (cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText || '') + '" says', true);
+                    claimShowWords(condKind + ' ' + (cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText || '')) + '" says', true);
                 return { kind: 'all', subject, predicate: cons.kind === 'not' ? negateClaimProp(leaf.prop) : leaf.prop,
                     np: condKind, vp: cons.kind === 'not' && cons.inner ? cons.inner.vpText : cons.vpText, pronoun: null, restrictorVp: null, boundPronoun: true };
             }
@@ -22615,11 +22626,51 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (step) return claimOppositeRule(step);
             }
         }
-        // "Anything that is a mental state of a subject is a part of that
-        // subject's mind" and its case, "the records are mental states of
-        // Otto": the rule said of Otto (r27.118).
+        // "A student cheats", so "the student" (r27.145): tried before the
+        // rule said of the subject, and while near misses are listed, those
+        // it found dropped.
+        if (!rule && !claimDefiniteBusy) {
+            const mark = claimNearMisses ? claimNearMisses.length : 0, found = claimDefiniteStep(premises, conclusions, attack);
+            if (found) return found;
+            if (claimNearMisses) claimNearMisses.length = mark;
+        }
         if (!rule && !claimDonkeyBusy && !claimNearMisses) return claimDonkeyStep(premises, conclusions, attack);
         return rule;
+    }
+    // A conclusion's "the student" is the one a premise's "a student" speaks
+    // of (r27.145; the user chose it): within the step, "a student cheats"
+    // says "the student is a student that cheats", and the step is checked
+    // so. "If a student cheats, the student will be caught", "a student
+    // cheats", so "the student will be caught": universal modus ponens. Of
+    // one premise with "a" or "an" and the noun, and none other.
+    let claimDefiniteBusy = false;
+    // The step's premises with that premise said of "the student", or the
+    // premises as they are. `own`: in the premise's own words, for the
+    // colors to find ("A student cheats": "a student", "cheats").
+    function claimDefinitePremises(premises, C, own) {
+        const words = t => claimUnmarked(String(t || '')).trim().toLowerCase();
+        const g = C && (C.kind === 'not' ? C.inner : C), m = g && g.kind === 'pred' ? /^the\s+(.+)$/.exec(words(g.term)) : null;
+        if (!m) return premises;
+        const at = premises.map((p, i) => p && p.kind === 'pred' && p.noIndividual && p.vpText && new RegExp('^an?\\s+' + m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$').test(words(p.term)) ? i : -1)
+            .filter(i => i >= 0);
+        if (at.length !== 1) return premises;
+        // In the premise's own words, capitals and all ("an AI system").
+        const p = premises[at[0]], shown = claimShowWords(String(p.term)), art = /^(an?)\s/i.exec(shown), noun = shown.replace(/^an?\s+/i, '');
+        const said = art && claimQuietly(() => parseClaim('The ' + noun + ' is ' + art[1].toLowerCase() + ' ' + noun + ' that ' + claimShowWords(String(p.vpText)) + '.'));
+        if (!said) return premises;
+        const put = own ? Object.assign({}, said, { subjectText: p.subjectText, vpText: p.vpText, src: p.src }) : said;
+        return premises.map((q, i) => i === at[0] ? put : q);
+    }
+    function claimDefiniteStep(premises, conclusions, attack) {
+        for (const C of conclusions) {
+            const P = claimDefinitePremises(premises, C);
+            if (P === premises) continue;
+            claimDefiniteBusy = true;
+            let found = null;
+            try { found = certifyStep(P, [C], attack); } finally { claimDefiniteBusy = false; }
+            if (found) return found;
+        }
+        return null;
     }
     // The step with a rule worded "a subject ... that subject" said of each
     // thing the step's other claims name in its noun's place, the case and
@@ -31896,7 +31947,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // before one -- and none after a letter or digit ("well-known", "x-1").
     const IC_NEG_SYM = /(?<![\p{L}\p{N}_'\u2019])(?:[\u00ac~\u223c]+(?=\s*[\p{L}(\[\u00ac~\u223c])|[!\u2212-]+(?=[\p{L}(\[\u00ac~\u223c]))/gu;
     const IC_ARROW = /-->|->|=>|\u2192|\u2283|\u21d2|\u27f6|\u27f9/g;
-    const IC_WORD = /[\p{L}\p{N}][\p{L}\p{N}'\u2019\u2060-]*/gu;
+    // The reader's mark for a capital (\uE000) inside a word, as its letters
+    // are (r27.145): "\uE000n\uE000a\uE000s\uE000a" is one word, "nasa".
+    const IC_WORD = /[\p{L}\p{N}\uE000][\p{L}\p{N}'\u2019\u2060\uE000-]*/gu;
     const IC_COPULA = /^(?:is|are|was|were|am|be|been|being)\s+/i;
     const IC_CONTRACTED = { "can't": ['can', 'not'], cannot: ['can', 'not'], "won't": ['will', 'not'], "shan't": ['shall', 'not'], "ain't": ['is', 'not'] };
     const IC_CLITIC = { s: 'is', re: 'are', ve: 'have', ll: 'will', d: 'would', m: 'am' };
@@ -32265,7 +32318,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const C = step.rule ? step.conclusion : null;
         // "Anything that is a mental state of a subject ...": as said of the
         // subject the step names (r27.115).
-        const P = claimDonkeyPremises(step.premises, step.conclusion);
+        const P = claimDefinitePremises(claimDonkeyPremises(step.premises, step.conclusion), step.conclusion, true);
         const same = (a, b) => claimSame(a, b) || claimDenies(a, b);
         const groupsOf = P.map(() => []);
         const clauses = P.map((f, i) => icClauses(f, '', [], groupsOf[i], true));
@@ -32506,7 +32559,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Words as the check reads them: small letters, contractions as two
     // words, regional spellings as one.
     function icNorm(word) {
-        const w = word.toLowerCase().replace(/\u2019/g, "'").replace(/\u2060/g, '').replace(/['-]+$/, '');
+        const w = word.toLowerCase().replace(/\u2019/g, "'").replace(/[\u2060\uE000]/g, '').replace(/['-]+$/, '');
         if (Object.prototype.hasOwnProperty.call(IC_CONTRACTED, w)) return IC_CONTRACTED[w];
         let m = /^(.+)n't$/.exec(w);
         if (m) return [m[1], 'not'];

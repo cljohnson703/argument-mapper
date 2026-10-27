@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: "the student" is the one "a student" speaks of; "a" inside a kind; names in capitals colored (r27.145)
+
+The user chose to read "the student" as the one "a student" speaks of, over keeping it as one fixed thing: "B".
+
+* "If a student cheats, the student will be caught" now says what "every student that cheats will be caught" says, as "that student" and "he" already did.
+* As it does for those, the check asks whether "a student" after "if" means any student, students in general, or one particular student. Read as "every", a step with Bob follows by universal modus ponens.
+* A conclusion's "the student" is the one a premise's "a student" speaks of: "Every student that cheats will be caught" and "A student cheats" give "The student will be caught" by universal modus ponens.
+* That reading does not apply where two premises could be the one ("A dog barked", "A dog slept"), nor to another noun.
+* The Extended Mind step of r27.119 changes with this:
+  * "If an AI system is reliably and routinely consulted …, then the AI system functions as a cognitive extension" had been read about one fixed AI system, and the step had been modus ponens.
+  * Now the box asks what "an AI system" after "if" means. Answered "any", it reads "Every AI system that is reliably and routinely consulted …", and the step follows by universal modus ponens.
+* Inside a kind, "a" and "an" are dropped the way a verb phrase drops them. "Every tool that is used by a carpenter is sharp" and "The saw is a tool that is used by a carpenter" had named the kind differently by one "a", so universal modus ponens did not take the step; now it does.
+* Five of the 4,542 sentences in the corpus read differently: four kinds with "a" inside ("a mental state of a subject"), and the AI-system conditional.
+* Colors:
+  * A name in capitals ("NASA", "an AI system") is now found among the box's words; it had gone uncolored.
+  * "A student cheats", with "the student" in the conclusion, is colored as the thing that goes on, with "cheats" meeting the kind.
+* The note for a bound "the AI system" keeps its capitals: "every AI system that is consulted".
+
+Tests:
+* rules-r27-ordinary-test.js has 82 checks; the four new ones that test the change fail on r27.144.
+* colors-r27-inference-test.js has 134 checks; the two new ones fail on r27.144.
+* extended-mind-r27-test.js: the r27.119 step asks its question, and once answered it is universal modus ponens, with its colors. The "any" reading now reads "every AI system that is consulted".
+* anaphora-r27-test.js: "the student" is the one "a student" speaks of; "the teacher" is not.
+* Take-one-out: every edit is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: "Switch on", from the step's tag and from the list of steps (r27.144)
 
 The user, of a "Switch on" button in the check's hint, after two mockups (in a window from the tag, or in the list of steps): "both".

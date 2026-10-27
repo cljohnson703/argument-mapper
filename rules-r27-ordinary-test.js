@@ -84,6 +84,14 @@
  *    has the same button after the words. Not where the map is read-only.
  *    Contraries and contradictories, metaphysical necessity and its axioms
  *    too.
+ * 19. (r27.145) "The student" is the one "a student" speaks of (the user
+ *    chose it): in a condition's consequent, as "that student" is; and a
+ *    conclusion's "the student", the one a premise's "a student" speaks of
+ *    -- "every student that cheats will be caught", "a student cheats", so
+ *    "the student will be caught". Not with two premises it could be, nor
+ *    another noun. And inside a kind, "a" as a verb phrase has it: "every
+ *    tool that is used by a carpenter", "a tool that is used by a
+ *    carpenter", one kind (they had differed by "a").
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -518,6 +526,29 @@ console.log('\n-- 18. (r27.144) a switch switched on from its step --');
         return out;`);
     ok(J(sws) === J([{ ids: ['opposites'], name: 'contraries and contradictories' }, { ids: ['modal-meta'], name: 'Metaphysical necessity' }, { ids: ['modal-meta-4'], name: 'axiom 4' }, null]),
         'contraries and contradictories, metaphysical necessity, an axiom of its system; nothing where no switch would give the step', J(sws));
+}
+
+console.log('\n-- 19. (r27.145) "the student" is the one "a student" speaks of --');
+{
+    const f = ev(`var r = parseClaimFull('If a student cheats, the student will be caught.'); return { kind: r.form.kind, notes: r.notes.map(function (n) { return n.message; }) };`);
+    ok(f.kind === 'all' && f.notes[0] === '"the student" is read as what the condition speaks of, so the box says what "every student that cheats will be caught" says',
+        '"If a student cheats, the student will be caught" says what "every student that cheats will be caught" says, as "that student" did (it had been one claim to another)', J(f));
+    const bob = step(['If a student cheats, the student will be caught.', 'Bob is a student.', 'Bob cheats.'], 'Bob will be caught.');
+    ok(!bob.rule && bob.why.indexOf('Read as \u201cevery student that cheats will be caught\u201d, the step follows by universal modus ponens.') >= 0,
+        'with Bob: the question "a student" after "if" asks, as it does for "they"; read as "every", universal modus ponens', J(bob));
+    const DEF = [[['Every student that cheats will be caught.', 'A student cheats.'], 'The student will be caught.'],
+        [['Every AI system that is reliably and routinely consulted functions as a cognitive extension.', 'An AI system is reliably and routinely consulted.'], 'The AI system functions as a cognitive extension.']];
+    ok(!misses(DEF, 'universal modus ponens').length, 'a conclusion\'s "the student" is the one a premise\'s "a student" speaks of: universal modus ponens', J(misses(DEF, 'universal modus ponens')));
+    const NOT = [[['A dog barked.'], 'The dog bit Bob.'], [['A dog barked.', 'A dog slept.'], 'The dog barked.'],
+        [['Every student that cheats will be caught.', 'A teacher cheats.'], 'The student will be caught.']];
+    ok(!certified(NOT).length, 'not what the premise does not say; not with two dogs "the dog" could be; not another noun', J(certified(NOT)));
+    ok(step(['If a student cheats, the teacher will be angry.', 'A student cheats.'], 'The teacher will be angry.').rule === 'modus ponens',
+        '"the teacher" is not the student: modus ponens, as before');
+    const KIND = [[['Every tool that is used by a carpenter is sharp.', 'The saw is a tool that is used by a carpenter.'], 'The saw is sharp.'],
+        [['Every tool that a carpenter uses is sharp.', 'The saw is a tool that a carpenter uses.'], 'The saw is sharp.'],
+        [['Every AI system that is consulted by a student functions as an extension.', 'ChatGPT is an AI system that is consulted by a student.'], 'ChatGPT functions as an extension.']];
+    ok(!misses(KIND, 'universal modus ponens').length, '"every tool that is used by a carpenter" and "a tool that is used by a carpenter", one kind (they had differed by "a")',
+        J(misses(KIND, 'universal modus ponens')));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

@@ -77,6 +77,9 @@
 //     drops words ("Bob ran quickly", so "Bob ran"; "Bob is glad that Mary
 //     left", so "Bob is glad") lights the words kept and dims those
 //     dropped.
+// (13) r27.145: a name in capitals ("NASA") is found among the box's words,
+//     as any word is; "A student cheats", with "the student" in the
+//     conclusion, goes on as the student, "cheats" meeting the kind.
 //
 // Run:  node colors-r27-inference-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -916,6 +919,17 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'a modifier dropped: "Bob ran" goes on, "quickly" dimmed (it had dimmed "ran quickly"); "very" in "very tall"; "quickly" before the verb', J([ran, tall, store]));
         ok(glad.rule === 'dropping a \u2018that\u2019 clause' && J(runs(glad.boxes[0], /^ic-c/)) === J(['Bob is glad']) && J(runs(glad.boxes[0], /^ic-u/)) === J(['that Mary left']),
             'a "that" clause dropped: "Bob is glad" goes on, "that Mary left" dimmed', J(glad));
+    }
+
+    console.log('\n-- (r27.145) a name in capitals; "a student", the conclusion\'s "the student" --');
+    {
+        const nasa = paint(['Every agency is funded.', 'NASA is an agency.'], 'NASA is funded.');
+        ok(J(runs(nasa.boxes[1], /^ic-c/)) === J(['NASA']) && J(runs(nasa.boxes[1], /^ic-k0/)) === J(['is an agency']),
+            '"NASA" goes on as "Poe" would (the reader\'s mark for each capital had split it into letters, and it went uncolored)', J(nasa));
+        const stu = paint(['Every student that cheats will be caught.', 'A student cheats.'], 'The student will be caught.');
+        ok(stu.rule === 'universal modus ponens' && J(runs(stu.boxes[1], /^ic-c/)) === J(['A student']) && J(runs(stu.boxes[1], /^ic-k0/)) === J(['cheats']) &&
+            J(runs(stu.boxes[0], /^ic-k0/)) === J(['Every student that cheats']),
+            '"A student" goes on as "the student", and "cheats" meets "every student that cheats"', J(stu));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

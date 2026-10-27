@@ -235,19 +235,31 @@ console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (
     // and it doesn't certify."
     const s = step(["If an AI system is reliably and routinely consulted by a student as part of the student's thinking process, then the AI system functions as a cognitive extension.",
         "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.');
-    ok(s.rule === 'modus ponens', 'the step: modus ponens (it had waited on a question whose "any" reading was the sentence as written)', J(s));
-    ok(J(s.colors) === J([['ic-rest: If', "ic-k0: an AI system is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: , then',
-        'ic-c: the AI system functions as a cognitive extension', 'ic-rest: .'], ["ic-k0: An AI system is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: .']]),
-        'its colors: the condition and the premise one part each, one color ("reliably | and routinely" had been two)', J(s.colors));
+    const t = step(["Every AI system that is reliably and routinely consulted by a student as part of the student's thinking process functions as a cognitive extension.",
+        "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.');
+    // Since r27.145 "the AI system" is the one "an AI system" speaks of (the
+    // user chose it over keeping "the" for one fixed thing): the step asks
+    // what "an AI system" after "if" means, as it does with "they"; read as
+    // "every AI system ...", universal modus ponens, by the premise's AI
+    // system. It had been modus ponens, "the AI system" one fixed thing.
+    ok(s.tag === '? generic' && s.why.indexOf('Read as \u201cevery AI system that is reliably and routinely consulted by a student as part of the student\'s thinking process ' +
+        'functions as a cognitive extension\u201d, the step follows by universal modus ponens.') >= 0,
+        'the step asks what "an AI system" after "if" means; read as "every AI system ...", it follows by universal modus ponens (it had been modus ponens)', J(s));
+    ok(t.rule === 'universal modus ponens' && J(t.colors) === J([["ic-k0: Every AI system that is reliably and routinely consulted by a student as part of the student's thinking process",
+        'ic-c: functions as a cognitive extension', 'ic-rest: .'], ['ic-c: An AI system', "ic-k0: is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: .']]),
+        'answered "every": universal modus ponens; the kind meets what the premise says, and "An AI system" goes on as "the AI system"', J(t));
     ok(key('Bob is reliably and routinely consulted.') === 'P:bob|=reliably and routinely consulted' && /^C\[/.test(key('Bob is happy and rich.')),
         '"is reliably and routinely consulted": adverbs joined, one part; "is happy and rich", two', key('Bob is reliably and routinely consulted.'));
     ok(ev(`return parseClaimFull('Seven is not even or odd.').notes.some(function (n) { return /"not" can deny the whole "or"/.test(n.message); });`),
         'adverbs in -ly only: "is not even or odd" still asks what "not" denies');
     const q = ev(`var r = parseClaimFull('If an AI system is consulted, then the AI system is reliable.'), a = parseClaimFull('An AI system is reliably consulted.');
-        return { if: r.notes.map(function (n) { return [n.message, n.readings.map(function (x) { return x.replace(/\\uE000/g, '^'); })]; }), plain: a.notes.map(function (n) { return n.message; }) };`);
+        return { if: r.notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return [n.message, n.readings.map(function (x) { return x.replace(/\\uE000/g, '^'); })]; }),
+            bound: r.notes.filter(function (n) { return n.kind === 'unread'; }).map(function (n) { return n.message; }), plain: a.notes.map(function (n) { return n.message; }) };`);
+    // Its "any" reading since r27.145 the kind said whole: "every AI system that is consulted".
     ok(q.if.length === 1 && q.if[0][0] === '"an AI system" after "if" may mean any AI system, AI systems in general, or one particular AI system' &&
-        /^if any \^a\^i system is consulted, then the \^a\^i system is reliable$/.test(q.if[0][1][0]),
-        'after "if": its "any" reading says "any", its words their capitals, "AI systems in general"', J(q.if));
+        /^every \^a\^i system that is consulted is reliable$/.test(q.if[0][1][0]) &&
+        J(q.bound) === J(['"the AI system" is read as what the condition speaks of, so the box says what "every AI system that is consulted is reliable" says']),
+        'after "if": its "any" reading says "every", its words their capitals, "AI systems in general"; "the AI system" read as the one it speaks of, and said so', J(q));
     ok(J(q.plain) === J(['"an AI system" may mean every one, some one, or one in general']), '"AI system": no question whether "AI" describes the system itself', J(q.plain));
     const ai = ev(`return ['ChatGPT is an AI system.', 'Every US senator is a citizen.', 'This is a zombie argument.'].map(function (t) {
         return parseClaimFull(t).notes.filter(function (n) { return /describes the/.test(n.message); }).length; });`);

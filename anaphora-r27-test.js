@@ -507,11 +507,12 @@ console.log('\n-- "they" of one person; "the student" of "a student" (r27.130) -
         '"that student", after "if a student ...", is that student, as "he" would be (it had been read as one claim)', J(the));
     const notes = ev(`return parseClaimFull('If a student cheats, that student will be caught.').notes.map(function (n) { return n.message; });`);
     ok(notes[0] === '"that student" is read as what the condition speaks of, so the box says what "every student that cheats will be caught" says', 'and says so, in its words', J(notes));
-    // "The AI system" keeps its words, the same in each box, for the step
-    // r27.119 made modus ponens: "the student" is not bound so.
+    // "The student" too, since r27.145 (the user chose it over keeping its
+    // words for the r27.119 modus ponens of "the AI system"); "the teacher"
+    // is not the student.
     const kept = ev(`return ['If a student cheats, the student will be caught.', 'If a student cheats, the teacher will be angry.'].map(function (t) { return claimKey(parseClaim(t)).replace(/\\uE000/g, ''); });`);
-    ok(J(kept) === J(['I(P:a student|~cheat>P:the student|~will be caught)', 'I(P:a student|~cheat>P:the teacher|~will be angry)']),
-        '"the student" keeps its words (the r27.119 modus ponens of "the AI system"), and "the teacher" is not the student', J(kept));
+    ok(J(kept) === J(['U:(=student&~cheat)|~will be caught', 'I(P:a student|~cheat>P:the teacher|~will be angry)']),
+        '"the student" is the one "a student" speaks of, as "that student" is; "the teacher" is not the student', J(kept));
 }
 
 console.log('\n-- the weather\'s "it" after "if", "unless", "when"; "it is Tuesday" (r27.132) --');
