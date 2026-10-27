@@ -944,6 +944,13 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             '"everyone who cheats" meets "is a person who cheats" (the two had been dimmed: the kind was spelled two ways)', J(cheat));
     }
 
+    console.log('\n-- (r27.152) "something is a dog and a pet" is "some dog is a pet" --');
+    {
+        const mp = paint(['If some dog is a pet, Bob is wrong.', 'Something is a dog and a pet.'], 'Bob is wrong.');
+        ok(mp.rule === 'modus ponens' && J(runs(mp.boxes[0], /^ic-k0/)) === J(['some dog is a pet']) && J(runs(mp.boxes[1], /^ic-k0/)) === J(['Something is a dog and a pet']),
+            'one claim in two wordings: "some dog is a pet" meets "Something is a dog and a pet" (the step had not been certified)', J(mp));
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
     console.log('\n' + pass + ' passed, ' + fail + ' failed');

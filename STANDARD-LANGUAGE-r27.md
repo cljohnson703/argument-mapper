@@ -4,6 +4,50 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: "something is a dog and a pet" is "some dog is a pet" (r27.152)
+
+The user: "Sure".
+
+* "Something is a dog and a pet" says what "Some dog is a pet" says, as "Something is a dog and barks" already said what "Some dog barks" says.
+  * They are one claim, so a step may use either wording: "If some dog is a pet, Bob is wrong" and "Something is a dog and a pet" give "Bob is wrong" by modus ponens.
+  * Likewise "Something is black and old" and "Some black thing is old".
+* Where both boxes spell out the "and", the swap is commutation: "Something is a dog and a pet" gives "Something is a pet and a dog". Where one box or neither does, it is conversion: "Something is a dog and a pet" gives "Some pet is a dog" by conversion.
+  * So with conversion switched off, a student can still show why conversion works, by spelling out the "and" in both boxes.
+  * Before, "Something is a dog and a pet" gave "Some pet is a dog" as commutation even with conversion switched off: a back road r27.147 had missed.
+* Only "something": "Someone is a student and a singer" is read as before.
+* Colors: "some dog is a pet" meets "Something is a dog and a pet". Where "Something is a dog and a pet" gives "Something is a dog", only "and a pet" is dimmed.
+* No sentence in the corpus reads differently.
+
+Tests:
+* rules-r27-ordinary-test.js has 116 checks; three of the four new ones fail on r27.151 (the fourth guards "someone").
+* colors-r27-inference-test.js has 137 checks; the new one fails on r27.151.
+* Take-one-out: both changes are caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 27: "is a bird and is black", "are birds and animals"; "Bob, who knows Mary, loves her" (r27.151)
+
+Three readings found while checking r27.150.
+
+* "Every raven is a bird and is black": the second "is" says the first again.
+  * Under "every" and "some" it had been read into the predicate ("bird and is black").
+  * So "Every raven is a bird and is black" and "Poe is a raven" did not even give "Poe is a bird and is black". Now they do, by universal modus ponens, and the box gives "Every raven is black" too.
+  * With a name ("Bob is a dog and is a pet") the two halves were already read apart.
+* "All ravens are birds and animals": after "are", each of the things joined is said of one, as "is a bird and an animal" says it.
+  * "Birds" had stayed plural. So the box gave neither "All ravens are birds" nor "All ravens are animals", and "All ravens are birds and black" with "Poe is a raven" did not give "Poe is a bird and black".
+  * "Some ravens are birds and black" likewise gives "Some ravens are black".
+  * One side effect: the step from "Ravens are birds and black" (no "all" or "some") to "Ravens are black" now asks what "ravens" means, as the step from "Ravens are black and old" to "Ravens are black" always has. It had passed only because the "all" reading of "birds and black" was misread.
+* "Bob, who knows Mary, loves her": the clause set off by commas says something of Bob, the subject of "loves", so "her" is not Bob. It is Mary (the user: "unless it said 'herself', wouldn't 'her' have to refer to Mary?"). It had asked "Bob or Mary?".
+  * Likewise "Mary, who knows Bob, loves him".
+  * "Bob, who knows Mary, thinks she is smart" still asks, rightly: there "she" may be either.
+* No sentence in the corpus reads differently.
+
+Tests:
+* rules-r27-ordinary-test.js has 112 checks; the five new ones fail on r27.150.
+* Take-one-out: each of the three changes is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: a pronoun in a "who" clause, and the subject of its verb (r27.150)
 
 A fix to r27.149, and an older mistake found with it.

@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.150';
+    const APP_BUILD = '2026-10-27 r27.152';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10311,6 +10311,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const head = cands.find(x => x.k0 === c.from && x.k1 < j && !x.fact);
                 return head ? { cand: head } : {};
             }
+            // "Bob, who knows Mary, loves her": the clause set off by commas
+            // says something of Bob, the subject of "loves" -- so "her" is
+            // not Bob (r27.151; it had asked "Bob or Mary?").
+            if (c && toks[j].l === ',') {
+                const opener = toks.findIndex((y, k) => k > c.from + 1 && k < j && /^(?:who|which)$/.test(y.l) && toks[k - 1].l === ',');
+                const head = opener > 0 ? cands.find(x => x.k0 === c.from && x.k1 === opener - 2 && !x.fact) : null;
+                if (head) return { cand: head };
+            }
             const pron = open.find(q => q.k === j);
             if (pron) return { pron };
             const site = nameSites.find(x => x.at === toks[j].at);
@@ -13064,7 +13072,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (frequency) claimUnread('"' + frequency[0] + '" counts times or cases, which the checker cannot: it is not read');
         let prop;
         if (CLAIM_COPULAS.has(first) || first === 'be') {
-            let pred = claimCanonicalComplement(rest, denied);                  // "afraid of all ravens": of every raven
+            // "Is a bird and is black": the second "is" says the first again --
+            // "is a bird and black" (r27.151; under "every" and "some" it had
+            // been read into the predicate, "bird and is black"). Not where a
+            // clause of its own follows ("is sure that Bob left and is sad").
+            const again = first !== 'be' && !/(?:^|\s)(?:that|whether|if|who|which)(?=\s|$)/.test(rest) ?
+                rest.replace(new RegExp('(^|\\s)(and|or)\\s+' + first + '\\s+(?!not(?:\\s|$))', 'g'), '$1$2 ') : rest;
+            // "Are birds and black", "are birds and animals": each said of
+            // one, as "is a bird and black" says it -- "bird and black"
+            // (r27.151; "birds" had stayed plural, so "all ravens are birds
+            // and animals" gave neither half).
+            const each = first === 'are' && /\s(?:and|or)\s/.test(again) && !/(?:^|\s)(?:that|whether|if|who|which|whom|whose|of|than)(?=\s|$)/.test(again) ?
+                again.split(/(\s*,\s*|\s+(?:and|or)\s+)/).map((x, i) => i % 2 ? x : normalizeClaimTerm(x)).join('') : again;
+            let pred = claimCanonicalComplement(each, denied);                  // "afraid of all ravens": of every raven
             // A denial in the word cancels a "not": "is not impossible" says "is possible".
             const able = pred.match(/^(un)?able to (.+)$/);
             if (able) {
@@ -17178,6 +17198,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     : quant === 'some' ? (j.kind === 'and' ? q + ' that ' + is + ' ' + a + ' ' + b : q + ' ' + is + ' ' + a + ', or ' + q + ' ' + b)
                     : (j.kind === 'and' ? q + ' that ' + is + ' ' + a + ' ' + b : q + ' ' + is + ' ' + a + ', and ' + q + ' ' + b);
                 return readClaim(said.replace(/\s+/g, ' ').trim());
+            }
+            // "Something is a dog and a pet": some dog is a pet, as "something
+            // is a dog and barks" is some dog that barks (r27.152; the user:
+            // "Sure"). Marked: where both boxes spell out the "and", the swap
+            // is commutation, not conversion.
+            if (j && j.copula && !j.negated && j.kind === 'and' && j.parts.length === 2 && quant === 'some' && pronoun &&
+                subject === CLAIM_ANY && j.parts.every(p => !claimCopulaVerbPart(claimTokens(p)[0], j.head[0]))) {
+                const q = tokens.slice(0, tokens.length - vp.length).join(' '), is = j.head.join(' ');
+                const plain = p => { const t = claimTokens(p); return t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1).join(' ') : p; };
+                const read = readClaim((q + ' that ' + is + ' ' + plain(j.parts[0]) + ' ' + is + ' ' + plain(j.parts[1])).replace(/\s+/g, ' ').trim());
+                if (read && read.kind === 'some') return Object.assign({}, read, { spelled: true });
             }
             // "Every raven is black and then flies": read whole, as "every
             // raven sings and then flies" is (it had asked about "a black fly").
@@ -22534,7 +22565,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // contraposition by name.
         { id: 'conversion', name: 'conversion',
           gloss: '"no F is G" is "no G is F", and "some F is G" is "some G is F", anywhere in a claim',
-          test: (P, C) => claimReplaces('conversion', P, C) },
+          // Not where both boxes spell out the "and": "something is a dog and
+          // a pet", so "something is a pet and a dog" is commutation (r27.152).
+          test: (P, C) => claimReplaces('conversion', P, C) && !(P.length === 1 && !!P[0] && P[0].spelled && C.spelled) },
         { id: 'contraposition', name: 'contraposition',
           gloss: '"all F are G" is "everything that is not G is not F", anywhere in a claim',
           // Not where it is conversion: "no dogs are cats", so "no cats are

@@ -129,6 +129,19 @@
  *    who met Mary loves her" -- Mary (it had been the woman); "every student
  *    who loves her mother is kind" -- "her" has nothing to refer to, as before
  *    r27.149, which had kept it and said nothing.
+ * 25. (r27.151) "Is a bird and is black", "are birds and animals" under
+ *    "every", "all" and "some": the second "is" says the first again, and
+ *    after "are" each of the things joined is said of one. They had been read
+ *    into the predicate ("bird and is black", "birds and animal"), so not
+ *    even universal modus ponens followed. And "Bob, who knows Mary, loves
+ *    her": the clause set off by commas says something of Bob, the subject of
+ *    "loves", so "her" is Mary (the user: "unless it said 'herself', wouldn't
+ *    'her' have to refer to Mary?"; it had asked "Bob or Mary?").
+ * 26. (r27.152) "Something is a dog and a pet" is "some dog is a pet" (the
+ *    user: "Sure"): one claim, so a step may use either wording. Where both
+ *    boxes spell out the "and", the swap is commutation; where one or neither
+ *    does, conversion -- so with conversion switched off, the spelled-out
+ *    swap still passes and the others do not.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -733,6 +746,43 @@ console.log('\n-- 24. (r27.150) a pronoun in a "who" clause; the subject is the 
     ok(J(told) === J([true, true, true]),
         'a pronoun in the "who" clause, or after a verb there that takes a claim, is not the quantifier\'s own: "her" has nothing to refer to, as before ' +
         '(r27.149 had kept it and said nothing)', J(told));
+}
+
+console.log('\n-- 25. (r27.151) "is a bird and is black", "are birds and animals"; "Bob, who knows Mary, loves her" --');
+{
+    const UMP = [[['Every raven is a bird and is black.', 'Poe is a raven.'], 'Poe is a bird and is black.'],
+        [['All ravens are birds and black.', 'Poe is a raven.'], 'Poe is a bird and black.']];
+    ok(!misses(UMP, 'universal modus ponens').length, '"every raven is a bird and is black", "all ravens are birds and black", and "Poe is a raven": ' +
+        'universal modus ponens (neither had followed)', J(misses(UMP, 'universal modus ponens')));
+    const ALL = [[['Every raven is a bird and is black.'], 'Every raven is black.'], [['All ravens are birds and animals.'], 'All ravens are birds.']];
+    ok(!misses(ALL, 'conjunction elimination under ∀').length, 'either half, under "every" and "all"', J(misses(ALL, 'conjunction elimination under ∀')));
+    const some = step(['Some ravens are birds and black.'], 'Some ravens are black.');
+    ok(some.rule === 'conjunction elimination under ∃', 'and under "some"', J(some));
+    const same = ev(`return [parseClaim('Something is a dog and is a pet.').predicate, parseClaim('Something is a dog and a pet.').predicate];`);
+    ok(same[0] === same[1], '"something is a dog and is a pet" says what "something is a dog and a pet" says', J(same));
+    const her = ev(`return ['Bob, who knows Mary, loves her.', 'Mary, who knows Bob, loves him.'].map(function (s) { return claimPronounReadingsUncached(s).texts; });`);
+    ok(J(her) === J([['Bob, who knows Mary, loves Mary.'], ['Mary, who knows Bob, loves Bob.']]),
+        '"Bob, who knows Mary, loves her": "her" is not Bob, the subject of "loves" -- Mary (it had asked "Bob or Mary?")', J(her));
+}
+
+console.log('\n-- 26. (r27.152) "something is a dog and a pet" is "some dog is a pet" --');
+{
+    const named = [[['Something is a dog and a pet.'], 'Some pet is a dog.'], [['Some dog is a pet.'], 'Something is a pet and a dog.'],
+        [['Something is a dog and a pet.'], 'Something is a pet and a dog.'], [['Some dog is a pet.'], 'Some pet is a dog.']].map(([p, c]) => step(p, c).rule);
+    ok(J(named) === J(['conversion', 'conversion', 'commutation', 'conversion']),
+        'the swap is commutation where both boxes spell out the "and", conversion where one or neither does', J(named));
+    const off = ev(`var one = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
+            { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : null; };
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
+        var r = [one(['Something is a dog and a pet.'], 'Something is a pet and a dog.'), one(['Something is a dog and a pet.'], 'Some pet is a dog.'),
+            one(['Some dog is a pet.'], 'Something is a pet and a dog.')];
+        state.logic = null; claimRulesCache = null; return r;`);
+    ok(J(off) === J(['commutation', null, null]), 'with conversion switched off, the spelled-out swap still passes, and the others do not', J(off));
+    const mp = step(['If some dog is a pet, Bob is wrong.', 'Something is a dog and a pet.'], 'Bob is wrong.');
+    const same = step(['Some dog is a pet.'], 'Something is a dog and a pet.');
+    ok(mp.rule === 'modus ponens' && !same.rule && /only repeats/.test(same.why), 'one claim: modus ponens across the two wordings; the one as a reason for the other only repeats it', J([mp, same]));
+    const someone = step(['Someone is a student and a singer.'], 'Someone is a singer and a student.');
+    ok(someone.rule === 'commutation', '"someone is a student and a singer", so "someone is a singer and a student": commutation, as before', J(someone));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
