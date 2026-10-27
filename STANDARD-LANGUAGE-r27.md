@@ -4,6 +4,27 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: the existential fallacy says how to mend the step; "Bob is James" keeps the name (r27.146)
+
+The user, of a sentence telling the student how to mend the existential fallacy: "Sure. I don't want the unsafe version."
+
+* "Every raven is black", so "Some raven is black", is still refused. The check now ends with the box that would mend it: "… that is the existential fallacy (“every” does not say that there are any). Add “There are ravens” and it follows."
+  * The same goes for "no": "No raven is white", so "Some raven is not white".
+  * The box is said in the plural the reader takes back to the kind: "There are children", "There are old ravens".
+  * The sentence appears only where the step with that box is one the check takes.
+  * It does not appear for a kind with "that" or "who" ("every raven that sings"), for "everyone", or for two premises (Darapti, Barbari). There, the check does not take the mended step in one go.
+* "Everything is physical", so "something is physical", is still subalternation. Nothing that goes from "all" to "some" of a kind with nothing in it is certified.
+* The message quotes the premise's own word: "everyone", "everybody", "nobody", "no one". It had said "all".
+* "Bob is James" keeps the name. A capitalized word on its own after "is" had been made singular ("Jame", "Clemen"), so "Bob is James" did not give "James is Bob". Now it does, by identity symmetry, and "Twain is Clemens" with "Twain wrote books" gives "Clemens wrote books" by identity substitution. "Bob and Al are Greeks" is a plural, as before.
+* No sentence in the corpus reads differently.
+
+Tests:
+* rules-r27-ordinary-test.js has 91 checks; the four new ones that test the change fail on r27.145.
+* hints-r27-test.js: the existential fallacy's message, word for word, now ends with the box that mends it.
+* Take-one-out: every edit is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: "the student" is the one "a student" speaks of; "a" inside a kind; names in capitals colored (r27.145)
 
 The user chose to read "the student" as the one "a student" speaks of, over keeping it as one fixed thing: "B".

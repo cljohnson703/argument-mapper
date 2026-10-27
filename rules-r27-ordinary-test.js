@@ -92,6 +92,13 @@
  *    another noun. And inside a kind, "a" as a verb phrase has it: "every
  *    tool that is used by a carpenter", "a tool that is used by a
  *    carpenter", one kind (they had differed by "a").
+ * 20. (r27.146) The existential fallacy says how to mend the step (the
+ *    user: "Sure. I don't want the unsafe version"): "Every raven is
+ *    black", so "some raven is black", is still refused, and the check adds
+ *    "Add 'There are ravens' and it follows" -- only where the step with
+ *    that box is one it takes. It quotes "everyone" and "nobody" as the
+ *    premise says them. And "Bob is James" keeps the name ("Jame" had been
+ *    read), so "James is Bob" follows.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -549,6 +556,39 @@ console.log('\n-- 19. (r27.145) "the student" is the one "a student" speaks of -
         [['Every AI system that is consulted by a student functions as an extension.', 'ChatGPT is an AI system that is consulted by a student.'], 'ChatGPT functions as an extension.']];
     ok(!misses(KIND, 'universal modus ponens').length, '"every tool that is used by a carpenter" and "a tool that is used by a carpenter", one kind (they had differed by "a")',
         J(misses(KIND, 'universal modus ponens')));
+}
+
+console.log('\n-- 20. (r27.146) the existential fallacy says how to mend the step; "Bob is James" --');
+{
+    const MEND = [[['Every raven is black.'], 'Some raven is black.', 'There are ravens'], [['All ravens are black.'], 'Some ravens are black.', 'There are ravens'],
+        [['No raven is white.'], 'Some raven is not white.', 'There are ravens'], [['Every child is loved.'], 'Some child is loved.', 'There are children'],
+        [['Every old raven is black.'], 'Some old raven is black.', 'There are old ravens']];
+    const said = MEND.map(([p, c, add]) => { const r = step(p, c);
+        return !r.rule && / existential fallacy /.test(r.why) && r.why.endsWith(' Add \u201c' + add + '\u201d and it follows.') ? '' : p[0] + ': ' + J(r); }).filter(Boolean);
+    ok(!said.length, '"all" to "some" is still refused, and the check says which box would mend it: "Add “There are ravens” and it follows" ("children", "old ravens")', said.join(' | '));
+    // The box it names mends the step: the check takes the step with it.
+    const mended = misses(MEND.map(([p, c, add]) => [p.concat([add + '.']), c]), 'categorical syllogism');
+    ok(!mended.length, 'with that box, the step is a categorical syllogism', J(mended));
+    // Not where the step with the box is not taken: a kind with "that", "everyone", two premises.
+    const NONE = [[['Every raven that sings is black.'], 'Some raven that sings is black.'], [['Everyone is mortal.'], 'Someone is mortal.'],
+        [['All humans are mortal.', 'All humans are animals.'], 'Some animals are mortal.']];
+    const added = NONE.map(([p, c]) => step(p, c)).filter(r => r.rule || !/existential fallacy/.test(r.why) || / Add /.test(r.why));
+    ok(!added.length, 'no such sentence where the step with the box would not be taken: "every raven that sings", "everyone", two premises', J(added));
+    const quoted = [[['Everyone is mortal.'], 'Someone is mortal.', 'everyone'], [['Nobody is perfect.'], 'Somebody is not perfect.', 'nobody'],
+        [['No one is perfect.'], 'Someone is not perfect.', 'no one']].map(([p, c, w]) => step(p, c).why.indexOf('(\u201c' + w + '\u201d does not say that there are any)') >= 0 ? '' : w)
+        .filter(Boolean);
+    ok(!quoted.length, 'the premise\'s own word: "everyone", "nobody", "no one" (they had been "all")', J(quoted));
+    ok(step(['Everything is physical.'], 'Something is physical.').rule === 'subalternation', '"everything" to "something" is subalternation, as before');
+    const UNSAFE = [[['Every raven is black.'], 'Some raven is black.'], [['Every raven is black.'], 'At least one raven is black.'],
+        [['No raven is white.'], 'Not every raven is white.'], [['Every raven is black.'], 'Something is black.'], [['Everyone is mortal.'], 'Someone is mortal.']];
+    ok(!certified(UNSAFE).length, 'no "all" to "some" of a kind that may have nothing in it is certified', J(certified(UNSAFE)));
+    const NAMES = [[['Bob is James.'], 'James is Bob.', 'identity symmetry'], [['Twain is Clemens.'], 'Clemens is Twain.', 'identity symmetry'],
+        [['Twain is Clemens.', 'Twain wrote books.'], 'Clemens wrote books.', 'identity substitution']];
+    const names = NAMES.map(([p, c, rule]) => { const r = step(p, c); return r.rule === rule ? '' : p.join(' / ') + ': ' + J(r); }).filter(Boolean);
+    ok(!names.length, '"Bob is James" keeps the name: "James is Bob" follows (it had read "Jame")', names.join(' | '));
+    const note = ev(`return parseClaimFull('Bob is James.').notes.map(function (n) { return n.message; });`);
+    ok(note.some(m => m.indexOf('"James" is read as a name') >= 0), 'its note says "James"', J(note));
+    ok(step(['Bob and Al are Greeks.'], 'Bob is a Greek.').rule === 'conjunction elimination', '"Bob and Al are Greeks" is a plural, as before');
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

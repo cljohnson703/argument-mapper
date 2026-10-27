@@ -22,7 +22,9 @@
  * 7. A step in the form of a common fallacy says which (r27.98): affirming
  *    the consequent, denying the antecedent, a converse or inverse, affirming a
  *    disjunct, undistributed middle, illicit major, illicit conversion, the
- *    existential fallacy, "some" to "all".
+ *    existential fallacy, "some" to "all". The existential fallacy says the
+ *    box that would mend it, "Add 'There are unicorns' and it follows"
+ *    (r27.146; the user: "Sure. I don't want the unsafe version").
  * 8. Where nothing else is said, what the premises do give, and by what rule
  *    (r27.99): "The premises give “Socrates is mortal” by universal modus
  *    ponens, but not “Socrates will die”."
@@ -201,11 +203,13 @@ console.log('\n-- 7. a fallacy, named (r27.98) --');
         'an "all" worded as a conditional is named as a conditional is');
     ok(named(['All men are mortal.'], 'All mortals are men.', '“All men are mortal” does not give “All mortals are men”: that is the fallacy of illicit conversion.', 'illicit conversion') &&
         named(['All unicorns are white.'], 'Some unicorns are white.',
-        '“All unicorns are white” does not give “Some unicorns are white”: that is the existential fallacy (“all” does not say that there are any).', 'existential fallacy') &&
+        '“All unicorns are white” does not give “Some unicorns are white”: that is the existential fallacy (“all” does not say that there are any). Add “There are unicorns” and it follows.',
+        'existential fallacy') &&
         named(['Some ravens are black.'], 'All ravens are black.', '“Some ravens are black” does not give “All ravens are black”: what holds of some need not hold of all.', 'some to all'),
         'illicit conversion, the existential fallacy, "some" to "all"');
     ok(named(['No raven is black.'], 'Some ravens are not black.',
-        '“No raven is black” does not give “Some ravens are not black”: that is the existential fallacy (“no” does not say that there are any).', 'existential fallacy'),
+        '“No raven is black” does not give “Some ravens are not black”: that is the existential fallacy (“no” does not say that there are any). Add “There are ravens” and it follows.',
+        'existential fallacy'),
         'the existential fallacy in the premise\'s own word, "no"');
     const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.message; });`);
     ok(notes('If someone is a man, then he is mortal.').includes('"he" is read as the "someone" in the condition, so the box says what "everyone who is a man is mortal" says') &&

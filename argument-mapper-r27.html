@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.145';
+    const APP_BUILD = '2026-10-27 r27.146';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -12987,6 +12987,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!lexical.text) return null;
                 if (lexical.denied) negated = !negated;
                 prop = claimNounProp(lexical.text);
+                // "Bob is James": after "is", a capitalized word on its own is
+                // a name, kept as written -- not a plural made singular,
+                // "Jame" (r27.146). "Bob and Al are Greeks" is a plural, as
+                // before.
+                if ((first === 'is' || first === 'am') && /^\uE000[a-z][a-z'\u2019-]*s$/.test(lexical.text.trim())) prop = '=' + lexical.text.trim();
             }
         } else if (first === 'was' || first === 'were') {
             prop = '~was ' + normalizeClaimTerm(rest);        // the past is its own predicate
@@ -20291,6 +20296,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (a.kind === 'all' && b.kind === 'all' && c.kind === 'some') return 'the existential fallacy';
         return null;
     }
+    // "Every raven is black", so "some raven is black" -- the existential
+    // fallacy -- and the box that would make the step good: "There are
+    // ravens" (r27.146; the user, of saying so: "Sure. I don't want the
+    // unsafe version"). Only where the step with it is one the check
+    // takes; otherwise null.
+    function claimExistenceRepair(P, C, attack) {
+        const f = P.length === 1 ? P[0] : null;
+        if (!f || f.kind !== 'all' || typeof f.subject !== 'string' || f.subject.charAt(0) !== '=' || f.subject === CLAIM_PERSON) return null;
+        const np = claimShowWords(String(f.np || f.subject.slice(1))).trim();
+        if (!/^[A-Za-z][A-Za-z'\u2019-]*(?:\s+[A-Za-z][A-Za-z'\u2019-]*)*$/.test(np) || /\b(?:that|who|whom|whose|which|where|when|of)\b/i.test(np)) return null;
+        const words = np.split(/\s+/), last = words[words.length - 1], head = last.toLowerCase();
+        if (claimSingularOf(head) === head) words[words.length - 1] = claimPluralNoun(head).replace(/^./, c => /^[A-Z]/.test(last) ? c.toUpperCase() : c);
+        const text = 'There are ' + words.join(' ') + '.', there = claimQuietly(() => parseClaim(text));
+        return there && certifyStep([f, there], [C], attack) ? text : null;
+    }
     // Whether a form holds a modal claim anywhere.
     const claimHasModal = f => !!f && typeof f === 'object' && (f.kind === 'modal' || [f.inner, f.cons].concat(f.parts || [], f.conds || []).some(claimHasModal));
     // A modal step the map's system does not take, and what would take it:
@@ -24002,7 +24022,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // An objection's or a rebuttal's: against what it would have to
             // give, the denial of the box it attacks (r27.100).
             for (const c of attack ? claimDenials(forms[forms.length - 1]) : [forms[forms.length - 1]])
-                if (!fallacy) fallacy = claimFallacyForm(forms.slice(0, -1), c, iffy);
+                if (!fallacy) {
+                    fallacy = claimFallacyForm(forms.slice(0, -1), c, iffy);
+                    // With "There are ravens", it follows (r27.146).
+                    if (fallacy && fallacy.existential) fallacy.exists = claimExistenceRepair(forms.slice(0, -1), c, attack);
+                }
         }
         // "We know that all men are mortal", "Everyone agrees that ...": what
         // is known or agreed, not the claim itself (r27.100). With the claim
@@ -24125,9 +24149,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // A fallacy: the premises at work, what they do not give, and why.
             .concat(fallacy ? [fallacy.at.map(i => said(premiseTexts[i])).join(' and ') + (fallacy.at.length === 1 ? ' does' : ' do') + ' not give ' + target +
                 ': ' + (fallacy.says || 'that is ' + fallacy.name) +
-                // "All" or "no", as the premise says it, does not say that there are any.
-                (fallacy.existential ? ' (“' + ((/^[^A-Za-z]*(all|every|each|no|none|any)(?![A-Za-z])/i.exec(premiseTexts[fallacy.at[0]]) || [0, 'all'])[1].toLowerCase()) +
-                    '” does not say that there are any)' : fallacy.note ? ' (' + fallacy.note + ')' : '') + '.'] : [])
+                // "All" or "no", as the premise says it, does not say that there
+                // are any: "everyone", "nobody" too (r27.146; they had been "all").
+                (fallacy.existential ? ' (“' + ((/^[^A-Za-z]*(all|every(?:one|body)?|each|no(?:body|\s+one)?|none|any(?:one|body)?)(?![A-Za-z])/i.exec(premiseTexts[fallacy.at[0]]) ||
+                    [0, 'all'])[1].toLowerCase().replace(/\s+/g, ' ')) + '” does not say that there are any)' : fallacy.note ? ' (' + fallacy.note + ')' : '') + '.' +
+                // And the box that would make it good (r27.146).
+                (fallacy.exists ? ' Add ' + said(fallacy.exists) + ' and it follows.' : '')] : [])
             .concat(gives ? [(premiseTexts.length === 1 ? said(premiseTexts[0]) + ' gives ' : 'The premises give ') + said(gives.text) + ' by ' + gives.rule.name +
                 (attack ? ', which does not deny ' + said(conclusionText) : ', but not ' + said(conclusionText)) + '.'] : [])
             .concat(dangling ? [quote(texts[dangling.at]) + ': “' + dangling.words + '” points back to nothing in this box, and each box is read alone: name the ' +
