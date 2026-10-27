@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.146';
+    const APP_BUILD = '2026-10-27 r27.148';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -21618,6 +21618,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             .concat(DEDUCTIVE_MODAL_RULES, DEDUCTIVE_OPTIONAL_RULES.filter(r => !r.instance), DEDUCTIVE_RULES.slice(-1)).filter(r => claimRuleOn(r.id)) };
         return claimRulesCache.list;
     }
+    // The rules a step may be named for, in the order the check names it:
+    // those in force, and those this map has switched off that are on unless
+    // a map says otherwise. A step named for a rule switched off is off,
+    // whatever other rule could take it (r27.147; the user, of "a step
+    // belongs to the rule it's named for": "Yes"). Not a rule off from the
+    // start, as the catch-alls are: it names no step.
+    let claimRulesByNameCache = null;
+    function claimRulesByName() {
+        const sig = claimRulesSignature();
+        if (!claimRulesByNameCache || claimRulesByNameCache.sig !== sig) {
+            const onByDefault = id => !claimBasisOnly && DEDUCTIVE_EXTENSIONS.some(g => g.on && g.rules.includes(id));
+            claimRulesByNameCache = { sig, list: DEDUCTIVE_RULES.slice(0, -1)
+                .concat(DEDUCTIVE_MODAL_RULES, DEDUCTIVE_OPTIONAL_RULES.filter(r => !r.instance), DEDUCTIVE_RULES.slice(-1))
+                .filter(r => claimRuleOn(r.id) || onByDefault(r.id)) };
+        }
+        return claimRulesByNameCache.list;
+    }
+    // A switch as the Logic panel names it: "universal syllogism", where the
+    // step is "categorical syllogism (Barbara)" (r27.147).
+    function claimSwitchName(rule) {
+        const listed = DEDUCTIVE_RULES.concat(DEDUCTIVE_OPTIONAL_RULES).find(r => r.id === rule.id);
+        return listed ? listed.name : rule.name;
+    }
     // Switch one rule, or a group, on or off for this map.
     function setDeductiveRule(ids, on) {
         if (!state.logic) state.logic = { base: 'standard', rules: {} };
@@ -22486,19 +22509,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // conclusion (claimLiftedStep names it: "modus ponens under ∀").
         { id: 'under-quantifier', name: 'a rule under a quantifier',
           gloss: 'a rule used inside "every" or "some": "every raven is black and old" gives "every raven is black"',
-          test: (P, C) => (!!claimLiftedStep(P, C) || !!claimObjectLiftedStep(P, C)) && !claimOffRuleTakes(P, C) }
+          // With conversion off, "no dogs are cats", so "no cats are dogs",
+          // had passed as transposition under ∀ (r27.143): a step is named for
+          // the first rule that takes it, this last (r27.147).
+          test: (P, C) => !!claimLiftedStep(P, C) || !!claimObjectLiftedStep(P, C) }
     ];
-    // A step a rule this map has switched off takes whole is that rule's: a
-    // rule under a quantifier does not take it (r27.143; the user: "sure,
-    // close the loophole"). "No dogs are cats", so "no cats are dogs", with
-    // conversion off, had passed as transposition under ∀. Not the
-    // catch-alls nor the extra rule instances, which take any step truth
-    // tables give.
-    function claimOffRuleTakes(P, C) {
-        const all = DEDUCTIVE_RULES.concat(DEDUCTIVE_OPTIONAL_RULES);
-        return DEDUCTIVE_EXTENSIONS.filter(g => !['inside', 'catchall', 'instances'].includes(g.id))
-            .some(g => g.rules.some(id => { if (claimRuleOn(id)) return false; const r = all.find(x => x.id === id); return !!r && !!r.test(P, C); }));
-    }
     // Metaphysical necessity (r27.101): a step by each axiom of the system
     // the map has switched on -- no rule of Standard's.
     const DEDUCTIVE_MODAL_RULES = [
@@ -22611,12 +22626,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // The rules in force: the basis, and the extensions this map has on.
         // While near misses are listed, those a rule found and then failed
         // with are dropped: only the one that goes through says what differs
-        // (r27.115).
-        const rule = claimRulesInForce().find(rule => conclusions.some(C => {
+        // (r27.115). The step is named for the first rule that takes it, on
+        // or switched off; switched off, the step is off, and what that rule
+        // found is dropped too (r27.147).
+        const start = claimNearMisses ? claimNearMisses.length : 0;
+        const named = claimRulesByName().find(rule => conclusions.some(C => {
             const mark = claimNearMisses ? claimNearMisses.length : 0, ok = rule.test(premises, C);
             if (!ok && claimNearMisses) claimNearMisses.length = mark;
             return ok;
         })) || null;
+        const rule = named && claimRuleOn(named.id) ? named : null;
+        if (named && !rule && claimNearMisses) claimNearMisses.length = start;
         if (rule && rule.id === 'under-quantifier') {
             for (const C of conclusions) { const lifted = claimLiftedStep(premises, C) || claimObjectLiftedStep(premises, C); if (lifted) return lifted; }
         }
@@ -23889,7 +23909,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
                     return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, switchedOff: rule,
                         text: group.rules.length === 1 ? 'With ' + group.label + ' switched on in the Logic panel, the premises would give ' + target + ' by ' + rule.name + '.'
-                            : 'With ' + rule.name + ' switched on in the Logic panel (' + group.label + '), the premises would give ' + target + '.' };
+                            : 'With ' + claimSwitchName(rule) + ' switched on in the Logic panel (' + group.label + '), the premises would give ' + target +
+                                (claimSwitchName(rule) !== rule.name ? ' by ' + rule.name : '') + '.' };
                 }
             }
         }
@@ -33283,7 +33304,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             ['pointerdown', 'mousedown', 'touchstart'].forEach(type => tag.addEventListener(type, e => e.stopPropagation()));
             if (step.ambiguous && !step.rule && step.why && (step.why.ambiguous || []).some(a => a.readings && a.readings.length))
                 tag.title = tag.title.replace(/ Click for every step\.$/, claimAskedKind(step) === 'typo' ? ' Click to fix the box.' : ' Click to choose a reading.');
-            const sw = !step.ambiguous && !reviewMode && !collabReadOnly() ? claimStepSwitch(step) : null;
+            // Where the Logic panel's switch works: in Review mode too, not on
+            // a map opened with a view-only link (r27.148).
+            const sw = !step.ambiguous && !collabReadOnly() ? claimStepSwitch(step) : null;
             if (sw) tag.title = tag.title.replace(/ Click for every step\.$/, ' Click to switch on ' + sw.name + '.');
             tag.addEventListener('click', e => {
                 e.stopPropagation();
@@ -33572,7 +33595,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimStepSwitch(step) {
         const why = step && !step.rule ? step.why : null;
         if (!why) return null;
-        if (why.switchedOff) return { ids: [why.switchedOff.id], name: why.switchedOff.name };
+        if (why.switchedOff) return { ids: [why.switchedOff.id], name: claimSwitchName(why.switchedOff) };
         if (why.opposites) return { ids: ['opposites'], name: 'contraries and contradictories' };
         if (why.modal) return !claimModalOn() ? { ids: ['modal-meta'], name: 'Metaphysical necessity' }
             : why.modal.axiom ? { ids: ['modal-meta-' + why.modal.axiom], name: 'axiom ' + why.modal.axiom } : null;
@@ -33584,7 +33607,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // as the reading chooser does, and goes as it goes.
     function openSwitchChooser(step, anchor) {
         const sw = claimStepSwitch(step);
-        if (!sw || reviewMode || collabReadOnly()) return false;
+        if (!sw || collabReadOnly()) return false;
         closeReadingChooser();
         const pop = document.createElement('div');
         pop.id = 'reading-chooser';
@@ -33963,8 +33986,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 why.className = 'logic-why';
                 why.textContent = step.why.text;
                 claims.appendChild(why);
-                // The switch it names, switched on from here (r27.144).
-                const sw = !step.ambiguous && !reviewMode && !collabReadOnly() ? claimStepSwitch(step) : null;
+                // The switch it names, switched on from here (r27.144), in
+                // Review mode too (r27.148).
+                const sw = !step.ambiguous && !collabReadOnly() ? claimStepSwitch(step) : null;
                 if (sw) {
                     const on = document.createElement('button');
                     on.type = 'button';

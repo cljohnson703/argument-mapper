@@ -81,7 +81,8 @@
  * 18. (r27.144) A "Switch on" button (the user: "both"): a step that a
  *    switched-off rule would certify opens, from its tag, the check's words
  *    and a button that switches the rule on for this map; the list of steps
- *    has the same button after the words. Not where the map is read-only.
+ *    has the same button after the words. Not on a map opened with a
+ *    view-only link (since r27.148; it had been Review mode, section 22).
  *    Contraries and contradictories, metaphysical necessity and its axioms
  *    too.
  * 19. (r27.145) "The student" is the one "a student" speaks of (the user
@@ -99,6 +100,21 @@
  *    that box is one it takes. It quotes "everyone" and "nobody" as the
  *    premise says them. And "Bob is James" keeps the name ("Jame" had been
  *    read), so "James is Bob" follows.
+ * 21. (r27.147) A step belongs to the rule it is named for (the user: "Yes"):
+ *    the check names a step for the first rule that takes it, and with that
+ *    rule switched off the step is off, whatever other rule could take it.
+ *    With conversion off, "some dogs are pets", so "some pets are dogs", had
+ *    passed as commutation; with universal syllogism off, Barbara as
+ *    categorical syllogism; with identity transitivity off, as identity
+ *    substitution; with Negated Conditional off, as material implication;
+ *    with "tautological consequence" on, any rule switched off. A rule
+ *    switched off neither blocks another's own steps nor drags another down;
+ *    one off from the start names no step. The check names the switch as the
+ *    Logic panel does.
+ * 22. (r27.148) The "Switch on" button in Review mode too, where the Logic
+ *    panel's switches work (the user: "Yes"); still none on a map opened with
+ *    a view-only link (section 18). It names the switch as the panel does:
+ *    "universal syllogism", "relations".
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -506,11 +522,12 @@ console.log('\n-- 18. (r27.144) a switch switched on from its step --');
         r.listOpen = document.getElementById('logic-modal-backdrop').classList.contains('open');
         r.css = [].map.call(document.querySelectorAll('style'), function (x) { return x.textContent; }).join(' ').indexOf('.logic-step .logic-switch-on { margin-left: 8px;') >= 0;
         closeDeductiveCheck();
-        setDeductiveRule(['conversion'], false); reviewMode = true; render();
+        // A map opened with a view-only link (r27.148; this had been Review mode).
+        setDeductiveRule(['conversion'], false); _collab = { role: 'viewer' }; render();
         var ro = document.querySelector('.derivation-tag[data-step="A"]'); r.roTitle = ro.title; ro.click();
         r.roPop = !!document.getElementById('reading-chooser'); r.roList = document.getElementById('logic-modal-backdrop').classList.contains('open');
         r.roBtn = !!document.querySelector('#logic-modal-body .logic-switch-on');
-        closeDeductiveCheck(); reviewMode = false; setDeductiveRule(['conversion'], true); state.trees = []; render();
+        closeDeductiveCheck(); _collab = null; setDeductiveRule(['conversion'], true); state.trees = []; render();
         return r;`);
     ok(r.tag === '? not recognized' && /\. Click to switch on conversion\.$/.test(r.title), 'a step a switched-off rule would certify: its tag\'s tip says a click switches it on', J(r));
     ok(r.kind === 'switch' && r.text === 'With conversion switched on in the Logic panel (Replacement rules), the premises would give \u201cNo cats are dogs\u201d.' &&
@@ -519,7 +536,7 @@ console.log('\n-- 18. (r27.144) a switch switched on from its step --');
     ok(r.closed && r.on && r.after === '\u2713 conversion', 'the button switches conversion on for this map, and the step is certified', J(r));
     ok(r.listBtn === 'Switch on' && r.listTitle === 'Switch on conversion for this map' && r.listOn && r.listRule === '\u2713conversion' && r.listOpen && r.css,
         'in the list of steps, the same button after the words; the list stays open, the row certified', J(r));
-    ok(/ Click for every step\.$/.test(r.roTitle) && !r.roPop && r.roList && !r.roBtn, 'where the map is read-only, no button: the tag opens the list', J(r));
+    ok(/ Click for every step\.$/.test(r.roTitle) && !r.roPop && r.roList && !r.roBtn, 'on a map opened with a view-only link, no button: the tag opens the list', J(r));
     const sws = ev(`var one = function (ps, c) { var trees = [{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [{ id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }];
             return claimStepSwitch(collectDeductiveSteps(trees)[0]); };
         setDeductiveRule(['opposites'], false);
@@ -589,6 +606,74 @@ console.log('\n-- 20. (r27.146) the existential fallacy says how to mend the ste
     const note = ev(`return parseClaimFull('Bob is James.').notes.map(function (n) { return n.message; });`);
     ok(note.some(m => m.indexOf('"James" is read as a name') >= 0), 'its note says "James"', J(note));
     ok(step(['Bob and Al are Greeks.'], 'Bob is a Greek.').rule === 'conjunction elimination', '"Bob and Al are Greeks" is a plural, as before');
+}
+
+console.log('\n-- 21. (r27.147) a step belongs to the rule it is named for --');
+{
+    // The rule a step is named for switched off: the step is off, and the check names that switch.
+    const OFF = [['conversion', ['Some dog is a pet.'], 'Some pet is a dog.', 'conversion', 'Replacement rules'],
+        ['universal-syllogism', ['Every raven is a bird.', 'Every bird is an animal.'], 'Every raven is an animal.', 'universal syllogism', 'Familiar steps'],
+        ['universal-syllogism', ['No bird is a fish.', 'Every raven is a bird.'], 'No raven is a fish.', 'universal syllogism', 'Familiar steps'],
+        ['existential-syllogism', ['Some dog is a poodle.', 'Every poodle is a pet.'], 'Some dog is a pet.', 'existential syllogism', 'Familiar steps'],
+        ['identity-transitivity', ['Bob is Al.', 'Al is Carl.'], 'Bob is Carl.', 'identity transitivity', 'Familiar steps'],
+        ['negated-conditional', ['It is not the case that if Bob wins, Al loses.'], 'Bob wins and Al does not lose.', 'Negated Conditional', 'Replacement rules']];
+    const open = OFF.map(([id, p, c, name, group]) => { const r = without(id, () => step(p, c));
+        return !r.rule && r.why.indexOf('With ' + name + ' switched on in the Logic panel (' + group + ')') === 0 ? '' : id + ': ' + J(r); }).filter(Boolean);
+    ok(!open.length, 'switched off, a rule\'s steps are off, whatever other rule could take them: conversion of "some", universal and existential syllogism, identity transitivity, ' +
+        'Negated Conditional (they had passed as commutation, categorical syllogism, identity substitution, material implication)', open.join(' | '));
+    const mt = ev(`setDeductiveRule(['tautological-consequence'], true); setDeductiveRule(['modus-tollens'], false);
+        var r = __step(['If Bob wins, Al loses.', 'Al does not lose.'], 'Bob does not win.');
+        setDeductiveRule(['tautological-consequence'], false); setDeductiveRule(['modus-tollens'], true); return r;`);
+    ok(!mt.rule && /^With modus tollens switched on in the Logic panel/.test(mt.why), 'with "tautological consequence" on, modus tollens switched off is still off (it had passed by the catch-all)', J(mt));
+    // A rule switched off blocks no other rule's own steps, and drags none down.
+    const KEEP = [['commutation', ['Some dog is a pet.'], 'Some pet is a dog.', 'conversion'],
+        ['conversion', ['Bob wins and Al loses.'], 'Al loses and Bob wins.', 'commutation'],
+        ['conversion', ['Every raven is black and old.'], 'Every raven is black.', 'conjunction elimination under ∀'],
+        ['under-quantifier', ['No dog is a cat.'], 'No cat is a dog.', 'conversion'],
+        ['categorical-syllogism', ['Every raven is a bird.', 'Every bird is an animal.'], 'Every raven is an animal.', 'universal syllogism'],
+        ['universal-syllogism', ['No fish is a mammal.', 'Every whale is a mammal.'], 'No whale is a fish.', 'categorical syllogism (Cesare)'],
+        ['identity-substitution', ['Bob is Al.', 'Al is Carl.'], 'Bob is Carl.', 'identity transitivity'],
+        ['identity-transitivity', ['Twain is Clemens.', 'Twain wrote books.'], 'Clemens wrote books.', 'identity substitution'],
+        ['material-implication', ['It is not the case that if Bob wins, Al loses.'], 'Bob wins and Al does not lose.', 'Negated Conditional'],
+        ['negated-conditional', ['If Bob wins, Al loses.'], 'Bob does not win or Al loses.', 'material implication']];
+    const kept = KEEP.map(([id, p, c, rule]) => { const r = without(id, () => step(p, c)); return r.rule === rule ? '' : id + ' off, ' + p.join(' / ') + ': ' + J(r); }).filter(Boolean);
+    ok(!kept.length, 'a broad rule switched off does not block a narrow one (commutation off, conversion converts), nor a narrow one a broad one (conversion off, "A and B" is still "B and A")',
+        kept.join(' | '));
+    ok(step(['Bob wins, and Bob wins or Al loses.'], 'Bob wins.').rule === 'conjunction elimination', 'a rule off from the start (Boolean absorption) names no step: conjunction elimination, as before');
+    const named = ev(`state.logic = { base: 'standard', rules: { 'syllogism-names': true } }; claimRulesCache = null; setDeductiveRule(['universal-syllogism'], false);
+        var r = __step(['Every raven is a bird.', 'Every bird is an animal.'], 'Every raven is an animal.'); state.logic = null; claimRulesCache = null; return r;`);
+    ok(!named.rule && named.why === 'With universal syllogism switched on in the Logic panel (Familiar steps), the premises would give “Every raven is an animal” by categorical syllogism (Barbara).',
+        'the check names the switch as the panel does, "universal syllogism", and the step by its name (syllogism names on)', J(named));
+}
+
+console.log('\n-- 22. (r27.148) "Switch on" in Review mode; the switch as the panel names it --');
+{
+    const r = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['No cats are dogs.'], collapsed: [], x: 30000, y: 30000, children: [{ id: 'A', type: 'support', texts: ['No dogs are cats.'], collapsed: [], children: [] }] }];
+        ensureCollabFields(state); selectedIds = []; setDeductiveRule(['conversion'], false); if (!deductiveLive) toggleDeductiveLive(); reviewMode = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="A"]'), r = { title: tag.title };
+        tag.click();
+        var pop = document.getElementById('reading-chooser'); r.kind = pop && pop.dataset.kind; r.btn = pop ? pop.querySelector('.rc-apply').textContent : '';
+        closeReadingChooser(); openDeductiveCheck('A');
+        var b = document.querySelector('#logic-modal-body .logic-step[data-step="A"] .logic-switch-on'); r.list = !!b;
+        if (b) b.click();
+        r.on = claimRuleOn('conversion');
+        closeDeductiveCheck(); reviewMode = false; setDeductiveRule(['conversion'], true); state.trees = []; render();
+        return r;`);
+    ok(/\. Click to switch on conversion\.$/.test(r.title) && r.kind === 'switch' && r.btn === 'Switch on conversion for this map' && r.list && r.on,
+        'in Review mode, where the Logic panel\'s switches work, the button is there too: from the tag and in the list (it had been hidden)', J(r));
+    const names = ev(`var one = function (ps, c) { var trees = [{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [{ id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }];
+            var sw = claimStepSwitch(collectDeductiveSteps(trees)[0]); return sw && sw.name; };
+        var out = [];
+        state.logic = { base: 'standard', rules: { 'syllogism-names': true } }; claimRulesCache = null; setDeductiveRule(['universal-syllogism'], false);
+        out.push(one(['Every raven is a bird.', 'Every bird is an animal.'], 'Every raven is an animal.'));
+        state.logic = null; claimRulesCache = null; setDeductiveRule(['relations'], false);
+        out.push(one(['Bob is older than Al.'], 'Al is younger than Bob.'));
+        state.logic = null; claimRulesCache = null; setDeductiveRule(['categorical-syllogism'], false);
+        out.push(one(['No fish is a mammal.', 'Every whale is a mammal.'], 'No whale is a fish.'));
+        state.logic = null; claimRulesCache = null;
+        return out;`);
+    ok(J(names) === J(['universal syllogism', 'relations', 'categorical syllogism']),
+        'the button names the switch as the panel does: "universal syllogism", "relations", "categorical syllogism" (it had named the step, "converses ‘older than’ and ‘younger than’")', J(names));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

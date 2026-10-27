@@ -4,6 +4,43 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: "Switch on" in Review mode too (r27.148)
+
+The user, of showing the button in Review mode and hiding it only for view-only links: "Yes".
+
+* Review mode freezes the boxes, not the Logic panel, and the button is the panel's own switch. It had been hidden in Review mode. Now it is there, from the step's tag and in the list of steps.
+* On a map opened with a view-only link there is still no button, and the tag opens the list.
+* The button names the switch as the panel does: "Switch on universal syllogism", "Switch on relations", "Switch on categorical syllogism". It had used the step's name, such as "converses ‘older than’ and ‘younger than’".
+
+Tests:
+* rules-r27-ordinary-test.js has 98 checks; the two new ones in section 22 fail on r27.147. Section 18's check of a read-only map now opens the map with a view-only link; it had used Review mode.
+* Take-one-out: every edit is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 27: a step belongs to the rule it is named for (r27.147)
+
+The user, of "a step belongs to the rule it's named for": "Yes". They had asked which is more general, conversion or transposition under ∀. Neither contains the other: transposition under ∀ takes conversion's step for "no" and more besides, while conversion's step for "some" is commutation inside "some".
+
+* The check names each step for the first rule that takes it. If that rule is switched off, the step is off, whatever other rule could take it, and the check names the switch.
+* Five steps had come back by another rule:
+  * Conversion off: "Some dogs are pets", so "some pets are dogs", had passed as commutation.
+  * Universal syllogism off: Barbara and Celarent had passed as categorical syllogism. Existential syllogism off: Darii and Ferio, likewise.
+  * Identity transitivity off: "Bob is Al" and "Al is Carl", so "Bob is Carl", had passed as identity substitution.
+  * Negated Conditional off: its step had passed as material implication.
+  * "Tautological consequence" switched on: any rule switched off had passed by it.
+* A rule switched off blocks no other rule's own steps, and drags none down. With commutation off, conversion still converts. With conversion off, "Bob wins and Al loses" still gives "Al loses and Bob wins", and "every raven is black and old" still gives "every raven is black".
+* A rule that is off from the start, as the catch-alls are, names no step.
+* r27.143's check in the rule under a quantifier is gone; this does its work.
+* The check names the switch as the Logic panel does: "With universal syllogism switched on in the Logic panel (Familiar steps), the premises would give “Every raven is an animal” by categorical syllogism (Barbara)." It had given the step's name, "categorical syllogism (Barbara)", as the switch's.
+* No reading changes.
+
+Tests:
+* rules-r27-ordinary-test.js, section 21: the three checks that test the change fail on r27.146.
+* Take-one-out: every edit is caught but one, the removal of r27.143's check, which this release makes redundant. No suite can tell it is gone.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: the existential fallacy says how to mend the step; "Bob is James" keeps the name (r27.146)
 
 The user, of a sentence telling the student how to mend the existential fallacy: "Sure. I don't want the unsafe version."
