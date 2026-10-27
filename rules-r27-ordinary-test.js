@@ -115,6 +115,14 @@
  *    panel's switches work (the user: "Yes"); still none on a map opened with
  *    a view-only link (section 18). It names the switch as the panel does:
  *    "universal syllogism", "relations".
+ * 23. (r27.149) A quantifier binds a pronoun in its own verb phrase (the
+ *    queue: "Everyone who cheats thinks they will win"): "every student
+ *    believes that they are smart", so, of Bob, "Bob believes that he is
+ *    smart"; "their mother", "his mother"; "someone thinks that they will
+ *    win". Not where the box names what the pronoun is ("every student who
+ *    loves Mary thinks she is smart": Mary), nor "everyone loves him". And
+ *    "everyone who cheats | thinks Bob will win": the verb that takes the
+ *    claim had been read into the subject.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -674,6 +682,33 @@ console.log('\n-- 22. (r27.148) "Switch on" in Review mode; the switch as the pa
         return out;`);
     ok(J(names) === J(['universal syllogism', 'relations', 'categorical syllogism']),
         'the button names the switch as the panel does: "universal syllogism", "relations", "categorical syllogism" (it had named the step, "converses ‘older than’ and ‘younger than’")', J(names));
+}
+
+console.log('\n-- 23. (r27.149) a quantifier binds a pronoun in its own verb phrase --');
+{
+    const BOUND = [[['Everyone who cheats thinks they will win.', 'Bob is a person who cheats.'], 'Bob thinks he will win.'],
+        [['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that he is smart.'],
+        [['Everyone thinks they are right.', 'Bob is a person.'], 'Bob thinks he is right.'],
+        [['Every student loves their mother.', 'Bob is a student.'], 'Bob loves his mother.'],
+        [['Every student thinks that their teacher is wise.', 'Bob is a student.'], 'Bob thinks that his teacher is wise.'],
+        [['Every student thinks Mary loves them.', 'Bob is a student.'], 'Bob thinks Mary loves him.'],
+        [['Every man thinks he is right.', 'Bob is a man.'], 'Bob thinks he is right.']];
+    ok(!misses(BOUND, 'universal modus ponens').length, 'a pronoun its quantifier binds, in a claim its verb takes or as "their": said of Bob, "he", "his", "him" -- ' +
+        'universal modus ponens (it had said "they" points back to nothing, or kept it and said nothing)', J(misses(BOUND, 'universal modus ponens')));
+    const some = step(['Bob thinks he will win.', 'Bob is a person.'], 'Someone thinks they will win.');
+    ok(some.rule === 'expository syllogism', '"Bob thinks he will win" and "Bob is a person", so "someone thinks they will win"', J(some));
+    const same = step(['Some student thinks they will win.'], 'Some student thinks that they will win.');
+    ok(!same.rule && /only repeats/.test(same.why), '"some student thinks they will win" and "... that they will win", one claim (the "that" had made them two)', J(same));
+    const mary = step(['Every student who loves Mary thinks she is smart.', 'Bob is a student who loves Mary.'], 'Bob thinks Mary is smart.');
+    ok(mary.rule === 'universal modus ponens', 'where the box names what the pronoun is, it is that: "every student who loves Mary thinks she is smart" -- Mary, as before', J(mary));
+    const NOT = [[['Everyone loves him.', 'Bob is a person.'], 'Bob loves himself.'], [['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that Al is smart.']];
+    ok(!certified(NOT).length, 'not "everyone loves him" as each one loving themselves; not someone else', J(certified(NOT)));
+    // Where the subject ends: before a verb that takes a claim.
+    const subjects = ev(`return ['Everyone who cheats thinks Bob will win.', 'The man who left says Bob will win.', 'People who eat meat smoke.', 'The woman who fears change left.'].map(function (s) {
+        var t = claimTokens(normalizeClaimText(s).replace(/[.]$/, '')); return claimUnmarked(t.slice(0, claimSynSubjectEnd(t)).join(' ')); });`);
+    ok(J(subjects) === J(['everyone who cheats', 'the man who left', 'people who eat meat', 'the woman who fears change']),
+        '"everyone who cheats | thinks Bob will win", "the man who left | says Bob will win" (the verb that takes the claim had been read into the subject); ' +
+        '"people who eat meat | smoke", as before', J(subjects));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

@@ -932,6 +932,18 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             '"A student" goes on as "the student", and "cheats" meets "every student that cheats"', J(stu));
     }
 
+    console.log('\n-- (r27.149) a pronoun its quantifier binds; "everyone who cheats", "a person who cheats" --');
+    {
+        const smart = paint(['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that he is smart.');
+        const mother = paint(['Every student loves their mother.', 'Bob is a student.'], 'Bob loves his mother.');
+        ok(smart.rule === 'universal modus ponens' && J(runs(smart.boxes[0], /^ic-c/)) === J(['believes that they are smart']) && J(runs(smart.boxes[0], /^ic-k0/)) === J(['Every student']) &&
+            J(runs(mother.boxes[0], /^ic-c/)) === J(['loves their mother']),
+            '"believes that they are smart" goes on as "believes that he is smart", "every student" meets "is a student"; "loves their mother" too', J([smart, mother]));
+        const cheat = paint(['Everyone who cheats will lose.', 'Bob is a person who cheats.'], 'Bob will lose.');
+        ok(J(runs(cheat.boxes[0], /^ic-k0/)) === J(['Everyone who cheats']) && J(runs(cheat.boxes[1], /^ic-k0/)) === J(['is a person who cheats']),
+            '"everyone who cheats" meets "is a person who cheats" (the two had been dimmed: the kind was spelled two ways)', J(cheat));
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
     console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.148';
+    const APP_BUILD = '2026-10-27 r27.149';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10488,6 +10488,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 break;
             }
         });
+        // A pronoun bound by the quantifier its clause opens with -- "every",
+        // "no", "everyone", "some", "someone" -- where it can be nothing else
+        // in the box but that (r27.149): in a claim that clause's verb takes
+        // ("every student believes that they are smart", "everyone who
+        // cheats thinks they will win", "some student thinks that they will
+        // win") or "their", "his", "her", "its" before a noun. Each one, of
+        // themselves: the box keeps the pronoun, and the reading marks it
+        // (claimBindOwn).
+        const binder = p => {
+            const c = clauses[p.ci];
+            return !c ? null : quantified.find(x => x.k0 === c.from && x.k0 < p.k) ||
+                cands.find(x => x.indef && x.k0 === c.from && x.k0 < p.k && /^(?:some|someone|somebody|something)$/.test(toks[x.k0].l)) || null;
+        };
+        const subjectBinds = p => {
+            const q = binder(p), kd = CLAIM_PRONOUN_KIND[p.l];
+            if (!q || !(kd === 'm' || kd === 'f' ? q.kind === 'person' || q.kind === 'animal' : kd === 'p' || q.kind === 'thing' || q.kind === 'animal')) return false;
+            const next = toks[p.k + 1], possessive = /^(?:their|his|its)$/.test(p.l) ||
+                (p.l === 'her' && !!next && /^[a-z]/.test(next.w) && !claimSynClosed(next.l) && !CLAIM_VERB_MARKERS.has(next.l));
+            return possessive || toks.slice(q.k0 + 1, p.k).some(y => claimAttitudeWord(y.l));
+        };
+        for (let i = slots.length - 1; i >= 0; i--) {
+            const own = slots[i].members.map(binder);
+            if (choices[i].every(c => own.includes(c)) && slots[i].members.every(subjectBinds)) { slots.splice(i, 1); choices.splice(i, 1); }
+        }
+        if (!slots.length) return none;
         // The user's choice (a): an "it" asks unless it can be one thing only.
         const itAsks = !!ambientText || slots.some((x, i) => x.kind !== 'q' && choices[i].length !== 1);
         // Nothing for one of them: why.
@@ -10596,7 +10621,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimFormHasIt(f, any) {
         if (!f || typeof f !== 'object') return false;
         const w = any ? '(?:he|she|him|his|her|it|its|they|them|their)' : 'it';
-        const at = new RegExp('(?:^|[\\s~=¬])' + w + "(?:'s)?(?:\\s|$)");
+        // A pronoun the reading took as its quantifier's counts too: where
+        // the box names what it is, it is that ("every student who loves Mary
+        // thinks she is smart": Mary) (r27.149).
+        const at = new RegExp('(?:^|[\\s~=¬])' + (any ? '\\uE004?' : '') + w + "(?:'s)?(?:\\s|$)");
         if (f.kind === 'pred') return at.test(String(f.term || '')) || at.test(String(f.prop || ''));
         if (f.kind === 'atom') return at.test(String(f.text || ''));
         return [f.inner, f.cons].concat(f.parts || [], f.conds || [], f.from || []).some(g => claimFormHasIt(g, any)) ||
@@ -12395,7 +12423,50 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // A property said of a term: "Poe is a black raven" as "Poe is black" and
     // "Poe is a raven", each said of Poe.
+    // A pronoun its quantifier binds, in the predicate (r27.149): "every
+    // student believes that they are smart" -- "they" is each student.
+    // Marked (\uE004), so that said of Bob the claim is "Bob believes that
+    // he is smart" (claimFillBound). In a claim the verb takes, or "their",
+    // "his", "her", "its" before a noun; not "everyone loves him", whose
+    // "him" is someone else. Of many ("some students"), only "they".
+    function claimBindOwn(prop, subject, plural) {
+        if (typeof prop !== 'string' || !/(?:^|\s)(?:they|them|their|he|him|his|she|her|it|its)(?=\s|$)/.test(prop)) return prop;
+        const nouns = String(subject || '').replace(/^[=~¬]+/, '').split(/\s+/).map(claimWord);
+        const kind = subject === CLAIM_PERSON || nouns.some(w => w === 'person' || CLAIM_HE_OR_SHE_NOUNS.has(w)) ? 'person'
+            : nouns.some(w => CLAIM_HE_OR_SHE_ANIMALS.has(w)) ? 'animal' : 'thing';
+        const agrees = w => { const k = CLAIM_PRONOUN_KIND[w]; return k === 'm' || k === 'f' ? kind !== 'thing' : k === 'p' || kind !== 'person'; };
+        const words = prop.split(' '), opens = words.findIndex((w, i) => i > 0 && /^(?:that|whether)$/.test(claimWord(w)));
+        let marked = false;
+        for (let i = 1; i < words.length; i++) {
+            const w = words[i], next = words.slice(i + 1).map(claimWord);
+            if (!/^(?:they|them|their|he|him|his|she|her|it|its)$/.test(w) || !agrees(w) || (plural && !/^(?:they|them|their)$/.test(w))) continue;
+            const possessive = /^(?:their|his|its)$/.test(w) || (w === 'her' && !!next[0] && !claimSynClosed(next[0]) && !CLAIM_VERB_MARKERS.has(next[0]));
+            if ((!possessive && (opens < 0 || i < opens)) || (w === 'it' && claimDummyItNext(next))) continue;
+            words[i] = '\uE004' + w;
+            marked = true;
+        }
+        return marked ? words.join(' ') : prop;
+    }
+    // A bound pronoun said of a term (r27.149): "believes that they are
+    // smart" of Bob is "believes that bob is smart" -- right after "that" as
+    // a clause's first word is written, elsewhere as a name is ("loves
+    // Bob's mother"); "they are" said of one is "is".
+    function claimFillBound(prop, term) {
+        const t = claimUnmarked(String(term || '')).trim(), words = prop.split(' ');
+        for (let i = 0; i < words.length; i++) {
+            const m = /^([¬~=]*)\uE004([a-z]+)$/.exec(words[i]);
+            if (!m) continue;
+            const said = i > 0 && /^(?:that|whether|if)$/.test(claimWord(words[i - 1])) ? t : claimObjectWord(t), next = claimWord(words[i + 1] || '');
+            if (/^(?:their|his|its)$/.test(m[2]) || (m[2] === 'her' && !!next && !claimSynClosed(next) && !CLAIM_VERB_MARKERS.has(next))) { words[i] = m[1] + said + "'s"; continue; }
+            words[i] = m[1] + said;
+            const one = m[2] === 'they' ? claimTheyAsOne(words.slice(i + 1).join(' ')) : null;
+            if (one) words.splice(i + 1, words.length, ...one.split(' '));
+        }
+        return words.join(' ');
+    }
     function applyClaimProp(prop, term) {
+        // A pronoun the quantifier binds, said of this term (r27.149).
+        if (typeof prop === 'string' && prop.indexOf('\uE004') >= 0) prop = claimFillBound(prop, term);
         if (prop.charAt(0) === '¬') return { kind: 'not', inner: applyClaimProp(prop.slice(1), term) };
         // "That Poe loves" said of Fido: "Poe loves Fido".
         if (prop.charAt(0) === '^') {
@@ -17105,7 +17176,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             else if (shared) return claimSharedTailQuestion(shared, j.parts, j.kind, s, tokens.slice(0, tokens.length - vp.length), j.head,
                 quant === 'all' && j.kind === 'and', j.negated);
         }
-        const predicate = quant === 'no' ? claimWithAnyAsSome(() => verbPhraseProp(claimAttitudeVp(vp))) : verbPhraseProp(claimAttitudeVp(vp));
+        const predicate = claimBindOwn(quant === 'no' ? claimWithAnyAsSome(() => verbPhraseProp(claimAttitudeVp(vp))) : verbPhraseProp(claimAttitudeVp(vp)), subject,
+            /^(?:are|were|have|do|don't|aren't|weren't|haven't)$/.test(claimWord(vp[0] || '')) || (!!np && np.some(t => claimKnownPlural(t))));
         if (!subject || !predicate) return null;
         const words = { np: np ? np.join(' ') : null, vp: vp.join(' '), pronoun: pronoun ? lower[0] : null, restrictorVp };
         if (quant === 'no') return Object.assign({ kind: 'all', subject, predicate: negateClaimProp(predicate) }, words);
@@ -17463,7 +17535,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // smoke", "the woman who fears change | left" -- not "who sings |
                 // dances".
                 found.forEach((f, k) => {
-                    if (f.q === object && ws[f.q].noun && found.slice(k + 1).some(g => g.v === 'strong' || f.v === 'weak')) return;
+                    if (f.q === object && ws[f.q].noun && found.slice(k + 1).some(g => g.v === 'strong' || f.v === 'weak') &&
+                        // Not a verb that takes the claim after it: "everyone who
+                        // cheats | thinks Bob will win" (r27.149).
+                        !(claimAttitudeWord(ws[f.q].w) && claimSynNounPhrases(ws, f.q + 1).some(p => claimSynVerbStart(ws, p.end, p.number) === 'strong'))) return;
                     add(f.q, o.number);
                 });
                 if (own >= 0) add(ws.length, o.number);
@@ -32091,7 +32166,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // by its own words (r27.133; they had gone uncolored).
             const runs = at < 0 && !f.np ? icSplitRuns(src, f.subject, f.predicate) : null;
             const kind = runs ? runs.subject : at > 0 ? src.slice(0, at).trim() : (f.np || '');
-            return [{ key: 'p:' + f.subject, words: kind, kids: icRestrictor(f.subject, kind) },
+            // The kind in one spelling: "everyone who cheats" meets "a person
+            // who cheats" (r27.149; they had been dimmed).
+            return [{ key: 'p:' + claimPropCanon(f.subject), words: kind, kids: icRestrictor(f.subject, kind) },
                     { key: 'p:' + String(f.predicate).replace(/^\u00ac/, ''), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made }];
         }
         if (f.kind === 'pred' && f.term && f.prop) {
@@ -32104,7 +32181,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (f.kind === 'and' && f.compound && (f.parts || []).length && f.parts.every(x => x.kind === 'pred' && x.term === f.parts[0].term)) {
             const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
             if (vp) return [{ key: 't:' + f.parts[0].term, words: cl.form.subjectText || f.subjectText || '' },
-                    { key: 'p:' + String(f.compound).replace(/^\u00ac/, ''), words: vp, said: true, neg: icDenies(said) !== made }];
+                    { key: 'p:' + claimPropCanon(String(f.compound).replace(/^\u00ac/, '')), words: vp, said: true, neg: icDenies(said) !== made }];
         }
         return null;
     }
@@ -32423,8 +32500,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // conclusion denies of a thing goes on denied: "every raven" in
             // "every raven is black", with "Poe is not a raven" (r27.133; it
             // had gone on plain).
+            // A predicate with a pronoun its kind binds, said of the
+            // conclusion's thing: "believes that they are smart" goes on as
+            // "believes that he is smart" (r27.149).
+            const filled = sp => /\uE004/.test(sp.key) ? cParts.filter(t => /^t:/.test(t.key)).map(t => 'p:' + claimFillBound(sp.key.slice(2), t.key.slice(2))) : [];
             const place = (sp, pool) => {
-                const inC = cParts.find(x => x.key === sp.key);
+                const inC = cParts.find(x => x.key === sp.key || filled(sp).includes(x.key));
                 if (inC) { sp.role = 'c'; sp.denied = !!inC.said && (sp.said ? sp.neg !== inC.neg : !!inC.neg); return; }
                 if (pool.some(x => x !== sp && x.key === sp.key)) { sp.role = 'link'; sp.color = colorOf(x => x.key === sp.key, { key: sp.key }); }
             };

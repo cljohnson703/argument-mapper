@@ -4,6 +4,30 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: a quantifier binds a pronoun in its own verb phrase (r27.149)
+
+The next item of the queue: "Everyone who cheats thinks they will win".
+
+* "Every student believes that they are smart" says of each student that they believe it of themselves. Said of Bob, it is "Bob believes that he is smart"; with "Bob is a student", that follows by universal modus ponens.
+  * The check had said that "they" has nothing in the box to refer to.
+  * Without "that" ("everyone thinks they are right"), and with "their" ("every student loves their mother"), it had kept the pronoun and said nothing, so no case of it followed.
+* It holds for "every", "no", "everyone", "some" and "someone"; for "they", "he" and "she" opening a claim the verb takes; for "them", "him" and "her" inside that claim ("every student thinks Mary loves them"); and for "their", "his", "her" and "its" before a noun.
+* Not where the box names what the pronoun is: in "every student who loves Mary thinks she is smart", "she" is Mary, as before. Not "everyone loves him", whose "him" is someone else.
+* "Bob thinks he will win" and "Bob is a person" give "Someone thinks they will win", by expository syllogism.
+* "Some student thinks they will win" and "Some student thinks that they will win" are one claim; the "that" had made them two.
+* "Everyone who cheats | thinks Bob will win": the verb that takes the claim had been read into the subject ("everyone who cheats thinks Bob | will win"). Likewise "the man who left | says Bob will win". "People who eat meat | smoke" is read as before.
+* Colors:
+  * "Believes that they are smart" goes on as "believes that he is smart".
+  * "Everyone who cheats" meets "is a person who cheats". The two had been dimmed, the kind spelled two ways.
+* One of the 4,542 sentences in the corpus reads differently: "Every teacher loves her job", whose "her" is now each teacher's.
+
+Tests:
+* rules-r27-ordinary-test.js has 104 checks; the four new ones that test the change fail on r27.148.
+* colors-r27-inference-test.js has 136 checks; the two new ones fail on r27.148.
+* Take-one-out: every edit is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: "Switch on" in Review mode too (r27.148)
 
 The user, of showing the button in Review mode and hiding it only for view-only links: "Yes".
