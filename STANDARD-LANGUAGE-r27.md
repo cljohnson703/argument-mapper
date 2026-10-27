@@ -4,6 +4,40 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 27: "Switch on", from the step's tag and from the list of steps (r27.144)
+
+The user, of a "Switch on" button in the check's hint, after two mockups (in a window from the tag, or in the list of steps): "both".
+
+* A step that a rule this map has switched off would certify now has a way to switch that rule on. The check already named the switch: "With conversion switched on in the Logic panel (Replacement rules), the premises would give …".
+* Clicking the step's tag opens the check's words, a button "Switch on conversion for this map" and "Every step…". The tag's tip says what the click does.
+* In the list of steps, a "Switch on" button follows the same words, and the list stays open with the row certified.
+* The button works for contraries and contradictories, for metaphysical necessity, and for any axiom of its system.
+* The switch is the Logic panel's own, saved with the map; the panel switches it off again.
+* Where the map is read-only there is no button, and the tag opens the list as before.
+
+Tests:
+* rules-r27-ordinary-test.js has 76 checks. The new ones that test the button fail on r27.143; the read-only one holds on both.
+* Take-one-out: all 12 edits of r27.143 and r27.144 are caught.
+* No reading changes.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 27: a switched-off rule stays off, even inside "every"; syllogism names, a switch inside Familiar steps (r27.143)
+
+The user, of the loophole: "sure, close the loophole". Of syllogism names: "If the rule has an ordinary name, keep it; if it doesn't, default to the syllogism name; toggle syllogism names ON for those that want to replace the ordinary with syllogism names, default OFF"; and of where the switch goes: "Inside 'Familiar steps'".
+
+* A rule switched off no longer comes back through a rule used inside "every" or "some". With conversion off, "No dogs are cats", so "No cats are dogs", had still been certified as "transposition under ∀". It is not certified now, and the check names the switch. A rule under a quantifier still takes its own steps, as in "Every raven is black and old", so "every raven is black".
+* "Syllogism names" is a switch at the bottom of the Familiar steps list, set apart by a line and off by default. With it on, Barbara and Celarent are named "categorical syllogism (Barbara)" and "(Celarent)" in place of "universal syllogism". Darii and Ferio are named "(Darii)" and "(Ferio)" in place of "existential syllogism".
+* The other moods already had only their syllogism names. "Poe loves every raven", so "Poe loves every crow", keeps "universal syllogism", and universal modus ponens keeps its name too.
+* The switch is saved with the map. It is not counted among the group's rules.
+
+Tests:
+* rules-r27-ordinary-test.js has 70 checks; the three that test the change fail on r27.142.
+* Take-one-out: every edit is caught.
+* No reading changes.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 26: "every raven is black and old" is "every raven is black and every raven is old"; technical steps off by default (r27.142)
 
 The user, of the rules textbooks have and arguments rarely use: "Switch those to on-by-default that you think reflect ordinary reasoning. Tell me why for both those you turned on and those you turned off."

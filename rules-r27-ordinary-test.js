@@ -70,6 +70,20 @@
  *    congruence, Boolean absorption, the ⊥ laws, the rules of passage and
  *    the vacuous quantifier anywhere, a group off by default; resolution,
  *    change of bound variable and quantifier distribution stay on.
+ * 17. (r27.143) A rule under a quantifier does not take a step a rule the
+ *    map has switched off takes whole (the user: "sure, close the
+ *    loophole"): with conversion off, "No dogs are cats", so "No cats are
+ *    dogs", had passed as transposition under ∀. And syllogism names, a
+ *    switch off by default inside Familiar steps (the user: "toggle
+ *    syllogism names ON for those that want to replace the ordinary with
+ *    syllogism names, default OFF"; "Inside 'Familiar steps'"): on,
+ *    Barbara, Celarent, Darii and Ferio by their mood.
+ * 18. (r27.144) A "Switch on" button (the user: "both"): a step that a
+ *    switched-off rule would certify opens, from its tag, the check's words
+ *    and a button that switches the rule on for this map; the list of steps
+ *    has the same button after the words. Not where the map is read-only.
+ *    Contraries and contradictories, metaphysical necessity and its axioms
+ *    too.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -423,6 +437,87 @@ console.log('\n-- 16. (r27.142) quantifier distribution over a kind; the technic
     const ON = [[['Either Bob or Al did it.', 'Either Bob did not do it or Cy helped.'], 'Either Al did it or Cy helped.', 'resolution'], [['\u2203x B(x)'], '\u2203y B(y)', 'change of bound variable'],
         [['Something is black or white.'], 'Something is black or something is white.', 'quantifier distribution, anywhere']];
     ok(ON.every(([p, c, r]) => step(p, c).rule === r), 'resolution, change of bound variable and quantifier distribution stay on', J(ON.map(([p, c]) => step(p, c).rule)));
+}
+
+console.log('\n-- 17. (r27.143) the loophole closed; syllogism names --');
+{
+    const conv = without('conversion', () => step(['No dogs are cats.'], 'No cats are dogs.'));
+    ok(!conv.rule && conv.why === 'With conversion switched on in the Logic panel (Replacement rules), the premises would give \u201cNo cats are dogs\u201d.',
+        'conversion off: "No dogs are cats", so "No cats are dogs", is no longer transposition under \u2200 -- the check names the switch', J(conv));
+    ok(step(['No dogs are cats.'], 'No cats are dogs.').rule === 'conversion' && step(['Every raven is black and old.'], 'Every raven is black.').rule === 'conjunction elimination under \u2200',
+        'on, it is conversion; a rule under a quantifier still takes its own steps');
+    const MOODS = [[['Every man is mortal.', 'Every Greek is a man.'], 'Every Greek is mortal.', 'Barbara', 'universal syllogism'],
+        [['No man is a fish.', 'Every Greek is a man.'], 'No Greek is a fish.', 'Celarent', 'universal syllogism'],
+        [['Every man is mortal.', 'Some Greek is a man.'], 'Some Greek is mortal.', 'Darii', 'existential syllogism'],
+        [['No man is a fish.', 'Some Greek is a man.'], 'Some Greek is not a fish.', 'Ferio', 'existential syllogism']];
+    const KEEP = [[['Poe loves every raven.', 'Every crow is a raven.'], 'Poe loves every crow.'], [['No fish is a mammal.', 'Every whale is a mammal.'], 'No whale is a fish.'],
+        [['Every man is mortal.', 'Socrates is a man.'], 'Socrates is mortal.']];
+    const off = MOODS.map(([p, c]) => step(p, c).rule);
+    ev("setDeductiveRule(['syllogism-names'], true); return 1;");
+    const on = MOODS.map(([p, c]) => step(p, c).rule), keep = KEEP.map(([p, c]) => step(p, c).rule);
+    ev("setDeductiveRule(['syllogism-names'], false); return 1;");
+    ok(J(off) === J(MOODS.map(m => m[3])) && J(on) === J(MOODS.map(m => 'categorical syllogism (' + m[2] + ')')),
+        'off by default: "universal syllogism", "existential syllogism"; on: "categorical syllogism (Barbara)", Celarent, Darii, Ferio', J([off, on]));
+    ok(J(keep) === J(['universal syllogism', 'categorical syllogism (Cesare)', 'universal modus ponens']),
+        'on, "Poe loves every crow" keeps its name, as do Cesare and universal modus ponens', J(keep));
+    const sw = ev(`toggleEvalOverview(); var cb = document.querySelector('#logic-rules-familiar [data-setting="syllogism-names"]');
+        var r = { inList: !!cb, checked: !!cb && cb.checked, title: cb ? cb.parentElement.title : '' };
+        if (cb) { cb.click(); r.saved = !!(state.logic && state.logic.rules && state.logic.rules['syllogism-names']); r.ticked = cb.checked;
+            r.count = document.querySelector('[data-count="familiar"]').textContent; cb.click(); r.cleared = !state.logic.rules['syllogism-names'];
+            setDeductiveRule(['syllogism-names'], true); renderLogicPanel(); r.synced = cb.checked; setDeductiveRule(['syllogism-names'], false); renderLogicPanel(); r.synced = r.synced && !cb.checked; }
+        r.css = [].map.call(document.querySelectorAll('style'), function (x) { return x.textContent; }).join(' ').indexOf('.logic-rules .logic-names { grid-column: 1 / -1; margin-top: 3px; padding-top: 5px; border-top: 1px solid') >= 0;
+        toggleEvalOverview(); return r;`);
+    ok(sw.inList && sw.checked === false && sw.saved && sw.ticked && sw.cleared && sw.synced && sw.count === '' && /by their mood/.test(sw.title) && sw.css,
+        'a switch inside Familiar steps\' list, a row of its own under a line, off by default, saved with the map, not counted among its rules', J(sw));
+}
+
+console.log('\n-- 18. (r27.144) a switch switched on from its step --');
+{
+    const r = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['No cats are dogs.'], collapsed: [], x: 30000, y: 30000, children: [{ id: 'A', type: 'support', texts: ['No dogs are cats.'], collapsed: [], children: [] }] }];
+        ensureCollabFields(state); selectedIds = []; setDeductiveRule(['conversion'], false); if (!deductiveLive) toggleDeductiveLive(); render();
+        var tag = document.querySelector('.derivation-tag[data-step="A"]'), r = { tag: tag && tag.textContent, title: tag ? tag.title : '' };
+        tag.click();
+        var pop = document.getElementById('reading-chooser');
+        r.kind = pop && pop.dataset.kind; r.text = pop ? pop.querySelector('.rc-said').textContent : ''; r.btn = pop ? pop.querySelector('.rc-apply').textContent : ''; r.all = pop ? pop.querySelector('.rc-all').textContent : '';
+        refreshDerivationTags(); r.kept = document.getElementById('reading-chooser') === pop;
+        if (pop) pop.querySelector('.rc-apply').click();
+        r.closed = !document.getElementById('reading-chooser'); r.on = claimRuleOn('conversion');
+        var again = document.querySelector('.derivation-tag[data-step="A"]'); r.after = again && again.textContent;
+        setDeductiveRule(['conversion'], false); render(); openDeductiveCheck('A');
+        var b = document.querySelector('#logic-modal-body .logic-step[data-step="A"] .logic-switch-on');
+        r.listBtn = b && b.textContent; r.listTitle = b && b.title;
+        if (b) b.click();
+        r.listOn = claimRuleOn('conversion'); r.listRule = document.querySelector('#logic-modal-body .logic-step[data-step="A"] .logic-rule').textContent;
+        r.listOpen = document.getElementById('logic-modal-backdrop').classList.contains('open');
+        r.css = [].map.call(document.querySelectorAll('style'), function (x) { return x.textContent; }).join(' ').indexOf('.logic-step .logic-switch-on { margin-left: 8px;') >= 0;
+        closeDeductiveCheck();
+        setDeductiveRule(['conversion'], false); reviewMode = true; render();
+        var ro = document.querySelector('.derivation-tag[data-step="A"]'); r.roTitle = ro.title; ro.click();
+        r.roPop = !!document.getElementById('reading-chooser'); r.roList = document.getElementById('logic-modal-backdrop').classList.contains('open');
+        r.roBtn = !!document.querySelector('#logic-modal-body .logic-switch-on');
+        closeDeductiveCheck(); reviewMode = false; setDeductiveRule(['conversion'], true); state.trees = []; render();
+        return r;`);
+    ok(r.tag === '? not recognized' && /\. Click to switch on conversion\.$/.test(r.title), 'a step a switched-off rule would certify: its tag\'s tip says a click switches it on', J(r));
+    ok(r.kind === 'switch' && r.text === 'With conversion switched on in the Logic panel (Replacement rules), the premises would give \u201cNo cats are dogs\u201d.' &&
+        r.btn === 'Switch on conversion for this map' && r.all === 'Every step\u2026' && r.kept,
+        'clicking the tag opens the check\'s words, a button, and "Every step\u2026"; the tags drawn again, it stays', J(r));
+    ok(r.closed && r.on && r.after === '\u2713 conversion', 'the button switches conversion on for this map, and the step is certified', J(r));
+    ok(r.listBtn === 'Switch on' && r.listTitle === 'Switch on conversion for this map' && r.listOn && r.listRule === '\u2713conversion' && r.listOpen && r.css,
+        'in the list of steps, the same button after the words; the list stays open, the row certified', J(r));
+    ok(/ Click for every step\.$/.test(r.roTitle) && !r.roPop && r.roList && !r.roBtn, 'where the map is read-only, no button: the tag opens the list', J(r));
+    const sws = ev(`var one = function (ps, c) { var trees = [{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [{ id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }];
+            return claimStepSwitch(collectDeductiveSteps(trees)[0]); };
+        setDeductiveRule(['opposites'], false);
+        var out = [one(['Mary is unhappy.'], 'Mary is not happy.')];
+        setDeductiveRule(['opposites'], true);
+        out.push(one(['It is metaphysically necessary that Bob exists.'], 'Bob exists.'));
+        setDeductiveRule(['modal-meta'], true); setDeductiveRule(['modal-meta-5', 'modal-meta-4', 'modal-meta-B'], false);
+        out.push(one(['It is metaphysically necessary that Bob exists.'], 'It is metaphysically necessary that it is metaphysically necessary that Bob exists.'));
+        state.logic = null; claimRulesCache = null;
+        out.push(one(['Bob is tall.'], 'Al is tall.'));
+        return out;`);
+    ok(J(sws) === J([{ ids: ['opposites'], name: 'contraries and contradictories' }, { ids: ['modal-meta'], name: 'Metaphysical necessity' }, { ids: ['modal-meta-4'], name: 'axiom 4' }, null]),
+        'contraries and contradictories, metaphysical necessity, an axiom of its system; nothing where no switch would give the step', J(sws));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
