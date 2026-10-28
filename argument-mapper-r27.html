@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-27 r27.160';
+    const APP_BUILD = '2026-10-28 r27.164';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13184,7 +13184,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // ("A, and both B and C"; "A ∧ (B ∧ C)"), which stays one part. Order and
     // grouping are content: commutation and association change them.
     function makeClaimJunction(kind, parts) {
-        return { kind, parts: [].concat(...parts.map(p => p.kind === kind && !p.iff && !p.grouped ? p.parts : [p])) };
+        // A clause read as an "and" ("a brain process is a physical space":
+        // physical, a space) stays one part, with its own words (r27.161).
+        return { kind, parts: [].concat(...parts.map(p => p.kind === kind && !p.iff && !p.grouped && !(p.compound && p.src) ? p.parts : [p])) };
     }
     // A part kept as a group: a list of the same kind inside a list.
     function claimGroupedIn(kind, p) {
@@ -17219,12 +17221,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // may sing): read as before.
             const bare = p => { const t = claimTokens(p); return j && t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1) : t; };
             if (j && j.copula && !j.negated && j.kind === 'and' && j.parts.length === 2 && (quant === 'some' || quant === 'no') && pronoun &&
-                (subject === CLAIM_ANY || subject === CLAIM_PERSON && j.parts.every(p => claimPersonOnly(['is'].concat(bare(p))))) &&
+                (subject === CLAIM_ANY || subject === CLAIM_PERSON && j.parts.some(p => claimPersonOnly(['is'].concat(bare(p))))) &&
                 j.parts.every(p => !claimCopulaVerbPart(claimTokens(p)[0], j.head[0]))) {
                 const q = tokens.slice(0, tokens.length - vp.length).join(' '), is = j.head.join(' ');
                 const plain = p => { const t = claimTokens(p); return t.length > 1 && claimWord(t[0]) === claimWord(j.head[0]) ? t.slice(1).join(' ') : p; };
-                const read = readClaim((q + ' that ' + is + ' ' + plain(j.parts[0]) + ' ' + is + ' ' + plain(j.parts[1])).replace(/\s+/g, ' ').trim());
-                if (read && read.kind === (quant === 'no' ? 'all' : 'some')) return Object.assign({}, read, { spelled: true });
+                // Of people: one of the nouns names people only, so "one" adds
+                // nothing, and the claim reads as "nothing" would -- "no one is
+                // a student and a singer", "no student is a singer" (r27.163;
+                // only where both nouns did, before).
+                const said = (q + ' that ' + is + ' ' + plain(j.parts[0]) + ' ' + is + ' ' + plain(j.parts[1])).replace(/\s+/g, ' ').trim();
+                const read = readClaim(subject === CLAIM_PERSON ? said.replace(/^\S+(?:\s+one)?/, quant === 'no' ? 'nothing' : 'something') : said);
+                if (read && read.kind === (quant === 'no' ? 'all' : 'some')) return Object.assign({}, read, { spelled: true }, subject === CLAIM_PERSON ? { src: said, pronoun } : {});
             }
             // "Every raven is black and then flies": read whole, as "every
             // raven sings and then flies" is (it had asked about "a black fly").
@@ -19567,7 +19574,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return (form.kind === 'unsound' ? 'US(' : 'IV(') + (form.inner ? key(form.inner) : '*') + '|' + form.from.map(key).sort().join('&') + ')';
             case 'if': { const m = claimMergedIf(form); return (m.counterfactual ? 'J(' : 'I(') + claimInOrder(m.conds.map(key)).join('&') + '>' + key(m.cons) + ')'; }
             // A biconditional is its own claim, not the conjunction of its conditionals.
-            case 'and': return (form.iff ? 'B[' : 'C[') + claimInOrder((claimUnorderedKeys ? claimFlatParts(form) : form.parts).map(key)).join(';') + ']';
+            // A clause read as an "and" is keyed as parts of the list it is in (r27.161).
+            case 'and': return (form.iff ? 'B[' : 'C[') + claimInOrder((claimUnorderedKeys ? claimFlatParts(form)
+                : [].concat(...form.parts.map(p => p.kind === 'and' && p.compound && !p.iff ? p.parts : [p]))).map(key)).join(';') + ']';
             // "A and then B": in its order, always -- the order is what it says.
             case 'then': return 'T[' + form.parts.map(key).join(';') + ']';
             case 'or': return 'D[' + claimInOrder((claimUnorderedKeys ? claimFlatParts(form) : form.parts).map(key)).join(';') + ']';
@@ -21004,12 +21013,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     // The indirect object moved: "gave Mary a book", "gave a book to Mary".
-    // Not "leave" (r27.158): "the war left Mary a widow" says what Mary was
-    // left as, and is not "the war left a widow to Mary". Nor "throw" with
-    // what is no thing thrown: "threw Mary a party" is not "threw a party to
-    // Mary".
+    // Not "leave" where what is left is a word for what one is left as: "the
+    // war left Mary a widow" is not "the war left a widow to Mary" (r27.158;
+    // it had been) -- but "Bob left Mary a fortune" is "Bob left a fortune to
+    // Mary" (r27.162). A noun of people or of a state; "a quadriplegic", on
+    // no list here, is not caught. Nor "throw" with what is no thing thrown:
+    // "threw Mary a party" is not "threw a party to Mary".
     const CLAIM_DATIVE_VERBS = new Set(('give send show tell offer lend sell hand pass bring teach pay owe promise throw award grant feed serve write ' +
-        'read mail loan assign deny email').split(' '));
+        'read mail leave loan assign deny email').split(' '));
+    const CLAIM_LEFT_AS = new Set(('orphan pauper beggar invalid wreck cripple amputee millionaire billionaire prisoner captive slave hostage ' +
+        'ruin shell shadow mess survivor widow widower hero victim stranger').split(' '));
+    const claimLeftAs = ws => { const w = claimSingularOf(claimWord(ws[ws.length - 1] || ''));
+        return CLAIM_LEFT_AS.has(w) || CLAIM_HE_OR_SHE_NOUNS.has(w) || CLAIM_PERSON_ONLY_NOUNS.has(w); };
     const CLAIM_NOT_THROWN = /^(?:party|parties|fit|fits|tantrum|tantrums|look|looks|glance|glances|punch|punches)$/;
     function claimDativeSwaps(f) {
         const parts = claimSaidParts(f);
@@ -21020,7 +21035,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const v = l[i], bases = claimUnique(claimPastBases(v).concat(claimParticipleBases(v), claimRegularBases(v, 's'), [v]));
         if (!bases.some(b => CLAIM_DATIVE_VERBS.has(b))) return out;
         const head = vp.slice(0, i + 1), r = vp.slice(i + 1), lr = r.map(claimWord);
-        const say = (a, b, to) => (to ? a : b).length && bases.includes('throw') && CLAIM_NOT_THROWN.test(claimWord((to ? a : b)[(to ? a : b).length - 1])) ? null : out.push({ text: subject.concat(head, to ? a.concat(['to'], b) : a.concat(b)).join(' '),
+        const say = (a, b, to) => (to ? a : b).length && (bases.includes('throw') && CLAIM_NOT_THROWN.test(claimWord((to ? a : b)[(to ? a : b).length - 1])) ||
+            bases.includes('leave') && claimLeftAs(to ? a : b)) ? null : out.push({ text: subject.concat(head, to ? a.concat(['to'], b) : a.concat(b)).join(' '),
             blocked: claimQuantifiedWords(a) && claimQuantifiedWords(b) ? 'scope' : null, pair: [a.join(' '), b.join(' ')] });
         const t = lr.indexOf('to');
         // "a book to Mary": "Mary a book" -- not "it to Mary", "Mary it".
@@ -22604,9 +22620,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'and-elim', name: 'conjunction elimination',
           gloss: '"A and B" gives A, and gives B',
           // "A and then B" too: it gives A, B, and "A and B" -- in its order.
+          // A predication read as an "and" is one part of its list, and its
+          // halves are parts too: "Bob is tall, but Al is a physical space"
+          // gives "Al is physical" (r27.161).
           test: (P, C) => P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
-              (P[0].parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, P[0].parts) ||
-                  (P[0].kind === 'then' && claimsSameInOrder(C.parts, P[0].parts))))) },
+              [P[0].parts, [].concat(...P[0].parts.map(p => p.kind === 'and' && p.compound && !p.iff ? p.parts : [p]))].some(parts =>
+                  parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, parts) ||
+                      (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts))))) },
         { id: 'or-intro', name: 'disjunction introduction',
           gloss: 'A gives "A or B", for any B',
           test: (P, C) => P.length === 1 && C.kind === 'or' &&
@@ -24878,12 +24898,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!premises.length) return true;
         if (premises.length !== 1 || entries.length !== 2) return false;
         const p = premises[0], a = A[p], c = A[last];
-        if (a.kind !== 'all' || c.kind !== 'all' || S[p].kind !== 'some' || S[last].kind !== 'some' || a.subject !== c.subject ||
-            a.restrictorVp || c.restrictorVp || a.pronoun || c.pronoun || !/^=[a-z]/.test(String(a.subject))) return false;
+        if (a.kind !== 'all' || c.kind !== 'all' || S[p].kind !== 'some' || S[last].kind !== 'some' || a.subject !== c.subject) return false;
         const plain = String(a.subject).slice(1).split(' ').concat(String(entries[0].note.subject || '').replace(/\uE000/g, '').trim().toLowerCase().split(/\s+/));
-        if (plain.some(w => !/^[a-z][a-z-]+$/.test(w) || /^(?:that|which|who|whom|whose|of|with|without|in|on|at|by|for|from|to|and|or|not|no|non)$/.test(w))) return false;
         const says = x => String(x || '').toLowerCase().split(/[^a-z-]+/).some(w => plain.some(v => w.indexOf(v) >= 0));
-        return !texts.some((t, i) => i !== p && i !== last && says(t)) && !says(a.predicate) && !says(c.predicate);
+        if (!a.restrictorVp && !c.restrictorVp && !a.pronoun && !c.pronoun && /^=[a-z]/.test(String(a.subject)) &&
+            !plain.some(w => !/^[a-z][a-z-]+$/.test(w) || /^(?:that|which|who|whom|whose|of|with|without|in|on|at|by|for|from|to|and|or|not|no|non)$/.test(w)) &&
+            !texts.some((t, i) => i !== p && i !== last && says(t)) && !says(a.predicate) && !says(c.predicate)) return true;
+        // Or the step tried on one raven that nothing else in the step names
+        // (r27.164): "it is a bird that chases ravens" gives "it is a bird".
+        // Then whatever the premise says of a raven, the box says of it --
+        // "ravens" elsewhere or no -- and so of most of them, or of them in
+        // general. ("Ravens are birds that chase ravens" to "Ravens are
+        // birds" had asked.)
+        const fols = A.map(f => f && claimToFol(f));
+        if (fols.some(t => !t)) return false;
+        const avoid = new Set();
+        fols.forEach(t => folNames(t, avoid));
+        const k = folFresh('§k', avoid);
+        const one = t => t.op === 'all' && t.body && t.body.op === 'imp' ? symbolicToClaim(folSubst(t.body.b, t.v, k)) : null;
+        const pa = one(fols[p]), pc = one(fols[last]);
+        return !!(pa && pc && certifyStep(A.slice(0, -1).map((f, i) => i === p ? pa : f), [pc], false));
     }
     // Whether a generic's answer decides a step. Every box of the step is read
     // the same way for each subject -- all, some, most, in general, as its

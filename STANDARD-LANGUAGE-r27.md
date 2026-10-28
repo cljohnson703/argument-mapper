@@ -4,6 +4,68 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 28: the step tried on one raven nothing else names (r27.164)
+
+The user, of "Ravens are birds that chase ravens" to "Ravens are birds" asking again since r27.157: "What do you suggest?"
+
+* A fourth way the check can be sure that a step following on "all" and "some" follows on "most" and "in general" too: with the plural in one premise and in the box a support is for, each the whole of its box, the step is tried on one raven that nothing else in the step names. If "it is a bird that chases ravens" gives "it is a bird", then whatever the premise says of a raven, the box says of it, whatever else the step says of ravens; and so of most of them, or of them in general.
+* So "Ravens are birds that chase ravens" gives "Ravens are birds" by conjunction elimination again, and "Ravens that fly are birds and black" gives "Ravens that fly are black".
+* With the plural in two premises, the check still asks: "Ravens are black" and "Ravens are big" give "Ravens are black and big" only if "ravens" means all of them.
+
+Tests:
+* rules-r27-ordinary-test.js has 149 checks; the first of the two new ones (section 38) fails on r27.163, and the second guards two premises.
+* Take-one-out: the one change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 28: "no one is a student and a singer" is "no student is a singer" (r27.163)
+
+The user, of "a student and a singer" not being read so: "I don't understand."
+
+* "No one" is no person. "No one is a student and a singer" says that no person is both. Every student is a person, so whatever is both a student and a singer is a person anyway, and "one" adds nothing: the claim is "No student is a singer". So one of the two nouns naming people only is enough. r27.160 had asked it of both, and "singer" names more than people (a bird may sing).
+* So "No one is a student and a singer" gives "No student is a singer"; with "Bob is a student", "Bob is not a singer" by universal modus ponens; and "No one is a singer and a student" is "No singer is a student", in the order written. Likewise "someone": "Someone is a singer and a student" gives "Some student is a singer" by conversion.
+* Still not "No one is a dog and a pet": neither noun names people only, and no person is a dog.
+
+Tests:
+* rules-r27-ordinary-test.js has 147 checks; the new one (section 37) fails on r27.162. Section 34's check no longer holds "a student and a singer" back.
+* Take-one-out: each of the 2 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.164 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
+### October 28: "Bob left Mary a fortune" is "Bob left a fortune to Mary" again (r27.162)
+
+The user, of r27.158 taking "leave" off the list: "Can you fix this?"
+
+* "Bob left Mary a fortune" is "Bob left a fortune to Mary" again, by indirect object, and back; likewise "Bob left Mary the house".
+* Not where what is left is a word for what one is left as: "The war left Mary a widow" does not give "The war left a widow to Mary", nor "The war left the boys orphans" "The war left orphans to the boys", nor "The crash left Bob a wreck" "The crash left a wreck to Bob". These are a noun for people, or a word on a short list ("orphan", "wreck", "millionaire", "prisoner" and others).
+* A word for what one is left as that is on none of these lists is not caught: "The accident left Mary a quadriplegic" would give "The accident left a quadriplegic to Mary".
+
+Tests:
+* rules-r27-ordinary-test.js has 146 checks; the first of the two new ones (section 36) fails on r27.161, and the second guards "a widow", "orphans" and "a wreck".
+* Take-one-out: each of the 2 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.164 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
+### October 28: "an after-image is not a physical space, but a brain process is": colors in their places (r27.161)
+
+The user, of a map whose modus ponens had its colors two words off: "The coloring here isn't working as expected."
+
+* "If an after-image is not a physical space, but a brain process is, then an after-image is not a brain process" and "An after-image is not a physical space, but a brain process is" give "An after-image is not a brain process" by modus ponens. In the "if" box, the colors had stood two words off: "an after-image" at the start lit as going on, and "then an after-image" lit as meeting the other box.
+* The cause: "a brain process is" is read as "a brain process is a physical space", which is read as "is physical, and is a space". Joined to the clause before it, those two halves had become parts of the list on their own, with none of the box's words, so the colors were placed by guesswork. It happened with "a physical space" and not "a physical thing" (read as "physical", one part).
+* Now a clause read so stays one part of the list, with its own words: "an after-image is not a physical space" meets the other box, so does "a brain process is", and "an after-image is not a brain process" goes on.
+* In the steps tried (eighteen with such a clause in a list, and every suite), nothing the check takes or refuses changed. Conjunction elimination still takes a half of such a clause: "Bob is tall, but Al is a physical space" gives "Al is physical". A list's key is as before, so the same claims are the same claim. Within one verb phrase nothing changes: "Ravens are black and noisy birds" says "birds" once, as before.
+
+Tests:
+* rules-r27-ordinary-test.js has 144 checks; the first of the three new ones (section 35) fails on r27.160, and the other two guard conjunction elimination and the list's key.
+* colors-r27-inference-test.js has 141 checks; the new one fails on r27.160.
+* Take-one-out: each of the 3 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* Released with r27.164 and tested on that build: all 91 suites pass, and so does the public build's smoke test.
+
 ### October 27: "no one is a student and a teacher" is "no student is a teacher" (r27.160)
 
 The user: "Go ahead and fix these."

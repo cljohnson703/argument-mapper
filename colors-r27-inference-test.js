@@ -977,6 +977,15 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'with "for", the clause goes on too', J(bought));
     }
 
+    console.log('\n-- (r27.161) "an after-image is not a physical space, but a brain process is" --');
+    {
+        const mp = paint(['If an after-image is not a physical space, but a brain process is, then an after-image is not a brain process.',
+            'An after-image is not a physical space, but a brain process is.'], 'An after-image is not a brain process.');
+        ok(mp.rule === 'modus ponens' && J(runs(mp.boxes[0], /^ic-k/)) === J(['an after-image is not a physical space', 'a brain process is']) &&
+            J(runs(mp.boxes[0], /^ic-c/)) === J(['an after-image is not a brain process']),
+            'the "if" clause meets the other box, and the "then" clause goes on, each in its own words (they had stood two words off)', J(mp));
+    }
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     W.dom.window.close();
     console.log('\n' + pass + ' passed, ' + fail + ' failed');

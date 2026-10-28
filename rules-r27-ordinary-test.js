@@ -182,8 +182,20 @@
  * 34. (r27.160) "No one is a student and a teacher" is "no student is a
  *    teacher", and "someone is a student and a teacher" "some student is a
  *    teacher", where each noun names people only (the user: "Go ahead and
- *    fix these"). Not "no one is a dog and a pet", nor "a student and a
- *    singer".
+ *    fix these"). Not "no one is a dog and a pet", nor (until r27.163, section
+ *    37) "a student and a singer".
+ * 35. (r27.161) A predication read as an "and" ("is a physical space":
+ *    physical, a space) stays one part of a list it is in: "an image is not
+ *    a physical space, but a brain process is" is two parts, not three (in
+ *    the colors suite, its "if" clause had stood two words off); and
+ *    conjunction elimination still takes a half of it.
+ * 36. (r27.162) "Bob left Mary a fortune" is "Bob left a fortune to Mary"
+ *    again (the user: "Can you fix this?"); not "the war left Mary a widow".
+ * 37. (r27.163) "No one is a student and a singer" is "no student is a
+ *    singer": one noun naming people only is enough.
+ * 38. (r27.164) "Ravens are birds that chase ravens" gives "Ravens are
+ *    birds", tried on one raven nothing else names; two premises with the
+ *    plural still ask.
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -975,9 +987,47 @@ console.log('\n-- 34. (r27.160) "no one is a student and a teacher" is "no stude
         'one claim in two wordings, of people: conversion, universal modus ponens and modus ponens across them; "no student is a teacher" to "no one is a student and a teacher" is quantifier negation (each had not been recognized)', J(named));
     const kept = [[['No one is a student and a teacher.'], 'No one is a teacher and a student.'], [['Someone is a student and a teacher.'], 'Someone is a teacher and a student.'],
         [['It is not the case that someone is a student and a teacher.'], 'No one is a student and a teacher.'], [['No one is a student and a singer.'], 'No one is a singer and a student.'],
-        [['No one is a dog and a pet.'], 'No dog is a pet.'], [['No one is a student and a singer.'], 'No student is a singer.']].map(([p, c]) => step(p, c).rule);
-    ok(J(kept) === J(['commutation', 'commutation', 'quantifier negation', 'commutation', null, null]),
-        'the swaps are still commutation, and "someone" and "no one" still quantifier negation; not "no one is a dog and a pet" (no person is a dog), nor "a student and a singer" (a bird may sing)', J(kept));
+        [['No one is a dog and a pet.'], 'No dog is a pet.']].map(([p, c]) => step(p, c).rule);
+    // Since r27.163, "a student and a singer" too (section 37).
+    ok(J(kept) === J(['commutation', 'commutation', 'quantifier negation', 'commutation', null]),
+        'the swaps are still commutation, and "someone" and "no one" still quantifier negation; not "no one is a dog and a pet" (no person is a dog)', J(kept));
+}
+
+console.log('\n-- 35. (r27.161) a predication read as an "and" stays one part of its list --');
+{
+    const parts = ev(`var f = parseClaim('An image is not a physical space, but a brain process is.'); return [f.kind, f.parts.length, f.parts[1] && f.parts[1].compound, f.parts[1] && f.parts[1].subjectText];`);
+    ok(J(parts) === J(['and', 2, '=physical space', 'a brain process']),
+        '"an image is not a physical space, but a brain process is": two parts, the second "a brain process is a physical space" whole, with its own words (it had been three, the last two no words of the box)', J(parts));
+    const ELIM = [[['Bob is tall, but Al is a physical space.'], 'Al is physical.'], [['Bob is tall, but Al is a physical space.'], 'Al is a physical space.'],
+        [['Bob is tall and Al is a physical space.'], 'Al is a space.'], [['Bob is tall, but Al is a physical space.'], 'Bob is tall and Al is physical.']];
+    ok(!misses(ELIM, 'conjunction elimination').length, 'conjunction elimination still takes a half of it, or the whole', J(misses(ELIM, 'conjunction elimination')));    const keys = ev(`return [claimKey(parseClaim('Bob is tall, but Al is a physical space.')), claimKey(parseClaim('Bob is tall, and Al is physical and a space.'))];`);
+    ok(keys[0] === 'C[P:bob|=tall;P:al|=physical;P:al|=space]' && keys[0] !== keys[1],
+        'its key is the list\'s, as before: "but Al is a physical space" is keyed as its parts, and is not "and Al is physical and a space", written as a group', J(keys));
+}
+
+console.log('\n-- 36. (r27.162) "Bob left Mary a fortune" is "Bob left a fortune to Mary" again --');
+{
+    const LEFT = [[['Bob left Mary a fortune.'], 'Bob left a fortune to Mary.'], [['Bob left a fortune to Mary.'], 'Bob left Mary a fortune.'], [['Bob left Mary the house.'], 'Bob left the house to Mary.']];
+    ok(!misses(LEFT, 'indirect object').length, '"left Mary a fortune" and "left a fortune to Mary": indirect object (r27.158 had taken "leave" off the list)', J(misses(LEFT, 'indirect object')));
+    const AS = [[['The war left Mary a widow.'], 'The war left a widow to Mary.'], [['The war left the boys orphans.'], 'The war left orphans to the boys.'], [['The crash left Bob a wreck.'], 'The crash left a wreck to Bob.']];
+    ok(!certified(AS).length, 'not where what is left is a word for what one is left as: "a widow", "orphans", "a wreck"', J(certified(AS)));
+}
+
+console.log('\n-- 37. (r27.163) "no one is a student and a singer" is "no student is a singer" --');
+{
+    const named = [[['No one is a student and a singer.'], 'No student is a singer.'], [['No one is a singer and a student.'], 'No singer is a student.'],
+        [['No one is a student and a singer.', 'Bob is a student.'], 'Bob is not a singer.'], [['Someone is a singer and a student.'], 'Some student is a singer.'],
+        [['No one is a student and a singer.'], 'No one is a singer and a student.'], [['No one is a dog and a pet.'], 'No dog is a pet.']].map(([p, c]) => step(p, c).rule);
+    ok(J(named) === J(['quantifier negation', 'quantifier negation', 'universal modus ponens', 'conversion', 'commutation', null]),
+        'one noun naming people only is enough: "one" adds nothing, and the claim reads in the order written (each but the swap had not been recognized); still not "a dog and a pet"', J(named));
+}
+
+console.log('\n-- 38. (r27.164) the step tried on one raven nothing else names --');
+{
+    const ONE = [[['Ravens are birds that chase ravens.'], 'Ravens are birds.'], [['Ravens that fly are birds and black.'], 'Ravens that fly are black.']];
+    ok(!misses(ONE, 'conjunction elimination').length, '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read (it had asked)', J(misses(ONE, 'conjunction elimination')));
+    const two = step(['Ravens are black.', 'Ravens are big.'], 'Ravens are black and big.');
+    ok(!two.rule && /may mean all of them, some, most, or what holds in general/.test(two.why), 'with the plural in two premises, it still asks', J(two));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
