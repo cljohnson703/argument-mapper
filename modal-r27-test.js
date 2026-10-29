@@ -19,8 +19,9 @@
  * 4. With the group off nothing modal follows, and the check says what would
  *    take the step: the group switched on, or an axiom.
  * 5. "Necessarily", "it is necessary that", "possibly", "it is impossible
- *    that", "in every possible world": asked, with the group on, which kind
- *    is meant -- the answer written into the box. "Can" stays as it is.
+ *    that", "in every possible world": asked, with the group on or off, which
+ *    kind is meant (metaphysical, logical, physical, or what is known; r27.168)
+ *    -- the answer written into the box. "Can" stays as it is.
  * 6. The Logic panel: the group off by default; on, S5, with D, 4 and B
  *    implied (ticked and grayed); each choice of axioms named from the cube,
  *    and every implication the closure draws true of the frames.
@@ -55,9 +56,9 @@ function ok(cond, label, detail) {
 const setModal = axioms => ev(`state.logic = { base: 'standard', rules: ${axioms ? J(Object.assign({ 'modal-meta': true },
     ...['D', 'T', '4', 'B', '5'].map(a => ({ ['modal-meta-' + a]: axioms.includes(a) })))) : '{}'} }; deductiveCache.clear(); return 1;`);
 const key = t => ev(`return claimKey(parseClaim(${J(t)}));`);
-const step = (premises, conclusion) => ev(`
+const step = (premises, conclusion, kind) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
-        { id: 'A', type: 'support', texts: ${J(premises)}, collapsed: [], children: [] } ] }];
+        { id: 'A', type: ${J(kind || 'support')}, texts: ${J(premises)}, collapsed: [], children: [] } ] }];
     deductiveCache.clear(); ensureCollabFields(state);
     var s = collectDeductiveSteps(state.trees)[0];
     return { tag: deductiveStepTagText(s), rule: s.rule ? s.rule.name : null, why: s.why && s.why.text || '', asks: !!s.ambiguous };`);
@@ -211,16 +212,20 @@ console.log('\n-- 5. necessity without its kind: asked --');
 {
     setModal(['T', '5']);
     const n = step(['Necessarily, God exists.'], 'God exists.');
-    // r27.166 (the user: "the user is notified only when two valid
-    // disambiguations are available"): "necessarily" offers one kind, so it
-    // is no question to choose in -- the step waits, and says why. With
-    // "possibly", "for all we know" or "metaphysically possible": asked.
-    ok(!n.rule && n.asks && n.why === '“Necessarily, God exists.” is ambiguous: "necessarily" does not say which kind of necessity is meant: metaphysical, logical, physical, or what is known.',
-        '"necessarily": the step waits, and says that which kind is meant is not said -- no lone reading offered as the one it follows on', J(n));
-    ok(step(['It is necessary that God exists.'], 'God exists.').asks && step(['It is impossible that zombies exist.'], 'Zombies do not exist.').asks &&
+    // r27.168 (the user: "Any time someone writes, 'necessarily',
+    // 'possibly', etc., they need to specify the modality, and the checker
+    // should ask"; of offering the kinds the message names: "yes"): each of
+    // the four kinds, written out.
+    ok(!n.rule && n.asks && n.why === 'Did you mean “It is metaphysically necessary that God exists”, “It is logically necessary that God exists”, ' +
+            '“It is physically necessary that God exists”, or “It has been established that God exists”?',
+        '"necessarily": which kind is meant, asked -- metaphysical, logical, physical, or what is known', J(n));
+    ok(step(['It is necessary that God exists.'], 'God exists.').asks && step(['It is impossible that zombies exist.'], 'Zombies do not exist.').why ===
+            'Did you mean “It is metaphysically impossible that zombies exist”, “It is logically impossible that zombies exist”, “It is physically impossible that zombies exist”, ' +
+            'or “It has been established that zombies do not exist”?' &&
         step(['In every possible world, God exists.'], 'God exists.').asks &&
-        step(['God exists.'], 'Possibly, God exists.').why === 'Did you mean “For all we know, God exists” or “It is metaphysically possible that God exists”?',
-        '"it is necessary that", "it is impossible that", "in every possible world", and "possibly", asked with "for all we know" or "metaphysically possible"');
+        step(['God exists.'], 'Possibly, God exists.').why === 'Did you mean “It is metaphysically possible that God exists”, “It is logically possible that God exists”, ' +
+            '“It is physically possible that God exists”, or “For all we know, God exists”?',
+        '"it is necessary that", "it is impossible that" ("it has been established that zombies do not exist"), "in every possible world", and "possibly" ("for all we know")');
     const chosen = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['God exists.'], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ['Necessarily, God exists.'], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render();
@@ -230,10 +235,42 @@ console.log('\n-- 5. necessity without its kind: asked --');
         closeReadingChooser();
         deductiveCache.clear(); var t = collectDeductiveSteps(state.trees)[0];
         return { box: findNodeContext(state.trees, 'A').node.texts[0], rule: t.rule ? t.rule.name : null };`);
-    ok(chosen.box === 'Necessarily, God exists.' && chosen.rule === null && step(['It is metaphysically necessary that God exists.'], 'God exists.').rule === 'axiom T',
-        'no reading to write in: the box stays as it is, the step waiting; said "metaphysically necessary", it follows by axiom T', J(chosen));
+    ok(chosen.box === 'It is metaphysically necessary that God exists.' && chosen.rule === 'axiom T', 'the answer is written into the box, and the step follows', J(chosen));
     setModal(null);
-    ok(!step(['Necessarily, God exists.'], 'God exists.').asks, 'with the group off, nothing is asked');
+    const off = step(['Necessarily, God exists.'], 'God exists.');
+    ok(off.asks && /^Did you mean “It is metaphysically necessary that God exists”/.test(off.why) && !off.rule,
+        'with the group off, asked all the same (r27.168; the user: "Any time"); it had asked nothing', J(off));
+    setModal(['T', '5']);
+    // r27.168: "God necessarily exists", "Poe is necessarily black", "it is
+    // necessarily true that ...": "necessarily", asked; "not necessarily",
+    // of the four kinds, "it has not been established" one of them.
+    const inner = [['God necessarily exists.', 'God exists.'], ['Poe is necessarily black.', 'Poe is black.'], ['It is necessarily true that Poe is black.', 'Poe is black.']].map(([p, c]) => step([p], c).why);
+    ok(inner[0] === n.why && inner[1] === inner[2] && /^Did you mean “It is metaphysically necessary that Poe is black”, “It is logically necessary that Poe is black”/.test(inner[1]),
+        '"God necessarily exists" asks as "necessarily, God exists" does (it had been read as a verb, "necessarily exists"); "Poe is necessarily black", "it is necessarily true that Poe is black" too', J(inner));
+    const notNec = step(['God does not necessarily exist.'], 'God exists.', 'weak-objection');
+    ok(!notNec.rule && notNec.why === 'Did you mean “It is not metaphysically necessary that God exists”, “It is not logically necessary that God exists”, ' +
+            '“It is not physically necessary that God exists”, or “It has not been established that God exists”?' &&
+        step(['It has not been established that God exists.'], 'God exists.', 'weak-objection').tag === '✗ bare challenge',
+        '"not necessarily": asked, of the four kinds (its second reading had been "it is not so of necessity", no sentence); "it has not been established", a bare challenge', J(notNec));
+    const inside = step(['If God necessarily exists, then evil is unexplained.', 'It is metaphysically necessary that God exists.'], 'Evil is unexplained.');
+    ok(/^Did you mean “If it is metaphysically necessary that God exists, then evil is unexplained”, “If it is logically necessary that God exists, then evil is unexplained”/.test(inside.why) &&
+        step(['If it is metaphysically necessary that God exists, then evil is unexplained.', 'It is metaphysically necessary that God exists.'], 'Evil is unexplained.').rule === 'modus ponens',
+        'inside a longer box, each reading put in place; written in, modus ponens', J(inside));
+    // Logical and physical necessity: claims of their own kind, read (they had
+    // been said of "it"); the axioms, the map's for metaphysical necessity,
+    // do not take them; duality does.
+    const kinds = [step(['It is logically necessary that God exists.'], 'God exists.'), step(['It is physically necessary that God exists.'], 'It is physically possible that God exists.'),
+        step(['It is not logically possible that God exists.'], 'It is logically necessary that God does not exist.'),
+        step(['It is logically necessary that God exists.'], 'It is metaphysically necessary that God exists.')].map(r => r.rule);
+    ok(J(kinds) === J([null, null, 'modal duality', null]), 'logical and physical necessity: no axiom takes them (T, D), duality does; and one kind is not another', J(kinds));
+    ok(ev(`return claimKey(parseClaim('It is logically necessary that God exists.'));`) === '□logic(P:god|~exist)' &&
+        ev(`return claimKey(parseClaim('It is physically impossible that God exists.'));`) === '□phys(N(P:god|~exist))' &&
+        step(['It has been established that God exists.'], 'It has not been established that God exists.', 'objection').tag === '✗ bare denial',
+        '"it is logically necessary that P" is a claim of logical necessity; "it has been established that P" denies "it has not been established that P"');
+    ok(ev(`var f = claimModal('nec', parseClaim('God exists.'), 'logic'), g = claimModal('poss', parseClaim('God exists.'), 'phys');
+        return [claimSayForm(f, { texts: ['God exists.'], style: 0 }), claimShowForm(f), claimShowForm(g)];`).join(' / ') ===
+            'it is logically necessary that god exists / it is logically necessary that god exists / it is physically possible that god exists',
+        'logical and physical necessity said in words of their own kind, and shown so in what the check says, not as "metaphysically"');
     setModal(['T', '5']);
     ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is possible for Mary to sing”, or “Mary is allowed to sing”?' &&
         step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'ab esse ad posse', '"can" stays as it is: asked which, and "possible for" follows by ab esse ad posse');

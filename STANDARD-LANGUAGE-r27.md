@@ -4,6 +4,48 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 29: "necessarily", "possibly": which kind, asked every time (r27.168)
+
+The user: "Any time someone writes, 'necessarily', 'possibly', etc., they need to specify the modality, and the checker should ask"; and of offering the kinds the question names: "yes, I do want that".
+
+* "Necessarily", "it is necessary that", "it is impossible that", "in every possible world", "possibly", "it is possible that" and "not necessarily" ask, every time, which kind is meant, whether metaphysical necessity is switched on in the Logic panel or not. Each kind is written out:
+  * "Did you mean “It is metaphysically necessary that God exists”, “It is logically necessary that God exists”, “It is physically necessary that God exists”, or “It has been established that God exists”?"
+  * For "possibly", what is known is "for all we know"; for "not necessarily", "it has not been established"; for "impossible", "it has been established that God does not exist".
+* Before, "necessarily" was asked only where metaphysical necessity was switched on, and offered that kind alone (since r27.166 only said, there being one reading). "Possibly" had offered "for all we know", and "metaphysically possible" where the group was on. "Not necessarily" had offered "it is not so of necessity": no sentence, and read as "not P".
+* "God necessarily exists", "Poe is necessarily black" and "it is necessarily true that Poe is black" ask as "necessarily, …" does. They had been read with a verb of their own, "necessarily exists".
+* Inside a longer box each reading is put in place: "If it is metaphysically necessary that God exists, then evil is unexplained".
+* "It is logically necessary that P" and "it is physically possible that P" are claims of logical or physical necessity, each of its own kind. They had been read as said of "it". The axioms are the map's for metaphysical necessity and do not take them ("logically necessary" does not give P by axiom T); duality does ("not logically possible" is "logically necessary … not"). One kind does not give another.
+* "It has been established that P" is what "it has not been established that P" denies. It had been read as said of "it".
+
+Tests:
+* modal-r27-test.js has 47 checks. The three r27.166 had changed now expect the question; "with the group off, nothing is asked" now expects the question; and six are new. The ten fail on r27.167. Its step helper now takes an objection's kind.
+* language-r27-qualifier-test.js: the check of "possibly" now expects the question, alone and inside an "if"; it fails on r27.167.
+* logic-r27-stress-test.js: the hard cases "it's not necessarily the case that", "X is not necessarily Y", "X does not necessarily Y" and "that P isn't necessary" had each been a bare challenge, and now ask which kind; a new one has their reading "it has not been established that" a bare challenge. The first phrasing leaves the random list of ways to say "not established", since it asks.
+* Take-one-out: each of the 10 changes is caught. That "logically necessary" is said so, and not as "metaphysically necessary", was not, until the check of its words was added.
+* 30 sentences in the corpus read differently, each with "necessarily", "necessary", "possibly", "possible", "impossible", "it has been shown" or "logically necessary", as above.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### October 29: "for Mary" asks, every time (r27.167)
+
+The user, of "Bob bought a book for Mary": "shouldn't we just ask for a disambiguation when we see 'for x'?"; "Any time there's an ambiguity, the app should flag it and let the user select their preferred disambiguation"; "Always"; "Did you mean: - 'Bob bought a book on Mary's behalf' - 'Bob bought Mary a book'"; and of "made": "Bob made a cake for Mary to have" — "Sure".
+
+* A question may now ask every time. Its box holds back each step it is in until a reading is chosen, as a slip of grammar does, and not only where the reading decides the step.
+* The first such question: "for" and a person after a verb of getting or making something. "Bob bought a book for Mary" asks: "Did you mean “Bob bought a book on Mary's behalf” or “Bob bought Mary a book”?" So "Bob bought a book for Mary and Al cried", and from it "Al cried", waits for the answer.
+* With "make", "find", "keep" or "leave", whose second phrase may say what the first is made or found to be ("Bob made Mary a star"), and with "it", the second reading is "… for Mary to have": "Did you mean “Bob made a cake on Mary's behalf” or “Bob made a cake for Mary to have”?"
+* A person: a name, "him", "her", "teachers", "the teacher". Not "for the party", "for ten dollars", "for Mary's birthday" or "for an hour"; nor inside "Bob thinks that …", whose words are not read.
+* "… for Mary to have" had been read as a clause cut short (as "… does too" is): its "have" is no auxiliary.
+* A rewrite may keep a question its box has besides the one it answers. "If Bob bought a book for Mary, then she is glad" asks of "for Mary" and of "she", and offers both. Since r27.166 neither had been offered, each rewrite keeping the other question.
+* Not yet: "Bob did not buy a book for the teacher" is read first as "not … a book for the teacher" (every such book, or one), whose readings ask of "for" in turn. They are not offered, and the box is said to be ambiguous.
+
+Tests:
+* rules-r27-ordinary-test.js has 155 checks. Section 32's check that the "for" steps are not taken now also checks that each asks, and section 39 is new. That check and four of section 39's six fail on r27.166; the other two guard what is not asked and that each reading asks nothing more.
+* reading-r27-chooser-test.js has 39 checks; the new one, section 9, fails on r27.166.
+* Take-one-out: each of the 4 changes is caught.
+* No sentence in the corpus reads differently: none has "for" and a person after such a verb.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 29: "Did you mean …?", with only readings that read back (r27.166)
 
 The user: "The available disambiguations must be grammatical … A syntax checker could make sure bad disambiguations don't go through and that the user is notified only when two valid disambiguations are available"; "Did you mean: - '…' - '…'"; "Don't overcomplicate instructions for the user"; and, asked whether a reading should say that the step follows on it: "students absent-mindedly choose the one where the step follows even though it might not have been the intended argument. We need to make it idiot-proof".

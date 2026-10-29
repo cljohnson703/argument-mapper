@@ -2975,7 +2975,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-29 r27.166';
+    const APP_BUILD = '2026-10-29 r27.168';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11898,7 +11898,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // the only one yet, its own group in the Logic panel.
     function claimModal(op, inner, mod) { return { kind: 'modal', op, mod: mod || 'meta', inner }; }
     // Its words: "metaphysically necessary", "metaphysically possible".
-    const claimModalWord = f => 'metaphysically ' + (f.op === 'nec' ? 'necessary' : 'possible');
+    const claimModalWord = f => ({ logic: 'logically', phys: 'physically' }[f.mod] || 'metaphysically') + ' ' + (f.op === 'nec' ? 'necessary' : 'possible');
     // The dual of a quantified claim: "some F is not G" of "all F are G".
     function claimDual(form) {
         if (form.kind === 'all') return claimBoundAs(form, { kind: 'some', subject: form.subject, predicate: negateClaimProp(form.predicate) });
@@ -14497,14 +14497,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                      claimTokens(m[1]).length <= 6 && !claimTokens(m[1]).some(t => CLAIM_VERB_MARKERS.has(claimWord(t)) || /^(?:and|or|if|then|unless|because|that|whether)$/.test(claimWord(t)))) {
                 said = claimPositiveClause(m[1], m[2], m[3]); words = 'not necessarily';
             }
+            // Asked every time, of the four kinds (r27.168): "it has not been
+            // established", or not necessary metaphysically, logically or
+            // physically. Its second reading had been no sentence ("it is not
+            // so of necessity"), and read as "not P".
             if (said !== null) {
                 const positive = readClaim(said);
-                if (positive) {
-                    return claimAmbiguous('"not necessarily" may mean it has not been shown, or that it is not necessarily so', [
-                        { label: 'it has not been established that ' + said, build: () => claimUnestablished(positive, false, words) },
-                        { label: 'it is not so of necessity', build: () => claimWithout('necessarily', s) }
-                    ], false) || claimUnestablished(positive, false, words);
-                }
+                if (positive) return claimModalAsked('not necessarily', 'nec', true, said, s) || claimUnestablished(positive, false, words);
             }
         }
         return null;
@@ -14678,37 +14677,71 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // there, and the junction is read first. The claim keeps the sentence's
     // words, for what tells "not possibly" from "necessarily not".
     function readModalClaim(s) {
-        let m, op, negative = false, rest;
-        if ((m = /^it is (not )?metaphysically (necessary|possible|impossible) that (.+)$/.exec(s))) {
-            rest = m[3]; op = m[2] === 'necessary' ? 'nec' : 'poss'; negative = !!m[1] !== (m[2] === 'impossible');
+        let m, op, negative = false, rest, mod = 'meta';
+        // "It has been established that P": what "it has not been established
+        // that P" denies -- what is known, a reading of "necessarily"
+        // (r27.168). It had been read as said of "it".
+        if ((m = /^it has been (established|shown|proven|proved|demonstrated) that (.+)$/.exec(s))) {
+            const denied = readClaim('it has not been ' + m[1] + ' that ' + m[2]);
+            if (denied) return negateClaim(denied);
+        }
+        // "It is logically (physically) necessary that P": a claim of logical
+        // (physical) necessity, of its own kind -- the axioms are the map's
+        // for metaphysical necessity only (r27.168). It had been read as said
+        // of "it".
+        if ((m = /^it is (not )?(metaphysically|logically|physically) (necessary|possible|impossible) that (.+)$/.exec(s))) {
+            rest = m[4]; op = m[3] === 'necessary' ? 'nec' : 'poss'; negative = !!m[1] !== (m[3] === 'impossible');
+            mod = m[2] === 'logically' ? 'logic' : m[2] === 'physically' ? 'phys' : 'meta';
         } else if ((m = /^in (?:every|each|all|any) metaphysically possible worlds?,? (.+)$/.exec(s))) { rest = m[1]; op = 'nec'; }
         else if ((m = /^(?:in (?:some|a|at least one) metaphysically possible world|there (?:is|exists) (?:a|some|at least one) metaphysically possible world (?:in which|where|such that)),? (.+)$/.exec(s))) { rest = m[1]; op = 'poss'; }
         else return null;
         if (/,\s+(?:and|or|but)\s/.test(claimTopLevelMask(rest))) return null;
         const inner = readClaim(rest);
         if (!inner) return null;
-        const form = claimModal(op, inner);
+        const form = claimModal(op, inner, mod);
         return Object.assign(negative ? negateClaim(form) : form, { src: s });
+    }
+    // A modal claim's readings, one for each kind of modality its words may
+    // mean (r27.168; the user: "Any time someone writes, 'necessarily',
+    // 'possibly', etc., they need to specify the modality, and the checker
+    // should ask"): metaphysical -- the kind the axioms are for -- logical,
+    // physical, and what is known. `op`: 'nec' or 'poss'; `denied`: "not
+    // necessary", "impossible". Each read as its words are.
+    function claimModalReadings(op, denied, clause) {
+        const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
+        // What is known not to be: "it has been established that God does not exist".
+        const not = () => { const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
+            return n ? normalizeClaimText(n) : 'it is not the case that ' + clause; };
+        const known = op === 'nec' ? (denied ? 'it has not been established that ' + clause : 'it has been established that ' + clause)
+            : denied ? 'it has been established that ' + not() : 'for all we know, ' + clause;
+        return ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' that ' + clause).concat([known])
+            .map(label => ({ label, build: () => readClaim(label) }));
+    }
+    // Which kind of modality a claim means, asked every time (`ask`) -- its
+    // readings in place in a longer box -- or null; unanswered, the sentence
+    // is read as one claim, and said to be.
+    const claimModalWhy = (word, op) => '"' + word + '" does not say which kind of ' + (op === 'nec' ? 'necessity' : 'possibility') + ' is meant: metaphysical, logical, physical, or what is known';
+    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause), true, { ask: true, part: s });
+    function claimModalUnasked(word, op, s) {
+        claimUnread(claimModalWhy(word, op) + ': the sentence is read as one claim');
+        return Object.assign(claimAtom(s), { src: s });
     }
     // "Necessarily, P", "it is necessary that P", "it is impossible that P",
     // "in every possible world, P": which kind of necessity is meant? Asked
-    // where the map has one switched on (r27.101; the user, 2026-10-13: no one
-    // broad necessity), the reading written into the box. Unanswered, the box
-    // is read as before.
+    // (r27.101; the user, 2026-10-13: no one broad necessity) -- since r27.168
+    // every time, whether the map has metaphysical necessity switched on or
+    // not, of the four kinds (claimModalReadings), the reading written into
+    // the box. Unanswered, the box is read as one claim.
     function readUnqualifiedModal(s) {
-        let m, word, label;
-        if ((m = /^it is (not )?(necessary|impossible) that (.+)$/.exec(s))) { word = (m[1] || '') + m[2]; label = 'it is ' + (m[1] || '') + 'metaphysically ' + m[2] + ' that ' + m[3]; }
-        else if ((m = /^(not )?necessarily,? (.+)$/.exec(s))) { word = (m[1] || '') + 'necessarily'; label = 'it is ' + (m[1] || '') + 'metaphysically necessary that ' + m[2]; }
-        else if ((m = /^in (every|each|all|any) possible worlds?,? (.+)$/.exec(s))) { word = 'in ' + m[1] + ' possible world'; label = 'in every metaphysically possible world, ' + m[2]; }
+        let m, word, op, denied = false, clause;
+        if ((m = /^it is (not )?(necessary|impossible) that (.+)$/.exec(s))) { word = (m[1] || '') + m[2]; op = m[2] === 'necessary' ? 'nec' : 'poss'; denied = !!m[1] !== (m[2] === 'impossible'); clause = m[3]; }
+        else if ((m = /^(not )?necessarily,? (.+)$/.exec(s))) { word = (m[1] || '') + 'necessarily'; op = 'nec'; denied = !!m[1]; clause = m[2]; }
+        else if ((m = /^in (every|each|all|any) possible worlds?,? (.+)$/.exec(s))) { word = 'in ' + m[1] + ' possible world'; op = 'nec'; clause = m[2]; }
         else if ((m = /^(?:in (?:some|a|at least one) possible world|there (?:is|exists) (?:a|some|at least one) possible world (?:in which|where|such that)),? (.+)$/.exec(s))) {
-            word = 'possible world'; label = 'in some metaphysically possible world, ' + m[1];
+            word = 'possible world'; op = 'poss'; clause = m[1];
         }
         else return null;
-        const why = '"' + word + '" does not say which kind of necessity is meant: metaphysical, logical, physical, or what is known';
-        const chosen = claimAmbiguous(why, [{ label, build: () => readClaim(label) }], false);
-        if (chosen) return chosen;
-        claimUnread(why + ': the sentence is read as one claim');
-        return Object.assign(claimAtom(s), { src: s });
+        return claimModalAsked(word, op, denied, clause, s) || claimModalUnasked(word, op, s);
     }
     function readQualifiedClaim(s) {
         let m;
@@ -14748,20 +14781,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const inner = claimLooksLikeClause(text) ? readClaim(text) : null;
             return inner ? claimUnestablished(inner, false, claimHedgeWord(words)) : null;
         };
-        const possible = (text, words) => claimLooksLikeClause(text) ? (claimAmbiguous('"' + words + '" can say that it has not been ruled out, or that it could be so', [
-                { label: 'for all we know, ' + text, build: () => likely(text, 'for all we know') }].concat(claimModalOn() && /^(?:possibly|it is (?:quite |entirely |perfectly )?possible(?: that)?)$/.test(words)
-                ? [{ label: 'it is metaphysically possible that ' + text, build: () => readClaim('it is metaphysically possible that ' + text) }] : []), false) ||
-            opaque('"' + words + '" can say that it has not been ruled out, or that it could be so: the sentence is read as one claim', claimHedgeWord(words), text)) : null;
+        // "Possibly P": which kind of possibility -- asked every time, of the
+        // four kinds (r27.168): metaphysical, logical, physical, or not ruled
+        // out by what is known ("for all we know"). It had offered "for all we
+        // know" alone, and "metaphysically possible" only where metaphysical
+        // necessity was switched on.
+        const possible = (text, words) => claimLooksLikeClause(text) ? (claimModalAsked(claimHedgeWord(words), 'poss', false, text, s) ||
+            opaque(claimModalWhy(claimHedgeWord(words), 'poss') + ': the sentence is read as one claim', claimHedgeWord(words), text)) : null;
         // What reads as "not established" is that ("according to what we know, ...").
         const settled = () => readNotEstablished(s);
         // Necessity said without its kind (r27.101): which is meant, asked
         // where the map has one switched on.
-        const asked = claimModalOn() ? readUnqualifiedModal(s) : null;
+        const asked = readUnqualifiedModal(s);
         if (asked) return asked;
-        // 0. "It is necessary that X", "it is possible that X": "necessarily, X"
-        //    and "possibly, X", the that-clause running to the end of the sentence.
-        if ((m = s.match(/^it is (necessary|possible) that (.+)$/)))
-            return readClaim((m[1] === 'necessary' ? 'necessarily, ' : 'possibly, ') + m[2]);
         // 1. Words that add nothing: "moreover, P".
         if ((m = s.match(CLAIM_EMPTY_START))) return readClaim(m[1]);
         // 2. In front: "probably P", "it is likely that P", "chances are P".
@@ -15878,9 +15910,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }) && (f = readCoordination(s))) return f;
         // A clause cut short -- "and so is Fido", "if Poe is black, so is
         // Fido", "and Fido is not", "as does Fido" -- says what it says only
-        // with the clause before it.
+        // with the clause before it. Not "for Mary to have", whose "have" is
+        // no auxiliary (r27.167).
         if (!/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /(?:^|(?:,|\s(?:and|or|but))\s+)(?:so|neither|nor|as)\s+(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)\s+\S+(?:\s+\S+)?$/.test(s) ||
-            !/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /\s(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)(?:\s+not)?(?:\s+(?:too|also|either))?$/.test(s) &&
+            !/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /(?<!\bto)\s(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)(?:\s+not)?(?:\s+(?:too|also|either))?$/.test(s) &&
             !CLAIM_WILL_NOUN.test(s)) {
             claimUnread('a clause cut short ("so is ...", "... is not", "... does too") is not read');
             return claimAtom(s);
@@ -16136,7 +16169,48 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimUnread('the checker reads "every", "some" and "no", not "' + m[0].trim() + '": the sentence is not read');
             return claimAtom(s);
         }
+        // "Bob bought a book for Mary": on whose behalf, or who is to have it.
+        if ((f = claimForQuestion(s))) return f;
         return readIdentityClaim(s) || readQuantifiedClaim(s) || readPredicationClaim(s) || claimAtom(s);
+    }
+    // "Bob bought a book for Mary": "for Mary" may say on whose behalf, or who
+    // is to have it -- asked every time (r27.167; the user: "shouldn't we just
+    // ask for a disambiguation when we see 'for x'?"; "Always"): "Did you mean
+    // “Bob bought a book on Mary's behalf” or “Bob bought Mary a book”?" With
+    // "make", "find", "keep" or "leave", whose second phrase may say what the
+    // first is made or found to be ("made Mary a star"), and with "it",
+    // "... for Mary to have". Only where "for" names a person: "for the
+    // party", "for ten dollars" and "for an hour" ask nothing. The reading
+    // chosen, or null.
+    const CLAIM_FOR_DATIVE_VERBS = new Set(('buy bake build cook fetch get grab knit order pour sew fix prepare design draw paint pick choose ' +
+        'earn win book reserve sing').split(' '));
+    const CLAIM_FOR_TO_HAVE_VERBS = new Set('make find keep leave'.split(' '));
+    const CLAIM_OBJECT_POSSESSIVE = Object.assign(Object.create(null), { him: 'his', her: 'her', them: 'their', me: 'my', us: 'our', you: 'your' });
+    function claimForQuestion(s) {
+        const toks = claimTokens(s), l = toks.map(claimWord), f = l.lastIndexOf('for');
+        if (f < 3 || f === toks.length - 1) return null;
+        const who = toks.slice(f + 1), lw = who.map(claimWord), noun = w => CLAIM_HE_OR_SHE_NOUNS.has(claimSingularOf(w)) || CLAIM_PERSON_ONLY_NOUNS.has(claimSingularOf(w));
+        // A person: a name, "her", "teachers", "the teacher", "Mary's mother".
+        const person = who.length === 1 ? /^\uE000/.test(who[0]) || !!CLAIM_OBJECT_POSSESSIVE[lw[0]] || noun(lw[0])
+            : claimWholePhrase(who) && !claimQuantifiedWords(who) && (who.every(t => /^\uE000/.test(t)) ||
+                (/^(?:the|a|an|my|your|his|her|our|their)$/.test(lw[0]) || /['\u2019]s$/.test(lw[0])) && noun(lw[lw.length - 1]));
+        if (!person) return null;
+        for (let i = f - 2; i >= 1; i--) {
+            const bases = claimUnique(claimPastBases(l[i]).concat(claimParticipleBases(l[i]), claimRegularBases(l[i], 's'), [l[i]]));
+            const single = bases.some(b => CLAIM_FOR_DATIVE_VERBS.has(b));
+            if (!single && !bases.some(b => CLAIM_FOR_TO_HAVE_VERBS.has(b))) continue;
+            const object = toks.slice(i + 1, f), head = toks.slice(0, i + 1);
+            if (!claimWholePhrase(object)) continue;
+            const pronoun = object.length === 1 && /^(?:it|them|this|that|these|those)$/.test(claimWord(object[0]));
+            // "On Mary's behalf", "on his behalf", "on the teachers' behalf".
+            const last = lw[lw.length - 1], owner = who.length === 1 && CLAIM_OBJECT_POSSESSIVE[last] ? [CLAIM_OBJECT_POSSESSIVE[last]]
+                : who.slice(0, -1).concat([who[who.length - 1] + (/s$/.test(last) && claimPluralWord(last) ? "'" : "'s")]);
+            const behalf = head.concat(object, ['on'], owner, ['behalf']).join(' ');
+            const have = single && !pronoun ? head.concat(who, object).join(' ') : head.concat(object, ['for'], who, ['to', 'have']).join(' ');
+            return claimAmbiguous('"for ' + claimShowWords(who.join(' ')) + '" may say on whose behalf, or who is to have it',
+                [behalf, have].map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+        }
+        return null;
     }
     // Explicit numerical identity between simple names. Bare "A is B" can
     // express predication and is deliberately not promoted to identity.
@@ -18148,6 +18222,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 subjectTokens = tokens.slice(0, j); vp = tokens.slice(j);                        // "Clark Kent wears glasses"
             } else return null;
         }
+        // "God necessarily exists", "Poe is necessarily black": what
+        // "necessarily, God exists" says, asked which kind -- its readings in
+        // place of these words (r27.168). It had been read as "necessarily
+        // exists", a verb of its own.
+        const necessarily = claimWord(vp[0]) === 'necessarily' ? 0 : /^(?:is|are|am|was|were)$/.test(claimWord(vp[0])) && claimWord(vp[1]) === 'necessarily' ? 1 : -1;
+        // "It is necessarily true that P": P.
+        if (necessarily >= 0 && vp.length > necessarily + 1)
+            return claimModalAsked('necessarily', 'nec', false, subjectTokens.concat(vp.slice(0, necessarily), vp.slice(necessarily + 1)).join(' ')
+                .replace(/^it (?:is|was) (?:true|the case) that\s+/, ''), s) || claimModalUnasked('necessarily', 'nec', s);
         const first = claimWord(subjectTokens[0]);
         const fault = claimSubjectFault(subjectTokens);
         if (fault) { claimUnread(fault); return claimAtom(s); }
@@ -22902,36 +22985,41 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     ];
     // Metaphysical necessity (r27.101): a step by each axiom of the system
     // the map has switched on -- no rule of Standard's.
+    // A step whose modal claims are each of metaphysical necessity: the
+    // axioms are the map's for it, not for logical or physical necessity
+    // (r27.168). Duality holds of each kind.
+    const claimModalMetaOnly = (P, C) => !P.concat([C]).some(function other(f) {
+        return !!f && typeof f === 'object' && ((f.kind === 'modal' && f.mod !== 'meta') || other(f.inner) || other(f.cons) || (f.parts || []).some(other) || (f.conds || []).some(other)); });
     const DEDUCTIVE_MODAL_RULES = [
         { id: 'modal-duality', name: 'modal duality',
           gloss: '"not possibly A" is "necessarily not A", and "not necessarily A" is "possibly not A"',
           test: (P, C) => P.length === 1 && claimModalDual(P[0], C) },
         { id: 'modal-k', name: 'axiom K',
           gloss: '"necessarily, if A, then B" and "necessarily A" give "necessarily B"; with "possibly A", they give "possibly B"',
-          test: (P, C) => P.length === 2 && C.kind === 'modal' && [0, 1].some(i => {
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 2 && C.kind === 'modal' && [0, 1].some(i => {
               const k = P[i], x = P[1 - i];
               return claimModalIs(k, 'nec', C.mod) && claimModalIs(x, C.op, C.mod) &&
                   claimConditionalViews(k.inner).some(v => v.conds.length === 1 && claimSame(v.conds[0], x.inner) && claimSame(v.cons, C.inner));
           }) },
         { id: 'modal-d', name: 'axiom D',
           gloss: '"necessarily A" gives "possibly A"',
-          test: (P, C) => P.length === 1 && claimModalIs(P[0], 'nec') && claimModalIs(C, 'poss', P[0].mod) && claimSame(P[0].inner, C.inner) },
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 1 && claimModalIs(P[0], 'nec') && claimModalIs(C, 'poss', P[0].mod) && claimSame(P[0].inner, C.inner) },
         { id: 'modal-t', name: 'axiom T',
           gloss: '"necessarily A" gives A, and A gives "possibly A"',
-          test: (P, C) => P.length === 1 && ((claimModalIs(P[0], 'nec') && claimSame(P[0].inner, C)) || (claimModalIs(C, 'poss') && claimSame(P[0], C.inner))) },
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 1 && ((claimModalIs(P[0], 'nec') && claimSame(P[0].inner, C)) || (claimModalIs(C, 'poss') && claimSame(P[0], C.inner))) },
         { id: 'modal-4', name: 'axiom 4',
           gloss: '"necessarily A" gives "necessarily necessarily A", and "possibly possibly A" gives "possibly A"',
-          test: (P, C) => P.length === 1 && (
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 1 && (
               (claimModalIs(P[0], 'nec') && claimModalIs(C, 'nec', P[0].mod) && claimModalIs(C.inner, 'nec', P[0].mod) && claimSame(P[0].inner, C.inner.inner)) ||
               (claimModalIs(P[0], 'poss') && claimModalIs(P[0].inner, 'poss', P[0].mod) && claimModalIs(C, 'poss', P[0].mod) && claimSame(P[0].inner.inner, C.inner))) },
         { id: 'modal-b', name: 'axiom B',
           gloss: 'A gives "necessarily possibly A", and "possibly necessarily A" gives A',
-          test: (P, C) => P.length === 1 && (
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 1 && (
               (claimModalIs(C, 'nec') && claimModalIs(C.inner, 'poss', C.mod) && claimSame(P[0], C.inner.inner)) ||
               (claimModalIs(P[0], 'poss') && claimModalIs(P[0].inner, 'nec', P[0].mod) && claimSame(P[0].inner.inner, C))) },
         { id: 'modal-5', name: 'axiom 5',
           gloss: '"possibly A" gives "necessarily possibly A", and "possibly necessarily A" gives "necessarily A"',
-          test: (P, C) => P.length === 1 && claimModalIs(P[0], 'poss') && (
+          test: (P, C) => claimModalMetaOnly(P, C) && P.length === 1 && claimModalIs(P[0], 'poss') && (
               (claimModalIs(C, 'nec', P[0].mod) && claimModalIs(C.inner, 'poss', P[0].mod) && claimSame(P[0].inner, C.inner.inner)) ||
               (claimModalIs(P[0].inner, 'nec', P[0].mod) && claimModalIs(C, 'nec', P[0].mod) && claimSame(P[0].inner.inner, C.inner))) }
     ];
@@ -24763,13 +24851,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return flag;
     }
     // Whether a box asks the user something before its steps are checked: a
-    // slip of agreement (which fix?). A generic asks only where its answer
-    // decides a step (claimGenericRole).
+    // slip of agreement (which fix?), and an ambiguity of a kind that asks
+    // every time (`ask`; r27.167; the user: "Always"): "for Mary" after
+    // "bought a book". A generic asks only where its answer decides a step
+    // (claimGenericRole).
     const claimAsksCache = new Map();
     function claimAsksUser(text) {
         const key = String(text == null ? '' : text);
         if (claimAsksCache.has(key)) return claimAsksCache.get(key);
-        const asks = parseClaimFull(key).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo));
+        const asks = parseClaimFull(key).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && (n.readings || []).length >= 2)));
         if (claimAsksCache.size > 5000) claimAsksCache.clear();
         claimAsksCache.set(key, asks);
         return asks;
@@ -33976,12 +34066,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const turned = f => !f || (f.kind !== 'and' && f.kind !== 'or') || !f.parts || f.parts.length !== 2 ? null
             : f.iff ? (f.parts[0].kind === 'if' ? claimIff(f.parts[0].cons, f.parts[0].conds[0]) : null)
             : claimList(f.kind, [f.parts[1], f.parts[0]]);
-        // A question the box has anyway and does not block with ("when" may
-        // say when or why) may stay; no other may be raised. A note of one
-        // reading ("a good pianist need not be good") asks nothing (r27.166).
-        const had = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && !n.always).map(n => n.message);
+        // A question the box has anyway may stay -- "she" in "if Bob bought a
+        // book for Mary, then she is glad", answering "for Mary" (r27.167; it
+        // had kept a box with two questions from offering either) -- but not
+        // the one answered, and no other may be raised. A note of one reading
+        // ("a good pianist need not be good") asks nothing (r27.166).
+        const had = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.message !== entry.message).map(n => n.message);
         return !!want && !!got.form && !got.notes.some(n => n.kind === 'ambiguous' && !n.generic && (n.always || (n.readings || []).length >= 2) &&
-                !(!n.always && had.includes(n.message))) &&
+                (n.message === entry.message || !had.includes(n.message))) &&
             (claimSame(want, got.form) || (!!turned(got.form) && claimSame(want, turned(got.form))));
     }
     // The readings a question may offer (r27.166; the user: "The available

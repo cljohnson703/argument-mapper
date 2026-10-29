@@ -97,12 +97,18 @@ try {
             'perhaps Poe is not black.', 'it is not likely that Poe is black.'].map(t => [['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.']);
         ok(all(challenges, 'weak-objection').length === 0, 'brought by a reason, probability hedges challenge the box they object to (' + challenges.length + ')', all(challenges, 'weak-objection').join(' ‖ '));
         const flagged = ['Possibly, Poe is not black.', 'It is possible that Poe is not black.', 'Poe is possibly not black.'];
-        ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous && /is ambiguous: "possibly" can say that it has not been ruled out, or that it could be so\.$/.test(s.why); }) &&
+        // r27.168 (the user: "Any time someone writes, 'necessarily',
+        // 'possibly', etc., they need to specify the modality, and the checker
+        // should ask"): which kind -- metaphysical, logical, physical, or not
+        // ruled out by what is known -- in the box's own words.
+        const kinds = (pre, said) => 'Did you mean “' + pre + 'it is metaphysically possible that ' + said + '”, “' + pre + 'it is logically possible that ' + said + '”, “' +
+            pre + 'it is physically possible that ' + said + '”, or “' + pre + 'for all we know, ' + said + '”?';
+        ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous &&
+                s.why === 'Did you mean “It is metaphysically possible that Poe is not black”, “It is logically possible that Poe is not black”, ' +
+                    '“It is physically possible that Poe is not black”, or “For all we know, Poe is not black”?'; }) &&
             ['possibly Poe is not black.', 'it is possible that Poe is not black.', 'Poe is possibly not black.'].every(t => { const s = step(['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.', 'weak-objection');
-                // r27.166: "for all we know, ..." is no reading the box reads back
-                // as, so none is offered, nor said to give the step.
-                return !s.rule && s.ambiguous && /is ambiguous: "[^"]+" can say that it has not been ruled out, or that it could be so\.$/.test(s.why) && !/Read as|follows|read as one claim/.test(s.why); }),
-            '"possibly" is flagged, not read as "for all we know"; no reading is offered (none reads back), nor said to give the step, or to be a bare challenge');
+                return !s.rule && s.ambiguous && s.why === kinds('If Poe is a crow, then ', 'Poe is not black'); }),
+            '"possibly" asks which kind of possibility is meant: metaphysical, logical, physical, or "for all we know" -- alone, and inside an "if"');
         const conditions = [[['When Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black when Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['Given that Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black given that Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['In case Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['While Poe is black, Fido is white.'], 'Fido is white.'],

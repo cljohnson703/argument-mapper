@@ -353,6 +353,22 @@ const J = JSON.stringify;
         return claimReadingRoundTrips(Object.assign({ text: t }, n), 0, 'If all computer programs are only formal (syntactic), then computers lack semantics.');`);
     ok(back === true, 'a note of one reading that a rewrite raises ("computer program" read as one phrase) asks nothing, and does not stop the rewrite reading back', J(back));
 
+    // 9. Asked every time (r27.167; the user: "Always"): "for Mary" holds
+    // its step back -- here one the words as written give -- until a reading
+    // is chosen and written in.
+    const forMary = T(W, `__c.load(${J(MAP('Bob bought a book for Mary and Al cried.', 'Al cried.'))});
+        var before = __c.tag('S').textContent;
+        __c.tag('S').click();
+        var pop = __c.pop(), rows = [].slice.call(pop.querySelectorAll('.rc-row'));
+        var shown = rows.map(function (r) { return r.title; }), head = pop.querySelector('.rc-head').textContent;
+        var i = rows[1].querySelector('input'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true }));
+        pop.querySelector('.rc-apply').click();
+        return { before: before, head: head, shown: shown, box: __c.text('S'), after: __c.tag('S').textContent };`);
+    ok(forMary.before === '? ambiguous' && forMary.head === 'Did you mean:' &&
+        J(forMary.shown) === J(["Bob bought a book on Mary's behalf and Al cried.", 'Bob bought Mary a book and Al cried.']) &&
+        forMary.box === 'Bob bought Mary a book and Al cried.' && forMary.after === '✓ conjunction elimination',
+        '"for Mary" holds back even a step the words give, and asks; "Bob bought Mary a book" chosen, it is written in, and the step follows', J(forMary));
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);
     W.dom.window.close();

@@ -891,7 +891,9 @@ const moreEnglish = (function () {
             ['we are not warranted in believing that', false], ['it is not warranted to conclude that', false],
             ['there is insufficient warrant for believing that', false], ['we lack warrant for concluding that', false],
             ['there is not sufficient warrant for concluding that', false], ["we can't necessarily conclude that", false],
-            ["it's not necessarily the case that", false], ['nothing shows that', false], ['the jury is still out on whether', true],
+            // Not "it's not necessarily the case that": since r27.168 it asks
+            // which kind of necessity is meant (a hard case, below).
+            ['nothing shows that', false], ['the jury is still out on whether', true],
             ['there are no grounds for believing that', false], ['we lack evidence that', false], ['it is by no means clear that', false]
         ];
         function expectCase() {
@@ -1107,10 +1109,15 @@ const HARD_CASES = [
     ["bare", "W",["Nothing shows that God exists"],"God exists","\"nothing shows that\""],
     ["bare", "W",["The jury is still out on whether God exists"],"God does not exist","\"the jury is still out on whether\""],
     ["bare", "W",["Perhaps God does not exist"],"God exists","\"perhaps not P\""],
-    ["bare", "W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\""],
-    ["bare", "W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\""],
-    ["bare", "W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\""],
-    ["bare", "W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\""],
+    // Since r27.168 (the user: "Any time someone writes, 'necessarily',
+    // 'possibly', etc., they need to specify the modality, and the checker
+    // should ask"): "not necessarily" asks which kind -- "it has not been
+    // established" one of them, a bare challenge.
+    ["amb", "W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\": asked which kind"],
+    ["amb", "W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\": asked which kind"],
+    ["amb", "W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\": asked which kind"],
+    ["bare", "W",["It has not been established that Poe is guilty"],"Poe is guilty","its reading \"it has not been established that\""],
+    ["amb", "W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\": asked which kind"],
     ["amb","O",["God does not necessarily exist"],"God necessarily exists","\"not necessarily\": the modal sense is flagged"],
     ["amb","O",["Poe is not necessarily black"],"Poe is necessarily black","\"is not necessarily\": the modal sense is flagged"],
     ["no","O",["Poe is not necessarily guilty"],"Poe is guilty","\"not necessarily\" denies nothing"],

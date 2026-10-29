@@ -956,7 +956,9 @@ console.log('\n-- 32. (r27.158) "bought Mary a book" gives "bought a book for Ma
     // Since r27.165, withdrawn: "for Mary" may say on whose behalf, and then
     // "Bob bought a book for Mary" can be false where "Bob bought Mary a book"
     // is true -- in a "then" part too (the user: "Don't these come apart?").
-    ok(!certified(FOR).length, 'with "for": not taken -- "for Mary" may say on whose behalf, and the check does not yet ask which (r27.158 had taken each)', J(certified(FOR)));
+    // Since r27.167 the box asks which (section 39).
+    ok(!certified(FOR).length && FOR.every(([p, c]) => /did you mean|Did you mean/.test(step(p, c).why)),
+        'with "for": not taken -- "for Mary" may say on whose behalf, and the box asks which (r27.158 had taken each)', J(certified(FOR)));
     const NOT = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob did not buy Mary a book.'], 'Bob did not buy a book for Mary.'],
         [['Bob never bought Mary a book.'], 'Bob never bought a book for Mary.'], [['No boy bought Mary a book.'], 'No boy bought a book for Mary.'],
         [['If Bob bought Mary a book, Al is glad.'], 'If Bob bought a book for Mary, Al is glad.'],
@@ -1036,6 +1038,38 @@ console.log('\n-- 38. (r27.164) the step tried on one raven nothing else names -
     const two = step(['Ravens are black.', 'Ravens are big.'], 'Ravens are black and big.');
     ok(!two.rule && two.why.indexOf('“Ravens are black.”: did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”? ' +
         '“Ravens are big.”: did you mean “All ravens are big”, ') === 0, 'with the plural in two premises, it still asks, of each box', J(two));
+}
+
+console.log('\n-- 39. (r27.167) "for Mary": on whose behalf, or who is to have it -- asked every time --');
+{
+    // The user, of "Bob bought a book for Mary": "shouldn't we just ask for a
+    // disambiguation when we see 'for x'?"; "Always"; "Did you mean: - 'Bob
+    // bought a book on Mary's behalf' - 'Bob bought Mary a book'"; of "made":
+    // "Bob made a cake for Mary to have" -- "Sure".
+    const asked = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob made a cake for Mary.'], 'Bob made a cake.'],
+        [['Students buy books for teachers.'], 'Students buy books.'], [['Bob will buy a book for the teacher.'], 'Bob will buy a book.']].map(([p, c]) => step(p, c));
+    ok(J(asked.map(a => [a.rule, a.why])) === J([
+            [null, 'Did you mean “Bob bought a book on Mary\'s behalf” or “Bob bought Mary a book”?'],
+            [null, 'Did you mean “Bob made a cake on Mary\'s behalf” or “Bob made a cake for Mary to have”?'],
+            [null, 'Did you mean “Students buy books on teachers\' behalf” or “Students buy teachers books”?'],
+            [null, 'Did you mean “Bob will buy a book on the teacher\'s behalf” or “Bob will buy the teacher a book”?']]),
+        '"for" and a person after a verb of getting or making: "on Mary\'s behalf", or "Bob bought Mary a book" -- "made", "for Mary to have"', J(asked));
+    const held = step(['Bob bought a book for Mary and Al cried.'], 'Al cried.');
+    ok(!held.rule && held.why === 'Did you mean “Bob bought a book on Mary\'s behalf and Al cried” or “Bob bought Mary a book and Al cried”?',
+        'asked every time: the box holds back its step until it is answered, here a conjunction elimination the words as written give', J(held));
+    const quiet = [[['Bob bought a book for the party.'], 'Bob bought a book for the party.'], [['Bob bought a book for ten dollars.', 'Al cried.'], 'Al cried.'],
+        [['Bob bought a book for Mary\'s birthday.', 'Al cried.'], 'Al cried.'], [['Bob thinks that Al bought a book for Mary.', 'Al cried.'], 'Al cried.'],
+        [['Bob ran for an hour.', 'Al cried.'], 'Al cried.']].map(([p, c]) => step(p, c)).filter(r => /did you mean|on whose behalf/i.test(r.why));
+    ok(!quiet.length, 'not "for the party", "for ten dollars", "for Mary\'s birthday", "for an hour", nor inside "Bob thinks that ..."', J(quiet));
+    const both = step(['If Bob bought a book for Mary, then she is glad.', 'Bob bought Mary a book.'], 'Mary is glad.');
+    ok(both.why.indexOf('“If Bob bought a book for Mary, then she is glad.”: did you mean “If Bob bought a book on Mary\'s behalf, then she is glad” or ' +
+            '“If Bob bought Mary a book, then she is glad”? “If Bob bought a book for Mary, then she is glad.”: did you mean “If Bob bought a book for Mary, then Bob is glad” or ' +
+            '“If Bob bought a book for Mary, then Mary is glad”?') === 0,
+        'inside a longer box, each reading put in place; and the box\'s other question ("she") is offered too -- a rewrite may keep it, but not the one it answers', both.why);
+    const have = ev('var r = parseClaimFull("Bob made a cake for Mary to have."); return { key: claimKey(r.form), notes: r.notes.length };');
+    ok(/^P:/.test(have.key) && !have.notes, '"for Mary to have" is read, not taken for a clause cut short ("... to have", as "... does too")', J(have));
+    const fixed = ['Bob bought a book on Mary\'s behalf.', 'Bob bought Mary a book.', 'Bob made a cake for Mary to have.'].map(t => step([t, 'Al cried.'], 'Al cried.').why);
+    ok(fixed.every(w => !/did you mean/i.test(w)), 'each reading, written in, asks nothing more', J(fixed));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
