@@ -4,6 +4,22 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 29: the "for" step withdrawn (r27.165)
+
+The user, of "Bob bought Mary a book" giving "Bob bought a book for Mary": "This seems dangerous if the meaning of 'Bob bought a book for Mary' gets misunderstood by a reader ... You showed that it was ambiguous"; and of the step in a "then" part: "Don't these come apart? Make 'Al is happy' true, 'Bob bought Mary a book' true, and 'Bob bought a book for Mary' (in the 'behalf' sense) false."
+
+* They do. "For Mary" may say who is to have the book, or on whose behalf it was bought. Read the second way, "Bob bought a book for Mary" can be false where "Bob bought Mary a book" is true: he gave her a book, and bought none as her agent. r27.158 took the step as if every reader would take the first way: true on one reading had been taken as enough.
+* So the step is withdrawn, wherever r27.158 took it, until the check asks which "for" is meant.
+* "Bob gave Mary a book" and "Bob gave a book to Mary" are one claim still: "to" has no second sense.
+
+Tests:
+* rules-r27-ordinary-test.js: section 32's first check now has the "for" steps not taken; it had them taken. It fails on r27.164.
+* colors-r27-inference-test.js: r27.158's check goes with the step it checked; 140 checks.
+* Take-one-out: the two changes that change what the app does are caught. The third only removes code that nothing calls any more, so leaving it in changes nothing a test could see.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 28: the step tried on one raven nothing else names (r27.164)
 
 The user, of "Ravens are birds that chase ravens" to "Ravens are birds" asking again since r27.157: "What do you suggest?"

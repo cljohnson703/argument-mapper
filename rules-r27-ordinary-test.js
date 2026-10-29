@@ -169,10 +169,11 @@
  *    are birds" and "Every bird is an animal" give "Ravens are animals" by
  *    universal syllogism (it had been "not recognized"). Not sure, and
  *    asked: the plural in more than one premise, in another box, or denied.
- * 32. (r27.158) "Bob bought Mary a book" gives "Bob bought a book for
- *    Mary", by indirect object (the user: "Go ahead and fix these") -- one
- *    way only, as "for Mary" may say on whose behalf, and only where the
- *    claim says it: not after "not", "no" or "if"; not "made" or "found".
+ * 32. (r27.158) "Bob bought Mary a book" gave "Bob bought a book for Mary",
+ *    by indirect object, one way, where the claim says it -- withdrawn in
+ *    r27.165 ("for Mary" may say on whose behalf, and read so the step can
+ *    lead from true to false); never after "not", "no" or "if", nor "made" or
+ *    "found".
  *    And not "the war left Mary a widow" to "the war left a widow to Mary",
  *    nor "threw Mary a party" to "threw a party to Mary".
  * 33. (r27.159) The progressive in the other voice (the user: "Go ahead and
@@ -949,7 +950,10 @@ console.log('\n-- 32. (r27.158) "bought Mary a book" gives "bought a book for Ma
     const FOR = [[['Bob bought Mary a book.'], 'Bob bought a book for Mary.'], [['Bob baked Mary a cake.'], 'Bob baked a cake for Mary.'],
         [['Every boy bought Mary a book.'], 'Every boy bought a book for Mary.'], [['Bob will buy Mary a book.'], 'Bob will buy a book for Mary.'],
         [['If Al is happy, Bob bought Mary a book.'], 'If Al is happy, Bob bought a book for Mary.'], [['Bob bought Mary a book and Al left.'], 'Bob bought a book for Mary and Al left.']];
-    ok(!misses(FOR, 'indirect object').length, 'with "for": indirect object, in each tense, under "every", after "then", in an "and"', J(misses(FOR, 'indirect object')));
+    // Since r27.165, withdrawn: "for Mary" may say on whose behalf, and then
+    // "Bob bought a book for Mary" can be false where "Bob bought Mary a book"
+    // is true -- in a "then" part too (the user: "Don't these come apart?").
+    ok(!certified(FOR).length, 'with "for": not taken -- "for Mary" may say on whose behalf, and the check does not yet ask which (r27.158 had taken each)', J(certified(FOR)));
     const NOT = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob did not buy Mary a book.'], 'Bob did not buy a book for Mary.'],
         [['Bob never bought Mary a book.'], 'Bob never bought a book for Mary.'], [['No boy bought Mary a book.'], 'No boy bought a book for Mary.'],
         [['If Bob bought Mary a book, Al is glad.'], 'If Bob bought a book for Mary, Al is glad.'],

@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-28 r27.164';
+    const APP_BUILD = '2026-10-29 r27.165';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -21052,49 +21052,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // As a rewrite, anywhere in a claim: each way not blocked, read.
     const claimSaidOtherwise = (f, swaps) => !f || !f.src || !/^(?:pred|not|all|some)$/.test(f.kind) ? []
         : swaps(f).filter(x => !x.blocked).map(x => parseClaim(claimSentenceOf(x.text))).filter(Boolean);
-    // "Bob bought Mary a book" gives "Bob bought a book for Mary" -- and not
-    // back: "for Mary" may say on whose behalf, the book someone else's
-    // (r27.158; the user: "Go ahead and fix these"). Not "make", "find",
-    // "call", "keep" or "leave", whose second phrase may say what the first
-    // is made or found to be ("made Mary a star"), nor "save", "spare",
-    // "play" or "rent" ("played Mary a trick"). One way, so only where a
-    // claim says it (claimRewritesSaid): not with "not" or "never" in its
-    // verb phrase, nor after "no", "few" or "only".
-    const CLAIM_FOR_DATIVE_VERBS = new Set(('buy bake build cook fetch get grab knit order pour sew fix prepare design draw paint pick choose ' +
-        'earn win book reserve sing').split(' '));
-    function claimForDativeSwaps(f) {
-        const parts = claimSaidParts(f);
-        if (!parts || !parts.subject.length) return [];
-        const { subject, vp } = parts, l = vp.map(claimWord), out = [];
-        if (subject.some(x => /^(?:no|nobody|nothing|none|neither|nor|few|fewer|only|not|never|hardly|scarcely|barely|at)$/.test(claimWord(x)))) return out;
-        let i = 0;
-        while (i < l.length - 1 && /^(?:did|does|do|has|have|had|will|would|can|could|may|might|must|shall|should)$/.test(l[i])) i++;
-        const v = l[i], bases = claimUnique(claimPastBases(v).concat(claimParticipleBases(v), claimRegularBases(v, 's'), [v]));
-        if (!bases.some(b => CLAIM_FOR_DATIVE_VERBS.has(b))) return out;
-        const head = vp.slice(0, i + 1), r = vp.slice(i + 1);
-        if (r.some(x => /^(?:to|for|not|never)$/.test(claimWord(x)))) return out;
-        for (let e = 1; e < r.length; e++)
-            if (claimWholePhrase(r.slice(0, e)) && claimWholePhrase(r.slice(e)))
-                out.push({ text: subject.concat(head, r.slice(e), ['for'], r.slice(0, e)).join(' '),
-                    blocked: claimQuantifiedWords(r.slice(0, e)) && claimQuantifiedWords(r.slice(e)) ? 'scope' : null, pair: [r.slice(0, e).join(' '), r.slice(e).join(' ')] });
-        return out;
-    }
-    // Both ways of moving an indirect object, for the colors.
-    const claimIndirectObjectSwaps = f => claimDativeSwaps(f).concat(f && f.kind !== 'not' ? claimForDativeSwaps(f) : []);
-    // A one-way rewrite, where a claim says what it rewrites: not under
-    // "not", nor in what "if" puts first, nor in an "if and only if"
-    // (r27.158). "If Bob bought Mary a book, she is glad" does not give "if
-    // Bob bought a book for Mary, she is glad".
-    function claimRewritesSaid(form, rewrite) {
-        if (!form || typeof form !== 'object') return [];
-        const out = form.kind === 'not' ? [] : rewrite(form).filter(Boolean);
-        if ((form.kind === 'and' || form.kind === 'or') && !form.iff && Array.isArray(form.parts))
-            form.parts.forEach((part, i) => claimRewritesSaid(part, rewrite).forEach(r =>
-                out.push(makeClaimJunction(form.kind, form.parts.map((p, j) => j === i ? claimGroupedIn(form.kind, r) : p)))));
-        else if (form.kind === 'if' && !form.counterfactual && form.cons)
-            claimRewritesSaid(form.cons, rewrite).forEach(r => out.push(makeClaimConditional(form.conds, r)));
-        return out;
-    }
     const CLAIM_EQUIVALENCES = {
         // Active and passive, the indirect object (r27.153).
         'active-passive': f => claimSaidOtherwise(f, claimVoiceSwaps),
@@ -22865,9 +22822,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: '"Bob wrote the book" is "the book was written by Bob", anywhere in a claim -- not where "by" may say where ("by the river"), nor where "every" and "a" change places',
           test: (P, C) => claimReplaces('active-passive', P, C) },
         { id: 'indirect-object', name: 'indirect object',
-          gloss: '"gave Mary a book" is "gave a book to Mary", anywhere in a claim; "bought Mary a book" gives "bought a book for Mary", not back',
-          test: (P, C) => claimReplaces('indirect-object', P, C) ||
-              P.length === 1 && !!P[0] && claimRewritesSaid(P[0], f => claimSaidOtherwise(f, claimForDativeSwaps)).some(r => claimSame(r, C)) },
+          gloss: '"gave Mary a book" is "gave a book to Mary", anywhere in a claim',
+          test: (P, C) => claimReplaces('indirect-object', P, C) },
         { id: 'de-morgan', name: 'De Morgan’s laws',
           gloss: '"not both A and B" is "not A or not B", and "not either A or B" is "not A and not B", anywhere in a claim',
           test: (P, C) => claimReplaces('de-morgan', P, C) },
@@ -32907,7 +32863,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const P = claimDefinitePremises(claimDonkeyPremises(step.premises, step.conclusion), step.conclusion, true);
         // A clause in the other voice, or with its indirect object moved,
         // where that is the step: it goes on (r27.153; it had been dimmed).
-        const swaps = !step.rule ? null : step.rule.id === 'active-passive' ? claimVoiceSwaps : step.rule.id === 'indirect-object' ? claimIndirectObjectSwaps : null;
+        const swaps = !step.rule ? null : step.rule.id === 'active-passive' ? claimVoiceSwaps : step.rule.id === 'indirect-object' ? claimDativeSwaps : null;
         const reworded = (a, b) => !!swaps && claimSaidOtherwise(a, swaps).some(r => claimSame(r, b));
         const same = (a, b) => claimSame(a, b) || claimDenies(a, b) || reworded(a, b);
         const groupsOf = P.map(() => []);

@@ -970,13 +970,6 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             '"is a black bird" goes on (it had been dimmed); "every student who loves their mother" meets "is a student who loves his mother"', J([bird, mother]));
     }
 
-    console.log('\n-- (r27.158) the indirect object moved, with "for" --');
-    {
-        const bought = paint(['Bob bought Mary a book.'], 'Bob bought a book for Mary.');
-        ok(bought.rule === 'indirect object' && runs(bought.boxes[0], /^ic-c/).join('') === 'Bob bought Mary a book' && !bought.boxes[0].some(p => /ic-cn/.test(p)),
-            'with "for", the clause goes on too', J(bought));
-    }
-
     console.log('\n-- (r27.161) "an after-image is not a physical space, but a brain process is" --');
     {
         const mp = paint(['If an after-image is not a physical space, but a brain process is, then an after-image is not a brain process.',
