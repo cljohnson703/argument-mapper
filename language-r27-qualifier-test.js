@@ -97,10 +97,12 @@ try {
             'perhaps Poe is not black.', 'it is not likely that Poe is black.'].map(t => [['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.']);
         ok(all(challenges, 'weak-objection').length === 0, 'brought by a reason, probability hedges challenge the box they object to (' + challenges.length + ')', all(challenges, 'weak-objection').join(' ‖ '));
         const flagged = ['Possibly, Poe is not black.', 'It is possible that Poe is not black.', 'Poe is possibly not black.'];
-        ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous && /a challenge needs reasons too/.test(s.why); }) &&
+        ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous && /is ambiguous: "possibly" can say that it has not been ruled out, or that it could be so\.$/.test(s.why); }) &&
             ['possibly Poe is not black.', 'it is possible that Poe is not black.', 'Poe is possibly not black.'].every(t => { const s = step(['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.', 'weak-objection');
-                return !s.rule && s.ambiguous && /Read as “for all we know, Poe is not black”, the step follows by modus ponens/.test(s.why) && !/read as one claim/.test(s.why); }),
-            '"possibly" is flagged, not read as "for all we know" (alone, that reading is a bare challenge)');
+                // r27.166: "for all we know, ..." is no reading the box reads back
+                // as, so none is offered, nor said to give the step.
+                return !s.rule && s.ambiguous && /is ambiguous: "[^"]+" can say that it has not been ruled out, or that it could be so\.$/.test(s.why) && !/Read as|follows|read as one claim/.test(s.why); }),
+            '"possibly" is flagged, not read as "for all we know"; no reading is offered (none reads back), nor said to give the step, or to be a bare challenge');
         const conditions = [[['When Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black when Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['Given that Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black given that Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['In case Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['While Poe is black, Fido is white.'], 'Fido is white.'],
@@ -117,7 +119,8 @@ try {
         ok(step(['Bob thinks that Poe is black.'], 'It is not the case that Bob thinks that Poe is black.', 'objection').bare === true, 'a denied attitude is its denial (so the objection is a bare denial)');
         // "Bob does not think that P" may say that he thinks it is not so (neg-raising): flagged, both readings named.
         const raised = step(['Bob thinks that Poe is black.'], 'Bob does not think that Poe is black.', 'objection');
-        ok(!raised.rule && raised.ambiguous && /does not think/.test(raised.why), '"does not think that P" is flagged: no such thought, or the thought that not P', raised.why);
+        ok(!raised.rule && raised.ambiguous && raised.why === 'Did you mean “It is not the case that Bob thinks that Poe is black” or “Bob thinks that it is not the case that Poe is black”?',
+            '"does not think that P" is asked about: no such thought, or the thought that not P', raised.why);
         const s = step(['Bob thinks that Poe is black, and Fido is white.'], 'Fido is white.');
         ok(!s.rule && s.ambiguous, '"Bob thinks that P, and Q": whether Q is Bob\'s is flagged');
     }
@@ -197,13 +200,15 @@ try {
            !step(['Poe loves every raven that sings.', 'Fido is a raven.'], 'Poe loves Fido.').rule &&
            step(['Poe manages to love every raven.', 'Fido is a raven.'], 'Poe manages to love Fido.').rule === 'universal modus ponens',
            'a relative clause is part of the kind ("every raven that sings"), and "manages to" passes the object through');
-        const flagged = [[['Poe must love every raven.', 'Fido is a raven.'], 'Poe must love Fido.', /of each raven there is/],
+        const flagged = [[['Poe must love every raven.', 'Fido is a raven.'], 'Poe must love Fido.', /may say of each raven that it is so/],
             [['Poe seeks every unicorn.', 'Uni is a unicorn.'], 'Poe seeks Uni.', /under a description/], [['Poe wants to meet every raven.', 'Fido is a raven.'], 'Poe wants to meet Fido.', /under a description/],
-            [['Poe loves the mother of every raven.', 'Fido is a raven.'], 'Poe loves the mother of Fido.', /each raven's own/],
+            [['Poe loves the mother of every raven.', 'Fido is a raven.'], 'Poe loves the mother of Fido.', /each one's own/],
             [['Poe fed every raven.', 'Fido is a raven.'], 'Poe fed Fido.', /in the past/], [['Poe has read every book.', 'Ulysses is a book.'], 'Poe has read Ulysses.', /after "has"/],
             [['Poe is afraid of every raven.', 'Fido is a raven.'], 'Poe is afraid of Fido.', /under a description/]];
-        const unflagged = flagged.filter(([p, c, why]) => { const r = step(p, c); return r.rule || !r.ambiguous || !why.test(r.why) || !/the step follows by universal modus ponens/.test(r.why); });
-        ok(unflagged.length === 0, 'after a modal, a verb of seeking or wanting, "the mother of", the past, the perfect or fear, the case is flagged with the reading that gives it',
+        // r27.166: their one reading ("of each raven there is") is no sentence
+        // to write in: not offered, nor said to give the step.
+        const unflagged = flagged.filter(([p, c, why]) => { const r = step(p, c); return r.rule || !r.ambiguous || !why.test(r.why) || /Read as|follows/.test(r.why); });
+        ok(unflagged.length === 0, 'after a modal, a verb of seeking or wanting, "the mother of", the past, the perfect or fear, the case is flagged, and says why -- not that a reading gives it',
             unflagged.map(([p, c]) => p.join(' | ') + ' ⊢ ' + c + ' [' + step(p, c).why.slice(0, 120) + ']').join(' ‖ '));
         ok(!step(['Poe loves almost every raven.', 'Fido is a raven.'], 'Poe loves Fido.').rule && !step(['Poe does not love every raven.', 'Fido is a raven.'], 'Poe does not love Fido.').rule,
             'and "almost every" and "does not love every" give no case');
@@ -288,8 +293,9 @@ try {
             '"someone couldn\'t swim" asks: one person couldn\'t, or no one could; "someone didn\'t swim" and "someone could swim" do not', J([one, quiet]));
         const m = step(["If pleasure is the only good, then someone couldn't rationally choose not to plug into the experience machine.", 'Someone could rationally choose not to plug into the experience machine.'], 'Pleasure is the only good.', 'objection');
         const no = step(['If pleasure is the only good, then no one could rationally choose not to plug into the experience machine.', 'Someone could rationally choose not to plug into the experience machine.'], 'Pleasure is the only good.', 'objection');
-        ok(m.ambiguous && /Read as “no one could rationally choose not to plug into the experience machine”, the step follows by modus tollens/.test(m.why) && no.rule === 'modus tollens',
-            'so the step asks, and says that read as "no one could ..." it follows by modus tollens; said so, it does', J([m, no]));
+        ok(m.ambiguous && m.why.indexOf('Did you mean “If pleasure is the only good, then there is someone who could not rationally choose not to plug into the experience machine” or ' +
+            '“If pleasure is the only good, then no one could rationally choose not to plug into the experience machine”?') === 0 && !/follows by/.test(m.why) && no.rule === 'modus tollens',
+            'so the step asks: one person couldn\'t, or no one could -- not which the step follows on (r27.166); said "no one could", it follows by modus tollens', J([m, no]));
         const both = ev('return parseClaimFull("If real experiences are not more valuable than fake ones in the world of the experience machine, then someone could not swim.").notes.filter(function (n) { return n.kind === "ambiguous"; }).length;');
         ok(both === 2, 'a box read again with "ones" as "experiences" still asks what its other clause asks (it had come back from memory without its question)', J(both));
         const denials = ['Someone could rationally choose not to plug in.', 'Someone sings.', "Someone doesn't sing.", 'Some ravens can fly.', 'Something is perfect.',
@@ -338,11 +344,11 @@ try {
             'return { rows: rows, box: box, rule: t.rule ? t.rule.name : null };');
         const chosen = choose('Pleasure is the only good.', ["If pleasure is the only good, then someone couldn't rationally choose not to plug into the experience machine.", 'Someone could rationally choose not to plug into the experience machine.'], 1);
         ok(J(chosen.rows) === J(['If pleasure is the only good, then there is someone who could not rationally choose not to plug into the experience machine.',
-            'If pleasure is the only good, then no one could rationally choose not to plug into the experience machine. — the step follows by modus tollens']) &&
+            'If pleasure is the only good, then no one could rationally choose not to plug into the experience machine.']) &&
             chosen.box === 'If pleasure is the only good, then no one could rationally choose not to plug into the experience machine.' && chosen.rule === 'modus tollens',
             'in the chooser both readings can be picked, each put where "someone couldn\'t" was; picked, "no one could" is the box, and the step follows by modus tollens (neither could be picked)', J(chosen));
         const cannot = choose('Somebody can fly.', ['If Poe is black, somebody cannot fly.', 'Poe is black.'], 0);
-        ok(J(cannot.rows) === J(['If Poe is black, there is somebody who cannot fly.', 'If Poe is black, no one can fly. — the step follows by modus ponens']) &&
+        ok(J(cannot.rows) === J(['If Poe is black, there is somebody who cannot fly.', 'If Poe is black, no one can fly.']) &&
             cannot.box === 'If Poe is black, there is somebody who cannot fly.' && !cannot.rule,
             '"somebody cannot fly": "there is somebody who cannot fly" (picked, the box says so, and nothing follows) or "no one can fly"', J(cannot));
         // (A name's mark taken out: "mary", "bob".)

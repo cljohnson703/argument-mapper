@@ -273,8 +273,10 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const missing = dark.filter(sel => !new RegExp('body\\.bg-light ' + esc(sel) + '\\s*\\{[^}]*color:\\s*var\\(--label-text\\)').test(CSS));
         ok(missing.length === 0, '"Saved in browser only …", "Basis: the axioms" and the Logic panel\'s notes, counts and arrows, Recent Maps\' times and note, "No notes yet.", the Depth labels and the own-words line take the headers\' color', J(missing));
         ok(/body\.bg-light \.eval-popover-close\s*\{\s*color:\s*#666;\s*\}/.test(CSS), 'the note popover\'s ✕ is #666, as the other ✕s');
-        ok(/body\.bg-light #reading-chooser \.rc-follows\s*\{\s*color:\s*#007a00;\s*\}/.test(CSS) && contrast('#007a00', '#f5f5f5') >= 4.5 && contrast('#00a800', '#f5f5f5') < 3,
-            'the reading chooser\'s "the step follows by …" is a deeper green: ' + contrast('#007a00', '#f5f5f5').toFixed(1) + ':1 on its panel, where the tags\' green is ' + contrast('#00a800', '#f5f5f5').toFixed(1) + ':1');
+        // r27.166: no reading is marked as the one the step follows on; once
+        // a box is rewritten, "✓ The step follows by …" is that green.
+        ok(/body\.bg-light #reading-chooser \.rc-done\s*\{\s*color:\s*#007a00;\s*\}/.test(CSS) && !/rc-follows/.test(CSS) && contrast('#007a00', '#f5f5f5') >= 4.5 && contrast('#00a800', '#f5f5f5') < 3,
+            'the reading chooser\'s "✓ The step follows by …" is a deeper green: ' + contrast('#007a00', '#f5f5f5').toFixed(1) + ':1 on its panel, where the tags\' green is ' + contrast('#00a800', '#f5f5f5').toFixed(1) + ':1');
         const grip = (CSS.match(/\n\s*\.drag-handle\s*\{[^}]*\}/) || [''])[0];
         ok(/color:\s*#999;/.test(grip) && /:where\(body\.nodes-light\) \.drag-handle\s*\{\s*color:\s*#555;\s*\}/.test(CSS),
             'the grip is #999 on the dark theme\'s boxes, #555 on the light theme\'s as before', grip.trim().slice(0, 120));

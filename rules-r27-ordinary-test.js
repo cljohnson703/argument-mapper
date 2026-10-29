@@ -640,8 +640,11 @@ console.log('\n-- 19. (r27.145) "the student" is the one "a student" speaks of -
     ok(f.kind === 'all' && f.notes[0] === '"the student" is read as what the condition speaks of, so the box says what "every student that cheats will be caught" says',
         '"If a student cheats, the student will be caught" says what "every student that cheats will be caught" says, as "that student" did (it had been one claim to another)', J(f));
     const bob = step(['If a student cheats, the student will be caught.', 'Bob is a student.', 'Bob cheats.'], 'Bob will be caught.');
-    ok(!bob.rule && bob.why.indexOf('Read as \u201cevery student that cheats will be caught\u201d, the step follows by universal modus ponens.') >= 0,
-        'with Bob: the question "a student" after "if" asks, as it does for "they"; read as "every", universal modus ponens', J(bob));
+    // r27.166: the readings, not which the step follows on; written in,
+    // "every" gives it.
+    ok(!bob.rule && bob.why.indexOf('Did you mean \u201cEvery student that cheats will be caught\u201d or \u201cGenerally, if a student cheats, the student will be caught\u201d?') === 0 &&
+        !/follows by/.test(bob.why) && step(['Every student that cheats will be caught.', 'Bob is a student.', 'Bob cheats.'], 'Bob will be caught.').rule === 'universal modus ponens',
+        'with Bob: the question "a student" after "if" asks, as it does for "they"; "every" written in, universal modus ponens', J(bob));
     const DEF = [[['Every student that cheats will be caught.', 'A student cheats.'], 'The student will be caught.'],
         [['Every AI system that is reliably and routinely consulted functions as a cognitive extension.', 'An AI system is reliably and routinely consulted.'], 'The AI system functions as a cognitive extension.']];
     ok(!misses(DEF, 'universal modus ponens').length, 'a conclusion\'s "the student" is the one a premise\'s "a student" speaks of: universal modus ponens', J(misses(DEF, 'universal modus ponens')));
@@ -881,7 +884,7 @@ console.log('\n-- 28. (r27.154) "most" and "in general" decided by "all" and "so
     ok(!misses(AND, 'conjunction elimination').length, 'half of an "and" said of ravens follows whatever "ravens" means: no question (it had asked, the check reading no "most" or "in general")',
         J(misses(AND, 'conjunction elimination')));
     const poe = step(['Ravens are black.', 'Poe is a raven.'], 'Poe is black.');
-    ok(!poe.rule && /may mean all of them, some, most, or what holds in general/.test(poe.why), 'where it follows on "all" only, it still asks', J(poe));
+    ok(!poe.rule && poe.why === 'Did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”?', 'where it follows on "all" only, it still asks', J(poe));
 }
 
 console.log('\n-- 29. (r27.155) "nothing is a dog and a cat" is "no dog is a cat" --');
@@ -1031,7 +1034,8 @@ console.log('\n-- 38. (r27.164) the step tried on one raven nothing else names -
     const ONE = [[['Ravens are birds that chase ravens.'], 'Ravens are birds.'], [['Ravens that fly are birds and black.'], 'Ravens that fly are black.']];
     ok(!misses(ONE, 'conjunction elimination').length, '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read (it had asked)', J(misses(ONE, 'conjunction elimination')));
     const two = step(['Ravens are black.', 'Ravens are big.'], 'Ravens are black and big.');
-    ok(!two.rule && /may mean all of them, some, most, or what holds in general/.test(two.why), 'with the plural in two premises, it still asks', J(two));
+    ok(!two.rule && two.why.indexOf('“Ravens are black.”: did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”? ' +
+        '“Ravens are big.”: did you mean “All ravens are big”, ') === 0, 'with the plural in two premises, it still asks, of each box', J(two));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

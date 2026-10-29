@@ -107,8 +107,11 @@ console.log('\n-- 1. the user\'s example: a "then" with no "if" of its own --');
     ok(shape(asked(r).readings[2]) === '(W & X → [Y and then Z])', 'the last as W → (X → (Y and then Z))', shape(asked(r).readings[2]));
     ok(!asked(r).readings.some(twiceIf), 'no reading says "if" twice in a row');
     const s = step(['If W, then if X, then Y, then Z.', 'W.'], 'If X implies Y, then Z.');
-    ok(s.tag === '? ambiguous' && /the step follows by modus ponens/.test(s.rows[1]) && !/follows/.test(s.rows[0] + s.rows[2]),
-        'a step on it waits, and the chooser shows which reading gives it', J(s));
+    // r27.166: no reading said to be the one the step follows on; written
+    // in, the second gives it.
+    ok(s.tag === '? ambiguous' && J(s.rows) === J(['If W implies that X implies Y, then Z.', 'If W, then if X implies Y, then Z.', 'If W, then if X, then first Y and then Z.']) &&
+        step(['If W, then if X implies Y, then Z.', 'W.'], 'If X implies Y, then Z.').tag === '✓ modus ponens',
+        'a step on it waits, and the chooser offers its readings, none marked; written in, the second gives it by modus ponens', J(s));
     const words = read('If Poe is a raven, then if Poe flies, then Poe sings, then Mary is happy.');
     ok(J(asked(words).readings.slice(0, 2)) === J(['if Poe is a raven implies that Poe flies implies that Poe sings, then Mary is happy',
         'if Poe is a raven, then if Poe flies implies that Poe sings, then Mary is happy']) &&
@@ -242,8 +245,8 @@ console.log('\n-- 7. formulas, and Help --');
         asked(read('∀x (Fx → Gx → Hx)')).readings.length === 2 && !read('P → (Q → R)').asked.length && !read('(P → Q) → R').asked.length,
         'four parts: five groupings; inside brackets and under a quantifier too; with brackets, not asked');
     const s = step(['W → (X → Y) → Z', 'W'], '(X → Y) → Z');
-    ok(s.tag === '? ambiguous' && /modus ponens/.test(s.rows[1]) && !/follows/.test(s.rows[0]) && step(['W → ((X → Y) → Z)', 'W'], '(X → Y) → Z').tag === '✓ modus ponens',
-        'a step on it waits, and the chooser shows which grouping gives it; bracketed, modus ponens', J(s));
+    ok(s.tag === '? ambiguous' && J(s.rows) === J(['(W → (X → Y)) → Z', 'W → ((X → Y) → Z)']) && step(['W → ((X → Y) → Z)', 'W'], '(X → Y) → Z').tag === '✓ modus ponens',
+        'a step on it waits, and the chooser offers its groupings, none marked; bracketed, modus ponens', J(s));
     ok(shape('((W → X) → Y) → Z') === '(((W → X) → Y) → Z)' && shape('(((P → Q) → R) → S) → T') === '((((P → Q) → R) → S) → T)', 'brackets on the left, at any depth');
     ok(shape('¬¬(P → (Q ∨ ¬(R ∧ (S → ¬T))))') === '¬¬(P → (Q ∨ ¬(R ∧ (S → ¬T))))', 'denials, "or" and "and" between');
     ok(step(['(X → Y) → Z', 'X → Y'], 'Z').tag === '✓ modus ponens' && step(['((P → Q) → R)', '¬R'], '¬(P → Q)').tag === '✓ modus tollens', 'modus ponens and tollens on them');

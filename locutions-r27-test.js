@@ -80,10 +80,13 @@ const step = (premises, conclusion) => ev(`
         rows = Array.prototype.map.call(document.querySelectorAll('#reading-chooser .rc-row'), function (r) {
             return (/rc-unfit/.test(r.className) ? '[unfit] ' : '[ok] ') + (r.title ? r.title + Array.prototype.map.call(r.querySelectorAll('.rc-follows, .rc-own'), function (x) { return x.textContent; }).join('') : r.textContent); });
         closeReadingChooser(); }
-    return { tag: deductiveStepTagText(s), rows: rows, rule: s.rule ? s.rule.name : null };`);
+    return { tag: deductiveStepTagText(s), rows: rows, rule: s.rule ? s.rule.name : null, why: s.why ? s.why.text : null,
+        follows: ((s.why && s.why.ambiguous) || []).some(function (a) { return (a.derives || []).some(function (d) { return !!d.rule; }); }) };`);
 const certifies = (premises, conclusion, rule) => { const s = step(premises, conclusion); return s.tag === '✓ ' + rule; };
-// Not certified, and no reading of it is offered as following.
-const refused = (premises, conclusion) => { const s = step(premises, conclusion); return !s.rule && !s.rows.some(r => /the step follows by/.test(r)); };
+// Not certified, and on no reading of it does it follow. (Since r27.166 the
+// rows no longer say which reading the step follows on: the check's own
+// readings say it.)
+const refused = (premises, conclusion) => { const s = step(premises, conclusion); return !s.rule && !s.follows && !s.rows.some(r => /the step follows by/.test(r)); };
 
 console.log('\n-- 1. words the reader had misread --');
 {
@@ -112,8 +115,13 @@ console.log('\n-- 2. variables --');
         read('For all x, x is mortal.').said === 'everything is mortal', '"for some x", "there is an x such that", "for all x"');
     ok(refused(['For any x, if x is a man, then x is mortal.', 'Socrates is mortal.'], 'Socrates is a man.'), 'affirming the consequent is no step');
     const bare = step(['If x is a man, then x is mortal.', 'Socrates is a man.'], 'Socrates is mortal.');
-    ok(bare.tag === '? ambiguous' && /^\[ok\] For any x, if x is a man, then x is mortal\. — the step follows by universal modus ponens/.test(bare.rows[0]) &&
-        /^\[unfit\] "x" names one thing/.test(bare.rows[1] || ''), 'with no "for any x": asked, "for any x" one click away', J(bare));
+    // r27.166 (the user: "The available disambiguations must be grammatical
+    // ... notified only when two valid disambiguations are available"):
+    // '"x" names one thing' is no sentence to write in, so there is nothing
+    // to choose between: the box is said to be ambiguous, and how.
+    ok(bare.tag === '? ambiguous' && !bare.rows.length && bare.follows &&
+        bare.why === '“If x is a man, then x is mortal.” is ambiguous: "x" may stand for anything ("for any x") or name one thing.',
+        'with no "for any x": said to be ambiguous, "for any x" named -- no reading to choose, "x names one thing" being no sentence', J(bare));
     ok(refused(['If x is a man, then x is mortal.', 'Socrates is mortal.'], 'Socrates is a man.') && refused(['x is a man.'], 'Socrates is a man.') &&
         refused(['If x is a man, then x is mortal.'], 'Socrates is mortal.'), 'and no fallacy on any reading');
     ok(read('If x is a man, then x is mortal.').kind === 'if', 'read as written until a step turns on it');

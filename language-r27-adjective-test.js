@@ -107,8 +107,12 @@ try {
             [['The mind is a black box.'], 'The mind is a box.'], [['This is a zombie argument.'], 'This is an argument.'], [['This is a zombie argument.'], 'This is a zombie.']];
         ok(flagged(non).length === 0, 'a privative, material or unknown modifier, and an idiom: neither part passes, each is flagged (' + non.length + ')', flagged(non).join(' ‖ '));
         const s = step(['This is a fake gun.'], 'This is a gun.'), t = step(['Poe is a good pianist.'], 'Poe is good.');
-        ok(/a fake gun need not be a gun/.test(s.why) && /Read as “a gun that is fake”, the step follows by conjunction elimination/.test(s.why) && !/Worded the same way/.test(s.why) &&
-           /a good pianist is a pianist, but need not be good/.test(t.why), 'the flag says why, and what reading would make the step follow', s.why + ' ‖ ' + t.why);
+        // r27.166 (the user: "The available disambiguations must be
+        // grammatical"): "a gun that is fake" is no sentence the box could be
+        // rewritten as, so no reading is offered -- nor said to give the step.
+        ok(s.why === '“This is a fake gun.” is ambiguous: a fake gun need not be a gun.' &&
+           t.why === '“Poe is a good pianist.” is ambiguous: a good pianist is a pianist, but need not be good, only good for a pianist.',
+           'the flag says why -- and offers no reading that is no sentence, nor says that one would make the step follow', s.why + ' ‖ ' + t.why);
     }
 
     console.log('\n-- what stays apart --');
@@ -132,7 +136,8 @@ try {
         ok(key('Poe is a black and white raven.') === 'C[P:poe|=black;P:poe|=raven;P:poe|=white]' && key('Ravens are black and noisy birds.') === 'C[P:ravens|=black;P:ravens|=bird;P:ravens|=noisy bird]' &&
            key('Poe is a philosopher and poet.') === 'C[P:poe|=philosopher;P:poe|=poet]', 'adjectives joined before one noun say it once; nouns joined stay two', key('Ravens are black and noisy birds.'));
         const generic = step(['All black ravens fly.'], 'Black ravens fly.'), g2 = step(['Black ravens fly.', 'Poe is a black raven.'], 'Poe flies.');
-        ok(!g2.rule && g2.ambiguous && /may mean all of them, some, most, or what holds in general/.test(g2.why), 'a plural with adjectives is a generic, flagged as "ravens fly" is', g2.why);
+        ok(!g2.rule && g2.ambiguous && g2.why === 'Did you mean “All black ravens fly”, “Some black ravens fly”, “Most black ravens fly”, or “Generally, black ravens fly”?',
+           'a plural with adjectives is a generic, asked about as "ravens fly" is', g2.why);
     }
 
     console.log('\n-- soundness --');

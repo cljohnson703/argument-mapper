@@ -637,15 +637,20 @@ try {
             /once it is shown that \u2018Fido sings\u2019/.test(step(['Every raven is black if it sings', 'Fido is a raven'], 'Fido is black').why) &&
             /once it is shown that \u2018Tweety is black or white\u2019/.test(step(['Every bird that is black or white is happy', 'Tweety is a bird', 'Tweety is red'], 'Tweety is happy').why),
             'a universal short of its case says, in English, what the case still needs');
-        // "Only Bob runs" and "even if": flagged, and each reading offered.
-        const onlyWhy = step(['Only Bob runs'], 'Bob runs');
-        ok(!onlyWhy.rule && onlyWhy.ambiguous && /Read as \u201cBob runs, and everything that runs is Bob\u201d, the step follows by conjunction elimination/.test(onlyWhy.why) &&
-            /Read as \u201ceverything that runs is Bob\u201d, the step follows by universal modus ponens/.test(step(['Only Bob runs', 'Mary runs'], 'Mary is Bob').why),
-            '"only Bob runs" is ambiguous, and the reading each step needs is named');
-        const evenWhy = step(['Even if Mary runs, Bob runs'], 'Bob runs');
-        ok(!evenWhy.rule && evenWhy.ambiguous && /Read as \u201cBob runs, and if Mary runs, then Bob runs\u201d, the step follows by conjunction elimination/.test(evenWhy.why) &&
-            /Read as \u201cif Mary runs, then Bob runs\u201d, the step follows by modus ponens/.test(step(['Bob runs even if Mary runs', 'Mary runs'], 'Bob runs').why),
-            '"even if" is ambiguous in either order, and the reading each step needs is named');
+        // "Only Bob runs" and "even if": flagged, and each reading offered --
+        // since r27.166 not said to be the one the step needs (the user:
+        // "might steer less discerning individuals in the wrong direction");
+        // written in, each gives its step.
+        const onlyWhy = step(['Only Bob runs'], 'Bob runs'), onlyAsked = 'Did you mean \u201cEverything that runs is Bob\u201d or \u201cBob runs, and everything that runs is Bob\u201d?';
+        ok(!onlyWhy.rule && onlyWhy.ambiguous && onlyWhy.why === onlyAsked && step(['Only Bob runs', 'Mary runs'], 'Mary is Bob').why.indexOf(onlyAsked) === 0 &&
+            rule(['Bob runs, and everything that runs is Bob'], 'Bob runs') === 'conjunction elimination' &&
+            rule(['Everything that runs is Bob', 'Mary runs'], 'Mary is Bob') === 'universal modus ponens',
+            '"only Bob runs" is ambiguous, both readings offered, each giving the step that needs it', onlyWhy.why);
+        const evenWhy = step(['Even if Mary runs, Bob runs'], 'Bob runs'), evenAsked = 'Did you mean \u201cBob runs, and if Mary runs, then Bob runs\u201d or \u201cIf Mary runs, then Bob runs\u201d?';
+        ok(!evenWhy.rule && evenWhy.ambiguous && evenWhy.why === evenAsked && step(['Bob runs even if Mary runs', 'Mary runs'], 'Bob runs').why === evenAsked &&
+            rule(['Bob runs, and if Mary runs, then Bob runs'], 'Bob runs') === 'conjunction elimination' &&
+            rule(['If Mary runs, then Bob runs', 'Mary runs'], 'Bob runs') === 'modus ponens',
+            '"even if" is ambiguous in either order, both readings offered, each giving the step that needs it', evenWhy.why);
         // A premised equivalence lets either side stand for the other.
         ok(rule(['P ↔ Q', 'P ∧ R'], 'Q ∧ R') === 'substitution of equivalents' &&
             rule(['P ↔ Q', 'R → P'], 'R → Q') === 'substitution of equivalents' &&
@@ -888,18 +893,22 @@ try {
             'names, relative clauses, verbs joined, nouns of both numbers and plural modifiers are no slips; a plural with "is" is');
         // Generics are asked; a kind's predicate and a modal are not asked outright.
         const gen = tagOf(['Mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria');
-        ok(gen[0] === '? generic' && /all mosquitoes carry malaria/.test(gen[1]) && /most mosquitoes carry malaria/.test(gen[1]) &&
+        ok(gen[0] === '? generic' && gen[1] === 'Did you mean “All mosquitoes carry malaria”, “Some mosquitoes carry malaria”, “Most mosquitoes carry malaria”, or “Generally, mosquitoes carry malaria”?' &&
             rule(['All mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria') === 'universal modus ponens' &&
             rule(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false') === 'modus ponens' &&
             rule(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true') === 'modus tollens',
             'a generic asks all, some or most where the answer decides the step; "zombies are possible" and "a series of lights can ..." ask nothing here', J(gen));
         // An indefinite in an if-clause asks, in whole sentences.
         const ifA = tagOf(['If a raven sings, it is black', 'Fido is a raven', 'Fido sings'], 'Fido is black');
-        ok(ifA[0] === '? generic' && /“every raven that sings is black” or “generally, if a raven sings, it is black”/.test(ifA[1]) &&
-            /Read as “every raven that sings is black”, the step follows by universal modus ponens/.test(ifA[1]) &&
+        // r27.166: both readings read back -- "generally, ..." had come back as
+        // the box's own words, and could not be written in -- and neither is
+        // said to give the step.
+        ok(ifA[0] === '? generic' && ifA[1].indexOf('Did you mean “Every raven that sings is black” or “Generally, if a raven sings, it is black”?') === 0 && !/follows by/.test(ifA[1]) &&
+            ev('var e = parseClaimFull("If a raven sings, it is black").notes.filter(function (n) { return n.generic; })[0];' +
+                'return !!e && claimReadingRoundTrips({ text: "If a raven sings, it is black", site: e.site }, 1, "Generally, if a raven sings, it is black.");') &&
             ev('var e = parseClaimFull("If a raven sings, it is black").notes.filter(function (n) { return n.generic; })[0];' +
                 'return !!e && claimReadingRoundTrips({ text: "If a raven sings, it is black", site: e.site }, 0, "Every raven that sings is black.");'),
-            'an indefinite in an if-clause asks: any one (every raven that sings is black), or in general -- and the answer reads back', J(ifA));
+            'an indefinite in an if-clause asks: any one (every raven that sings is black), or in general -- and each answer reads back', J(ifA));
         // A conditional's "would" belongs to the "if".
         ok(rule(['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], "Mary doesn't know everything") === 'modus tollens' &&
             rule(['If Mary had known everything, Mary would not be surprised', 'Mary is surprised'], "Mary didn't know everything") === 'modus tollens' &&
@@ -908,8 +917,12 @@ try {
             rule(['Mary would not be surprised'], 'Mary is not surprised') === null,
             'a conditional\'s "would" belongs to the "if": modus tollens and ponens take the plain claims; "would" said alone stays', '');
         const past = tagOf(['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], "Mary didn't know everything");
-        ok(past[0] === '? ambiguous' && /read as the present/.test(past[1]) && /Read as “if Mary had known everything, Mary would not be surprised”, the step follows by modus tollens/.test(past[1]),
-            '"if she knew", with "would", is the present; the past is a reading, offered as "had known"', J(past));
+        // r27.166: "if Mary knew everything now, ..." does not read back as the
+        // present, so there is no second reading to offer: the box is said to
+        // be ambiguous, "had known" named.
+        ok(past[0] === '? ambiguous' && /is ambiguous: "Mary knew everything" after "if", with "would", is read as the present \("Mary knew everything now"\); it may mean the past \("Mary had known everything"\)\./.test(past[1]) &&
+            !/Read as|follows by/.test(past[1]),
+            '"if she knew", with "would", is the present; the past may be meant, "had known" named -- and not said to give the step', J(past));
         // The user's Mary steps, in their words.
         const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
         const S6 = 'When Mary exits the room and sees a ripe red tomato, she learns a new fact about the sensation of seeing red, namely its subjective character.';

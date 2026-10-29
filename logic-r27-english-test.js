@@ -676,8 +676,11 @@ function reportCorpus(name, res) {
         ok(d.noObject === true, '"gives you no reason" denies "gives you a reason", and so does "doesn\'t give you any reason"', J(d.noObject));
         ok(d.exact === true && d.contraries === true,
             'words that are exactly denials deny ("invalid", "non-physical", "unable to"), and "able to" is "can"; contraries and look-alikes do not', J([d.exact, d.contraries]));
-        ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true && /should as presumably/.test(d.hedge.why || '') && /only denies the box it objects to: a denial is not an argument/.test(d.hedge.why || ''),
-            '"We can\'t leave" against "We should be able to leave" is flagged: on the hedge reading it only denies its box, which is no argument', J(d.hedge));
+        // r27.166: "should as presumably" is no sentence to write in: no
+        // reading is offered, nor said to make the objection a bare denial.
+        ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true &&
+            d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
+            '"We can\'t leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
         // Since r27.157, "all black things are dark" and "ravens are black" give
         // "ravens are dark" however "ravens" is read: by universal syllogism,
         // the rule on "all" -- never universal modus ponens, of one thing.
@@ -886,14 +889,17 @@ function reportCorpus(name, res) {
         ok(!g.one.inference && g.one.rule === null && g.one.tag === '? not recognized',
             'beside "we can\'t conclude that ...", "we can conclude that ..." is a claim, not flagged; the whole argument is two rules, so not one step', J(g.one));
         ok(g.ponens.rule === 'modus ponens', 'its first step: the evidence condition first, modus ponens gives "if we can\'t conclude that any machine ..., then we can\'t conclude that others think"', J(g.ponens));
-        ok(g.tollens.rule === null && g.tollens.tag === '? ambiguous' && /"any machine" may mean every one or at least one/.test(g.tollens.why) &&
-            /Read as “every machine that passes the Turing test can think”, the step follows by modus tollens/.test(g.tollens.why),
-            'its second step asks what "any machine" means there, and says the step follows by modus tollens on "every"', J(g.tollens));
+        // r27.166: the readings, not which the step follows on (written in,
+        // "every" gives it: the check after the next).
+        ok(g.tollens.rule === null && g.tollens.tag === '? ambiguous' &&
+            g.tollens.why === "Did you mean “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
+                "“If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think”?",
+            'its second step asks what "any machine" means there: "every machine" or "some machine" -- not which the step follows on', J(g.tollens));
         ok(g.every.rule === 'modus tollens', 'with "every" in that box, modus tollens: "we can conclude that X" denies "we can\'t conclude that X"', J(g.every));
         ok(g.alike.rule === 'modus tollens', 'worded alike in both boxes, it follows on either reading of "any", and nothing is asked', J(g.alike));
-        ok((g.offered || []).some(t => t.indexOf("If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think — the step follows by modus tollens") === 0) &&
-            (g.offered || []).some(t => t.indexOf("If we can't conclude that some machine that passes the Turing test can think") === 0),
-            'answered in the box: "any machine" rewritten "every machine" (the step follows) or "some machine"', J(g.offered));
+        ok(J(g.offered) === J(["If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think",
+                "If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think"]),
+            'answered in the box: "any machine" rewritten "every machine" or "some machine", neither marked', J(g.offered));
         ok(g.notBoth.rule === 'conjunctive syllogism', '"It is not the case both that A and that B" is "not both A and B" (it was read as about "it")', J(g.notBoth));
         ok(g.both.rule === 'conjunction elimination', '"both" holds its own "and": "Both we can\'t conclude that P and Q" is two claims (the that-clause had taken in "and Q")', J(g.both));
         ok(g.belief.rule === null && g.belief.tag === '? ambiguous' && /"any raven" may mean every one or at least one/.test(g.belief.why),
@@ -949,15 +955,18 @@ function reportCorpus(name, res) {
         ok(/✓ modus tollens/.test(h.skeptic), 'the skeptic\'s modus tollens: "I know that I am not a brain in a vat" beside "I don\'t know that ..." denies it', h.skeptic);
         ok(/✓ modus tollens/.test(h.shown) && /✓ disjunctive syllogism/.test(h.knowDS), 'so for "it has been shown that" and "we know that": one rule for every phrasing', J([h.shown, h.knowDS]));
         ok(/in a box/.test(h.marker), '"We can conclude that Q" beside a different denial ("it has not been shown that P") is still an inference word', h.marker);
-        ok(/^S ✓ modus tollens$/.test(h.written[0]) && /^U \? ambiguous \|.*"can conclude" may mean it has been established, or that it is possible for us.*Read as “it is possible for us to conclude that others think”, the step follows by ab esse ad posse/.test(h.written[1]),
-            '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can", it follows by ab esse ad posse', J(h.written));
-        ok(/^S \? ambiguous \|.*"can’t conclude" may mean it has not been established, or that it is impossible for us.*Read as “it is impossible for us to conclude that every machine that passes the Turing test can think”, the step follows by modus tollens/.test(h.answered[0]) &&
-            /^U ✓ ab esse ad posse$/.test(h.answered[1]), 'answered "possible for us", the step above asks the same of its "can\'t", and follows by modus tollens on it', J(h.answered));
+        ok(/^S ✓ modus tollens$/.test(h.written[0]) && h.written[1] === 'U ? ambiguous | Did you mean “We are entitled to conclude that others think” or “It is possible for us to conclude that others think”?',
+            '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can" (worded "possible for us", it follows by ab esse ad posse: below)', J(h.written));
+        ok(h.answered[0].indexOf("S ? ambiguous | “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think”: did you mean " +
+                "“If we are not entitled to conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
+                "“If it is impossible for us to conclude that every machine that passes the Turing test can think, then we can't conclude that others think”?") === 0 &&
+            /^U ✓ ab esse ad posse$/.test(h.answered[1]), 'answered "possible for us", the step above asks the same of its "can\'t" (worded "impossible for us", modus tollens: below)', J(h.answered));
         ok(J(h.plain) === J(['S ✓ modus tollens', 'U ✓ ab esse ad posse']), 'worded "impossible/possible for us", modus tollens and ab esse ad posse, nothing asked', J(h.plain));
         ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
         ok(/in a box/.test(h.lone), 'alone, "We can conclude that ..." is still an inference word', h.lone);
         ok(/✓ modus ponens/.test(h.challenge), 'a weak objection\'s "we can\'t conclude that ..." is "not established", as before: nothing asked', h.challenge);
-        ok(/\? ambiguous \|.*"any raven" may mean every one or at least one/.test(h.object) && /\? ambiguous \|.*"anyone" may mean every one or at least one/.test(h.anyone),
+        ok(h.object === "A ? ambiguous | Did you mean “If we can't conclude that Mary loves every raven, then we can't conclude that others think” or “If we can't conclude that Mary loves some raven, then we can't conclude that others think”?" &&
+            h.anyone === "A ? ambiguous | Did you mean “If we can't conclude that everyone left, then we can't conclude that others think” or “If we can't conclude that someone left, then we can't conclude that others think”?",
             '"any" as an object, and "anyone", are asked about too', J([h.object, h.anyone]));
         ok(h.reason === 0, '"there is any reason": only "at least one" makes sense, so nothing is asked', h.reason);
         ok(/\? ambiguous \|.*"any raven" may mean every one or at least one/.test(h.beliefObject), 'a belief keeps an object\'s "any" too, and asks about it where it matters', h.beliefObject);
@@ -991,17 +1000,16 @@ function reportCorpus(name, res) {
                 able: step(['If Poe can fly, then Poe is a bird', 'Poe is able to fly'], 'Poe is a bird'),
                 ravens: step(['The ravens fly'], 'The ravens can fly')
             };`);
-        ok(c.fly.tag === '? ambiguous' && /"can" may say what Poe is able to do, what is possible for Poe, or what Poe is allowed to do/.test(c.fly.why) &&
-            /Read as “it is possible for Poe to fly”, the step follows by ab esse ad posse/.test(c.fly.why),
-            '"Poe flies", so "Poe can fly": asked which "can"; on "possible for Poe" it follows by ab esse ad posse', J(c.fly));
-        ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is possible for Poe to fly — the step follows by ab esse ad posse', 'Poe is allowed to fly']),
+        ok(c.fly.tag === '? ambiguous' && c.fly.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
+            '"Poe flies", so "Poe can fly": asked which "can" (said "possible for Poe", it follows by ab esse ad posse: below)', J(c.fly));
+        ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is possible for Poe to fly', 'Poe is allowed to fly']),
             'answered in the box: "Poe is able to fly", "It is possible for Poe to fly" or "Poe is allowed to fly"', J(c.fly.rows));
         ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '✓ modus ponens', 'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens asks nothing', J([c.possible.tag, c.both.tag]));
-        ok(c.strict.tag === '? ambiguous' && /Read as “it is possible for Poe to fly”, the step follows by modus ponens/.test(c.strict.why) &&
-            c.strict.rows[1] === 'If it is possible for Poe to fly, then Poe is a bird — the step follows by modus ponens',
+        ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If it is possible for Poe to fly, then Poe is a bird”, or “If Poe is allowed to fly, then Poe is a bird”?' &&
+            c.strict.rows[1] === 'If it is possible for Poe to fly, then Poe is a bird' &&
             '"possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));
         ok(c.able.tag === '✓ modus ponens', '"Poe is able to fly" is "Poe can fly" read as ability: one claim', J(c.able));
-        ok(/what the ravens are able to do/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
+        ok(/^Did you mean “The ravens are able to fly”, “It is possible for the ravens to fly”, or “The ravens are allowed to fly”\?/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
     /* ---------------- 3. diagnosis on a map ---------------- */
@@ -1028,13 +1036,14 @@ function reportCorpus(name, res) {
             return { tags: tags, rows: rows, summary: summary };`);
         const A = d.tags && d.tags.A, B = d.tags && d.tags.B, C = d.tags && d.tags.C;
         ok(A && A.text === '? ambiguous' && /\bambiguous\b/.test(A.cls), 'a step on a scope ambiguity is tagged "? ambiguous"', J(A));
-        ok(A && /“All ravens are not white” is ambiguous/.test(A.title) && /Read as “no ravens are white”, the step follows by universal modus ponens/.test(A.title),
-            'its tooltip gives the readings, and the one the step would follow on, by its rule', A && A.title);
+        // r27.166: the readings, not the one the step would follow on.
+        ok(A && A.title === 'Did you mean “No ravens are white” or “Not all ravens are white”? Click to choose a reading.',
+            'its tooltip asks which reading is meant -- not which the step would follow on', A && A.title);
         ok(B && B.text === '? not recognized' && !/ambiguous/.test(B.title), 'an unrecognized step is not silently declared invalid', J(B));
         ok(C && C.text === '? not recognized' && /“Most ravens are not white”: the checker reads "every", "some" and "no", not "most"/.test(C.title),
             'an unread sentence ("most") is named in the tooltip of a step that does not derive', C && C.title);
         const rowA = (d.rows || []).find(r => r.step === 'A');
-        ok(rowA && /\bambiguous\b/.test(rowA.cls) && rowA.mark === '?' && /ambiguous/.test(rowA.rule) && /Read as “no ravens are white”/.test(rowA.why || ''),
+        ok(rowA && /\bambiguous\b/.test(rowA.cls) && rowA.mark === '?' && /ambiguous/.test(rowA.rule) && rowA.why === 'Did you mean “No ravens are white” or “Not all ravens are white”?',
             'in the list its row is marked "?", with the explanation under it', J(rowA));
         ok(/0 of 3 steps certified · 1 ambiguous/.test(d.summary || ''), 'and the summary counts the ambiguous steps', d.summary);
     } catch (e) { ok(false, 'the section ran to the end', e.message); }

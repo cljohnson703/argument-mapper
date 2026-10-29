@@ -1255,7 +1255,6 @@
     #reading-chooser .rc-row { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; cursor: pointer; }
     #reading-chooser .rc-row input { margin-top: 3px; flex-shrink: 0; }
     #reading-chooser .rc-row.rc-unfit { cursor: default; opacity: 0.75; }
-    #reading-chooser .rc-follows { color: var(--logic-certified); }
     #reading-chooser .rc-own { display: block; font-size: 11px; color: #999; }
     #reading-chooser .rc-apply { display: block; margin: 6px 0 2px auto; padding: 4px 10px; border-radius: 5px;
         border: 1px solid #666; background: #3a3a40; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
@@ -1265,7 +1264,6 @@
     #reading-chooser .rc-done { color: var(--logic-certified); margin: 0 0 8px; }
     #reading-chooser .rc-next { font-size: 12px; color: #aaa; margin: 10px 0 4px; padding-top: 8px; border-top: 1px solid #444; }
     #reading-chooser .rc-done + .rc-next { margin-top: 0; }
-    #reading-chooser .rc-note { margin: 0 0 4px 21px; padding: 3px 7px; border-radius: 5px; font-size: 11.5px; color: #e0c27a; background: rgba(224, 180, 80, 0.12); }
     #reading-chooser .rc-all { display: block; margin-top: 8px; padding: 0; border: none; background: none; color: #9ab;
         font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; }
     body.bg-light #reading-chooser { background: #f5f5f5; border-color: #bbb; color: #222; box-shadow: 0 6px 24px rgba(0,0,0,0.15); }
@@ -1273,11 +1271,9 @@
     body.bg-light #reading-chooser .rc-own { color: var(--label-text); }
     /* The certified green, deeper for a line of words on the light panel:
        5.1:1 (the tags' #00a800 is 2.9:1 there). */
-    body.bg-light #reading-chooser .rc-follows { color: #007a00; }
     body.bg-light #reading-chooser .rc-apply { border-color: #bbb; background: #fff; }
     body.bg-light #reading-chooser .rc-done { color: #007a00; }
     body.bg-light #reading-chooser .rc-next { color: #666; border-top-color: #ccc; }
-    body.bg-light #reading-chooser .rc-note { color: #7a5300; background: rgba(200, 140, 20, 0.12); }
     body.bg-light #reading-chooser .rc-all { color: #357; }
 
     /* --- Context menu (right-click / long-press) --- */
@@ -2979,7 +2975,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-29 r27.165';
+    const APP_BUILD = '2026-10-29 r27.166';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13603,7 +13599,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         // not ..." beside "fake ones").
                         claimReadState.memo = new Map();
                     }
-                    if (auto && auto.whole) form = claimAtom(raw);
+                    // A reading chosen that is one claim already keeps its
+                    // words ("generally, if a raven sings, it is black"): the
+                    // box's own had been put for them (r27.166).
+                    if (auto && auto.whole) form = form && form.kind === 'atom' && claimReadState.choice ? form : claimAtom(raw);
                     else if (auto) {
                         claimBoxRaw = auto.auto;
                         claimBoxText = normalizeClaimText(auto.auto);
@@ -14750,7 +14749,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return inner ? claimUnestablished(inner, false, claimHedgeWord(words)) : null;
         };
         const possible = (text, words) => claimLooksLikeClause(text) ? (claimAmbiguous('"' + words + '" can say that it has not been ruled out, or that it could be so', [
-                { label: 'for all we know, ' + text, build: () => likely(text, words) }].concat(claimModalOn() && /^(?:possibly|it is (?:quite |entirely |perfectly )?possible(?: that)?)$/.test(words)
+                { label: 'for all we know, ' + text, build: () => likely(text, 'for all we know') }].concat(claimModalOn() && /^(?:possibly|it is (?:quite |entirely |perfectly )?possible(?: that)?)$/.test(words)
                 ? [{ label: 'it is metaphysically possible that ' + text, build: () => readClaim('it is metaphysically possible that ' + text) }] : []), false) ||
             opaque('"' + words + '" can say that it has not been ruled out, or that it could be so: the sentence is read as one claim', claimHedgeWord(words), text)) : null;
         // What reads as "not established" is that ("according to what we know, ...").
@@ -18158,6 +18157,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // who failed" -- read as a quantifier's, above, or not at all.
         if (/^(?:all|every|each|any|no|none|some|certain|most|many|few|several|everything|everyone|everybody|anything|anyone|anybody|nothing|nobody|something|someone|somebody|whatever|whoever)$/.test(first)) return null;
         if ((first === 'a' || first === 'an') && subjectTokens.length > 1) {
+            // "A raven generally flies": "generally, a raven flies" (r27.166).
+            if (claimWord(vp[0]) === 'generally' && vp.length > 1) return readClaim('generally, ' + subjectTokens.join(' ') + ' ' + vp.slice(1).join(' '));
             // Read as said of "a raven" -- consistently, so that its denial is
             // still its denial -- and noted: it may mean every raven, or some.
             const subject = restrictorProp(subjectTokens.slice(1)), predicate = claimQuietly(() => verbPhraseProp(vp));
@@ -18169,7 +18170,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             ].map(label => ({ label, build: () => readClaim(label) })), false, { generic: true, subject: subjectTokens.join(' ') }) : null;
             return chosen || claimNoIndividual(claimWithSubject(readVerbPhraseOf(claimSubjectTerm(subjectTokens), vp, s), subjectTokens, vp));
         }
-        const term = claimSubjectTerm(subjectTokens);
+        const term = claimSubjectTerm(subjectTokens), generalMark = claimReadState ? claimReadState.notes.length : 0;
         // "Bob thinks that Poe is black and flies": what Bob thinks, whole.
         const attitudeVp = claimAttitudeIndex(tokens) > 0 ? claimAttitudeVp(vp) : null;
         const said = attitudeVp ? (() => { const prop = verbPhraseProp(attitudeVp); return prop ? applyClaimProp(prop, term) : null; })() : null;
@@ -18214,6 +18215,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                  !/^(?:one|two|three|four|five|six|seven|eight|nine|ten|twelve|hundred|thousand|million|certain|such|various|numerous|countless)$/.test(t))));   // "color sensations"
         // A generic -- "mosquitoes carry malaria" -- may mean all of them, some,
         // or most, or hold in general with exceptions: the box asks which.
+        // "Ravens generally fly": what "generally, ravens fly" says -- the
+        // generic's reading "in general", one claim, asking nothing more
+        // (r27.166), so that the reading can be written in place inside a
+        // longer box ("ravens generally fly and crows sing").
+        // What the verb phrase read as "generally fly" noted goes with it.
+        if (generic && !nameInS && claimWord(vp[0]) === 'generally' && vp.length > 1) {
+            if (claimReadState) claimReadState.notes.length = generalMark;
+            return readClaim('generally, ' + subjectTokens.join(' ') + ' ' + vp.slice(1).join(' '));
+        }
         if (generic && pluralVerb && predicated && !claimKindPredicate(vp) && !nameInS) {
             const denied = form.kind === 'not', positive = denied ? claimWithoutDenial(claimTokens(s)).join(' ') : s;
             const chosen = claimAmbiguous('"' + claimShowWords(subjectTokens.join(' ')) + '" may mean all of them, some, most, or what holds in general', [
@@ -24192,9 +24202,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 else if (attack && weak && forms.length === 2 && forms[0] && wanted.some(c => c.kind === 'unestablished' && claimIs(forms[0])(c)))
                     derives.push({ label, bareChallenge: true });
             });
-            if (note.always || derives.length) ambiguous.push({ text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
+            if (!note.always && !derives.length) return;
+            const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
-                typo: !!note.typo, missing: !!note.missing, single: !!note.single });
+                typo: !!note.typo, missing: !!note.missing, single: !!note.single };
+            // A question offers its readings in words the check reads back,
+            // and asks only where there are two or more, each of them so
+            // written (r27.166): a question without one of its readings would
+            // leave out what may be meant ("it" may be the weather). Else the
+            // box is said to be ambiguous, and nothing is offered. A typo's fix
+            // and a slip's fixes are offered where they read back.
+            const offers = claimReadingOffers(entry, claimStepDenials ? [...claimStepDenials] : null);
+            const asks = entry.typo || entry.grammar ? offers.length > 0 : offers.length >= 2 && offers.length === note.readings.length;
+            ambiguous.push(Object.assign(entry, asks ? { readings: offers.map(o => o.label), offers } : { readings: [], offers: [] }));
         }));
         // A modal step the map's system does not take (r27.101): with every
         // axiom, would it follow? Then say what takes it -- the group switched
@@ -24596,11 +24616,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     between.first.name + '. Then ' + then.join(' and ') + ' ' + give(then.length) + ' ' + target + ' by ' + between.second.name + '. Add ' +
                     said(between.text) + ' as a box of its own, with ' + first.join(' and ') + ' under it.'];
             })() : [])
-            .concat(ambiguous.map(a => quote(a.text) + (a.typo ? ' has a typo: ' : a.missing || a.single ? ': ' : a.grammar ? ' has a grammar slip: ' : a.generic ? ' asks: ' : ' is ambiguous: ') + a.message +
-            (a.readings.length ? ' — ' + a.readings.map(r => quote(claimRecase(claimLabel(r), a.text))).join(' or ') + '.' : '.') +
-            a.derives.map(d => ' Read as ' + quote(claimRecase(claimLabel(d.label), a.text)) + (d.bare ? ', it only denies the box it objects to: a denial is not an argument.'
-                : d.bareChallenge ? ', it only says that the box it objects to has not been established: a challenge needs reasons too.'
-                : ', the step follows by ' + d.rule.name + '.')).join('')))
+            .concat(claimAskedWords(ambiguous))
             // An ambiguity asked about already says how the sentence is read
             // meanwhile: its "read as one claim" note is not repeated.
             .concat(unread.filter(u => !ambiguous.some(a => a.text === u.text && u.message.startsWith(a.message))).map(u => quote(u.text) + ': ' + u.message + '.'));
@@ -25213,11 +25229,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                 derives: role.joint ? [{ label: e.note.readings[e.reading], rule: role.rule, joint: role.entries.length > 1 }]
                                     : role.derives.map(d => ({ label: e.note.readings[d.reading], rule: d.rule }))
                             }));
-                            const said = asked.map(a => quote(a.text) + ' asks: ' + a.message + ' \u2014 ' +
-                                a.readings.map(r => quote(claimRecase(claimLabel(r), a.text))).join(' or ') + '.' + (role.joint ? '' :
-                                a.derives.map(d => ' Read as ' + quote(claimRecase(claimLabel(d.label), a.text)) + ', the step follows by ' + d.rule.name + '.').join('')));
-                            if (role.joint) said.push('Read as ' + claimListWords(asked.map(a => quote(claimRecase(claimLabel(a.derives[0].label), a.text))), 'and') +
-                                ', the step follows by ' + role.rule.name + '.');
+                            // Each of two or more readings in words the box can be
+                            // written as -- each box's, where they are answered
+                            // together; else each box is said to be ambiguous
+                            // (r27.166).
+                            const offers = asked.map(a => claimReadingOffers(a, [...denials]));
+                            const fit = asked.map((a, k) => offers[k].length >= 2 && offers[k].length === a.readings.length);
+                            asked.forEach((a, k) => Object.assign(a, (role.joint ? fit.every(Boolean) : fit[k]) ? { readings: offers[k].map(o => o.label), offers: offers[k] }
+                                : { readings: [], offers: [] }));
+                            const said = claimAskedWords(asked);
                             // An object's question is the step's hint: what the words
                             // as written would give, or how else to word them, is not
                             // said beside it -- only how the boxes were read (r27.120).
@@ -33957,10 +33977,54 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             : f.iff ? (f.parts[0].kind === 'if' ? claimIff(f.parts[0].cons, f.parts[0].conds[0]) : null)
             : claimList(f.kind, [f.parts[1], f.parts[0]]);
         // A question the box has anyway and does not block with ("when" may
-        // say when or why) may stay; no other may be raised.
+        // say when or why) may stay; no other may be raised. A note of one
+        // reading ("a good pianist need not be good") asks nothing (r27.166).
         const had = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && !n.always).map(n => n.message);
-        return !!want && !!got.form && !got.notes.some(n => n.kind === 'ambiguous' && !n.generic && !(!n.always && had.includes(n.message))) &&
+        return !!want && !!got.form && !got.notes.some(n => n.kind === 'ambiguous' && !n.generic && (n.always || (n.readings || []).length >= 2) &&
+                !(!n.always && had.includes(n.message))) &&
             (claimSame(want, got.form) || (!!turned(got.form) && claimSame(want, turned(got.form))));
+    }
+    // The readings a question may offer (r27.166; the user: "The available
+    // disambiguations must be grammatical ... the user is notified only when
+    // two valid disambiguations are available"): each in words the box can
+    // be rewritten as -- the reading written out, or put in the box's own
+    // words -- that the check reads back as that reading, and as nothing it
+    // would ask about. A reading with no such words is not offered. A typo's
+    // fix is offered as it is. `denials`: the step's (claimAsStepReads).
+    // [{ reading, label, words }], in the question's order.
+    function claimReadingOffers(entry, denials) {
+        const step = { denials: denials || [] }, out = [];
+        (entry.readings || []).forEach((label, r) => {
+            if (entry.typo) { out.push({ reading: r, label, words: label }); return; }
+            const words = claimReadingWords(label, entry.text);
+            if (claimAsStepReads(step, () => entry.object ? !!parseClaim(words) : claimReadingRoundTrips(entry, r, words))) { out.push({ reading: r, label, words }); return; }
+            const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimSomeWords(entry, label) ||
+                claimGenericWords(entry, label) || claimPartWords(entry, label));
+            if (inPlace && claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, inPlace))) out.push({ reading: r, label, words: inPlace });
+        });
+        return out;
+    }
+    // A question to choose among readings: two or more offered, and no typo
+    // or slip of grammar, which are fixed, not chosen among (r27.166).
+    const claimAskedChoice = a => !a.typo && !a.grammar && (a.offers || []).length >= 2;
+    // What a step asks, in a few words (r27.166; the user: "Did you mean:
+    // ..."; "Don't overcomplicate instructions for the user"): each
+    // question's readings as the box would say them, the box named where the
+    // step asks more than one thing -- and not which reading the step
+    // follows on: what is meant comes first. A typo, a slip, and an
+    // ambiguity with fewer than two readings to offer: what it is, and the
+    // fixes offered -- a typo's, what the box gives fixed (r27.53): there is
+    // nothing to choose.
+    function claimAskedWords(asked) {
+        const quote = t => '\u201c' + stripClaimMarkup(t) + '\u201d', said = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
+        const questions = asked.filter(claimAskedChoice).length;
+        return asked.map(a => claimAskedChoice(a)
+            ? (questions > 1 ? quote(a.text) + ': did you mean ' : 'Did you mean ') + claimListWords(a.offers.map(o => said(o.words)), 'or') + '?'
+            : quote(a.text) + (a.typo ? ' has a typo: ' : a.missing || a.single ? ': ' : a.grammar ? ' has a grammar slip: ' : ' is ambiguous: ') + a.message +
+                (a.readings.length ? ' \u2014 ' + a.readings.map(r => quote(claimRecase(claimLabel(r), a.text))).join(' or ') + '.' : '.') +
+                (a.typo ? a.derives.map(d => ' Read as ' + quote(claimRecase(claimLabel(d.label), a.text)) + (d.bare ? ', it only denies the box it objects to: a denial is not an argument.'
+                    : d.bareChallenge ? ', it only says that the box it objects to has not been established: a challenge needs reasons too.'
+                    : ', the step follows by ' + d.rule.name + '.')).join('') : ''));
     }
     // A generic inside a longer box ("If mosquitoes carry malaria, then ..."),
     // answered in place: "all", "some" or "most" put before its subject -- at
@@ -34042,8 +34106,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return null;
     }
+    // "In general" put in place too: "generally" after the subject (r27.166).
     function claimGenericWords(entry, label) {
-        const q = /^(all|some|most|every)\s/.exec(label);
+        const q = /^(?:(all|some|most|every)\s|(generally),\s)/.exec(label);
         if (!entry.generic || !entry.subject || !q) return null;
         const subject = String(entry.subject).replace(/\uE000/g, '').trim();
         const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.generic && String(n.subject).replace(/\uE000/g, '').trim() === subject);
@@ -34052,6 +34117,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let m, k = 0;
         while ((m = re.exec(entry.text))) {
             if (k++ !== rank) continue;
+            if (q[2]) return entry.text.slice(0, m.index + m[0].length) + ' generally' + entry.text.slice(m.index + m[0].length);
             const noun = m[2].replace(/^(?:a|an|any)\s+/i, '');
             const at = m.index + m[1].length, word = /^[A-Z]/.test(m[2]) && at === 0 ? q[1].charAt(0).toUpperCase() + q[1].slice(1) + ' ' + noun.charAt(0).toLowerCase() + noun.slice(1) : q[1] + ' ' + noun;
             return entry.text.slice(0, at) + word + entry.text.slice(at + m[2].length);
@@ -34177,32 +34243,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const lead = head && from > 4 ? b.slice(0, 3).join(' ') + ' \u2026 ' : from ? '\u2026' : '';
         return lead + b.slice(from, to).join(' ') + (to < b.length ? ' \u2026' : '');
     }
-    // What a marked reading would set off elsewhere (r27.122; the user: "going
-    // with the recommended fixes infected other nodes with '? generic'"):
-    // tried on a copy of the map, each other step that uses the box and
-    // follows now -- what it would then ask for, or that it would no longer
-    // follow. The notes, or none.
+    // Whether a step uses one of some boxes -- "id#idx" -- and whether it asks
+    // the user to choose a reading. What a reading would do to other steps
+    // is no longer said before it is chosen (r27.166): what is meant comes
+    // first; once the boxes are rewritten, the steps that use them and now
+    // ask are shown (claimReadingWalkOn), and each step's tag says the rest.
     const claimStepUses = (s, keys) => (s.premiseRefs || []).some(r => keys.has(r.targetId + '#' + r.targetIdx)) || keys.has(s.parentId + '#' + s.boxIdx);
     const claimStepAsks = s => s.ambiguous && !s.rule && !!s.why && (s.why.ambiguous || []).some(a => a.readings && a.readings.length && a.site !== undefined);
-    function claimReadingKnockOns(where, words, own) {
-        const keys = new Set([where.id + '#' + where.idx]);
-        const before = collectDeductiveSteps(state.trees).filter(s => !own.has(String(s.childId)) && claimStepUses(s, keys) && s.rule);
-        if (!before.length) return [];
-        const copy = JSON.parse(JSON.stringify(state.trees)), ctx = findNodeContext(copy, where.id);
-        if (!ctx || ctx.node.texts[where.idx] == null) return [];
-        ctx.node.texts[where.idx] = words;
-        const after = collectDeductiveSteps(copy), out = [];
-        before.forEach(b => {
-            const st = after.find(x => x.childId === b.childId && x.parentId === b.parentId && x.boxIdx === b.boxIdx);
-            if (!st || st.rule) return;
-            const asked = ((st.why && st.why.ambiguous) || []).map(a => ({ a, d: (a.derives || []).find(d => d.rule) })).find(x => x.d);
-            // Its full stop inside the quotation marks, and none after them.
-            const said = asked && claimReadingShort(stripClaimMarkup(asked.a.text), claimReadingWords(asked.d.label, asked.a.text), true);
-            out.push(asked ? 'Another step uses this box. It will then ask for \u201c' + said + '\u201d' + (/[.!?]$/.test(said) ? '' : '.')
-                : 'Another step uses this box. It will then no longer follow as written.');
-        });
-        return out;
-    }
     // After a rewrite (r27.122; of three mockups, the user chose "C",
     // walking on): the window stays open on what now asks -- the steps it
     // showed, where they still ask, and each step that uses a box just
@@ -34239,7 +34286,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // chosen for -- readings that give the step together ("with the
         // others as marked") are written together, one undo -- where each
         // question's own button had written its one box and closed the window.
-        const several = entries.length > 1, chosen = new Map(), marks = [];
+        const several = entries.length > 1, chosen = new Map();
         let applyAll = null;
         // Write the readings chosen, then walk on (r27.122).
         const rewrite = list => {
@@ -34273,7 +34320,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const head = document.createElement('div');
             head.className = 'rc-head';
             // A typo's box as typed, its spaces kept: the slip shows.
-            head.textContent = '\u201c' + (entry.typo ? entry.text : stripClaimMarkup(entry.text)) + '\u201d \u2014 ' + claimRecase(entry.message, entry.text);
+            // "Did you mean:" (r27.166), the box named where there is more than
+            // one question; a typo or a slip says what it is.
+            head.textContent = entry.typo || entry.grammar ? '\u201c' + (entry.typo ? entry.text : stripClaimMarkup(entry.text)) + '\u201d \u2014 ' + claimRecase(entry.message, entry.text)
+                : several ? '\u201c' + stripClaimMarkup(entry.text) + '\u201d \u2014 did you mean:' : 'Did you mean:';
             if (entry.typo) head.style.whiteSpace = 'pre-wrap';
             pop.appendChild(head);
             const apply = several ? null : document.createElement('button');
@@ -34283,15 +34333,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 apply.textContent = entry.typo ? 'Fix the box' : 'Rewrite the box this way';
                 apply.disabled = true;
             }
-            entry.readings.forEach((label, r) => {
-                let words = entry.typo ? label : claimReadingWords(label, entry.text);
+            // The readings offered (claimReadingOffers), each in its words.
+            (entry.offers || []).forEach(({ words }) => {
                 const linked = !!where && (() => { const c = findNodeContext(state.trees, where.id); return !!c && hasBoxLinks(c.node.texts[where.idx]); })();
-                let fits = !!where && !linked && (entry.typo || (entry.object ? !!claimAsStepReads(step, () => parseClaim(words))
-                    : claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, words))));
-                if (!fits && where && !linked) {
-                    const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimSomeWords(entry, label) || claimGenericWords(entry, label) || claimPartWords(entry, label));
-                    if (inPlace && claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, inPlace))) { words = inPlace; fits = true; }
-                }
+                const fits = !!where && !linked;
                 const row = document.createElement('label');
                 row.className = 'rc-row' + (fits ? '' : ' rc-unfit');
                 const radio = document.createElement('input');
@@ -34307,21 +34352,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // What the reading changes, the box whole on hover (r27.122).
                 text.textContent = entry.typo ? words : claimReadingShort(stripClaimMarkup(entry.text), words);
                 if (!entry.typo) row.title = words;
-                const d = (entry.derives || []).find(x => x.label === label);
-                if (d && d.rule && fits && where) marks.push({ row, where, words });
-                if (d) {
-                    const f = document.createElement('span');
-                    f.className = 'rc-follows';
-                    f.textContent = d.bare ? ' \u2014 only a denial of the box, which is no argument'
-                        : d.bareChallenge ? ' \u2014 only says that the box has not been established, which is no argument'
-                        : ' \u2014 the step follows by ' + d.rule.name + (d.joint ? ', with the others as marked' : '');
-                    text.appendChild(f);
-                }
                 if (!fits) {
                     const own = document.createElement('span');
                     own.className = 'rc-own';
-                    own.textContent = linked ? 'The box links other boxes: rewrite it yourself, so the links stay.'
-                        : where ? 'Not read back this way as written: put it in your own words.' : 'This sentence is not one of the step\u2019s boxes.';
+                    own.textContent = linked ? 'The box links other boxes: rewrite it yourself, so the links stay.' : 'This sentence is not one of the step\u2019s boxes.';
                     text.appendChild(own);
                 }
                 row.appendChild(radio);
@@ -34363,29 +34397,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         placeReadingChooser(pop, anchor);
         const first = pop.querySelector('.rc-row input:not(:disabled)');
         if (first && first.focus) first.focus({ preventScroll: true });
-        // What each marked reading would set off in other steps, under it
-        // (r27.122): worked out after the window opens, one reading at a
-        // time; `data-notes` says when they are all in.
-        const own = new Set(steps.map(s => String(s.childId)));
-        let k = 0;
-        pop.dataset.notes = marks.length ? 'pending' : 'done';
-        const noteNext = () => {
-            if (document.getElementById('reading-chooser') !== pop) return;
-            if (k >= marks.length) { pop.dataset.notes = 'done'; return; }
-            const m = marks[k++];
-            let at = m.row;
-            claimReadingKnockOns(m.where, m.words, own).forEach(t => {
-                const el = document.createElement('div');
-                el.className = 'rc-note';
-                el.textContent = t;
-                at.after(el);
-                at = el;
-            });
-            const tag = [...document.querySelectorAll('.derivation-tag.ambiguous')].find(t => t.dataset.step === pop.dataset.step);
-            if (tag || anchor.isConnected) placeReadingChooser(pop, tag || anchor);
-            setTimeout(noteNext, 0);
-        };
-        if (marks.length) setTimeout(noteNext, 0);
         setTimeout(() => document.addEventListener('pointerdown', readingChooserOutside, true), 0);
         document.addEventListener('keydown', readingChooserKey, true);
         return true;

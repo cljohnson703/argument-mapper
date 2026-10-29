@@ -211,12 +211,16 @@ console.log('\n-- 5. necessity without its kind: asked --');
 {
     setModal(['T', '5']);
     const n = step(['Necessarily, God exists.'], 'God exists.');
-    ok(!n.rule && n.asks && n.why === '“Necessarily, God exists.” is ambiguous: "necessarily" does not say which kind of necessity is meant: metaphysical, logical, physical, or what is known — ' +
-        '“it is metaphysically necessary that God exists”. Read as “it is metaphysically necessary that God exists”, the step follows by axiom T.', '"necessarily": which kind is meant, asked', J(n));
+    // r27.166 (the user: "the user is notified only when two valid
+    // disambiguations are available"): "necessarily" offers one kind, so it
+    // is no question to choose in -- the step waits, and says why. With
+    // "possibly", "for all we know" or "metaphysically possible": asked.
+    ok(!n.rule && n.asks && n.why === '“Necessarily, God exists.” is ambiguous: "necessarily" does not say which kind of necessity is meant: metaphysical, logical, physical, or what is known.',
+        '"necessarily": the step waits, and says that which kind is meant is not said -- no lone reading offered as the one it follows on', J(n));
     ok(step(['It is necessary that God exists.'], 'God exists.').asks && step(['It is impossible that zombies exist.'], 'Zombies do not exist.').asks &&
         step(['In every possible world, God exists.'], 'God exists.').asks &&
-        /“it is metaphysically possible that God exists”/.test(step(['God exists.'], 'Possibly, God exists.').why),
-        '"it is necessary that", "it is impossible that", "in every possible world", and "possibly" with "for all we know"');
+        step(['God exists.'], 'Possibly, God exists.').why === 'Did you mean “For all we know, God exists” or “It is metaphysically possible that God exists”?',
+        '"it is necessary that", "it is impossible that", "in every possible world", and "possibly", asked with "for all we know" or "metaphysically possible"');
     const chosen = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['God exists.'], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ['Necessarily, God exists.'], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render();
@@ -226,11 +230,13 @@ console.log('\n-- 5. necessity without its kind: asked --');
         closeReadingChooser();
         deductiveCache.clear(); var t = collectDeductiveSteps(state.trees)[0];
         return { box: findNodeContext(state.trees, 'A').node.texts[0], rule: t.rule ? t.rule.name : null };`);
-    ok(chosen.box === 'It is metaphysically necessary that God exists.' && chosen.rule === 'axiom T', 'the answer is written into the box, and the step follows', J(chosen));
+    ok(chosen.box === 'Necessarily, God exists.' && chosen.rule === null && step(['It is metaphysically necessary that God exists.'], 'God exists.').rule === 'axiom T',
+        'no reading to write in: the box stays as it is, the step waiting; said "metaphysically necessary", it follows by axiom T', J(chosen));
     setModal(null);
     ok(!step(['Necessarily, God exists.'], 'God exists.').asks, 'with the group off, nothing is asked');
     setModal(['T', '5']);
-    ok(/ab esse ad posse/.test(step(['Mary sings.'], 'Mary can sing.').why), '"can" stays as it is');
+    ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is possible for Mary to sing”, or “Mary is allowed to sing”?' &&
+        step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'ab esse ad posse', '"can" stays as it is: asked which, and "possible for" follows by ab esse ad posse');
 }
 
 console.log('\n-- 6. the Logic panel --');

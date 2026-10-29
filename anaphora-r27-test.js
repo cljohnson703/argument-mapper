@@ -97,10 +97,15 @@ console.log('\n-- 1. the user\'s example --');
 console.log('\n-- 2. two it may be: asked --');
 {
     const two = step(['The long road and the short road meet, and that road is dangerous.'], 'The long road is dangerous.');
+    // r27.166 (the user: saying whether a step follows "might steer less
+    // discerning individuals in the wrong direction"): neither reading says
+    // which one the step follows on; chosen, the reading says it.
+    const longOne = step(['The long road and the short road meet, and the long road is dangerous.'], 'The long road is dangerous.');
     ok(two.tag === '? ambiguous' && two.rows.length === 2 &&
-        /^The long road and the short road meet, and the long road is dangerous\. — the step follows by conjunction elimination/.test(two.rows[0]) &&
-        /^The long road and the short road meet, and the short road is dangerous\./.test(two.rows[1]),
-        '"that road" after "the long road and the short road": asked, each offered, and the one that makes the step follow says so', J(two));
+        two.rows[0] === 'The long road and the short road meet, and the long road is dangerous.' &&
+        two.rows[1] === 'The long road and the short road meet, and the short road is dangerous.' &&
+        longOne.tag === '✓ conjunction elimination',
+        '"that road" after "the long road and the short road": asked, each offered, neither saying which the step follows on; "the long road" written in, it follows', J([two, longOne]));
     const notes = read('The long road and the short road meet, and that road is dangerous.').notes;
     ok(notes.some(n => n === 'ambiguous: “that road” may be “the long road” or “the short road”'), 'the question names both', J(notes));
 }
@@ -443,8 +448,8 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
     const house = read('In the old house, it is cold.').notes;
     ok(house.length && !house.some(n => /^ambiguous/.test(n)), '"In the old house, it is cold": the weather there -- not "it" with nothing to refer to', J(house));
     const mp = step(['If it is cold and the street is wet, then Bob stays in.', 'The street is wet and it is cold.'], 'Bob stays in.');
-    ok(mp.tag === '? ambiguous' && mp.rows.length === 2 && /^It is cold and the street is wet\..*follows/.test(mp.rows[1]),
-        'a step that needs the weather asks, the weather the reading that gives it', J(mp));
+    ok(mp.tag === '? ambiguous' && mp.rows.length === 2 && mp.rows[1] === 'It is cold and the street is wet.' && !mp.rows.some(r => /follows/.test(r)),
+        'a step that needs the weather asks, the weather a reading -- not said to be the one that gives it (r27.166)', J(mp));
     const chosen = step(['If it is cold and the street is wet, then Bob stays in.', 'It is cold and the street is wet.'], 'Bob stays in.');
     ok(chosen.tag === '✓ modus ponens', 'and with it written in, follows', J(chosen));
     const as = [asks('The soup is hot and it is spicy.'), asks('Bob thinks that the street is wet and it is cold.')];

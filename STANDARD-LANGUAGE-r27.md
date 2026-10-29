@@ -4,6 +4,41 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 29: "Did you mean …?", with only readings that read back (r27.166)
+
+The user: "The available disambiguations must be grammatical … A syntax checker could make sure bad disambiguations don't go through and that the user is notified only when two valid disambiguations are available"; "Did you mean: - '…' - '…'"; "Don't overcomplicate instructions for the user"; and, asked whether a reading should say that the step follows on it: "students absent-mindedly choose the one where the step follows even though it might not have been the intended argument. We need to make it idiot-proof".
+
+* A question offers a reading only in words the check reads back as that reading, and as nothing else it would ask about. It had offered readings that were no sentences ("A pianist that is good", "Should as presumably", "Of each raven there is"), greyed out, with "put it in your own words".
+* A question is asked only where it has two or more readings and each can be written so. A reading left out may be the one meant: in "If the street is wet and the sky is grey, then it is cold", "it" may be the weather, and "It is cold if the street is wet and the sky is grey" asks what the "if" takes in. Then the box is said to be ambiguous, and why, and nothing is offered: "“If the street is wet and the sky is grey, then it is cold.” is ambiguous: “it” may be “the street” or “the sky”, or the weather." So too where a note has one reading ("a good pianist need not be good"; "necessarily" does not say which kind of necessity is meant, and only metaphysical necessity was offered).
+* The question, in the list of steps and the tag's tip: "Did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”?", the box named first where a step asks more than one thing. The chooser's head: "Did you mean:".
+* Before a reading is chosen, nothing says which one the step follows on, or that one would make an objection a bare denial, or (r27.122's notes under a reading) what it would do to another step that uses the box. Once a box is rewritten, the window says that the step follows, and goes on to the steps that use the box and now ask, as before. A typo's tip still says what the box gives once fixed: there is nothing to choose.
+* Readings that had not read back now do:
+  * "Ravens generally fly" says what "Generally, ravens fly" says: one claim, asking nothing. It had been read with "generally" left unread, and asked what "ravens" means. So a generic's reading "in general" can be written inside a longer box: "Did you mean “All ravens fly and crows sing”, “Some ravens fly and crows sing”, “Most ravens fly and crows sing”, or “Ravens generally fly and crows sing”?" Likewise "a raven generally flies".
+  * "Generally, if a raven sings, it is black" had come back as the box's own words.
+  * "For all we know, P", a reading of "possibly P", had kept the word "possibly".
+  * A note of one reading that a rewrite raises no longer stops it reading back: "If all computer programs are only formal …" raises "computer program", read as one phrase.
+* In the corpus, the generic questions with all four readings written rose from 50 to 95. Of all its questions, 395 can now be asked; 10 have a reading that cannot be written, and 186 have fewer than two readings; each of those is said, not asked.
+
+Tests:
+* Checks that quoted the old wording, or the readings marked as the ones a step follows on, now check the question and that nothing is marked. Where a check had read the reading that gives the step, it now writes that reading in and checks that the step follows. Each fails on r27.165:
+  * anaphora-r27-test.js: 2.
+  * extended-mind-r27-test.js: 7.
+  * language-r27-adjective-test.js: 2.
+  * language-r27-qualifier-test.js: 6.
+  * locutions-r27-test.js: 1. Its check that no reading of a fallacy follows now asks the check's own readings, since the rows no longer say.
+  * logic-r27-basis-test.js: 5.
+  * logic-r27-english-test.js: 12.
+  * modal-r27-test.js: 4.
+  * nesting-r27-test.js: 2.
+  * reading-r27-chooser-test.js: 7.
+  * rules-r27-ordinary-test.js: 3.
+  * theme-r27-light-test.js: 1. The deeper green it checked is now that of "✓ The step follows by …", once a box is rewritten.
+* reading-r27-chooser-test.js has 38 checks; the 6 new ones (section 8) fail on r27.165.
+* Take-one-out: 16 of the 21 changes are caught. Of the other five, one has the chooser use the readings worked out with the question, where it had worked them out again: nothing a test could see changes. The other four remove what nothing uses any more: the list of marked rows, the function that wrote the notes under them, and the notes' two styles.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 29: the "for" step withdrawn (r27.165)
 
 The user, of "Bob bought Mary a book" giving "Bob bought a book for Mary": "This seems dangerous if the meaning of 'Bob bought a book for Mary' gets misunderstood by a reader ... You showed that it was ambiguous"; and of the step in a "then" part: "Don't these come apart? Make 'Al is happy' true, 'Bob bought Mary a book' true, and 'Bob bought a book for Mary' (in the 'behalf' sense) false."
