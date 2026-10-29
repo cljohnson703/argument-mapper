@@ -373,9 +373,16 @@ try {
 
     console.log('\n-- wording and claims about one argument --');
     {
-        const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
+        // r27.169: "can't produce" asks which is meant; with an answer, the
+        // words that differ are said as before.
+        const asked = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
+        ok(!asked.rule && /^Did you mean “If we don't possess .+, then we can't conclude that a mere series of flashing lights is not able to produce consciousness”, /.test(asked.why),
+            '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169)', asked.why);
+        const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness, then we can't conclude that it is not possible for a mere series of flashing lights to produce consciousness.",
+            "We don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness."],
+            "It is not possible for a mere series of flashing lights and control circuitry to produce consciousness.", 'weak-objection');
         ok(!s.rule && /Worded the same way each time, the premises would give .+ by modus ponens/.test(s.why) && /“and control circuitry” is in one and not the other/.test(s.why),
             'a step that would follow if two claims were worded alike says which words differ', s.why);
         ok(ev('var f = parseClaim("The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” is unsound."); return f.kind === "unsound" && f.from.length === 2;'),

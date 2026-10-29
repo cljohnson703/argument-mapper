@@ -862,7 +862,9 @@ const moreEnglish = (function () {
                 () => ['fallacy: free choice any', [{ text: 'if ' + X + ' can not beat any player, then ' + X + ' is weak', f: O.Imp(O.Not(P({ prop: '~can beat player' }, X)), P({ prop: '=weak' }, X)) }, { text: X + ' is not weak', f: O.Not(P({ prop: '=weak' }, X)) }],
                     { text: X + ' can beat any player', f: P({ prop: '~can beat any player' }, X) }],
                 // modals
-                () => ['modal: can ... or', [{ text: X + ' can ' + v1.base + ' or ' + v2.base, f: O.Or(P({ prop: '~can ' + v1.base }, X), P({ prop: '~can ' + v2.base }, X)) }, { text: X + ' cannot ' + v1.base, f: O.Not(P({ prop: '~can ' + v1.base }, X)) }], { text: X + ' can ' + v2.base, f: P({ prop: '~can ' + v2.base }, X) }],
+                // "Will", not "can": "can" asks which is meant (r27.169), and "can
+                // fly or swim" is no longer spread.
+                () => ['modal: will ... or', [{ text: X + ' will ' + v1.base + ' or ' + v2.base, f: O.Or(P({ prop: '~will ' + v1.base }, X), P({ prop: '~will ' + v2.base }, X)) }, { text: X + ' will not ' + v1.base, f: O.Not(P({ prop: '~will ' + v1.base }, X)) }], { text: X + ' will ' + v2.base, f: P({ prop: '~will ' + v2.base }, X) }],
                 () => ['modal: must ... and', [{ text: X + ' must ' + v1.base + ' and ' + v2.base, f: O.And(P({ prop: '~must ' + v1.base }, X), P({ prop: '~must ' + v2.base }, X)) }], { text: X + ' must ' + v2.base, f: P({ prop: '~must ' + v2.base }, X) }],
                 () => ['fallacy: must ... or', [opaque('mustor', X + ' must ' + v1.base + ' or ' + v2.base), { text: 'it is not the case that ' + X + ' must ' + v1.base, f: O.Not(P({ prop: '~must ' + v1.base }, X)) }], { text: X + ' must ' + v2.base, f: P({ prop: '~must ' + v2.base }, X) }],
                 () => ['fallacy: can ... and', [{ text: X + ' can ' + v1.base, f: P({ prop: '~can ' + v1.base }, X) }, { text: X + ' can ' + v2.base, f: P({ prop: '~can ' + v2.base }, X) }], opaque('canand', X + ' can ' + v1.base + ' and ' + v2.base)],
@@ -968,8 +970,12 @@ const HARD_CASES = [
     // ---- "any", "some" and polarity ----
     ['no', 'S', ['If Poe can not beat any player, then Poe is weak', 'Poe is not weak'], 'Poe can beat any player', 'free-choice "any" is not the "any" a denial takes'],
     ['modus tollens', 'S', ['If Poe can not beat a player, then Poe is weak', 'Poe is not weak'], 'It is not the case that Poe can not beat a player', '"can not beat a player" is flagged and left whole: modus tollens holds of it as it stands'],
-    ['modus tollens', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat any player', '"any" in a condition is "a"'],
-    ['modus tollens', 'S', ['If Poe can beat a player, then Poe is a champion', 'Poe is not a champion'], 'Poe cannot beat any player', 'MT with "a player"'],
+    // r27.169: "can" asks which is meant (the user: "Any time someone writes,
+    // 'necessarily', 'possibly', etc., they need to specify the modality, and
+    // the checker should ask"); "is able to", answered, as "can" was read.
+    ['amb', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat any player', '"can" asks which is meant (r27.169)'],
+    ['modus tollens', 'S', ['If Poe is able to beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe is not able to beat any player', '"any" in a condition is "a"'],
+    ['modus tollens', 'S', ['If Poe is able to beat a player, then Poe is a champion', 'Poe is not a champion'], 'Poe is not able to beat any player', 'MT with "a player"'],
     ['no', 'O', ['Poe does not like some raven'], 'Poe likes some raven', '"not ... some" does not deny "some"'],
     ['yes', 'O', ['Poe does not own any car'], 'Poe owns a car', '"not ... any" denies "a"'],
     ['yes', 'O', ['Poe owns no car'], 'Poe owns a car', '"no" before an object denies "a"'],
@@ -990,7 +996,12 @@ const HARD_CASES = [
     ['disjunctive syllogism', 'S', ['Poe must fly or Poe must swim', 'It is not the case that Poe must fly'], 'Poe must swim', '"must" written twice'],
     ['amb', 'S', ['Poe can fly', 'Poe can swim'], 'Poe can fly and swim', '"can" over "and": each, or both together'],
     ['conjunction elimination', 'S', ['Poe must fly and swim'], 'Poe must fly', '"must" spreads over "and"'],
-    ['disjunctive syllogism', 'S', ['Poe can fly or swim', 'Poe cannot fly'], 'Poe can swim', '"can" spreads over "or"'],
+    // r27.169: "can fly or swim" asks which "can"; answered, one claim -- what
+    // one is able to do one or the other of, one need not be able to do
+    // either of (Kenny's cards). It had been read "can fly, or can swim".
+    ['amb', 'S', ['Poe can fly or swim', 'Poe cannot fly'], 'Poe can swim', '"can" over "or": which "can" is asked (r27.169)'],
+    ['no', 'S', ['Poe is able to fly or swim', 'Poe is not able to fly'], 'Poe is able to swim', '"able to fly or swim" is one claim, not "able to fly, or able to swim" (Kenny)'],
+    ['disjunctive syllogism', 'S', ['Poe will fly or swim', 'Poe will not fly'], 'Poe will swim', '"will" spreads over "or"'],
 
     // ---- subjects joined ----
     ['no', 'S', ['If Poe and Fido are ravens, then the flock is complete', 'The flock is not complete'], 'Poe and Fido are not ravens', '"Poe and Fido are not ravens" does not deny "Poe and Fido are ravens"'],

@@ -84,12 +84,21 @@ console.log('\n-- 1. a clause cut short, inside a condition and after "it\'s not
     const k = ev(`return [claimEllipsisReading('Mary knows that Bob can swim, and Sue can too.').text, claimEllipsisReading('Mary knows that Bob left, and Sue does too.').text];`);
     ok(k[0] === 'Mary knows that Bob can swim, and Sue can swim.' && k[1] === 'Mary knows that Bob left, and Sue knows that Bob left.',
         'the clause itself where its helping verb is of the kind ("does": "knows"), the one inside it where only that one\'s is ("can")', J(k));
-    const s = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
+    // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
+    // etc., they need to specify the modality, and the checker should ask"):
+    // "cannot perform" asks which is meant; the step, with its answer.
+    const asked = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");
+    ok(asked.tag === '? ambiguous' && asked.why.indexOf("did you mean “If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs”, " +
+            "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, ") > 0,
+        'as written, "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169)', asked.why);
+    const s = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.",
+        "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
+        "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.");
     ok(s.rule === 'modus ponens', 'the step: modus ponens (it had been "a clause cut short is not read")', J(s));
     ok(J(s.colors[0]) === J(['ic-rest: If', "ic-k0: non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't", 'ic-rest: , then',
-        "ic-c: the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs", 'ic-rest: .']) &&
+        "ic-c: the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs", 'ic-rest: .']) &&
         J(s.colors[1]) === J(["ic-k0: Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't", 'ic-rest: .']),
         'its colors: the condition and the premise one color (a "while" claim\'s words looked for as the box has them, not as "while Q, P")', J(s.colors));
 }
@@ -121,9 +130,9 @@ console.log('\n-- 3. letters: "A" is no article; labels; a list of them --');
     ok(J(ev(`return [claimLabelLists(normalizeClaimText('Bob believes A, B, and C.')), claimLabelLists(normalizeClaimText('If A, B, and C, then D.'))];`)) === J([[], []]) &&
         ev(`return claimLabelLists(normalizeClaimText('Mary visited rooms A, B, and C.')).length;`) === 1,
         'after a verb or "if", letters are sentence letters; after "rooms", labels');
-    const s = step(['If belief set A changes belief sets B, C, D, and E, and if Otto has to manually go through the whole notebook to find inconsistent belief sets, then Otto\'s notebook can\'t fully integrate all changes in non-occurrent beliefs in the same manner as the mind.',
+    const s = step(['If belief set A changes belief sets B, C, D, and E, and if Otto has to manually go through the whole notebook to find inconsistent belief sets, then Otto\'s notebook is not able to fully integrate all changes in non-occurrent beliefs in the same manner as the mind.',
         'Otto has to manually go through the whole notebook to find inconsistent belief sets.', 'Belief set A changes belief sets B, C, D, and E.'],
-        "Otto's notebook can't fully integrate all the changes in non-occurrent beliefs in the same manner as the mind");
+        "Otto's notebook is not able to fully integrate all the changes in non-occurrent beliefs in the same manner as the mind");
     ok(s.rule === 'modus ponens, conditions together', 'the step: two conditions, each given ("If A changes B, C, D, and E" had been read with its commas as "then")', J(s));
     ok(J(s.colors[2]) === J(['ic-k0: Belief set A changes belief sets B, C, D, and E', 'ic-rest: .']) && s.colors[0].includes('ic-k0: belief set A changes belief sets B, C, D, and E'),
         'its colors: the list one part, in the premise and in the condition', J(s.colors));
@@ -196,10 +205,11 @@ console.log('\n-- 6. what the check says --');
         '"the mind" and "minds": "Worded", not "Spelled", the same way', mind.why);
     ok(step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of his mind."], "Minds don't extend into the world.", 'objection').rule === 'modus ponens',
         'so worded, the objection follows');
-    const ob = step(['If the notebook can perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs.',
-        'The notebook can perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.", 'objection');
-    ok(ob.why === 'The premises give “The records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs” by modus ponens, which does not deny “The records in Otto\'s notebook cannot perform all the relevant functions of non-occurrent beliefs”.',
-        'an objection: what its premises give, which does not deny its box ("do not have to perform" against "cannot perform")', ob.why);
+    // With "is able to" for "can", which asks which is meant (r27.169).
+    const ob = step(['If the notebook is able to perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs.',
+        'The notebook is able to perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.", 'objection');
+    ok(ob.why === 'The premises give “The records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs” by modus ponens, which does not deny “The records in Otto\'s notebook are not able to perform all the relevant functions of non-occurrent beliefs”.',
+        'an objection: what its premises give, which does not deny its box ("do not have to perform" against "are not able to perform")', ob.why);
     const dang = step(["The records in Otto's notebook play the same causal/explanatory role as mental states of that subject.",
         'Anything that plays the same causal/explanatory roles as a mental state of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.");
     ok(dang.why === '“The records in Otto\'s notebook play the same causal/explanatory role as mental states of that subject.”: “that subject” points back to nothing in this box, and each box is read alone: name the subject (“Otto”?).',
@@ -214,10 +224,10 @@ console.log('\n-- 6. what the check says --');
     const kindSue = step(['Anything that is a child of a person is loved by that person.', 'Bob is a child of Mary.'], 'Bob is loved by Sue.').why;
     ok(/would give “Bob is loved by Sue” once it is shown that ‘Mary is a person’, and worded the same way each time: ‘bob is loved by Mary’ and ‘bob is loved by Sue’ differ: “mary” in one where the other has “sue”\.$/.test(kindSue),
         'with a kind: what it would give once Mary is shown to be one, and the words that differ', kindSue);
-    const can = step(['If the notebook can perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook can perform all the relevant functions of non-occurrent beliefs.',
-        'The notebook can perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.", 'objection');
-    ok(can.rule === 'modus ponens' && can.colors[0].includes('ic-c ic-neg: can'),
-        'an objection\'s "can" red against "cannot", though "non-occurrent" is said in both (r27.118)', J(can.colors[0]));
+    const can = step(['If the notebook is able to perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook are able to perform all the relevant functions of non-occurrent beliefs.',
+        'The notebook is able to perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.", 'objection');
+    ok(can.rule === 'modus ponens' && can.colors[0].includes('ic-c ic-neg: are'),
+        'an objection\'s "are" red in "are able" against "are not able", though "non-occurrent" is said in both (r27.118; "can" against "cannot" asks, r27.169)', J(can.colors[0]));
     const syn = step(['Computer programs are only syntactical.', 'Syntactics is not sufficient for semantics.',
         'If computer programs are only syntactical and syntax is not sufficient for semantics, then computers lack semantics.'], 'Computers lack semantics.');
     ok(/‘syntactics is not sufficient for semantics’ and ‘syntax is not sufficient for semantics’ differ: “syntactics” in one where the other has “syntax”\.$/.test(syn.why),
@@ -339,11 +349,11 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
        rule(["The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.",
             'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.") === 'universal modus ponens',
        'step 3, once its premise says "some": its rule asks for "some" too; as written, both alike, it follows as it did', step3.why);
-    const rebut = step(["If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
-        "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs."], "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal');
-    const ANY = "If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as any non-occurrent beliefs within Otto's brain.";
+    const rebut = step(["If the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
+        "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs."], "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal');
+    const ANY = "If the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as any non-occurrent beliefs within Otto's brain.";
     ok(rebut.tag === '? generic' && rebut.why.indexOf('Did you mean “' + ANY.replace(/\.$/, '') + '”, ') === 0 && !/follows by/.test(rebut.why) &&
-       rule([ANY, "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs."],
+       rule([ANY, "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs."],
             "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal') === 'modus ponens' &&
        !/Worded the same way/.test(rebut.why),
        'the rebuttal of "... as some ...": its "not ... non-occurrent beliefs" asks, "any" offered -- not the hint to write "not ... some", which says something else', rebut.why);

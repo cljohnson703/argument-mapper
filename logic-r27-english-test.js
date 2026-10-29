@@ -663,7 +663,9 @@ function reportCorpus(name, res) {
                 exact: denies('The argument is invalid', 'The argument is valid') && denies('Consciousness is non-physical', 'Consciousness is physical') &&
                     denies("We're unable to leave", 'We can leave') && key('We are able to leave') === key('We can leave'),
                 contraries: !denies('Poe is unhappy', 'Poe is happy') && !denies('This is invaluable', 'This is valuable'),
-                hedge: step(["We can't leave"], 'We should be able to leave', 'objection'),
+                // "We are not able to": "can't" asks which is meant (r27.169).
+                hedge: step(["We are not able to leave"], 'We should be able to leave', 'objection'),
+                cant: step(["We can't leave"], 'We should be able to leave', 'objection'),
                 generic: [step(['Ravens are black'], 'Something is black').rule, step(['All black things are dark', 'Ravens are black'], 'Ravens are dark').rule,
                     step(['A raven is black'], 'Something is black').rule, step(['It rains'], 'Something rains').rule],
                 individual: step(['All black things are dark', 'Poe is black'], 'Poe is dark').rule,
@@ -680,7 +682,9 @@ function reportCorpus(name, res) {
         // reading is offered, nor said to make the objection a bare denial.
         ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true &&
             d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
-            '"We can\'t leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
+            '"We are not able to leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
+        ok(d.cant && d.cant.rule === null && /^Did you mean “We are not able to leave”, “It is not possible for us to leave”, or “We are not allowed to leave”\?/.test(d.cant.why),
+            '"We can\'t leave" asks which "can" is meant (r27.169)', J(d.cant));
         // Since r27.157, "all black things are dark" and "ravens are black" give
         // "ravens are dark" however "ravens" is read: by universal syllogism,
         // the rule on "all" -- never universal modus ponens, of one thing.
@@ -938,7 +942,8 @@ function reportCorpus(name, res) {
             return {
                 skeptic: step(['If I know that I have hands, then I know that I am not a brain in a vat', "I don't know that I am not a brain in a vat"], "I don't know that I have hands"),
                 shown: step(['If it has been shown that the drug works, then the trial succeeded', 'The trial did not succeed'], 'It has not been shown that the drug works'),
-                knowDS: step(["Either we don't know that the bridge is safe, or we can cross the river", 'We know that the bridge is safe'], 'We can cross the river'),
+                // "Are able to": "can" asks which is meant (r27.169).
+                knowDS: step(["Either we don't know that the bridge is safe, or we are able to cross the river", 'We know that the bridge is safe'], 'We are able to cross the river'),
                 marker: step(['If it has not been shown that P, then Q', 'It has not been shown that P'], 'We can conclude that Q'),
                 written: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'We can conclude that others think')),
                 answered: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'It is possible for us to conclude that others think')),
@@ -978,7 +983,10 @@ function reportCorpus(name, res) {
     // follows that Poe can fly." Then, of the three readings ("Possible,
     // able, allowed"): ab esse ad posse on "possible for Poe" only -- one
     // lucky success shows no ability (Kenny 1976), and what is so need not be
-    // allowed. Asked where a step follows on "possible" and not on "able".
+    // allowed. Asked every time (r27.169; the user: "Any time someone writes,
+    // 'necessarily', 'possibly', etc., they need to specify the modality, and
+    // the checker should ask"); it had been asked only where a step followed
+    // on "possible" and not on "able".
     console.log('\n-- plain "can": possible, able, allowed --');
     try {
         const c = T(W, `
@@ -997,19 +1005,62 @@ function reportCorpus(name, res) {
                 possible: step(['Poe flies'], 'It is possible for Poe to fly'),
                 both: step(['If Poe can fly, then Poe is a bird', 'Poe can fly'], 'Poe is a bird'),
                 strict: step(['If Poe can fly, then Poe is a bird', 'It is possible for Poe to fly'], 'Poe is a bird'),
-                able: step(['If Poe can fly, then Poe is a bird', 'Poe is able to fly'], 'Poe is a bird'),
+                able: step(['If Poe is able to fly, then Poe is a bird', 'Poe is able to fly'], 'Poe is a bird'),
+                sameAble: (function () { var n = parseClaimFull('Poe can fly.').notes.filter(function (x) { return x.canPlain; })[0];
+                    return !!n && claimSame(parseClaim('Poe can fly.', { site: n.site, reading: 0 }), parseClaim('Poe is able to fly.')); })(),
                 ravens: step(['The ravens fly'], 'The ravens can fly')
             };`);
         ok(c.fly.tag === '? ambiguous' && c.fly.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
             '"Poe flies", so "Poe can fly": asked which "can" (said "possible for Poe", it follows by ab esse ad posse: below)', J(c.fly));
         ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is possible for Poe to fly', 'Poe is allowed to fly']),
             'answered in the box: "Poe is able to fly", "It is possible for Poe to fly" or "Poe is allowed to fly"', J(c.fly.rows));
-        ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '✓ modus ponens', 'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens asks nothing', J([c.possible.tag, c.both.tag]));
+        ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '? ambiguous',
+            'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens asks too, every time (r27.169; it had asked nothing)', J([c.possible.tag, c.both.tag]));
         ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If it is possible for Poe to fly, then Poe is a bird”, or “If Poe is allowed to fly, then Poe is a bird”?' &&
             c.strict.rows[1] === 'If it is possible for Poe to fly, then Poe is a bird' &&
             '"possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));
-        ok(c.able.tag === '✓ modus ponens', '"Poe is able to fly" is "Poe can fly" read as ability: one claim', J(c.able));
+        ok(c.able.tag === '✓ modus ponens' && c.sameAble === true, '"Poe is able to fly" is "Poe can fly" read as ability: one claim', J(c.able));
         ok(/^Did you mean “The ravens are able to fly”, “It is possible for the ravens to fly”, or “The ravens are allowed to fly”\?/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
+        // r27.169: the readings' words. A plural of one word is "are", and
+        // written small inside the reading ("for computers"); a name keeps
+        // its capital ("James", "Socrates"); the head of the subject says its
+        // number ("the records in Otto's notebook are"); a plural that opens
+        // a box is written small after "that" ("ravens are black").
+        const w = T(W, `
+            var why = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear(); ensureCollabFields(state); render();
+                var s = collectDeductiveSteps(state.trees)[0]; return s.why && s.why.text ? String(s.why.text) : '';
+            };
+            return { computers: why(['Computers can think.'], 'Al is happy.'), james: why(['James can sing.'], 'Al is happy.'),
+                records: why(["The records in Otto's notebook cannot perform all the functions."], 'Al is happy.'),
+                ravens: why(['Ravens are necessarily black.'], 'Al is happy.'), god: why(['God necessarily exists.'], 'Al is happy.') };`);
+        ok(w.computers === 'Did you mean “Computers are able to think”, “It is possible for computers to think”, or “Computers are allowed to think”?' &&
+            /^Did you mean “James is able to sing”, “It is possible for James to sing”/.test(w.james) &&
+            /^Did you mean “The records in Otto's notebook are not able to perform all the functions”, “It is not possible for the records in Otto's notebook to perform all the functions”/.test(w.records) &&
+            /^Did you mean “It is metaphysically necessary that ravens are black”/.test(w.ravens) && /^Did you mean “It is metaphysically necessary that God exists”/.test(w.god),
+            'the readings\' words: "computers are", "for computers"; "James is"; "the records in Otto\'s notebook are"; "that ravens are black", "that God exists" (r27.169; it had been "computers is", "for Computers", "that Ravens")', J(w));
+        // r27.169: "can't", each reading denied; and a box of two "can"s, each
+        // asked in place -- "it is possible for Mary to sing and Bob cannot
+        // dance" is two claims, not "possibly" over the rest.
+        const two = T(W, `
+            state.trees = [{ id: 'M', type: 'contention', texts: ['Al is happy.'], collapsed: [], x: 0, y: 0, children: [
+                { id: 'A', type: 'support', texts: ['Mary can sing and Bob cannot dance.'], collapsed: [], children: [] } ] }];
+            deductiveCache.clear(); ensureCollabFields(state); render();
+            var s = collectDeductiveSteps(state.trees)[0];
+            return { offers: (s.why.ambiguous || []).map(function (a) { return (a.offers || []).map(function (o) { return o.words; }); }),
+                key: claimKey(parseClaim('It is possible for Mary to sing and Bob cannot dance.')).replace(/\\uE000/g, '') };`);
+        ok(J(two.offers) === J([['Mary is able to sing and Bob cannot dance.', 'It is possible for Mary to sing and Bob cannot dance.', 'Mary is allowed to sing and Bob cannot dance.'],
+                ['Mary can sing and Bob is not able to dance.', 'Mary can sing and it is not possible for Bob to dance.', 'Mary can sing and Bob is not allowed to dance.']]) &&
+            /^C\[/.test(two.key),
+            'two "can"s in one box, each asked and answered in place; "it is possible for Mary to sing and ..." is two claims (r27.169)', J(two));
+        // r27.169: "is able to" read as "can" is, its objects too: "is not able
+        // to perform all the functions" is "cannot perform all the functions"
+        // read as ability -- one claim.
+        ok(T(W, `var n = parseClaimFull('Otto cannot perform all the functions.').notes.filter(function (x) { return x.canPlain; })[0];
+                return !!n && claimSame(parseClaim('Otto cannot perform all the functions.', { site: n.site, reading: 0 }), parseClaim('Otto is not able to perform all the functions.'));`) === true,
+            '"is not able to perform all the functions" is "cannot perform all the functions" read as ability (r27.169; "all the functions" had been kept as written)');
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
 
     /* ---------------- 3. diagnosis on a map ---------------- */

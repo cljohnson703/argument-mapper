@@ -2975,7 +2975,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-29 r27.168';
+    const APP_BUILD = '2026-10-29 r27.169';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11145,7 +11145,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_SINGULAR_S = new Set(('gas atlas canvas alias bias pancreas christmas kvass lemmas ' +
         'herpes diabetes rabies scabies feces faeces caries congeries superficies shingles measles ' +
         'cosmos chaos ethos pathos logos kudos asbestos bathos mythos thermos rhinoceros eros telos nomos kairos thanatos demos topos pharos calvados ' +
-        'socrates hermes achilles hercules archimedes diogenes euripides sophocles pericles aristophanes heracles descartes hades moses').split(' '));
+        'socrates hermes achilles hercules archimedes diogenes euripides sophocles pericles aristophanes heracles descartes hades moses ' +
+        'thales parmenides empedocles xenophanes pythagoras protagoras anaxagoras aquinas hobbes james rawls chalmers').split(' '));
     const CLAIM_IS_US_PLURALS = new Set(('taxis skis alibis bikinis kiwis safaris rabbis yetis chilis chillis delis emojis wikis tsunamis salamis ' +
         'martinis zucchinis khakis broccolis sushis graffitis origamis jacuzzis bonsais samurais tipis rotis swamis ' +
         'menus gurus emus haikus tutus zebus kudzus tofus snafus sudokus tiramisus bayous bijous caribous gnus impromptus milieus adieus luaus tabus').split(' '));
@@ -11321,7 +11322,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_EMPTY_START = /^(?:(?:moreover|furthermore|nevertheless|nonetheless|in addition|in fact|of course|after all|as a matter of fact|what is more|needless to say|to be sure|in other words|in particular|in short|in sum|in brief|in any case|in any event|at any rate|by contrast|in contrast|on the other hand|on the one hand|as a result|note that|notice that|it turns out that|it turned out that|as it turns out|as it happens)\s*,?|(?:also|besides|indeed|anyway|anyhow|however|still|even so|similarly|likewise|again|firstly|secondly|thirdly|first|second|third|lastly|additionally|further|plus|for example|for instance|for one thing|to begin with|to start with|in conclusion|to conclude|to summarize|yet)\s*,)\s+(.+)$/;
     const CLAIM_LIKELY_FRONT = /^(probably|very probably|most probably|in all probability|in all likelihood|presumably|most likely|very likely|quite likely|likely(?=,)|(?:the )?(?:chances|odds) are(?: that)?|it is (?:very |quite |highly |most |more than )?(?:likely|probable)(?: that)?|there is (?:a |an )?(?:good |real |fair |decent |strong |high |significant |serious |reasonable |excellent )?(?:chance|likelihood|probability)(?: that)?|it (?:may|might) (?:well |very well )?be(?: the case)?(?: that)?)\s*,?\s+(.+)$/;
     const CLAIM_UNLIKELY_FRONT = /^(it is (?:very |highly |quite )?(?:unlikely|improbable|not likely|not probable)(?: that)?|there is (?:little|no|only a (?:small|slim|slight|remote)|a (?:small|slim|slight|remote)) (?:chance|likelihood|probability)(?: that)?|it (?:may|might) not be(?: the case)?(?: that)?|(?:the )?chances are slim(?: that)?)\s*,?\s+(.+)$/;
-    const CLAIM_POSSIBLE_FRONT = /^(possibly|it is (?:quite |entirely |perfectly )?possible(?: that)?|it could (?:well |very well )?be(?: the case)?(?: that)?)\s*,?\s+(.+)$/;
+    // Not "it is possible for Mary to sing (and Bob can't dance)", which says
+    // what is possible for Mary (r27.169).
+    const CLAIM_POSSIBLE_FRONT = /^(possibly|it is (?:quite |entirely |perfectly )?possible(?!\s+for\s)(?: that)?|it could (?:well |very well )?be(?: the case)?(?: that)?)\s*,?\s+(.+)$/;
     // A qualifier after the claim, or set off inside it: "P, I think",
     // "Poe, apparently, is black".
     const CLAIM_HEDGE_PHRASES = "probably|presumably|perhaps|maybe|possibly|in all likelihood|in all probability|most likely|very likely|" +
@@ -11635,6 +11638,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimDummyItNext(n) {
         if (CLAIM_WEATHER_VERB.test(n[0] || '') || /^(?:seems?|seemed|appears?|appeared|follows?|followed)$/.test(n[0] || '')) return true;
         if (!/^(?:is|was|will|would|could|might|may|must|can|shall|should|did|does|do|has|had|cannot|remains?|remained)$|n't$/.test(n[0] || '')) return false;
+        // "It is (not) possible for Mary to sing", as a reading of "can" says
+        // it (r27.169): "premises that it is not possible for ..." had read
+        // "it" as what the premises say.
+        if (/^(?:is|was)$/.test(n[0]) && /^(?:not )?(?:(?:metaphysically|logically|physically) )?(?:possible|impossible|necessary|unnecessary) (?:for|to) /.test(n.slice(1, 6).join(' ') + ' ')) return true;
         return n.slice(1, 4).some(x => CLAIM_WEATHER_VERB.test(x)) || claimExtraposedProp('=' + n.slice(1).join(' ') + ' ');
     }
     function claimRelativeIndex(tokens) {
@@ -13092,7 +13099,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const able = pred.match(/^(un)?able to (.+)$/);
             if (able) {
                 if (able[1]) negated = !negated;
-                prop = '~can ' + able[2];                                 // "is able to V" says "can V"
+                // "Is able to V" says "can V", read as it is -- "is able to
+                // perform all the functions": "every function" (r27.169; it
+                // had been kept as written, and so was no answer to "can't
+                // perform all the functions").
+                const can = claimQuietly(() => verbPhraseProp(['can'].concat(claimTokens(able[2]))));
+                prop = can && /^~can /.test(can) ? can : '~can ' + able[2];
             } else {
                 const lexical = /^(?:false|untrue)$/.test(pred) ? { denied: true, text: 'true' } : claimPhraseDenial(pred);
                 if (!lexical.text) return null;
@@ -14095,25 +14107,53 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "Poe can fly": what is possible for Poe, what Poe is able to do, or what
     // Poe is allowed to do (the user, 2026-10-05). Only the first gives "Poe
     // can fly" from "Poe flies" (ab esse ad posse); one lucky success shows
-    // no ability (Kenny 1976), and what is so need not be allowed. Asked where
-    // a step follows on "possible" and not on "able" (claimGenericRole); read
-    // as "able" otherwise, as before.
-    function claimPlainCan(text, form) {
-        const m = /^(.+?) can (?!not\b)(.+)$/.exec(text);
+    // no ability (Kenny 1976), and what is so need not be allowed. Asked
+    // every time (r27.169; the user: "Any time someone writes, 'necessarily',
+    // 'possibly', etc., they need to specify the modality, and the checker
+    // should ask"), and "Poe can't fly" too, each reading denied: it had been
+    // asked only where a step followed on "possible" and not on "able"
+    // (claimGenericRole), and "can't" not at all. Read as "able" until it is
+    // answered. A plural subject is "are": "computers are able to think", "the
+    // records in Otto's notebook are" (it had been "computers is able").
+    function claimPlainCan(text, form, denied) {
+        const m = (denied ? /^(.+?) can not (.+)$/ : /^(.+?) can (?!not\b)(.+)$/).exec(text);
         if (!m || /\b(?:if|then|that|whether|and|or|but|not)\b/.test(m[1])) return null;
-        const subj = m[1], vp = m[2], last = claimWord(subj.split(' ').pop());
-        const be = subj === 'i' ? 'am' : /^(?:we|you|they)$/.test(subj) || (subj.split(' ').length > 1 && claimPluralWord(last)) ? 'are' : 'is';
-        const obj = CLAIM_FOR_PERSON[subj] || subj, who = claimShowWords(subj);
-        const labels = [subj + ' ' + be + ' able to ' + vp, 'it is possible for ' + obj + ' to ' + vp, subj + ' ' + be + ' allowed to ' + vp];
-        return claimAmbiguous(claimRecase('"can" may say what ' + who + ' ' + be + ' able to do, what is possible for ' + claimShowWords(obj) + ', or what ' + who + ' ' + be + ' allowed to do', claimBoxRaw || ''),
-            [{ label: labels[0], build: () => form }, { label: labels[1], build: () => Object.assign({}, form, { possible: true, src: text }) },
-             { label: labels[2], build: () => readClaim(labels[2]) }], false,
-            { generic: true, canScope: true, canPlain: true, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be }) || form;
+        // Its number from its head: "the records in Otto's notebook are".
+        const subj = m[1], vp = m[2], words = subj.split(' ');
+        const at = words.findIndex((x, i) => i > 0 && (CLAIM_PREPOSITIONS.has(claimWord(x)) || CLAIM_MORE_PREPOSITIONS.test(claimWord(x)) || /^(?:that|who|which|whom|whose)$/.test(claimWord(x))));
+        const last = words[at > 0 ? at - 1 : words.length - 1], head = claimWord(last);
+        const be = subj === 'i' ? 'am' : /^(?:we|you|they)$/.test(subj) ? 'are'
+            : !/^\uE000/.test(last) && (claimKnownPlural(head) || claimOpeningPlural(head)) ? 'are' : 'is';
+        const obj = CLAIM_FOR_PERSON[subj] || subj, who = claimShowWords(subj), not = denied ? 'not ' : '';
+        const labels = [subj + ' ' + be + ' ' + not + 'able to ' + vp, 'it is ' + not + 'possible for ' + obj + ' to ' + vp, subj + ' ' + be + ' ' + not + 'allowed to ' + vp];
+        // Its words as "can VP" has them, so that its objects are compared as theirs are.
+        const possible = Object.assign({}, denied ? form.inner : form, { possible: true, src: subj + ' can ' + vp },
+            denied ? { subjectText: form.subjectText || subj, vpText: 'can ' + vp } : {});
+        // "Poe can fly or swim", read as "Poe can fly, or Poe can swim": each
+        // reading is one claim, "Poe is able to fly or swim" -- what one is
+        // able to do one or the other of, one need not be able to do either
+        // of (Kenny's cards), so the "can" is not spread over the "or".
+        const spread = form.kind === 'or', one = spread ? claimCanOne(form, subj, vp) : null;
+        return claimAmbiguous(claimRecase('"' + (denied ? 'can\u2019t' : 'can') + '" may say what ' + who + ' ' + be + ' ' + not + 'able to do, what is ' + not + 'possible for ' +
+                claimShowWords(obj) + ', or what ' + who + ' ' + be + ' ' + not + 'allowed to do', claimBoxRaw || ''),
+            [{ label: labels[0], build: () => spread ? one : form }, { label: labels[1], build: () => spread ? one && Object.assign({}, one, { possible: true }) : denied ? negateClaim(possible) : possible },
+             { label: labels[2], build: () => readClaim(labels[2]) }], true,
+            { generic: true, canScope: true, canPlain: true, canDenied: !!denied, ask: true, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be }) || form;
     }
     // "We can conclude that P" read as what is possible for us: a predication
     // marked so (the "can" ab esse ad posse and "we do" speak to).
+    // "Poe can fly or swim", read with "can" over each ("Poe can fly, or Poe
+    // can swim"), as one claim: "Poe is able to fly or swim" (r27.169).
+    function claimCanOne(form, subj, vp) {
+        const prop = claimQuietly(() => verbPhraseProp(['can'].concat(claimTokens(vp))));
+        return prop && /^~can /.test(prop) ? Object.assign(applyClaimProp(prop, form.parts[0].term),
+            { subjectText: form.parts[0].subjectText || subj, vpText: 'can ' + vp, src: subj + ' can ' + vp }) : null;
+    }
     function claimPossibleCan(text) {
-        const f = claimWithout('established', text);
+        let f = claimWithout('established', text);
+        // "It is possible for Poe to fly or swim": one claim (r27.169).
+        const m = /^(.+?) can (.+)$/.exec(text);
+        if (f && f.kind === 'or' && !f.iff && m && f.parts.every(p => p.kind === 'pred' && /^~can /.test(p.prop) && p.term === f.parts[0].term)) f = claimCanOne(f, m[1], m[2]);
         // One wording, however it is said ("it is possible for us to
         // conclude that P"), so it is one claim.
         return f && f.kind === 'pred' && /^~can /.test(f.prop) ? Object.assign(f, { possible: true, src: text }) : null;
@@ -15441,6 +15481,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // again without a word that qualifies it ("Computers also can think")
         // had asked it twice, once of "Computers also" (r27.106).
         if (!would && form && form.kind === 'pred' && !form.possible && /^~can /.test(form.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.canPlain))) form = claimPlainCan(String(text || '').trim(), form) || form;
+        // "Poe can't fly": the same, each reading denied (r27.169).
+        else if (!would && form && form.kind === 'not' && form.inner && form.inner.kind === 'pred' && !form.inner.possible && /^~can /.test(form.inner.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.canPlain))) form = claimPlainCan(String(text || '').trim(), form, true) || form;
+        // "Poe can fly or swim", "can" read over each: the same (r27.169).
+        else if (!would && form && form.kind === 'or' && !form.iff && form.parts.length > 1 && form.parts.every(p => p.kind === 'pred' && !p.possible && /^~can /.test(p.prop) && p.term === form.parts[0].term) &&
             !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.canPlain))) form = claimPlainCan(String(text || '').trim(), form) || form;
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
@@ -19827,8 +19873,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (leaf(a) && leaf(b) && a.src !== undefined && b.src !== undefined) {
             // Brackets round all of what follows a "that" only group it.
             const unbracket = t => { const m = /^(.*\bthat )(\(.*\))$/.exec(t || ''); return m && claimBracketed(m[2]) ? m[1] + claimClauseStart(m[2].slice(1, -1)) : t; };
+            // "Poe is able to fly" says what "Poe can fly" says, read as ability
+            // (its "can" of what is possible is marked, and keyed, apart) --
+            // and its objects' words are logic as theirs are: "is able to
+            // perform all the functions", "can perform every function"
+            // (r27.169).
+            const ableSaid = t => String(t).replace(/(^|\s)(?:is|are|am)( not)? able to (?=\S)/, '$1can$2 ').replace(/(^|\s)(?:is|are|am) unable to (?=\S)/, '$1can not ');
             const regionalSource = g => {
-                const f = Object.assign({}, g, { src: unbracket(g.src), vpText: g.vpText && unbracket(g.vpText) });
+                const f = Object.assign({}, g, { src: ableSaid(unbracket(g.src)), vpText: g.vpText && ableSaid(unbracket(g.vpText)) });
                 const src = claimClauseStart(f.src);
                 // The noun "analyses" must stay untouched; only a parsed verb
                 // phrase licenses this spelling equivalence.
@@ -19844,10 +19896,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // A reflexive, or the subject named again, is one mark (r27.88).
                 return src.slice(0,-f.vpText.length) + (f.kind === 'pred' ? claimSelfSaid(vp, claimSelfTerm(f)) : vp);
             };
-            // "Poe is able to fly" says what "Poe can fly" says, read as ability
-            // (its "can" of what is possible is marked, and keyed, apart).
-            const ableSaid = t => String(t).replace(/(^|\s)(?:is|are|am) able to (?=\S)/, '$1can ');
-            return ableSaid(regionalSource(a)) === ableSaid(regionalSource(b));
+            return regionalSource(a) === regionalSource(b);
         }
         if (a.kind === 'if' && b.kind === 'if') {
             const x = claimMergedIf(a), y = claimMergedIf(b);
@@ -20257,11 +20306,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // A reading in the capitals of the box it reads: "bob" as "Bob" where the
     // box wrote "Bob", but not "if" as "If" for having begun the sentence.
+    // A plural that opens a box -- "Ravens", "Computers" -- has its capital
+    // from that alone: inside a reading's words it is written small, "it is
+    // metaphysically necessary that ravens are black" (r27.169). Not "God",
+    // "Mary", "Socrates".
+    const claimOpeningPlural = w => claimSingularOf(w) !== w && !CLAIM_SINGULAR_S.has(w);
     function claimRecase(label, original) {
         const caps = new Map();
         const lower = new Set(String(original).match(/\b[a-z][A-Za-z'\u2019-]*\b/g) || []);
-        (String(original).match(/\b[A-Z][A-Za-z'\u2019-]*\b/g) || []).forEach(w => {
+        const capitals = String(original).match(/\b[A-Z][A-Za-z'\u2019-]*\b/g) || [], opening = /^[^A-Za-z]*[A-Z]/.test(String(original));
+        capitals.forEach((w, k) => {
             const l = w.toLowerCase();
+            if (k === 0 && opening && capitals.indexOf(w, 1) < 0 && claimOpeningPlural(l)) return;
             if (!CLAIM_NOT_A_NAME.has(l) && !/^(?:even|only|every|each|all|no|some|any|not|it|there)$/i.test(w) && !CLAIM_RELATIVE_HEADS.test(l) && !lower.has(l) && !claimKnownAdjective(l)) caps.set(l, w);
         });
         return String(label).replace(/\b[a-z][A-Za-z'\u2019-]*\b/g, (w, at, all) =>
@@ -24272,9 +24328,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!unread.some(u => u.text === texts[i] && u.message === note.message)) unread.push({ text: texts[i], message: note.message });
                 return;
             }
-            // Which "can" is meant is asked of the whole step, where it matters
-            // (claimGenericRole), not one box at a time.
-            if (note.canScope) return;
+            // Which "can" is meant in "we can't conclude" is asked of the whole
+            // step, where it matters (claimGenericRole), not one box at a time;
+            // a plain "can", which asks every time (r27.169), of its box.
+            if (note.canScope && !note.ask) return;
             const derives = [];
             note.readings.forEach((label, reading) => {
                 const alt = parseClaim(texts[i], { site: note.site, reading });
@@ -24293,6 +24350,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!note.always && !derives.length) return;
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
+                canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null,
                 typo: !!note.typo, missing: !!note.missing, single: !!note.single };
             // A question offers its readings in words the check reads back,
             // and asks only where there are two or more, each of them so
@@ -34149,15 +34207,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (entry.canPlain) {
             const subj = claimUnmarked(String(entry.canFrom || '')).trim();
             if (!subj) return null;
-            const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.canPlain && n.subject === entry.subject);
+            const asked = parseClaimFull(entry.text).notes.filter(n => n.kind === 'ambiguous' && n.canPlain && n.subject === entry.subject && !!n.canDenied === !!entry.canDenied);
             const rank = asked.findIndex(n => n.site === entry.site);
-            const re = new RegExp('(^|[^A-Za-z])(' + subj.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + ')\\s+can\\s+(?=' + verb.replace(/\s+/g, '\\s+') + '(?![A-Za-z]))', 'gi');
+            // "Poe can't fly": "Poe is not able to fly" ... (r27.169).
+            const can = entry.canDenied ? "(?:can['\u2019]t|cannot|can\\s+not)" : 'can', not = entry.canDenied ? 'not ' : '';
+            const re = new RegExp('(^|[^A-Za-z])(' + subj.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + ')\\s+' + can + '\\s+(?=' + verb.replace(/\s+/g, '\\s+') + '(?![A-Za-z]))', 'gi');
             let m, k = 0;
             while ((m = re.exec(entry.text))) {
                 if (k++ !== rank) continue;
                 const at = m.index + m[1].length, said = m[2], start = !entry.text.slice(0, at).trim() || /[.!?:]\s*$/.test(entry.text.slice(0, at));
-                const word = r === 1 ? (start ? 'It' : 'it') + ' is possible for ' + (CLAIM_FOR_PERSON[said.toLowerCase()] || said) + ' to '
-                    : said + ' ' + (entry.canBe || 'is') + (r === 0 ? ' able to ' : ' allowed to ');
+                // "It is possible for computers to think": no capital from the box's start.
+                const first = said.split(/\s+/)[0].toLowerCase();
+                const who = CLAIM_FOR_PERSON[said.toLowerCase()] || (start && (CLAIM_FUNCTION_WORDS.has(first) || claimOpeningPlural(first)) ? said.charAt(0).toLowerCase() + said.slice(1) : said);
+                const word = r === 1 ? (start ? 'It' : 'it') + ' is ' + not + 'possible for ' + who + ' to '
+                    : said + ' ' + (entry.canBe || 'is') + ' ' + not + (r === 0 ? 'able to ' : 'allowed to ');
                 return entry.text.slice(0, at) + word + entry.text.slice(m.index + m[0].length);
             }
             return null;

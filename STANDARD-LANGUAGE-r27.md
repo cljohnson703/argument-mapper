@@ -4,6 +4,34 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### October 29: "can" asks which is meant, every time (r27.169)
+
+The user: "Any time someone writes, 'necessarily', 'possibly', etc., they need to specify the modality, and the checker should ask"; "Always".
+
+* "Poe can fly" asks every time: "Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?" It had been asked only where a step followed on "possible" and not on "able", and read as "able" otherwise.
+* "Poe can't fly" asks too, each reading denied: "Poe is not able to fly", "It is not possible for Poe to fly", "Poe is not allowed to fly". It had not been asked at all.
+* "Poe can fly or swim" asks as well, and each answer is one claim: "Poe is able to fly or swim". It had been read as "Poe can fly, or Poe can swim", so "Poe can fly or swim" and "Poe cannot fly" gave "Poe can swim". Read as ability, that step fails: one may be able to do one or the other without being able to do either one (Kenny's cards). "It is possible for Poe to fly or swim" is one claim too, and the check does not yet take the step from it.
+* A plural's readings say "are": "Computers are able to think", "It is possible for computers to think". They had said "computers is able to think" and "for Computers". The number is the head noun's: "the records in Otto's notebook are".
+* A plural that opens a box is written small inside a reading: "It is metaphysically necessary that ravens are black" (since r27.168 it had been "that Ravens are black"). "James", "Rawls", "Chalmers", "Hobbes", "Aquinas" and some Greek names end in -s and are names, as "Socrates" is.
+* "Is able to perform all the functions" is read as "can perform all the functions" is, "every function", so it can answer "cannot perform all the functions". It had been kept as written, and was no answer.
+* "It is possible for Mary to sing and Bob cannot dance" is two claims. "Possible" had been read as "possibly", over all the rest.
+* The "it" of "it is (not) possible for X to ..." stands for nothing. In "premises that it is not possible for a mere series of flashing lights ... to produce consciousness", "it" had been read as what the premises say.
+* Not yet asked: "can" after "everyone", "some birds", "whoever" or "only citizens"; "we can't conclude that P", still asked only where it decides the step; "could", "may", "might" and "must".
+
+Tests:
+* logic-r27-english-test.js has 135 checks. "'Poe can fly' in both boxes of a modus ponens asks nothing" now expects the question. The "should" check uses "We are not able to leave", and a new check has "We can't leave" ask. The "we know that" step uses "we are able to cross the river". Three checks are new: the readings' words; two "can"s in one box, each answered in place; "is not able to perform all the functions". Five fail on r27.168.
+* anaphora-r27-test.js: "can too" is now "will too", and "is too" after "is able to"; a new check has "can too" ask. It fails on r27.168.
+* extended-mind-r27-test.js has 60 checks. The Otto steps are written "are not able to perform", "is not able to fully integrate" and "is able to perform". In the objection of r27.118, "are" is red against "are not able". A new check has "cannot perform" ask. Two fail on r27.168: the new one, and "two conditions", whose "is not able to fully integrate all changes" r27.168 did not read as "all the changes".
+* language-r27-qualifier-test.js: the "flashing lights" step is written "it is not possible for ... to produce"; a new check has "can't produce" ask. Both fail on r27.168, the second by the "it" read as what the premises say.
+* logic-r27-basis-test.js: "imaginary objects are able to cause"; the lights' modus tollens now asks, and answered "is able to", follows. That check fails on r27.168.
+* syntax-r27-test.js: the "-able" steps are written "are able to conceive" and "is able to prove", with "it is possible for us to conceive" added; a new check has "we can conceive of zombies" and "zombies can be conceived" ask. "Bob, who is rich, will pay". The new check fails on r27.168.
+* logic-r27-stress-test.js: two "can" hard cases now ask; their "is able to" versions keep modus tollens; "Poe is able to fly or swim" and "Poe is not able to fly" give nothing; "will" spreads over "or". The 300 instances' "can ... or" is now "will ... or". The two that ask fail on r27.168.
+* colors-r27-inference-test.js, premise-links-r27-test.js and reading-r27-chooser-test.js: their boxes are written without "can": "Computers are not minds", "the machine thinks", "votes", "will pay", "are not able to perform". They pass on r27.168 too. "Bob, who is rich, pays" leaves "who" undimmed, as r27.168 does: a slip of the colors after a one-word verb, not yet fixed.
+* Take-one-out: each of the 13 changes is caught.
+* 35 sentences in the corpus read differently, each with "can", "cannot" or "can't".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 29: "necessarily", "possibly": which kind, asked every time (r27.168)
 
 The user: "Any time someone writes, 'necessarily', 'possibly', etc., they need to specify the modality, and the checker should ask"; and of offering the kinds the question names: "yes, I do want that".

@@ -252,8 +252,9 @@ const J = JSON.stringify;
     const choose = list => `var pop = __c.pop(), want = ${J(list)};
         [].slice.call(pop.querySelectorAll('.rc-row')).filter(function (r) { return want.indexOf(r.title) >= 0; }).forEach(function (r) { var i = r.querySelector('input'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); });`;
     const U3 = 'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.';
-    const RIF = "If the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.";
-    const RP = "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.";
+    // "Are not able to" for "cannot", which asks which is meant (r27.169).
+    const RIF = "If the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.";
+    const RP = "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.";
     const OTTO = [N('M', 'contention', ["The records in Otto's notebook are mental states of Otto."], [
         N('S3', 'support', [C, U3], [
             N('S4', 'support', [P1, P2], [N('R', 'rebuttal', [RIF, RP], [], { targetIndex: 0 })], { targetIndex: 0 })])], { x: 30000, y: 30000 })];

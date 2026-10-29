@@ -538,18 +538,26 @@ console.log('\n-- "-able" words (r27.65) --');
     // the one-way rule, its own step, an option in the Logic panel.
     const tag = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, why: (st.why && st.why.text || '').replace(/\uE000/g, '') } : null;`);
-    const yes = [tag(['We can conceive of zombies.'], 'Zombies are conceivable.'), tag(['We can conceive of zombies.'], 'Zombies can be conceived.'),
-        tag(['Zombies can be conceived.'], 'Zombies are conceivable.'), tag(['Mary can prove the theorem.'], 'The theorem is provable.')];
+    // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
+    // etc., they need to specify the modality, and the checker should ask"):
+    // "we can conceive" asks which "can" is meant; answered "are able to" or
+    // "it is possible for", the rule takes it.
+    const asked = [tag(['We can conceive of zombies.'], 'Zombies are conceivable.'), tag(['Zombies can be conceived.'], 'Zombies are conceivable.')];
+    ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cIt is possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
+        '"we can conceive of zombies", "zombies can be conceived": which "can" is asked (r27.169)', J(asked));
+    const yes = [tag(['We are able to conceive of zombies.'], 'Zombies are conceivable.'), tag(['We are able to conceive of zombies.'], 'Zombies are able to be conceived.'),
+        tag(['Zombies are able to be conceived.'], 'Zombies are conceivable.'), tag(['Mary is able to prove the theorem.'], 'The theorem is provable.'),
+        tag(['It is possible for us to conceive of zombies.'], 'Zombies are conceivable.')];
     ok(yes.every(r => r && r.rule === 'meaning of \u2018-able\u2019'),
-        '"we can conceive of zombies" gives "zombies are conceivable" and "zombies can be conceived", by the meaning of "-able"; so "provable"', J(yes));
-    const no = [tag(['Zombies are conceivable.'], 'We can conceive of zombies.'), tag(['We cannot conceive of zombies.'], 'Zombies are not conceivable.'),
-        tag(['We can read the book.'], 'The book is readable.'), tag(['We can conceive of a zombie.'], 'Zombies are conceivable.')];
-    ok(no.every(r => r && !r.rule), 'never the other way; nor from "cannot"; nor for a word whose meaning has moved ("readable"); nor from another number', J(no));
-    const direct = tag(['If zombies are conceivable, then zombies are possible.', 'We can conceive of zombies.'], 'Zombies are possible.');
-    ok(direct && !direct.rule && /\u201cWe can conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are possible\u201d by modus ponens\./.test(direct.why),
+        '"we are able to conceive of zombies" gives "zombies are conceivable" and "zombies are able to be conceived", by the meaning of "-able"; so "provable"; so "it is possible for us to conceive"', J(yes));
+    const no = [tag(['Zombies are conceivable.'], 'We are able to conceive of zombies.'), tag(['We are not able to conceive of zombies.'], 'Zombies are not conceivable.'),
+        tag(['We are able to read the book.'], 'The book is readable.'), tag(['We are able to conceive of a zombie.'], 'Zombies are conceivable.')];
+    ok(no.every(r => r && !r.rule && !/Did you mean/.test(r.why)), 'never the other way; nor from "not able"; nor for a word whose meaning has moved ("readable"); nor from another number', J(no));
+    const direct = tag(['If zombies are conceivable, then zombies are possible.', 'We are able to conceive of zombies.'], 'Zombies are possible.');
+    ok(direct && !direct.rule && /\u201cWe are able to conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are possible\u201d by modus ponens\./.test(direct.why),
         'the direct route is not one step: its explanation names the box that is missing', J(direct));
     const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: {} }; setDeductiveRule('able-meaning', false);
-        var trees = [{ id: 'M', type: 'contention', texts: ['Zombies are conceivable.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['We can conceive of zombies.'], collapsed: [], children: [] }] }];
+        var trees = [{ id: 'M', type: 'contention', texts: ['Zombies are conceivable.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['We are able to conceive of zombies.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0], r = st && st.rule ? st.rule.name : null; state.logic = was; claimRulesCache = null; return r;`);
     ok(off === null, 'switched off in the Logic panel, the step is not taken', J(off));
 }
@@ -800,7 +808,8 @@ console.log('\n-- a clause or a phrase set off by commas: "Bob, who is rich, can
     const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support',
         texts: ${J(ps)}, collapsed: [], children: [] }] }];
         return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`);
-    ok(step(['Bob, who is rich, can pay.'], 'Bob is rich.') === '✓ conjunction elimination' && step(['Bob, a doctor, can pay.'], 'Bob is a doctor.') === '✓ conjunction elimination' &&
+    // "Will pay": "can pay" asks which is meant (r27.169).
+    ok(step(['Bob, who is rich, will pay.'], 'Bob is rich.') === '✓ conjunction elimination' && step(['Bob, a doctor, will pay.'], 'Bob is a doctor.') === '✓ conjunction elimination' &&
         step(['Mark Twain, who wrote Huckleberry Finn, was born in Missouri.'], 'Mark Twain wrote Huckleberry Finn.') === '✓ conjunction elimination',
         'so "Bob is rich", "Bob is a doctor", "Mark Twain wrote Huckleberry Finn" follow');
 }

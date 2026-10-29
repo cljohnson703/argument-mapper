@@ -578,9 +578,10 @@ try {
             'the chooser writes its readings with "both", "either" and numbering, not brackets, where English can');
 
         // Conditions together, and the premises that give them (r27.45).
-        ok(rule(['Imagination is a non-physical event', 'Imaginary objects can cause people to feel fear',
-                'If imaginary objects can cause people to feel fear and imagination is a non-physical event, then non-physical events can cause people to feel fear.'],
-                'Non-physical events can cause people to feel fear') === 'modus ponens, conditions together' &&
+        // "Are able to" for "can", which asks which is meant (r27.169).
+        ok(rule(['Imagination is a non-physical event', 'Imaginary objects are able to cause people to feel fear',
+                'If imaginary objects are able to cause people to feel fear and imagination is a non-physical event, then non-physical events are able to cause people to feel fear.'],
+                'Non-physical events are able to cause people to feel fear') === 'modus ponens, conditions together' &&
             rule(['Poe is small and black', 'Fido sings', 'If Poe is black and small and Fido sings, then Rex flies'], 'Rex flies') === null,
             'a premise that the reader takes as two claims ("a non-physical event") gives its run of the conditions; in another order it does not');
         const tA = "Poe isn't overdetermined", tB = 'Poe has a physical cause', tC = 'Mary causes the effect', tD = 'Mary is physical';
@@ -891,13 +892,19 @@ try {
             J(slips('The ravens is black.')) === J([['The ravens are black.', 'The raven is black.']]) &&
             J(slips('A raven are black.')) === J([['A raven is black.', 'Ravens are black.']]),
             'names, relative clauses, verbs joined, nouns of both numbers and plural modifiers are no slips; a plural with "is" is');
-        // Generics are asked; a kind's predicate and a modal are not asked outright.
+        // Generics are asked where the answer decides the step; a kind's
+        // predicate is not asked outright. "Can" asks which is meant, every
+        // time (r27.169; the user: "Any time someone writes, 'necessarily',
+        // 'possibly', etc., they need to specify the modality, and the checker
+        // should ask"); answered, the step follows.
         const gen = tagOf(['Mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria');
+        const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
         ok(gen[0] === '? generic' && gen[1] === 'Did you mean “All mosquitoes carry malaria”, “Some mosquitoes carry malaria”, “Most mosquitoes carry malaria”, or “Generally, mosquitoes carry malaria”?' &&
             rule(['All mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria') === 'universal modus ponens' &&
             rule(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false') === 'modus ponens' &&
-            rule(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true') === 'modus tollens',
-            'a generic asks all, some or most where the answer decides the step; "zombies are possible" and "a series of lights can ..." ask nothing here', J(gen));
+            lights[0] === '? ambiguous' && /did you mean “If functionalism is true, then a mere series of lights is able to produce consciousness”, “If functionalism is true, then it is possible for a mere series of lights to produce consciousness”, or /.test(lights[1]) &&
+            rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true') === 'modus tollens',
+            'a generic asks all, some or most where the answer decides the step; "zombies are possible" asks nothing here; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens', J([gen, lights]));
         // An indefinite in an if-clause asks, in whole sentences.
         const ifA = tagOf(['If a raven sings, it is black', 'Fido is a raven', 'Fido sings'], 'Fido is black');
         // r27.166: both readings read back -- "generally, ..." had come back as

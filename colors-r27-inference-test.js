@@ -64,7 +64,7 @@
 //     phrase, a verb's object, contraries, "F(a)" and "a = b" in symbols;
 //     painted whole only where it is another wording of the conclusion.
 // (11) r27.133: a kind with parts, where it meets nothing whole, in its
-//     parts ("whoever" and "can vote", "every raven" and "sings"); "only",
+//     parts ("whoever" and "votes", "every raven" and "sings"); "only",
 //     "none but" and "if something is ..., then it is ..." found by their
 //     words; words two clauses share ("Bob and Mary left") found for each,
 //     a shared word taking the color of the part that goes on, else of the
@@ -72,7 +72,7 @@
 //     a kind the conclusion denies goes on denied ("every raven", with
 //     "Poe is not a raven").
 // (12) r27.141: a subject the reading says twice where the box says it once
-//     ("Bob, who is rich, can pay": "Bob is rich, and Bob can pay") goes on
+//     ("Bob, who is rich, will pay": "Bob is rich, and Bob will pay") goes on
 //     with the part that goes on, "Mark Twain" one stretch; a step that
 //     drops words ("Bob ran quickly", so "Bob ran"; "Bob is glad that Mary
 //     left", so "Bob is glad") lights the words kept and dims those
@@ -657,9 +657,9 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         // false", "is false that", etc.)"; and "What do you suggest when we
         // have a negated parent and a non-negated child?"
         const attack = second => val(`(function () {
-            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
-                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine can think.'], collapsed: [], children: [
-                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", ${J(second)}], collapsed: [], children: [] }] }] }]);
+            __load([{ id: 'M', type: 'contention', texts: ['The machine thinks.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine thinks.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers are not minds.", ${J(second)}], collapsed: [], children: [] }] }] }]);
             if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
             const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
             return { rule: st && st.rule ? st.rule.name : null, parts: __parts(1) }; })()`);
@@ -668,7 +668,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             'is false': '[S1](#box:S) is false', 'is not the case': '[S1](#box:S) is not the case',
             'is untrue': '[S1](#box:S) is untrue', "isn't true": "[S1](#box:S) isn't true" };
         const linked = Object.keys(wordings).map(k => {
-            const r = attack("If computers can't be minds, then " + wordings[k] + '.');
+            const r = attack("If computers are not minds, then " + wordings[k] + '.');
             return { k, rule: r.rule, red: runs(r.parts, /ic-neg/), green: runs(r.parts, /^ic-c/).join(' ') };
         });
         ok(linked.every(g => g.rule === 'modus ponens' && J(g.red) === J([g.k]) && g.green.includes('S1') && g.green.includes(g.k)),
@@ -676,9 +676,9 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         // Found by the box's own words, where it is read with a pronoun for
         // its referent ("identifying it", read as "identifying the computer").
         const said = val(`(function () {
-            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
-                { id: 'S', type: 'support', texts: ['If the computer is able to fool the investigator into identifying it as human, then the machine can think.'], collapsed: [], children: [
-                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", "If computers can't be minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
+            __load([{ id: 'M', type: 'contention', texts: ['The machine thinks.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer is able to fool the investigator into identifying it as human, then the machine thinks.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers are not minds.", "If computers are not minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
             if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
             const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
             return { stretches: icPlan(st)[1].stretches.map(x => x.words), parts: __parts(1) }; })()`);
@@ -704,7 +704,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J([pleasure.boxes[0], rain.boxes[0]]));
         const plain = [['God exists', 'God does not exist.', 'exists'], ['some ravens are white', 'No ravens are white.', 'some'],
             ['there is a God', 'There is no God.', 'is'], ['Socrates is mortal', 'Socrates is not mortal.', 'is'],
-            ['computers can think', "Computers can't think.", 'can'], ['all ravens are black', 'Not all ravens are black.', 'all']]
+            ['computers think', "Computers don't think.", 'think'], ['all ravens are black', 'Not all ravens are black.', 'all']]
             .map(([t, box, want]) => { const r = paint(['If physics is complete, then ' + t + '.', 'Physics is complete.'], box, 'objection');
                 return { t, want, rule: r.rule, red: runs(r.boxes[0], /ic-neg/) }; });
         ok(plain.every(x => x.rule === 'modus ponens' && J(x.red) === J([x.want])),
@@ -722,9 +722,9 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         // the "if" of "if it rains, then the game is off" left uncolored:
         // "Fix both."
         const piece = val(`(function () {
-            __load([{ id: 'M', type: 'contention', texts: ['The machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
-                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine can think.'], collapsed: [], children: [
-                    { id: 'A', type: 'objection', texts: ["Computers can't be minds.", "If computers can't be minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
+            __load([{ id: 'M', type: 'contention', texts: ['The machine thinks.'], collapsed: [], x: 30000, y: 30000, children: [
+                { id: 'S', type: 'support', texts: ['If the computer fools the investigator, then the machine thinks.'], collapsed: [], children: [
+                    { id: 'A', type: 'objection', texts: ["Computers are not minds.", "If computers are not minds, then not [S1](#box:S)."], collapsed: [], children: [] }] }] }]);
             if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
             const rd = document.querySelector('.node[data-node-id="A"][data-node-idx="1"] .rendered-text');
             const red = rd.querySelector('span.ic-neg'), part = red && red.parentElement;
@@ -761,7 +761,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         // in O2 doesn't turn red, and the conclusion doesn't validate".
         const o2 = val(`(function () {
             __load([{ id: 'M', type: 'contention', texts: ['If the computer is able to fool the investigator into identifying it as human approximately as often as the woman was able to fool the investigator into identifying her as a man, then we should conclude that the machine can think.'], collapsed: [], x: 30000, y: 30000, children: [
-                { id: 'A', type: 'objection', texts: ["Computers can't be minds.", 'If [O1](#box:A), then not [M1](#box:M).'], collapsed: [], children: [] }] }]);
+                { id: 'A', type: 'objection', texts: ["Computers are not minds.", 'If [O1](#box:A), then not [M1](#box:M).'], collapsed: [], children: [] }] }]);
             if (!inferenceColorsOn) cycleInferenceColors(); else refreshDerivationTags();
             const st = collectDeductiveSteps(state.trees, null).find(s => s.childId === 'A');
             return { tag: st ? deductiveStepTagText(st) : null, parts: __parts(1) }; })()`);
@@ -850,13 +850,14 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         // The class of the part of a box whose words are `w`.
         const k = (b, w) => (b.find(p => p.slice(p.indexOf(': ') + 2).trim() === w) || '').split(': ')[0];
         // A kind with parts, where it meets nothing whole: "whoever" (a
-        // person) and "can vote", "every raven" and "sings" -- they had been
+        // person) and "votes", "every raven" and "sings" -- they had been
         // dimmed.
-        const who = paint(['Whoever can vote is a citizen.', 'Bob is a person.', 'Bob can vote.'], 'Bob is a citizen.');
-        ok(who.rule === 'universal modus ponens' && /^ic-k\d$/.test(k(who.boxes[0], 'Whoever')) && /^ic-k\d$/.test(k(who.boxes[0], 'can vote')) &&
-            k(who.boxes[0], 'Whoever') !== k(who.boxes[0], 'can vote') && k(who.boxes[0], 'Whoever') === k(who.boxes[1], 'is a person') &&
-            k(who.boxes[0], 'can vote') === k(who.boxes[2], 'can vote') && J(runs(who.boxes[0], /^ic-c/)) === J(['is a citizen']),
-            '"Whoever can vote": "whoever" meets "is a person", "can vote" meets "can vote", each in its own color', J(who));
+        // Without "can", which asks which is meant (r27.169).
+        const who = paint(['Whoever votes is a citizen.', 'Bob is a person.', 'Bob votes.'], 'Bob is a citizen.');
+        ok(who.rule === 'universal modus ponens' && /^ic-k\d$/.test(k(who.boxes[0], 'Whoever')) && /^ic-k\d$/.test(k(who.boxes[0], 'votes')) &&
+            k(who.boxes[0], 'Whoever') !== k(who.boxes[0], 'votes') && k(who.boxes[0], 'Whoever') === k(who.boxes[1], 'is a person') &&
+            k(who.boxes[0], 'votes') === k(who.boxes[2], 'votes') && J(runs(who.boxes[0], /^ic-c/)) === J(['is a citizen']),
+            '"Whoever votes": "whoever" meets "is a person", "votes" meets "votes", each in its own color', J(who));
         const sings = paint(['Every raven that sings is black.', 'Poe is a raven.', 'Poe sings.'], 'Poe is black.');
         ok(J(runs(sings.boxes[0], /^ic-k/)) === J(['Every raven', 'sings']) && k(sings.boxes[0], 'Every raven') === k(sings.boxes[1], 'is a raven') &&
             k(sings.boxes[0], 'sings') === k(sings.boxes[2], 'sings') && runs(sings.boxes[0], /^ic-rest/).includes('that'),
@@ -866,11 +867,11 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J(runs(whole.boxes[1], /^ic-c/)) === J(['Poe']),
             '... and whole where a premise says it whole: "is a raven that sings" (it had been dimmed)', J(whole));
         // Said in another order than its reading's.
-        const only = paint(['Only citizens can vote.', 'Bob can vote.'], 'Bob is a citizen.');
-        const none = paint(['None but citizens can vote.', 'Bob can vote.'], 'Bob is a citizen.');
-        ok(only.rule === 'universal modus ponens' && J(only.boxes[0]) === J(['ic-rest: Only ', 'ic-c: citizens', 'ic-rest:  ', 'ic-k0: can vote', 'ic-rest: .']) &&
-            J(runs(none.boxes[0], /^ic-c/)) === J(['citizens']) && J(runs(none.boxes[0], /^ic-k0/)) === J(['can vote']),
-            '"Only citizens can vote", "None but citizens can vote": "can vote" meets, "citizens" goes on (they had gone uncolored)', J([only, none]));
+        const only = paint(['Only citizens vote.', 'Bob votes.'], 'Bob is a citizen.');
+        const none = paint(['None but citizens vote.', 'Bob votes.'], 'Bob is a citizen.');
+        ok(only.rule === 'universal modus ponens' && J(only.boxes[0]) === J(['ic-rest: Only ', 'ic-c: citizens', 'ic-rest:  ', 'ic-k0: vote', 'ic-rest: .']) &&
+            J(runs(none.boxes[0], /^ic-c/)) === J(['citizens']) && J(runs(none.boxes[0], /^ic-k0/)) === J(['vote']),
+            '"Only citizens vote", "None but citizens vote": "vote" meets, "citizens" goes on (they had gone uncolored)', J([only, none]));
         const raven = paint(['If something is a raven, then it is black.', 'Poe is a raven.'], 'Poe is black.');
         ok(J(runs(raven.boxes[0], /^ic-k0/)) === J(['is a raven']) && J(runs(raven.boxes[0], /^ic-c/)) === J(['is black']),
             '"If something is a raven, then it is black": "is a raven" meets, "is black" goes on (it had gone uncolored)', J(raven));
@@ -895,20 +896,21 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             '"Bob and Al did not both leave": "Bob" meets "Bob left", "Al ... leave" goes on denied, and "not both", between the words of both, belongs to neither', J(both));
         // A kind the conclusion denies goes on denied, as modus tollens's "if" part does.
         const umt = paint(['Every raven is black.', 'Poe is not black.'], 'Poe is not a raven.');
-        const onlyMT = paint(['Only citizens can vote.', 'Bob is not a citizen.'], 'Bob cannot vote.');
-        ok(umt.rule === 'universal modus tollens' && umt.boxes[0][0] === 'ic-c ic-cn: Every raven' && J(runs(onlyMT.boxes[0], /ic-cn/)) === J(['can vote']),
-            '"Every raven" in "Every raven is black", with "Poe is not a raven", goes on denied (it went on plain); "can vote" in "Only citizens can vote", with "Bob cannot vote"', J([umt, onlyMT]));
+        const onlyMT = paint(['Only citizens vote.', 'Bob is not a citizen.'], 'Bob does not vote.');
+        ok(umt.rule === 'universal modus tollens' && umt.boxes[0][0] === 'ic-c ic-cn: Every raven' && J(runs(onlyMT.boxes[0], /ic-cn/)) === J(['vote']),
+            '"Every raven" in "Every raven is black", with "Poe is not a raven", goes on denied (it went on plain); "vote" in "Only citizens vote", with "Bob does not vote"', J([umt, onlyMT]));
     }
 
     console.log('\n-- (r27.141) a subject said once, read twice; words dropped --');
     {
-        // "Bob" had been dimmed with "who is rich", as if it were none of "Bob can pay".
-        const rich = paint(['Bob, who is rich, can pay.'], 'Bob can pay.'), doctor = paint(['Bob, a doctor, can pay.'], 'Bob can pay.');
+        // "Bob" had been dimmed with "who is rich", as if it were none of "Bob will pay".
+        // "Will pay": "can pay" asks which is meant (r27.169).
+        const rich = paint(['Bob, who is rich, will pay.'], 'Bob will pay.'), doctor = paint(['Bob, a doctor, will pay.'], 'Bob will pay.');
         const twain = paint(['Mark Twain, a writer, was funny.'], 'Mark Twain was funny.');
-        ok(rich.rule === 'conjunction elimination' && J(rich.boxes[0]) === J(['ic-c: Bob', 'ic-u: , who is rich', 'ic-rest: , ', 'ic-c: can pay', 'ic-rest: .']) &&
-            J(runs(doctor.boxes[0], /^ic-c/)) === J(['Bob', 'can pay']) && J(runs(doctor.boxes[0], /^ic-u/)) === J([', a doctor']) &&
+        ok(rich.rule === 'conjunction elimination' && J(rich.boxes[0]) === J(['ic-c: Bob', 'ic-u: , who is rich', 'ic-rest: , ', 'ic-c: will pay', 'ic-rest: .']) &&
+            J(runs(doctor.boxes[0], /^ic-c/)) === J(['Bob', 'will pay']) && J(runs(doctor.boxes[0], /^ic-u/)) === J([', a doctor']) &&
             J(runs(twain.boxes[0], /^ic-c/)) === J(['Mark Twain', 'was funny']),
-            '"Bob, who is rich, can pay", with "Bob can pay": "Bob" goes on with "can pay", "who is rich" dimmed (it had dimmed "Bob" too); "Bob, a doctor,"; "Mark Twain" one stretch',
+            '"Bob, who is rich, will pay", with "Bob will pay": "Bob" goes on with "will pay", "who is rich" dimmed (it had dimmed "Bob" too); "Bob, a doctor,"; "Mark Twain" one stretch',
             J([rich, doctor, twain]));
         // A step that drops words: "ran quickly" had been dimmed whole.
         const ran = paint(['Bob ran quickly.'], 'Bob ran.'), tall = paint(['Bob is very tall.'], 'Bob is tall.'), store = paint(['Bob quickly ran to the store.'], 'Bob ran to the store.');

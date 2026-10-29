@@ -228,9 +228,14 @@ console.log('\n-- 9. a clause cut short --');
     ok(step(['Bob left, and Mary did too.'], 'Mary left.').tag === '✓ conjunction elimination' &&
         step(['Bob loves Ann, and so does Mary.'], 'Mary loves Ann.').tag === '✓ conjunction elimination' &&
         step(['Bob did not leave, and neither did Mary.'], 'Mary did not leave.').tag === '✓ conjunction elimination' &&
-        step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag === '✓ conjunction elimination' &&
+        step(['Bob will swim, and Mary will too.'], 'Mary will swim.').tag === '✓ conjunction elimination' &&
+        step(['Bob is able to swim, and Mary is too.'], 'Mary is able to swim.').tag === '✓ conjunction elimination' &&
         step(['Bob has a car, and Mary does too.'], 'Mary has a car.').tag === '✓ conjunction elimination',
-        '"did too", "so does", "neither did", "can too", "does too" after "has a car"');
+        '"did too", "so does", "neither did", "will too", "is too" after "is able to", "does too" after "has a car"');
+    // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
+    // etc., they need to specify the modality, and the checker should ask"):
+    // "can" asks which is meant, "Mary can too" with it.
+    ok(step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag === '? ambiguous', '"can too": "can" asks which is meant (r27.169)');
     ok(step(['Poe is black, but Fido is not.'], 'Fido is not black.').tag === '✓ conjunction elimination' &&
         step(["Poe is black, but Fido isn't."], 'Fido is not black.').tag === '✓ conjunction elimination',
         '"Fido is not", "Fido isn\'t"');
