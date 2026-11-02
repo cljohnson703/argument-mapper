@@ -4,6 +4,28 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 2: "might", "may" and "could" ask which is meant (r27.180)
+
+The user, of "must", "might", "may" and "could": "However many readings are possible. If there are too many, we can give the option 'Other', which would encourage the user to rewrite it to avoid the ambiguity".
+
+* "Poe might be black" asks: "Did you mean “It is metaphysically possible that Poe is black”, “It is logically possible that Poe is black”, “It is physically possible that Poe is black”, or “It has not been established that Poe is not black”?" These are "possibly"'s readings, in its order, so a step's "might" and "possibly" are answered together, kind for kind.
+* "May" asks the same, and what is allowed: "… or “Poe is allowed to fly”?"
+* "Could" asks the same, and what one was able to do: "… or “Poe was able to fly”?"
+* Denied:
+  * "might not" and "may not" are possible that not, "It is metaphysically possible that Poe does not fly" … "It has not been established that Poe flies". "May not" is also not allowed, "Poe is not allowed to fly".
+  * "could not" is not possible, "It is not metaphysically possible that Poe flies" … "It has been established that Poe does not fly", and not able, "Poe was not able to fly".
+  * "Might not" and "may not" are no longer said to be unread: only that they do not deny "might" and "may".
+* Each question with five readings ends with "Other" (r27.179).
+* It is asked as "possibly" is (r27.175). With "Ask which modality is meant" off, "If zombies could exist, then physicalism is false" and "Zombies could exist" give modus ponens. So does "Zombies might exist" beside "If it is possible that zombies exist, …": as written, two claims; on every kind, one.
+* Not "could choose not to", which "would" and "could" read as duals (r27.112). Not yet a quantifier's "might" ("someone might fly"), nor a "might" over an "or" or an "and" of verbs.
+
+Tests:
+* modal-r27-test.js has 76 checks; section 10 is new, and its four checks fail on r27.179.
+* Take-one-out: each of the 3 changes is caught.
+* 4 sentences in the corpus read differently, each with "might" or "may", each now asking which is meant.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 2: "must" asks which is meant; "Other" (r27.179)
 
 The user, of "must", "might", "may" and "could": "However many readings are possible. If there are too many, we can give the option 'Other', which would encourage the user to rewrite it to avoid the ambiguity". The mockup asked of "If Poe is a raven, then Poe must be black", with six readings and "Other".

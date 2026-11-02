@@ -2977,7 +2977,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-02 r27.179';
+    const APP_BUILD = '2026-11-02 r27.180';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13032,7 +13032,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         } else if (CLAIM_VERB_MARKERS.has(first) && claimWord(words[1]) === 'not') {
             if (CLAIM_SCOPED_NOT.has(first)) {
                 // "Must" is asked about (r27.179): only that the two differ.
-                claimUnread('"' + first + ' not" is not read as a denial of "' + first + '": the two differ' + (first === 'must' ? '' : ', and the checker does not read "' + first + '" yet'));
+                claimUnread('"' + first + ' not" is not read as a denial of "' + first + '": the two differ' + (/^(?:must|might|may)$/.test(first) ? '' : ', and the checker does not read "' + first + '" yet'));
             } else {
                 negated = true;
                 words = [first].concat(words.slice(2));
@@ -14228,6 +14228,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         st.notes.splice(at, 1);
         return claimAmbiguous(CLAIM_MUST_WHY, labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(text), { must: true }, claimModalAsking() ? {} : { subject: 'must if' }));
+    }
+    // "Poe might be black" (r27.180; the user, of "must", "might", "may" and
+    // "could": "However many readings are possible"): what is possible --
+    // metaphysically, logically or physically -- or what is not ruled out by
+    // what is known; "may", what is allowed too; "could", what one was able
+    // to do. In the order of "possibly"'s readings, so that a step's "might"
+    // and "possibly" are answered together, kind for kind. "Might not", "may
+    // not": possible that not -- and "may not", not allowed; "could not": not
+    // possible, not able. Of a plain subject, as "must" (r27.179); not "could
+    // choose not to", read with "would" as its dual (r27.112).
+    const CLAIM_MAYBE_WHY = Object.assign(Object.create(null), {
+        might: '"might" may say what is possible (metaphysically, logically or physically), or what is not ruled out by what is known',
+        may: '"may" may say what is possible (metaphysically, logically or physically), what is not ruled out by what is known, or what is allowed',
+        could: '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what is known, or what one was able to do' });
+    function claimMaybeQuestion(text, modal) {
+        const m = new RegExp('^(.+?) ' + modal + ' (not )?(.+)$').exec(text);
+        if (!m || /\b(?:if|then|that|whether|and|or|but|not|must|might|may|could|it|all|every|each|some|no|any|most|many|few|several|both|either|neither)\b/.test(m[1]) ||
+            /\b(?:must|might|may|could|and|or|nor|but)\b/.test(m[3])) return null;
+        const subj = m[1], denied = !!m[2], vp = m[3], be = claimSubjectBe(subj), was = be === 'are' ? 'were' : 'was';
+        if (modal === 'could' && /^(?:choose|decide|opt|elect)\b/.test(vp) && claimWouldCouldOn()) return null;
+        const yes = claimMustClause(subj, vp, be, false), no = claimMustClause(subj, vp, be, true);
+        // "Could not": none of it possible; "might not", "may not": possible that not.
+        const wide = denied && modal === 'could';
+        const kinds = ['metaphysically', 'logically', 'physically'].map(k => wide ? 'it is not ' + k + ' possible that ' + yes : 'it is ' + k + ' possible that ' + (denied ? no : yes));
+        const known = wide ? 'it has been established that ' + no : 'it has not been established that ' + (denied ? yes : no);
+        const extra = modal === 'may' ? [subj + ' ' + be + (denied ? ' not' : '') + ' allowed to ' + vp] : modal === 'could' ? [subj + ' ' + was + (denied ? ' not' : '') + ' able to ' + vp] : [];
+        const labels = kinds.concat([known], extra);
+        return claimAmbiguous(CLAIM_MAYBE_WHY[modal], labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
+            Object.assign(claimModalMarks(text), { maybe: true }, claimModalAsking() || modal === 'might' ? {} : { subject: modal }));
     }
     // "We can conclude that P" read as what is possible for us: a predication
     // marked so (the "can" ab esse ad posse and "we do" speak to).
@@ -15619,6 +15648,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.must))) form = claimMustQuestion(String(text || '').trim()) || form;
         else if (!would && form && form.kind === 'if' && !form.counterfactual && form.conds.length === 1 && form.cons && form.cons.kind === 'pred' && /^~must /.test(form.cons.prop))
             form = claimMustConditional(String(text || '').trim(), noteMark) || form;
+        // "Poe might be black", "may", "could": which is meant -- once
+        // (r27.180). "Poe could not fly": the same, denied.
+        else if (!would && form && form.kind === 'pred' && /^~(?:might|may|could) /.test(form.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.maybe))) form = claimMaybeQuestion(String(text || '').trim(), form.prop.slice(1).split(' ')[0]) || form;
+        else if (!would && form && form.kind === 'not' && form.inner && form.inner.kind === 'pred' && /^~could /.test(form.inner.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.maybe))) form = claimMaybeQuestion(String(text || '').trim(), 'could') || form;
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
         return form;

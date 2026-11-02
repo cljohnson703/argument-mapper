@@ -484,6 +484,32 @@ console.log('\n-- 9. "must": which is meant --');
         'off: "so Socrates must be mortal" asks -- what follows gives the step, necessity does not; "must" in both boxes of a modus ponens follows as written; "so Poe is black" from "then Poe must be black" asks', J(off));
 }
 
+console.log('\n-- 10. "might", "may" and "could": which is meant --');
+{
+    // r27.180 (the user, of "must", "might", "may" and "could": "However many
+    // readings are possible").
+    askModality = true; setModal(null);
+    const why = t => step([t], 'Al is happy.').why;
+    const P = '“It is metaphysically possible that Poe flies”, “It is logically possible that Poe flies”, “It is physically possible that Poe flies”, “It has not been established that Poe does not fly”';
+    ok(why('Poe might be black.') === 'Did you mean “It is metaphysically possible that Poe is black”, “It is logically possible that Poe is black”, “It is physically possible that Poe is black”, or “It has not been established that Poe is not black”?' &&
+        why('Poe may fly.') === 'Did you mean ' + P + ', or “Poe is allowed to fly”?' && why('Poe could fly.') === 'Did you mean ' + P + ', or “Poe was able to fly”?',
+        '"might": what is possible -- metaphysically, logically or physically -- or what is not ruled out by what is known; "may", what is allowed too; "could", what one was able to do');
+    const not = [why('Poe might not fly.'), why('Poe may not fly.'), why('Poe could not fly.')];
+    ok(/^Did you mean “It is metaphysically possible that Poe does not fly”, .+, or “It has not been established that Poe flies”\? “Poe might not fly\.”: "might not" is not read as a denial of "might": the two differ\.$/.test(not[0]) &&
+        /^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, or “Poe is not allowed to fly”\?/.test(not[1]) &&
+        not[2] === 'Did you mean “It is not metaphysically possible that Poe flies”, “It is not logically possible that Poe flies”, “It is not physically possible that Poe flies”, “It has been established that Poe does not fly”, or “Poe was not able to fly”?',
+        '"might not", "may not": possible that not -- "may not" not allowed, too; "could not": not possible, not able (no longer said to be unread)', J(not));
+    ok(/^Did you mean “If it rains, it is metaphysically possible that Poe flies”, /.test(why('If it rains, Poe might fly.')) &&
+        step(['Bob could choose not to stay.', 'If it rains, then Bob would choose to stay.'], 'It does not rain.').rule === 'modus tollens' &&
+        !/did you mean/i.test(why('Someone might fly.')),
+        'in place inside a longer box; not "could choose not to", read with "would" as its dual (r27.112); not yet a quantifier\'s', J(why('If it rains, Poe might fly.')));
+    askModality = false; setModal(null);
+    const off = [step(['If zombies could exist, then physicalism is false.', 'Zombies could exist.'], 'Physicalism is false.').rule,
+        step(['If it is possible that zombies exist, then physicalism is false.', 'Zombies might exist.'], 'Physicalism is false.').rule];
+    ok(J(off) === J(['modus ponens', 'modus ponens']),
+        'off: "could" in both boxes of a modus ponens follows; so "zombies might exist" beside "if it is possible that zombies exist, ...", which as written are two claims -- answered together, kind for kind, on every kind one', J(off));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
