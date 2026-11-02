@@ -4,6 +4,60 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 2: what has been established, and what we know: two readings (r27.183)
+
+The user, of "it has been established that …" and "we know that …": "I think these are two meanings that should be offered as disambiguations".
+
+* Every modal question offers what we know beside what has been established:
+  * "Zombies are possible": "… “It has not been established that zombies do not exist”, or “For all we know, zombies exist”?"
+  * "Zombies are impossible": "… “It has been established that zombies do not exist”, or “We know that zombies do not exist”?"
+  * "Necessarily, God exists": "… or “We know that God exists”?"; "God does not necessarily exist": "… or “We do not know that God exists”?"
+  * "Poe must be black": "… “We know that Poe is black”, or “Poe is required to be black”?"
+  * "Poe might fly", "may", "could": "… or “For all we know, Poe flies”"; "could not": "We know that Poe does not fly".
+* "For all we know, P" is read as "we do not know that not P": one claim. Inside a longer box it is written that way, where "for all we know" set off by commas does not always read back: "If we do not know that zombies do not exist, then physicalism is false".
+* In a step with a modal word, or with "for all we know", "we know that P" is read as the denial of "we do not know that P". Beside that denial it already was (r27.100). So "We know that zombies do not exist" denies "For all we know, zombies exist".
+* Each note says so: "… metaphysical, logical, physical, what has been established, or what we know".
+* With "Ask which modality is meant" off, "Zombies are impossible" still denies "Zombies are possible", as written. The user: "With semantic mode off, it would count; with it on, both 'impossible' and 'possible' would need to be disambiguated".
+
+Tests:
+* modal-r27-test.js has 81 checks. Its checks of the questions now expect the new reading. Section 11 is new: three checks, two of which fail on r27.182; the third, that "zombies are impossible" denies "zombies are possible" with the switch off, passes there too.
+* language-r27-qualifier-test.js and hints-r27-test.js: their questions now end with what we know.
+* Take-one-out: each of the 11 changes is caught.
+* 76 sentences in the corpus read differently, each with a modal word, each now offering what we know.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "could" as "would be able to" (r27.182)
+
+The user, of "could" as what one would be able to do: "Sure, let's add it".
+
+* "A machine could pass the Turing test" offers "A machine would be able to pass the Turing test" too, beside "A machine was able to pass the Turing test": what one would be able to do is the "could" of a present-tense argument. "Could not": "would not be able to".
+* Only where "could" is the whole box. Inside a longer box "would" makes the whole a what-if claim ("If it rains, Poe would be able to fly"), which says more than the clause. There "could" offers what it did.
+* "Zombies could exist" offers "Zombies would be able to exist" too. It is odd of zombies, but grammatical; "Other" is there for none of these.
+* The note says so: "… what one was able to do, or what one would be able to do".
+
+Tests:
+* modal-r27-test.js has 78 checks. Its checks of "could" now expect the new reading, and two new checks have it where "could" is the whole box and not inside an "if", and the note. Three fail on r27.181.
+* Take-one-out: each of the 2 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: a reductio in one box (r27.181)
+
+The user, of "If physicalism is false, then zombies are possible and zombies are not possible", a reductio in one box: "Sure".
+
+* "If not P, then Q and not Q" gives P by reductio, as "if not P, then Q" and "if not P, then not Q" do: "If physicalism is false, then zombies are metaphysically possible and zombies are not metaphysically possible" gives "Physicalism is true". It had been "? not recognized".
+* "If P, then Q and not Q" gives "not P": "If God exists, then evil is an illusion and evil is not an illusion" gives "God does not exist".
+* Any two parts of the "and" that deny each other will do. "If God exists, then evil is an illusion and evil is real" gives nothing, as the two-premise reductio does not.
+
+Tests:
+* logic-r27-english-test.js: its table of rules has three new rows, two of which fail on r27.180; the third, that a non-contradiction gives nothing, passes there too.
+* Take-one-out: the change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 2: "might", "may" and "could" ask which is meant (r27.180)
 
 The user, of "must", "might", "may" and "could": "However many readings are possible. If there are too many, we can give the option 'Other', which would encourage the user to rewrite it to avoid the ambiguity".

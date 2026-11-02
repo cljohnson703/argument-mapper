@@ -153,7 +153,7 @@ console.log('\n-- 5. "must" read as written --');
     // mortal"), the check says what the step would be without it.
     const c = step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.');
     ok(!c.rule && c.why === 'Did you mean “Socrates is mortal”, “It is metaphysically necessary that Socrates is mortal”, “It is logically necessary that Socrates is mortal”, ' +
-            '“It is physically necessary that Socrates is mortal”, “It has been established that Socrates is mortal”, or “Socrates is required to be mortal”?',
+            '“It is physically necessary that Socrates is mortal”, “It has been established that Socrates is mortal”, “We know that Socrates is mortal”, or “Socrates is required to be mortal”?',
         'in a conclusion: asked which "must" is meant (r27.179)', J(c));
     ok(/^Did you mean “If Socrates is a man, then Socrates is mortal”, “It is logically necessary that if Socrates is a man, then Socrates is mortal”, /.test(
             step(['If Socrates is a man, then he must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why) &&

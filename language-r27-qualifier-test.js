@@ -104,10 +104,10 @@ try {
         // What is known: "it has not been established that Poe is black"
         // (r27.174; it had been "for all we know, Poe is not black").
         const kinds = (pre, said, known) => 'Did you mean “' + pre + 'it is metaphysically possible that ' + said + '”, “' + pre + 'it is logically possible that ' + said + '”, “' +
-            pre + 'it is physically possible that ' + said + '”, or “' + pre + 'it has not been established that ' + known + '”?';
+            pre + 'it is physically possible that ' + said + '”, “' + pre + 'it has not been established that ' + known + '”, or “' + pre + 'we do not know that ' + known + '”?';
         ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous &&
                 s.why === 'Did you mean “It is metaphysically possible that Poe is not black”, “It is logically possible that Poe is not black”, ' +
-                    '“It is physically possible that Poe is not black”, or “It has not been established that Poe is black”?'; }) &&
+                    '“It is physically possible that Poe is not black”, “It has not been established that Poe is black”, or “For all we know, Poe is not black”?'; }) &&
             ['possibly Poe is not black.', 'it is possible that Poe is not black.', 'Poe is possibly not black.'].every(t => { const s = step(['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.', 'weak-objection');
                 return !s.rule && s.ambiguous && s.why === kinds('If Poe is a crow, then ', 'Poe is not black', 'Poe is black'); }),
             '"possibly" asks which kind of possibility is meant: metaphysical, logical, physical, or what is known -- alone, and inside an "if"');

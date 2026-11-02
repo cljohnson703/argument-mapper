@@ -549,6 +549,10 @@ const MORE_RULES = [
     ['reductio', ['If God exists, then evil is an illusion', 'If God exists, then evil is not an illusion'], 'God does not exist', 'reductio'],
     ['consequentia mirabilis', ['P → ¬P'], '¬P', 'a claim that implies its own denial (a familiar step; the basis reductio takes two conditionals)'],
     [null, ['If God exists, then evil is an illusion', 'If God exists, then evil is real'], 'God does not exist', 'reductio needs a claim and its denial'],
+    // r27.181 (the user, of the reductio in one box: "Sure").
+    ['reductio', ['If physicalism is false, then zombies are metaphysically possible and zombies are not metaphysically possible'], 'Physicalism is true', 'reductio in one box: "if not P, then Q and not Q" gives P (r27.181)'],
+    ['reductio', ['If God exists, then evil is an illusion and evil is not an illusion'], 'God does not exist', 'reductio in one box: "if P, then Q and not Q" gives "not P" (r27.181)'],
+    [null, ['If God exists, then evil is an illusion and evil is real'], 'God does not exist', 'in one box too, reductio needs a claim and its denial'],
     ['quantifier negation', ['Not all ravens are black'], 'Some ravens are not black', 'QN'],
     ['quantifier negation', ['It is not the case that some raven is white'], 'No raven is white', 'QN, some'],
     [null, ['Every raven is black'], 'All ravens are black', 'the same claim in other quantifier words is the same claim: it only restates its box'],

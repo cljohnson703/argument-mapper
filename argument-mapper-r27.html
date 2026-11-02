@@ -2977,7 +2977,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-02 r27.180';
+    const APP_BUILD = '2026-11-02 r27.183';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -14079,6 +14079,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const said = normalizeClaimText(t), re = new RegExp(CLAIM_UNESTABLISHED_ANYWHERE.source, 'g');
             let m;
             while ((m = re.exec(said))) { out.add(claimWarrantWords(m[1])); re.lastIndex = m.index + 1; }
+            // "For all we know" is "we do not know"; and where a modal word may
+            // be read as what we know, "we know that P" is read as its denial
+            // (r27.183).
+            if (/\bfor all we know\b/.test(said) || /\b(?:possibl[ey]|impossible|necessar(?:y|ily)|might|may|could|must)\b/.test(said)) out.add('we do not know');
         });
         return out;
     }
@@ -14195,7 +14199,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (aux) return subj + ' ' + (v === 'be' ? be : sg ? 'has' : 'have') + ' not' + after;
         return subj + ' ' + (sg ? 'does' : 'do') + ' not ' + vp;
     }
-    const CLAIM_MUST_WHY = '"must" may say what follows, what is necessary (metaphysically, logically or physically), what is known, or what is required';
+    const CLAIM_MUST_WHY = '"must" may say what follows, what is necessary (metaphysically, logically or physically), what has been established, what we know, or what is required';
     function claimMustParts(clause) {
         const m = /^(.+?) must (not )?(.+)$/.exec(clause);
         // Not over an "or" or "and" of verbs ("must fly or swim" has its own
@@ -14208,7 +14212,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const p = claimMustParts(text);
         if (!p) return null;
         const labels = [p.said].concat(['metaphysically', 'logically', 'physically'].map(k => 'it is ' + k + ' necessary that ' + p.said),
-            ['it has been established that ' + p.said, p.required]);
+            ['it has been established that ' + p.said, 'we know that ' + p.said, p.required]);
         return claimAmbiguous(CLAIM_MUST_WHY, labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(text), { must: true }, claimModalAsking() ? {} : { subject: 'must' }));
     }
@@ -14239,9 +14243,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // possible, not able. Of a plain subject, as "must" (r27.179); not "could
     // choose not to", read with "would" as its dual (r27.112).
     const CLAIM_MAYBE_WHY = Object.assign(Object.create(null), {
-        might: '"might" may say what is possible (metaphysically, logically or physically), or what is not ruled out by what is known',
-        may: '"may" may say what is possible (metaphysically, logically or physically), what is not ruled out by what is known, or what is allowed',
-        could: '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what is known, or what one was able to do' });
+        might: '"might" may say what is possible (metaphysically, logically or physically), or what is not ruled out by what has been established or by what we know',
+        may: '"may" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, or what is allowed',
+        could: '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, what one was able to do, or what one would be able to do' });
     function claimMaybeQuestion(text, modal) {
         const m = new RegExp('^(.+?) ' + modal + ' (not )?(.+)$').exec(text);
         if (!m || /\b(?:if|then|that|whether|and|or|but|not|must|might|may|could|it|all|every|each|some|no|any|most|many|few|several|both|either|neither)\b/.test(m[1]) ||
@@ -14253,8 +14257,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const wide = denied && modal === 'could';
         const kinds = ['metaphysically', 'logically', 'physically'].map(k => wide ? 'it is not ' + k + ' possible that ' + yes : 'it is ' + k + ' possible that ' + (denied ? no : yes));
         const known = wide ? 'it has been established that ' + no : 'it has not been established that ' + (denied ? yes : no);
-        const extra = modal === 'may' ? [subj + ' ' + be + (denied ? ' not' : '') + ' allowed to ' + vp] : modal === 'could' ? [subj + ' ' + was + (denied ? ' not' : '') + ' able to ' + vp] : [];
-        const labels = kinds.concat([known], extra);
+        // "Could": what one was able to do, and -- where it is the whole box
+        // -- what one would be able to do (r27.182; the user: "Sure, let's
+        // add it"). Inside a longer box "would" makes the whole a what-if.
+        const whole = !!claimBoxRaw && normalizeClaimText(claimBoxRaw).replace(/[.!?]+$/, '').trim() === text;
+        const extra = modal === 'may' ? [subj + ' ' + be + (denied ? ' not' : '') + ' allowed to ' + vp]
+            : modal === 'could' ? [subj + ' ' + was + (denied ? ' not' : '') + ' able to ' + vp].concat(whole ? [subj + ' would' + (denied ? ' not' : '') + ' be able to ' + vp] : []) : [];
+        // What we know too (r27.183): "for all we know, Poe flies" -- inside
+        // a longer box "we do not know that Poe does not fly" -- or, "could
+        // not", "we know that Poe does not fly".
+        const know = wide ? 'we know that ' + no : whole ? 'for all we know, ' + (denied ? no : yes) : 'we do not know that ' + (denied ? yes : no);
+        const labels = kinds.concat([known, know], extra);
         return claimAmbiguous(CLAIM_MAYBE_WHY[modal], labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(text), { maybe: true }, claimModalAsking() || modal === 'might' ? {} : { subject: modal }));
     }
@@ -14885,20 +14898,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // that P", "it has been established that not P", denies (r27.174; it had
     // been "for all we know, P", which the check does not read as that
     // denial).
-    function claimModalReadings(op, denied, clause) {
+    // The box is the clause read, whole.
+    const claimWholeBox = s => !!claimBoxRaw && normalizeClaimText(claimBoxRaw).replace(/[.!?]+$/, '').trim() === s;
+    function claimModalReadings(op, denied, clause, whole) {
         const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
         // What is known not to be: "it has been established that God does not exist".
         const not = () => { const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
             return n ? normalizeClaimText(n) : 'it is not the case that ' + clause; };
         const known = op === 'nec' ? (denied ? 'it has not been established that ' + clause : 'it has been established that ' + clause)
             : 'it has ' + (denied ? '' : 'not ') + 'been established that ' + not();
-        return ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' that ' + clause).concat([known])
+        // What we know, beside what has been established (r27.183; the user:
+        // "these are two meanings that should be offered as
+        // disambiguations"): "we know that P", "we do not know that P", "we
+        // know that not P"; "for all we know, P" -- inside a longer box "we do
+        // not know that not P", which says the same.
+        const know = op === 'nec' ? (denied ? 'we do not know that ' + clause : 'we know that ' + clause)
+            : denied ? 'we know that ' + not() : whole ? 'for all we know, ' + clause : 'we do not know that ' + not();
+        return ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' that ' + clause).concat([known, know])
             .map(label => ({ label, build: () => readClaim(label) }));
     }
     // Which kind of modality a claim means, asked every time (`ask`) -- its
     // readings in place in a longer box -- or null; unanswered, the sentence
     // is read as one claim, and said to be.
-    const claimModalWhy = (word, op) => '"' + word + '" does not say which kind of ' + (op === 'nec' ? 'necessity' : 'possibility') + ' is meant: metaphysical, logical, physical, or what is known';
+    const claimModalWhy = (word, op) => '"' + word + '" does not say which kind of ' + (op === 'nec' ? 'necessity' : 'possibility') + ' is meant: metaphysical, logical, physical, what has been established, or what we know';
     // "Ask which modality is meant" (r27.175; the user, of a switch to make
     // the app pedantic about modal words or not: "Probably off by default";
     // off, a modal word asks "only where the answer decides the step":
@@ -14915,7 +14937,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // longer box; or, off, asked where the answer decides the step -- the
     // questions in every box answered together, kind for kind.
     const claimModalMarks = s => claimModalAsking() ? { ask: true, part: s } : { generic: true, modal: true, subject: 'modality', part: s };
-    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause), claimModalAsking(), claimModalMarks(s));
+    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause, claimWholeBox(s)), claimModalAsking(), claimModalMarks(s));
     function claimModalUnasked(word, op, s) {
         claimUnread(claimModalWhy(word, op) + ': the sentence is read as one claim');
         return Object.assign(claimAtom(s), { src: s });
@@ -16468,7 +16490,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const not = be === 'are' ? 'do not exist' : 'does not exist';
         const kinds = ['metaphysically', 'logically', 'physically'].map(k => said + ' ' + be + ' ' + (denied ? 'not ' : '') + k + ' ' + m[4]);
         const known = 'it has ' + (denied || impossible ? '' : 'not ') + 'been established that ' + said + ' ' + not;
-        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(), claimModalMarks(s));
+        // What we know too (r27.183): "for all we know, zombies exist" --
+        // inside a longer box "we do not know that zombies do not exist" --
+        // or "we know that zombies do not exist".
+        const know = denied || impossible ? 'we know that ' + said + ' ' + not
+            : claimWholeBox(s) ? 'for all we know, ' + said + ' ' + (be === 'are' ? 'exist' : 'exists') : 'we do not know that ' + said + ' ' + not;
+        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known, know]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(), claimModalMarks(s));
     }
     // "Bob called Mary a taxi": a taxi called for Mary, or what Mary was
     // called, said in quotation marks -- words, not a taxi (r27.178; the
@@ -20010,6 +20037,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // with proof merely because both leave a claim unestablished.
     function claimWarrantWords(words) {
         return String(words || '').replace(/^it /, '')
+            // "For all we know, P": "we do not know that not P" (r27.183).
+            .replace(/^for all (we|i|you|they) know$/, '$1 do not know')
             .replace(/^(we|you|they) are (?:unable|not able|not entitled|not in a position) to /, '$1 can not ')
             .replace(/^i am (?:unable|not able|not entitled|not in a position) to /, 'i can not ')
             .replace(/^one is (?:unable|not able|not entitled|not in a position) to /, 'one can not ');
@@ -23167,8 +23196,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Łukasiewicz's three values, where every other basis rule holds.
         { id: 'reductio', name: 'reductio',
           gloss: 'a claim that implies both something and its denial is false',
-          test: (P, C) => P.length === 2 && claimConditionalViews(P[0]).some(a => claimConditionalViews(P[1]).some(b =>
-              claimSame(a.conds[0], b.conds[0]) && claimDenies(a.cons, b.cons) && claimDenies(C, a.conds[0]))) },
+          test: (P, C) => (P.length === 2 && claimConditionalViews(P[0]).some(a => claimConditionalViews(P[1]).some(b =>
+              claimSame(a.conds[0], b.conds[0]) && claimDenies(a.cons, b.cons) && claimDenies(C, a.conds[0])))) ||
+              // In one box: "if not P, then Q and not Q" gives P (r27.181; the
+              // user, of the reductio in one box: "Sure").
+              (P.length === 1 && claimConditionalViews(P[0]).some(v => v.cons.kind === 'and' && !v.cons.iff &&
+                  v.cons.parts.some((x, i) => v.cons.parts.some((y, j) => i < j && claimDenies(x, y))) && claimDenies(C, v.conds[0]))) },
         // A conditional that states a step one of the core rules takes -- its
         // premises conjoined, its conclusion -- needs no support while this is
         // on: "(A ∧ ¬A) → ⊥", "((A → B) ∧ A) → B". Each is derivable from the

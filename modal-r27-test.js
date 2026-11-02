@@ -220,14 +220,14 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // should ask"; of offering the kinds the message names: "yes"): each of
     // the four kinds, written out.
     ok(!n.rule && n.asks && n.why === 'Did you mean “It is metaphysically necessary that God exists”, “It is logically necessary that God exists”, ' +
-            '“It is physically necessary that God exists”, or “It has been established that God exists”?',
-        '"necessarily": which kind is meant, asked -- metaphysical, logical, physical, or what is known', J(n));
+            '“It is physically necessary that God exists”, “It has been established that God exists”, or “We know that God exists”?',
+        '"necessarily": which kind is meant, asked -- metaphysical, logical, physical, what has been established, or what we know (r27.183)', J(n));
     ok(step(['It is necessary that God exists.'], 'God exists.').asks && step(['It is impossible that zombies exist.'], 'Zombies do not exist.').why ===
             'Did you mean “It is metaphysically impossible that zombies exist”, “It is logically impossible that zombies exist”, “It is physically impossible that zombies exist”, ' +
-            'or “It has been established that zombies do not exist”?' &&
+            '“It has been established that zombies do not exist”, or “We know that zombies do not exist”?' &&
         step(['In every possible world, God exists.'], 'God exists.').asks &&
         step(['God exists.'], 'Possibly, God exists.').why === 'Did you mean “It is metaphysically possible that God exists”, “It is logically possible that God exists”, ' +
-            '“It is physically possible that God exists”, or “It has not been established that God does not exist”?',
+            '“It is physically possible that God exists”, “It has not been established that God does not exist”, or “For all we know, God exists”?',
         '"it is necessary that", "it is impossible that" ("it has been established that zombies do not exist"), "in every possible world", and "possibly" ("it has not been established that God does not exist", r27.174)');
     const chosen = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['God exists.'], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ['Necessarily, God exists.'], collapsed: [], children: [] } ] }];
@@ -252,7 +252,7 @@ console.log('\n-- 5. necessity without its kind: asked --');
         '"God necessarily exists" asks as "necessarily, God exists" does (it had been read as a verb, "necessarily exists"); "Poe is necessarily black", "it is necessarily true that Poe is black" too', J(inner));
     const notNec = step(['God does not necessarily exist.'], 'God exists.', 'weak-objection');
     ok(!notNec.rule && notNec.why === 'Did you mean “It is not metaphysically necessary that God exists”, “It is not logically necessary that God exists”, ' +
-            '“It is not physically necessary that God exists”, or “It has not been established that God exists”?' &&
+            '“It is not physically necessary that God exists”, “It has not been established that God exists”, or “We do not know that God exists”?' &&
         step(['It has not been established that God exists.'], 'God exists.', 'weak-objection').tag === '✗ bare challenge',
         '"not necessarily": asked, of the four kinds (its second reading had been "it is not so of necessity", no sentence); "it has not been established", a bare challenge', J(notNec));
     const inside = step(['If God necessarily exists, then evil is unexplained.', 'It is metaphysically necessary that God exists.'], 'Evil is unexplained.');
@@ -281,10 +281,11 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // zombies exist"). It had been said of zombies.
     const zp = step(['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.');
     ok(!zp.rule && zp.asks && zp.why.indexOf('“If zombies are possible, then physicalism is false.”: did you mean “If zombies are metaphysically possible, then physicalism is false”, ' +
-            '“If zombies are logically possible, then physicalism is false”, “If zombies are physically possible, then physicalism is false”, or ' +
-            '“If it has not been established that zombies do not exist, then physicalism is false”? “Zombies are possible.”: did you mean “Zombies are metaphysically possible”, ' +
-            '“Zombies are logically possible”, “Zombies are physically possible”, or “It has not been established that zombies do not exist”?') === 0,
-        '"zombies are possible": which kind, asked in the words of "zombies are metaphysically possible"; or what is known (r27.172, r27.174)', zp.why);
+            '“If zombies are logically possible, then physicalism is false”, “If zombies are physically possible, then physicalism is false”, ' +
+            '“If it has not been established that zombies do not exist, then physicalism is false”, or “If we do not know that zombies do not exist, then physicalism is false”? ' +
+            '“Zombies are possible.”: did you mean “Zombies are metaphysically possible”, “Zombies are logically possible”, “Zombies are physically possible”, ' +
+            '“It has not been established that zombies do not exist”, or “For all we know, zombies exist”?') === 0,
+        '"zombies are possible": which kind, asked in the words of "zombies are metaphysically possible"; or what has been established, or what we know (r27.172, r27.174, r27.183)', zp.why);
     // r27.174: what is known, one claim alone and inside a longer box -- so
     // modus ponens follows on that reading, answered in both; and the denial
     // of "impossible"'s, as "possibly"'s is of "it is impossible that"'s. It
@@ -298,8 +299,10 @@ console.log('\n-- 5. necessity without its kind: asked --');
         step(['It has been established that zombies do not exist.'], 'It has not been established that zombies do not exist.', 'objection').tag === '✗ bare denial',
         'those readings written in: modus ponens; and the one denies the other (r27.174)');
     const zi = [step(['Zombies are impossible.'], 'Physicalism is true.').why, step(['Zombies are not possible.'], 'Physicalism is true.').why];
-    ok(zi[0] === 'Did you mean “Zombies are metaphysically impossible”, “Zombies are logically impossible”, “Zombies are physically impossible”, or “It has been established that zombies do not exist”?' &&
-        zi[1] === 'Did you mean “Zombies are not metaphysically possible”, “Zombies are not logically possible”, “Zombies are not physically possible”, or “It has been established that zombies do not exist”?',
+    ok(zi[0] === 'Did you mean “Zombies are metaphysically impossible”, “Zombies are logically impossible”, “Zombies are physically impossible”, “It has been established that zombies do not exist”, ' +
+            'or “We know that zombies do not exist”?' &&
+        zi[1] === 'Did you mean “Zombies are not metaphysically possible”, “Zombies are not logically possible”, “Zombies are not physically possible”, “It has been established that zombies do not exist”, ' +
+            'or “We know that zombies do not exist”?',
         '"impossible" and "not possible": what is known, "it has been established that zombies do not exist" (r27.172)', J(zi));
     ok(step(['If zombies are metaphysically possible, then physicalism is false.', 'Zombies are metaphysically possible.'], 'Physicalism is false.').rule === 'modus ponens' &&
         !/did you mean/i.test(step(['The argument is possible.'], 'Physicalism is true.').why) && !/did you mean/i.test(step(['Everything is impossible or unlikely.'], 'Physicalism is true.').why),
@@ -308,11 +311,11 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // is small and of its phrase (r27.172): "black ravens", "time travel" --
     // not "God".
     const small = [step(['Black ravens are necessarily black.'], 'Physicalism is true.').why, step(['Time travel is possible.'], 'Physicalism is true.').why];
-    ok(/^Did you mean “It is metaphysically necessary that black ravens are black”/.test(small[0]) && /, or “It has not been established that time travel does not exist”\?$/.test(small[1]) &&
+    ok(/^Did you mean “It is metaphysically necessary that black ravens are black”/.test(small[0]) && /, “It has not been established that time travel does not exist”, or “For all we know, time travel exists”\?$/.test(small[1]) &&
         /^Did you mean “It is metaphysically necessary that God exists”/.test(step(['God necessarily exists.'], 'Physicalism is true.').why),
         'inside a reading, "black ravens", "time travel" -- written small, the box\'s capital its first word\'s alone -- but "God" (r27.172)', J(small));
     const ifg = step(['If possibly God exists, then evil is unexplained.'], 'Physicalism is true.');
-    ok(/, or “If it has not been established that God does not exist, then evil is unexplained”\?$/.test(ifg.why),
+    ok(/, “If it has not been established that God does not exist, then evil is unexplained”, or “If we do not know that God does not exist, then evil is unexplained”\?$/.test(ifg.why),
         'inside an "if", what is known put in place (r27.174; it had been "if, for all we know, God exists", r27.172)', ifg.why);
     setModal(['T', '5']);
     ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is possible for Mary to sing”, or “Mary is allowed to sing”?' &&
@@ -459,7 +462,7 @@ console.log('\n-- 9. "must": which is meant --');
     askModality = true; setModal(null);
     const black = step(['Poe must be black.'], 'Al is happy.'), cond = step(['If Poe is a raven, then Poe must be black.'], 'Al is happy.');
     ok(black.why === 'Did you mean “Poe is black”, “It is metaphysically necessary that Poe is black”, “It is logically necessary that Poe is black”, “It is physically necessary that Poe is black”, ' +
-            '“It has been established that Poe is black”, or “Poe is required to be black”?',
+            '“It has been established that Poe is black”, “We know that Poe is black”, or “Poe is required to be black”?',
         '"Poe must be black": what follows, what is necessary -- metaphysically, logically or physically -- what is known, or what is required', black.why);
     ok(cond.why === 'Did you mean “If Poe is a raven, then Poe is black”, “It is logically necessary that if Poe is a raven, then Poe is black”, “If Poe is a raven, then it is metaphysically necessary that Poe is black”, ' +
             '“If Poe is a raven, then it is logically necessary that Poe is black”, “If Poe is a raven, then it is physically necessary that Poe is black”, or “If Poe is a raven, then Poe is required to be black”?',
@@ -490,15 +493,26 @@ console.log('\n-- 10. "might", "may" and "could": which is meant --');
     // readings are possible").
     askModality = true; setModal(null);
     const why = t => step([t], 'Al is happy.').why;
-    const P = '“It is metaphysically possible that Poe flies”, “It is logically possible that Poe flies”, “It is physically possible that Poe flies”, “It has not been established that Poe does not fly”';
-    ok(why('Poe might be black.') === 'Did you mean “It is metaphysically possible that Poe is black”, “It is logically possible that Poe is black”, “It is physically possible that Poe is black”, or “It has not been established that Poe is not black”?' &&
-        why('Poe may fly.') === 'Did you mean ' + P + ', or “Poe is allowed to fly”?' && why('Poe could fly.') === 'Did you mean ' + P + ', or “Poe was able to fly”?',
-        '"might": what is possible -- metaphysically, logically or physically -- or what is not ruled out by what is known; "may", what is allowed too; "could", what one was able to do');
+    const P = '“It is metaphysically possible that Poe flies”, “It is logically possible that Poe flies”, “It is physically possible that Poe flies”, “It has not been established that Poe does not fly”, “For all we know, Poe flies”';
+    ok(why('Poe might be black.') === 'Did you mean “It is metaphysically possible that Poe is black”, “It is logically possible that Poe is black”, “It is physically possible that Poe is black”, ' +
+            '“It has not been established that Poe is not black”, or “For all we know, Poe is black”?' &&
+        why('Poe may fly.') === 'Did you mean ' + P + ', or “Poe is allowed to fly”?' && why('Poe could fly.') === 'Did you mean ' + P + ', “Poe was able to fly”, or “Poe would be able to fly”?',
+        '"might": what is possible -- metaphysically, logically or physically -- or what is not ruled out by what is known; "may", what is allowed too; "could", what one was able to do, or would be able to do (r27.182)');
     const not = [why('Poe might not fly.'), why('Poe may not fly.'), why('Poe could not fly.')];
-    ok(/^Did you mean “It is metaphysically possible that Poe does not fly”, .+, or “It has not been established that Poe flies”\? “Poe might not fly\.”: "might not" is not read as a denial of "might": the two differ\.$/.test(not[0]) &&
-        /^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, or “Poe is not allowed to fly”\?/.test(not[1]) &&
-        not[2] === 'Did you mean “It is not metaphysically possible that Poe flies”, “It is not logically possible that Poe flies”, “It is not physically possible that Poe flies”, “It has been established that Poe does not fly”, or “Poe was not able to fly”?',
+    ok(/^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, or “For all we know, Poe does not fly”\? “Poe might not fly\.”: "might not" is not read as a denial of "might": the two differ\.$/.test(not[0]) &&
+        /^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, “For all we know, Poe does not fly”, or “Poe is not allowed to fly”\?/.test(not[1]) &&
+        not[2] === 'Did you mean “It is not metaphysically possible that Poe flies”, “It is not logically possible that Poe flies”, “It is not physically possible that Poe flies”, “It has been established that Poe does not fly”, ' +
+            '“We know that Poe does not fly”, “Poe was not able to fly”, or “Poe would not be able to fly”?',
         '"might not", "may not": possible that not -- "may not" not allowed, too; "could not": not possible, not able (no longer said to be unread)', J(not));
+    // r27.182 (the user, of "could" as "would be able to": "Sure, let's add
+    // it"): where "could" is the whole box -- inside a longer one "would"
+    // makes the whole a what-if.
+    ok(/, “A machine was able to pass the Turing test”, or “A machine would be able to pass the Turing test”\?$/.test(why('A machine could pass the Turing test.')) &&
+        /, or “If it rains, Poe was able to fly”\?$/.test(why('If it rains, Poe could fly.')),
+        '"could": what one would be able to do, where it is the whole box; not inside an "if" (r27.182)', J([why('A machine could pass the Turing test.'), why('If it rains, Poe could fly.')]));
+    ok(ev(`return parseClaimFull('Poe could fly.').notes.filter(function (n) { return n.maybe; })[0].message;`) ===
+            '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, what one was able to do, or what one would be able to do',
+        'and its note says so (r27.182)');
     ok(/^Did you mean “If it rains, it is metaphysically possible that Poe flies”, /.test(why('If it rains, Poe might fly.')) &&
         step(['Bob could choose not to stay.', 'If it rains, then Bob would choose to stay.'], 'It does not rain.').rule === 'modus tollens' &&
         !/did you mean/i.test(why('Someone might fly.')),
@@ -508,6 +522,26 @@ console.log('\n-- 10. "might", "may" and "could": which is meant --');
         step(['If it is possible that zombies exist, then physicalism is false.', 'Zombies might exist.'], 'Physicalism is false.').rule];
     ok(J(off) === J(['modus ponens', 'modus ponens']),
         'off: "could" in both boxes of a modus ponens follows; so "zombies might exist" beside "if it is possible that zombies exist, ...", which as written are two claims -- answered together, kind for kind, on every kind one', J(off));
+}
+
+console.log('\n-- 11. what has been established, and what we know --');
+{
+    // r27.183 (the user, of "it has been established that ..." and "we know
+    // that ...": "I think these are two meanings that should be offered as
+    // disambiguations").
+    askModality = false; setModal(null);
+    const same = ev(`var a = parseClaim('For all we know, zombies exist.'), b = parseClaim('We do not know that zombies do not exist.'); return !!a && !!b && claimSame(a, b);`);
+    const deny = step(['We know that zombies do not exist.'], 'For all we know, zombies exist.', 'objection');
+    const mp = step(['If we do not know that zombies do not exist, then physicalism is false.', 'For all we know, zombies exist.'], 'Physicalism is false.');
+    const words = step(['Zombies are impossible.'], 'Zombies are possible.', 'objection');
+    ok(same && deny.tag === '✗ bare denial' && mp.rule === 'modus ponens',
+        '"for all we know, zombies exist" is "we do not know that zombies do not exist", the reading inside a longer box; "we know that zombies do not exist" denies it', J([same, deny, mp]));
+    ok(words.tag === '✗ bare denial', 'with the switch off, "zombies are impossible" denies "zombies are possible", as written (the user: "With semantic mode off, it would count")', J(words));
+    ok(ev(`return parseClaimFull('Necessarily, God exists.').notes.filter(function (n) { return n.kind === 'ambiguous'; })[0].message;`) ===
+            '"necessarily" does not say which kind of necessity is meant: metaphysical, logical, physical, what has been established, or what we know' &&
+        ev(`return parseClaimFull('Poe must be black.').notes.filter(function (n) { return n.must; })[0].message;`) ===
+            '"must" may say what follows, what is necessary (metaphysically, logically or physically), what has been established, what we know, or what is required',
+        'and the notes say so, of "necessarily" and of "must"');
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
