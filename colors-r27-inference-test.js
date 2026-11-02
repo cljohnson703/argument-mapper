@@ -631,8 +631,9 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(pre.rule === 'modus ponens' && runs(pre.boxes[0], /^ic-c/).join(' ') === "pre-linguistic humans don't lack minds" && !pre.boxes[0].some(p => /ic-cn/.test(p)) &&
             J(runs(pre.boxes[0], /ic-neg/)) === J(["don't"]),
             'a part that says what the conclusion says goes on plain, however its denial is worded -- the denial red', J(pre));
-        const mt = paint(['If zombies are possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not possible.');
-        ok(mt.rule === 'modus tollens' && runs(mt.boxes[0], /ic-cn/).join(' ') === 'zombies are possible', 'one that the conclusion denies is still underlined as denied', J(mt));
+        // "Metaphysically possible": "possible" asks which kind (r27.172).
+        const mt = paint(['If zombies are metaphysically possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not metaphysically possible.');
+        ok(mt.rule === 'modus tollens' && runs(mt.boxes[0], /ic-cn/).join(' ') === 'zombies are metaphysically possible', 'one that the conclusion denies is still underlined as denied', J(mt));
         // No denial of its own: the word that opposes the box's (r27.104).
         const have = paint(['Pre-linguistic humans have minds.'], 'Pre-linguistic humans lack minds.', 'objection');
         const truth = paint(['If physics is complete, then physicalism is true.', 'Physics is complete.'], 'Physicalism is false.', 'objection');
@@ -640,7 +641,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(J(runs(have.boxes[0], /ic-neg/)) === J(['have']) && J(runs(truth.boxes[0], /ic-neg/)) === J(['true']) && J(runs(sad.boxes[0], /ic-neg/)) === J(['sad']),
             'denying the box with a word, no denial: that word red -- "have" against "lack", "true" against "false", "sad" against "happy"', J([have, truth, sad]));
         const weak = paint(['If physics is complete, then it is not established that physicalism is false.', 'Physics is complete.'], 'Physicalism is false.', 'weak-objection');
-        const support = paint(['If zombies are possible, then it is not the case that physicalism is true.', 'Zombies are possible.'], 'It is not the case that physicalism is true.');
+        const support = paint(['If zombies are metaphysically possible, then it is not the case that physicalism is true.', 'Zombies are metaphysically possible.'], 'It is not the case that physicalism is true.');
         ok(!weak.boxes[0].some(p => /ic-neg/.test(p)) && !support.boxes[0].some(p => /ic-neg/.test(p)),
             'not a weak objection\'s, which does not deny the box; nor a support\'s', J([weak, support]));
         const sameWords = ['If physics is complete, then physicalism is true.', 'Physics is complete.'];
@@ -689,9 +690,9 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             .map(([t, want]) => { const r = paint(['If physics is complete, then ' + t + '.', 'Physics is complete.'], 'God exists.', 'objection');
                 return { t, want, rule: r.rule, red: runs(r.boxes[0], /ic-neg/) }; });
         ok(written.every(x => x.rule === 'modus ponens' && J(x.red) === J([x.want])), 'written out, each wording is one denial, red whole: "it\'s not the case that", not its "not" alone', J(written));
-        const mt = paint(['If zombies are possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not possible.');
+        const mt = paint(['If zombies are metaphysically possible, then physicalism is false.', 'Physicalism is not false.'], 'Zombies are not metaphysically possible.');
         ok(mt.rule === 'modus tollens' && J(runs(mt.boxes[1], /ic-neg/)) === J(['is not']) && J(runs(mt.boxes[0], /ic-neg/)) === J(['are']),
-            '"is not false" is two denials, "is false" one: the outer one red, "is not"; and "are" in "zombies are possible", which "zombies are not possible" denies (r27.112)', J(mt));
+            '"is not false" is two denials, "is false" one: the outer one red, "is not"; and "are" in "zombies are metaphysically possible", which "zombies are not metaphysically possible" denies (r27.112)', J(mt));
         // r27.112 (the user: "I think we should always make the contradictory
         // part of a red-underlined conclusion red (as in the modus tollens
         // picture attached)"; "So there, 'is' would be red").

@@ -131,12 +131,13 @@ console.log('\n-- 3. hints --');
         var r = __step(['Mary is unhappy.'], 'Mary is not happy.'); state.logic = was; claimRulesCache = null; return r;`);
     ok(!off.rule && off.why === 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give “Mary is not happy” by contraries ‘unhappy’ and ‘happy’.',
         'switched off in the Logic panel: the step is not taken, and the hint says what would take it', J(off));
-    const two = step(['If zombies are possible, then pre-linguistic humans lack minds.', 'Pre-linguistic humans have minds.'], 'Zombies are not possible.');
-    ok(!two.rule && two.why === 'Getting to “Zombies are not possible” takes two steps. First, “Pre-linguistic humans have minds” gives “Pre-linguistic humans do not lack minds” by contradictories ‘have’ and ‘lack’. ' +
-        'Then “Pre-linguistic humans do not lack minds” and “If zombies are possible, then pre-linguistic humans lack minds” give “Zombies are not possible” by modus tollens. ' +
+    // "Metaphysically possible": "possible" asks which kind (r27.172).
+    const two = step(['If zombies are metaphysically possible, then pre-linguistic humans lack minds.', 'Pre-linguistic humans have minds.'], 'Zombies are not metaphysically possible.');
+    ok(!two.rule && two.why === 'Getting to “Zombies are not metaphysically possible” takes two steps. First, “Pre-linguistic humans have minds” gives “Pre-linguistic humans do not lack minds” by contradictories ‘have’ and ‘lack’. ' +
+        'Then “Pre-linguistic humans do not lack minds” and “If zombies are metaphysically possible, then pre-linguistic humans lack minds” give “Zombies are not metaphysically possible” by modus tollens. ' +
         'Add “Pre-linguistic humans do not lack minds” as a box of its own, with “Pre-linguistic humans have minds” under it.',
         'two rules in one step: the claim between them, in the box\'s own words', J(two));
-    const words = [step(['If zombies are possible, then Mary lacks a mind.', 'Mary has a mind.'], 'Zombies are not possible.'),
+    const words = [step(['If zombies are metaphysically possible, then Mary lacks a mind.', 'Mary has a mind.'], 'Zombies are not metaphysically possible.'),
         step(['If the trial was fair, then the man was guilty.', 'The man was innocent.'], 'The trial was not fair.')];
     ok(/First, “Mary has a mind” gives “It is not the case that Mary lacks a mind” by contradictories ‘have’ and ‘lack’\./.test(words[0].why) &&
         /First, “The man was innocent” gives “The man was not guilty” by contradictories ‘innocent’ and ‘guilty’\./.test(words[1].why),

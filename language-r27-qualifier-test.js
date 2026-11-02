@@ -101,8 +101,9 @@ try {
         // 'possibly', etc., they need to specify the modality, and the checker
         // should ask"): which kind -- metaphysical, logical, physical, or not
         // ruled out by what is known -- in the box's own words.
+        // Inside the sentence, "for all we know" set off by commas (r27.172).
         const kinds = (pre, said) => 'Did you mean “' + pre + 'it is metaphysically possible that ' + said + '”, “' + pre + 'it is logically possible that ' + said + '”, “' +
-            pre + 'it is physically possible that ' + said + '”, or “' + pre + 'for all we know, ' + said + '”?';
+            pre + 'it is physically possible that ' + said + '”, or “' + pre.replace(/\s+$/, '') + ', for all we know, ' + said + '”?';
         ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous &&
                 s.why === 'Did you mean “It is metaphysically possible that Poe is not black”, “It is logically possible that Poe is not black”, ' +
                     '“It is physically possible that Poe is not black”, or “For all we know, Poe is not black”?'; }) &&

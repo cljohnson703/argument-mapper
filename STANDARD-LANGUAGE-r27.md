@@ -4,6 +4,81 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 2: the weather's reading of "it", its conditions in brackets (r27.173)
+
+The user, of "every reading can be written": "I'm not sure what you mean". The example given in reply was the weather's reading of "if the street is wet and the sky is grey, then it is cold", which could not be written, with the thought that brackets might do it.
+
+* The weather's reading is written with its conditions in brackets: "It is cold if (the street is wet and the sky is grey)".
+* Without them, "it is cold if the street is wet and the sky is grey" asks whether the "if" takes in both conditions. So that reading had not been offered, and the box had been said to be ambiguous.
+* Now all three are offered: "Did you mean “If the street is wet and the sky is grey, then the street is cold”, “If the street is wet and the sky is grey, then the sky is cold”, or “It is cold if (the street is wet and the sky is grey)”?"
+* One condition needs no brackets: "It is cold if the street is wet".
+
+Tests:
+* anaphora-r27-test.js: the weather's reading of that box is now "It is cold if (the street is wet and the sky is grey)"; the check fails on r27.172.
+* reading-r27-chooser-test.js has 40 checks. Its check that a question with a reading that does not read back is not asked now uses "Poe cannot beat any player": of its three readings, "It is not possible for Poe to beat any player" asks of "any" in turn. A new check has the weather's box offer all three readings; it fails on r27.172.
+* Take-one-out: the change is caught.
+* One sentence in the corpus reads differently: the street, the sky or the weather, as above.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "Zombies are possible" asks which kind of possibility, every time (r27.172)
+
+The user: "Any time someone writes, 'necessarily', 'possibly', etc., they need to specify the modality, and the checker should ask".
+
+* "Zombies are possible" asks, as "possibly" does (r27.168), in the words the user's maps use: "Did you mean “Zombies are metaphysically possible”, “Zombies are logically possible”, “Zombies are physically possible”, or “For all we know, zombies exist”?" It had been read as said of zombies, "possible", and asked nothing.
+* "Zombies are impossible" and "zombies are not possible" ask too: "... metaphysically impossible", "... not metaphysically possible", or "It has been established that zombies do not exist".
+* Inside a longer box what is known is written "it has not been established that zombies do not exist": "If it has not been established that zombies do not exist, then physicalism is false". "Physicalism is false if, for all we know, zombies exist" is not read so.
+* "For all we know" put in place inside a sentence is set off by commas: "If, for all we know, God exists, then evil is unexplained". Since r27.168 it had been "If for all we know, God exists, then ...".
+* It is asked of a kind or of some thing ("zombies", "time travel", "a world without suffering"). It is not asked of one thing named ("the argument is possible") or of "everything". "Zombies are not impossible" is not asked here.
+* A box's first word, where the next word is small and of its phrase, is written small inside a reading: "For all we know, time travel exists". "God", "Mary Smith", a letter ("X implies Y") and a word in capitals ("NASA") keep theirs.
+* Not yet: "must", "might", "may" and "could".
+
+Tests:
+* modal-r27-test.js has 52 checks; five are new, and four of them fail on r27.171. The fifth, that "zombies are metaphysically possible" still gives modus ponens and that "the argument is possible" is not asked, passes there too.
+* Checks whose boxes said "zombies are possible" or "zombies are impossible", for what else they test, now say "zombies are metaphysically possible" (and "... impossible"), as the user's maps do: colors-r27-inference-test.js, logic-r27-basis-test.js, logic-r27-english-test.js (Shift+K's derived box), named-claims-r27-test.js, opposites-r27-test.js and syntax-r27-test.js. They pass on r27.171 too.
+* logic-r27-basis-test.js: "zombies are possible asks nothing here" now expects the question; it fails on r27.171.
+* language-r27-qualifier-test.js: the "possibly" check now expects "If Poe is a crow, then, for all we know, Poe is not black", "for all we know" set off by commas; it fails on r27.171.
+* Take-one-out: each of the 5 changes is caught.
+* 24 sentences in the corpus read differently, each saying zombies are possible, impossible or not possible, as above.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "Bob and Mary" in a longer box: each, or together, asked in place (r27.171)
+
+The user: "So long as this eventually causes the app to always notify the user when there are at least 2 valid ambiguities, then sure". This is the first kind of question that could not be offered, worked through.
+
+* "Bob and Mary lifted the piano, and Al cried", against "Bob lifted the piano", asks whether "lifted the piano" is said of each or of the two together: "Did you mean “Both Bob and Mary lifted the piano, and Al cried” or “Bob and Mary together lifted the piano, and Al cried”?" Each reading is put in place.
+  * Its readings had been written as the clause alone, so inside a longer box they were not offered, and the box was said to be ambiguous.
+* Said of each, "Bob and Mary lifted the piano" is one part of its list whose halves are parts too, as a predication read as an "and" is (r27.161). "Both Bob and Mary lifted the piano, and Al cried" gives "Bob lifted the piano" by conjunction elimination.
+  * It had given nothing, so the question had not been asked. Instead the step had said "Worded the same way each time, ... ‘bob and Mary lifted the piano’ and ‘bob lifted the piano’ differ: “and mary” is in one and not the other".
+* A word in capitals keeps them in a reading: "Both NASA and ESA launched a probe". It had been "nASA", the box's first letter made small. A word keeps its digits too: "P1".
+* Not yet: "Al, Cy and Dee" ("both" is for two, and "Al, Cy and Dee are each tall" is not read); "black ravens fly and they caw", "ravens are black, and those ravens fly", "white ones": a generic's readings with a word that points back to it.
+
+Tests:
+* rules-r27-ordinary-test.js has 164 checks; section 41 is new, and its four checks fail on r27.170.
+* Take-one-out: each of the 5 changes is caught.
+* No sentence in the corpus reads differently: the readings are as they were, now put in place.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "Bob made Mary a cake" asks, every time (r27.170)
+
+The user, of "Bob made Mary a cake": "Good. It should ask"; of "Bob made a cake for Mary to have" and "Bob made Mary into a cake": "Sure"; of the verbs with two frames ("made", "found", "kept", "left" ... "Mary a ___": "Either a thing for Mary, or what Mary is made, found or called"): "Sure"; "Always".
+
+* "Bob made Mary a cake" asks every time: "Did you mean “Bob made a cake for Mary to have” or “Bob made Mary into a cake”?" It had been read as one verb phrase, and asked nothing.
+* So with "found", "kept" and "left": "Bob found a job for Mary to have" or "Bob found Mary to be a job"; "Bob kept a seat for Mary to have" or "Bob kept Mary as a seat"; "The war left a widow to Mary" or "The war left Mary as a widow".
+* "Bob left Mary a fortune" had been "Bob left a fortune to Mary" by indirect object (r27.162). "The war left Mary a widow" had not been, by a list of words for what one is left as. Both now ask.
+* The second phrase has its determiner, or is a plural: not "made Mary happy", "made Mary president" or "kept Mary waiting". The first is a name, "him", "them", "the dog", "Mary's dog", or a plural. Not "her", which may be "her cake"; not "it" ("made it a rule"); not a phrase with a phrase of its own ("the dog in the yard"); not one set off by a comma.
+* Inside a longer box each reading is put in place: "If Bob made a cake for Mary to have, then Al is happy".
+* Not yet: "called", "named" and "elected" ("Bob called Mary a taxi"). Their second reading, what Mary is called, has no wording of its own that the check reads back.
+
+Tests:
+* rules-r27-ordinary-test.js has 160 checks. Section 36's check that "Bob left Mary a fortune" gives "Bob left a fortune to Mary" by indirect object now expects the question, and a new check has "left a fortune to Mary" in a modus ponens. Section 40 is new. Three of its four checks fail on r27.169; the fourth, that a reading written in asks nothing more, passes there too.
+* Take-one-out: each of the 2 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### October 29: "can" asks which is meant, every time (r27.169)
 
 The user: "Any time someone writes, 'necessarily', 'possibly', etc., they need to specify the modality, and the checker should ask"; "Always".

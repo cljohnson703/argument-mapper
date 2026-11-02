@@ -1246,7 +1246,8 @@ function reportCorpus(name, res) {
     const keyK = `document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyK', key: 'K', shiftKey: true, bubbles: true, cancelable: true }));`;
     try {
         const r = T(W, `${shape} ${hints}
-            state.trees = [{ id: 'G', type: 'contention', texts: ['If zombies are conceivable, then zombies are possible', 'Zombies are conceivable'], collapsed: [], x: 30000, y: 30000, children: [] }];
+            // "Metaphysically possible": "possible" asks which kind (r27.172).
+            state.trees = [{ id: 'G', type: 'contention', texts: ['If zombies are conceivable, then zombies are metaphysically possible', 'Zombies are conceivable'], collapsed: [], x: 30000, y: 30000, children: [] }];
             ensureCollabFields(state); selectedIds = ['G-1']; render();
             ${keyK}
             var derived = shape(state.trees);
@@ -1260,7 +1261,7 @@ function reportCorpus(name, res) {
             ensureCollabFields(state); selectedIds = ['H-0']; render();
             ${keyK}
             var nothing = { trees: shape(state.trees), hint: window.__hints.slice(-1)[0] };
-            state.trees = [{ id: 'S', type: 'contention', texts: ['Zombies are possible'], collapsed: [], x: 30000, y: 30000, children: [] }];
+            state.trees = [{ id: 'S', type: 'contention', texts: ['Zombies are metaphysically possible'], collapsed: [], x: 30000, y: 30000, children: [] }];
             ensureCollabFields(state); selectedIds = ['S-0']; render();
             ${keyK}
             var single = { trees: shape(state.trees), hint: window.__hints.slice(-1)[0] };
@@ -1280,12 +1281,12 @@ function reportCorpus(name, res) {
             showHintToast = realHint;
             deductiveChecked.clear();
             return { derived: derived, sel: sel, tags: tags, checked: checked, undone: undone, nothing: nothing, single: single, empty: empty, symbols: symbols, two: two };`);
-        ok(r.derived && J(r.derived) === J([{ id: 'new', type: 'contention', texts: ['Zombies are possible'], xy: [30000, 30000], children: [
-                { id: 'G', type: 'support', texts: ['If zombies are conceivable, then zombies are possible', 'Zombies are conceivable'] }] }]),
+        ok(r.derived && J(r.derived) === J([{ id: 'new', type: 'contention', texts: ['Zombies are metaphysically possible'], xy: [30000, 30000], children: [
+                { id: 'G', type: 'support', texts: ['If zombies are conceivable, then zombies are metaphysically possible', 'Zombies are conceivable'] }] }]),
             'Shift+K on a top premise group writes the conclusion in a box above it, which takes its place — here the main contention — and the group supports it', J(r.derived));
         ok(J(r.sel) === J(['new-0']) && J(r.checked) === J(['G']) && J(r.tags) === J([['G', '✓ modus ponens']]),
             'the new box is selected, and the step is checked: its tag names the rule', J(r));
-        ok(r.undone && J(r.undone) === J([{ id: 'G', type: 'contention', texts: ['If zombies are conceivable, then zombies are possible', 'Zombies are conceivable'], xy: [30000, 30000] }]),
+        ok(r.undone && J(r.undone) === J([{ id: 'G', type: 'contention', texts: ['If zombies are conceivable, then zombies are metaphysically possible', 'Zombies are conceivable'], xy: [30000, 30000] }]),
             'Ctrl+Z takes the derived box away', J(r.undone));
         ok(r.nothing && J(r.nothing.trees) === J([{ id: 'H', type: 'objection', texts: ['The sky is blue', 'Grass is green'], xy: [100, 200], free: true, z: 3 }]) &&
            r.nothing.hint && r.nothing.hint.force === true && /These premises don’t derive anything obvious/.test(r.nothing.hint.text),

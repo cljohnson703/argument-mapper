@@ -101,8 +101,9 @@ console.log('\n-- 2. the name, said as a claim, is read as its claim --');
         step(['If the PSR, then the universe has an explanation.', 'Everything has an explanation.'], 'The universe has an explanation.', ['PSR: Everything has an explanation.']),
         step(['If the principle of sufficient reason holds, then the universe has an explanation.', 'The PSR is true.'], 'The universe has an explanation.',
             ['The principle of sufficient reason (PSR): Everything has an explanation.']),
-        step(['If physicalism is true, then zombies are impossible.', 'Everything is physical.'], 'Zombies are impossible.', ['Physicalism: Everything is physical.']),
-        step(['Physicalism implies that zombies are impossible.', 'Physicalism.'], 'Zombies are impossible.', ['Physicalism: Everything is physical.']),
+        // "Metaphysically impossible": "impossible" asks which kind (r27.172).
+        step(['If physicalism is true, then zombies are metaphysically impossible.', 'Everything is physical.'], 'Zombies are metaphysically impossible.', ['Physicalism: Everything is physical.']),
+        step(['Physicalism implies that zombies are metaphysically impossible.', 'Physicalism.'], 'Zombies are metaphysically impossible.', ['Physicalism: Everything is physical.']),
         step(['If the ex nihilo principle does not hold, then something came from nothing.', 'The ex nihilo principle is mistaken.'], 'Something came from nothing.', [ENP])];
     ok(forms.every(x => x.rule === 'modus ponens'), '"if the PSR, then", "holds", "the PSR is true", "physicalism is true", "implies", the name alone, "does not hold", "is mistaken"',
         J(forms.map(x => [x.rule, x.read])));

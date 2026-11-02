@@ -271,6 +271,32 @@ console.log('\n-- 5. necessity without its kind: asked --');
         return [claimSayForm(f, { texts: ['God exists.'], style: 0 }), claimShowForm(f), claimShowForm(g)];`).join(' / ') ===
             'it is logically necessary that god exists / it is logically necessary that god exists / it is physically possible that god exists',
         'logical and physical necessity said in words of their own kind, and shown so in what the check says, not as "metaphysically"');
+    // r27.172: "zombies are possible" asks which kind, in the words of the
+    // user's maps ("zombies are metaphysically possible"), or what is known:
+    // "for all we know, zombies exist", inside a longer box "it has not been
+    // established that zombies do not exist". It had been said of zombies.
+    const zp = step(['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.');
+    ok(!zp.rule && zp.asks && zp.why.indexOf('“If zombies are possible, then physicalism is false.”: did you mean “If zombies are metaphysically possible, then physicalism is false”, ' +
+            '“If zombies are logically possible, then physicalism is false”, “If zombies are physically possible, then physicalism is false”, or ' +
+            '“If it has not been established that zombies do not exist, then physicalism is false”? “Zombies are possible.”: did you mean “Zombies are metaphysically possible”, ' +
+            '“Zombies are logically possible”, “Zombies are physically possible”, or “For all we know, zombies exist”?') === 0,
+        '"zombies are possible": which kind, asked in the words of "zombies are metaphysically possible"; or what is known (r27.172)', zp.why);
+    const zi = [step(['Zombies are impossible.'], 'Physicalism is true.').why, step(['Zombies are not possible.'], 'Physicalism is true.').why];
+    ok(zi[0] === 'Did you mean “Zombies are metaphysically impossible”, “Zombies are logically impossible”, “Zombies are physically impossible”, or “It has been established that zombies do not exist”?' &&
+        zi[1] === 'Did you mean “Zombies are not metaphysically possible”, “Zombies are not logically possible”, “Zombies are not physically possible”, or “It has been established that zombies do not exist”?',
+        '"impossible" and "not possible": what is known, "it has been established that zombies do not exist" (r27.172)', J(zi));
+    ok(step(['If zombies are metaphysically possible, then physicalism is false.', 'Zombies are metaphysically possible.'], 'Physicalism is false.').rule === 'modus ponens' &&
+        !/did you mean/i.test(step(['The argument is possible.'], 'Physicalism is true.').why) && !/did you mean/i.test(step(['Everything is impossible or unlikely.'], 'Physicalism is true.').why),
+        'with its kind said, it follows as it did; not asked of "the argument" or "everything" (r27.172)');
+    // A box's first word, written small inside a reading where the next word
+    // is small and of its phrase (r27.172): "black ravens", "time travel" --
+    // not "God".
+    const small = [step(['Black ravens are necessarily black.'], 'Physicalism is true.').why, step(['Time travel is possible.'], 'Physicalism is true.').why];
+    ok(/^Did you mean “It is metaphysically necessary that black ravens are black”/.test(small[0]) && /, or “For all we know, time travel exists”\?$/.test(small[1]) &&
+        /^Did you mean “It is metaphysically necessary that God exists”/.test(step(['God necessarily exists.'], 'Physicalism is true.').why),
+        'inside a reading, "black ravens", "time travel" -- written small, the box\'s capital its first word\'s alone -- but "God" (r27.172)', J(small));
+    const ifg = step(['If possibly God exists, then evil is unexplained.'], 'Physicalism is true.');
+    ok(/, or “If, for all we know, God exists, then evil is unexplained”\?$/.test(ifg.why), 'inside an "if", "for all we know" set off by commas (r27.172; it had been "if for all we know, God exists")', ifg.why);
     setModal(['T', '5']);
     ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is possible for Mary to sing”, or “Mary is allowed to sing”?' &&
         step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'ab esse ad posse', '"can" stays as it is: asked which, and "possible for" follows by ab esse ad posse');

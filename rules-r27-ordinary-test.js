@@ -197,6 +197,13 @@
  * 38. (r27.164) "Ravens are birds that chase ravens" gives "Ravens are
  *    birds", tried on one raven nothing else names; two premises with the
  *    plural still ask.
+ * 39. (r27.167) "For Mary" after a verb of getting or making asks every
+ *    time: on Mary's behalf, or for Mary to have.
+ * 40. (r27.170) "Bob made Mary a cake" asks every time: a cake made for Mary,
+ *    or Mary made into one; so "found", "kept" and "left".
+ * 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": each, or the
+ *    two together, asked with each reading in place, and said of each it
+ *    gives "Bob lifted the piano".
  */
 const fs = require('fs');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -1016,8 +1023,13 @@ console.log('\n-- 35. (r27.161) a predication read as an "and" stays one part of
 
 console.log('\n-- 36. (r27.162) "Bob left Mary a fortune" is "Bob left a fortune to Mary" again --');
 {
+    // Since r27.170 "Bob left Mary a fortune" asks which frame is meant (a
+    // fortune left to Mary, or Mary left as one), and answered "to Mary", it
+    // is the step's other box: the step waits for the answer.
     const LEFT = [[['Bob left Mary a fortune.'], 'Bob left a fortune to Mary.'], [['Bob left a fortune to Mary.'], 'Bob left Mary a fortune.'], [['Bob left Mary the house.'], 'Bob left the house to Mary.']];
-    ok(!misses(LEFT, 'indirect object').length, '"left Mary a fortune" and "left a fortune to Mary": indirect object (r27.158 had taken "leave" off the list)', J(misses(LEFT, 'indirect object')));
+    const left = LEFT.map(([p, c]) => step(p, c)).map(r => [r.rule, /^Did you mean “Bob left (?:a fortune|the house) to Mary” or “Bob left Mary as (?:a fortune|the house)”\?$/.test(r.why)]);
+    ok(J(left) === J([[null, true], [null, true], [null, true]]), '"left Mary a fortune" asks which frame is meant -- "left a fortune to Mary", or "left Mary as a fortune" -- before the step is taken (r27.170; r27.162 had taken it)', J(left));
+    ok(step(['Bob left a fortune to Mary.', 'If Bob left a fortune to Mary, then Al cried.'], 'Al cried.').rule === 'modus ponens', 'answered, "left a fortune to Mary" is the claim of the "to" frame');
     const AS = [[['The war left Mary a widow.'], 'The war left a widow to Mary.'], [['The war left the boys orphans.'], 'The war left orphans to the boys.'], [['The crash left Bob a wreck.'], 'The crash left a wreck to Bob.']];
     ok(!certified(AS).length, 'not where what is left is a word for what one is left as: "a widow", "orphans", "a wreck"', J(certified(AS)));
 }
@@ -1070,6 +1082,51 @@ console.log('\n-- 39. (r27.167) "for Mary": on whose behalf, or who is to have i
     ok(/^P:/.test(have.key) && !have.notes, '"for Mary to have" is read, not taken for a clause cut short ("... to have", as "... does too")', J(have));
     const fixed = ['Bob bought a book on Mary\'s behalf.', 'Bob bought Mary a book.', 'Bob made a cake for Mary to have.'].map(t => step([t, 'Al cried.'], 'Al cried.').why);
     ok(fixed.every(w => !/did you mean/i.test(w)), 'each reading, written in, asks nothing more', J(fixed));
+}
+
+console.log('\n-- 40. (r27.170) "Bob made Mary a cake": a cake for Mary, or Mary made into one -- asked every time --');
+{
+    // The user, of "Bob made Mary a cake": "Good. It should ask"; of "Bob made
+    // a cake for Mary to have" and "Bob made Mary into a cake": "Sure"; of the
+    // verbs of two frames ("made", "found", "kept", "left" ... "Mary a ___"):
+    // "Either a thing for Mary, or what Mary is made, found or called" --
+    // "Sure"; "Always".
+    const asked = [['Bob made Mary a cake.', 'Did you mean “Bob made a cake for Mary to have” or “Bob made Mary into a cake”?'],
+        ['Bob found Mary a job.', 'Did you mean “Bob found a job for Mary to have” or “Bob found Mary to be a job”?'],
+        ['Bob kept Mary a seat.', 'Did you mean “Bob kept a seat for Mary to have” or “Bob kept Mary as a seat”?'],
+        ['The war left Mary a widow.', 'Did you mean “The war left a widow to Mary” or “The war left Mary as a widow”?'],
+        ['Bob made the old dog a bed.', 'Did you mean “Bob made a bed for the old dog to have” or “Bob made the old dog into a bed”?'],
+        ['Bob made Mary cakes.', 'Did you mean “Bob made cakes for Mary to have” or “Bob made Mary into cakes”?'],
+        ['Bob will make Mary a cake.', 'Did you mean “Bob will make a cake for Mary to have” or “Bob will make Mary into a cake”?']]
+        .map(([t, want]) => { const r = step([t, 'Al cried.'], 'Al cried.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
+    ok(!asked.length, '"made Mary a cake", "found Mary a job", "kept Mary a seat", "left Mary a widow": a thing for Mary, or what Mary is made, found, kept or left as -- asked, every time, the step held', J(asked));
+    const inside = step(['If Bob made Mary a cake, then Al is happy.', 'Bob made a cake for Mary to have.'], 'Al is happy.');
+    ok(!inside.rule && inside.why === 'Did you mean “If Bob made a cake for Mary to have, then Al is happy” or “If Bob made Mary into a cake, then Al is happy”?',
+        'inside a longer box, each reading put in place', J(inside));
+    const answered = step(['If Bob made a cake for Mary to have, then Al is happy.', 'Bob made a cake for Mary to have.'], 'Al is happy.');
+    const into = step(['If Bob made Mary into a cake, then Al is happy.', 'Bob made Mary into a cake.'], 'Al is happy.');
+    ok(answered.rule === 'modus ponens' && into.rule === 'modus ponens', 'each reading, written in, asks nothing more: the step follows', J([answered, into]));
+    const quiet = ['Bob made Mary happy.', 'Bob made Mary president.', 'Bob kept Mary waiting.', 'Bob made it a rule.', 'Bob bought Mary a book.',
+        'Bob made a plain support, the default look.', 'Bob threw Mary the ball.'].map(t => [t, step([t, 'Al cried.'], 'Al cried.')]).filter(([, r]) => /did you mean|may say what was/i.test(r.why)).map(([t, r]) => t + ': ' + r.why);
+    ok(!quiet.length, 'not "made Mary happy", "made Mary president", "kept Mary waiting", "made it a rule", nor "bought Mary a book" or "threw Mary the ball", each of one frame; nor a phrase set off by a comma', J(quiet));
+}
+
+console.log('\n-- 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": each, or together -- in place --');
+{
+    // The user: "So long as this eventually causes the app to always notify
+    // the user when there are at least 2 valid ambiguities"; the questions
+    // that could not be offered, worked through kind by kind.
+    const lifted = step(['Bob and Mary lifted the piano, and Al cried.'], 'Bob lifted the piano.');
+    ok(!lifted.rule && lifted.why === 'Did you mean “Both Bob and Mary lifted the piano, and Al cried” or “Bob and Mary together lifted the piano, and Al cried”?',
+        'inside a longer box, "Bob and Mary": each, or together, asked with each reading in place -- and nothing beside it of words that differ ("and mary" had been)', J(lifted));
+    const each = [step(['Both Bob and Mary lifted the piano, and Al cried.'], 'Bob lifted the piano.'), step(['Al cried, and both Bob and Mary lifted the piano.'], 'Mary lifted the piano.'),
+        step(['Bob and Mary together lifted the piano, and Al cried.'], 'Bob lifted the piano.')].map(r => r.rule);
+    ok(J(each) === J(['conjunction elimination', 'conjunction elimination', null]),
+        'said of each, "Bob and Mary lifted the piano" is one part of its list whose halves are parts too: conjunction elimination; said of the two together, no step', J(each));
+    const nasa = step(['NASA and ESA launched a probe, and Al cried.'], 'NASA launched a probe.');
+    ok(/^Did you mean “Both NASA and ESA launched a probe, and Al cried”/.test(nasa.why), 'a word in capitals keeps them in a reading ("NASA", which opening the box had been read "nASA")', nasa.why);
+    const p1 = step(['P1 can explain the data.'], 'Al is happy.');
+    ok(/“It is possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1")', p1.why);
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

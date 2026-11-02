@@ -2975,7 +2975,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-10-29 r27.169';
+    const APP_BUILD = '2026-11-02 r27.173';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10383,7 +10383,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let text = null;
             if (/^(?:then|,)$/.test(c.by) && p.ci === clauses.length - 1 && toks[0].l === 'if' && clauses[0].by === 'if' &&
                 clauses.slice(1, p.ci).every(x => /^(?:and|or|but|;)$/.test(x.by))) {
-                text = it.charAt(0).toUpperCase() + it.slice(1) + ' if ' + t.slice(toks[clauses[0].from].at, endOf(clauses[p.ci - 1])) + stop;
+                // Two conditions or more in brackets: "It is cold if (the street
+                // is wet and the sky is grey)" -- without them the "if" may take
+                // in only the first, and the reading was not offered (r27.173).
+                const cond = t.slice(toks[clauses[0].from].at, endOf(clauses[p.ci - 1]));
+                text = it.charAt(0).toUpperCase() + it.slice(1) + ' if ' + (p.ci > 1 ? '(' + cond + ')' : cond) + stop;
             } else if (/^(?:and|but|;)$/.test(c.by)) {
                 let j = p.ci - 1;
                 while (j > 0 && /^(?:and|but|;)$/.test(clauses[j].by)) j--;
@@ -16217,6 +16221,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // "Bob bought a book for Mary": on whose behalf, or who is to have it.
         if ((f = claimForQuestion(s))) return f;
+        // "Bob made Mary a cake": a cake for Mary, or Mary made into one.
+        if ((f = claimTwoFrameQuestion(s))) return f;
+        // "Zombies are possible": which kind of possibility.
+        if ((f = claimPossibleKindQuestion(s))) return f;
         return readIdentityClaim(s) || readQuantifiedClaim(s) || readPredicationClaim(s) || claimAtom(s);
     }
     // "Bob bought a book for Mary": "for Mary" may say on whose behalf, or who
@@ -16255,6 +16263,82 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const have = single && !pronoun ? head.concat(who, object).join(' ') : head.concat(object, ['for'], who, ['to', 'have']).join(' ');
             return claimAmbiguous('"for ' + claimShowWords(who.join(' ')) + '" may say on whose behalf, or who is to have it',
                 [behalf, have].map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+        }
+        return null;
+    }
+    // "Bob made Mary a cake": a cake made for Mary, or Mary made into one --
+    // asked every time (r27.170; the user: "Good. It should ask"; of "Bob
+    // made a cake for Mary to have" and "Bob made Mary into a cake": "Sure").
+    // So with "find" ("found Mary a job": a job for Mary, or Mary found to be
+    // one), "keep" ("kept Mary a seat": a seat for Mary, or Mary kept as one)
+    // and "leave" ("left Mary a fortune": a fortune left to Mary, or Mary
+    // left as one, as "the war left Mary a widow" says). The second phrase a
+    // noun phrase with its determiner, or a plural: not "made Mary happy",
+    // "made Mary president", "kept Mary waiting". The first a name, "him",
+    // "them", "the dog", "Mary's dog" -- not "her", which may be "her cake",
+    // nor "it" ("made it a rule"). The reading chosen, or null.
+    // "Zombies are possible": which kind of possibility is meant, asked every
+    // time, as "possibly" is (r27.172; the user: "Any time someone writes,
+    // 'necessarily', 'possibly', etc., they need to specify the modality, and
+    // the checker should ask"), in the words the user's maps use -- "zombies
+    // are metaphysically possible", "... logically", "... physically" -- or
+    // what is known, "for all we know, zombies exist". "Impossible" and "not
+    // possible": "...
+    // metaphysically impossible", "... not metaphysically possible", or "it
+    // has been established that zombies do not exist". Said of a kind or of
+    // some thing ("zombies", "time travel", "a world without suffering"), not
+    // of one named ("the argument is possible", "that is possible"), nor of
+    // "everything". It had been read as said of zombies, "possible". The
+    // reading chosen, or null.
+    function claimPossibleKindQuestion(s) {
+        const m = /^(.+?) (is|are) (not )?(possible|impossible)$/.exec(s);
+        if (!m) return null;
+        const subj = claimTokens(m[1]), first = claimWord(subj[0]);
+        if (!claimWholePhrase(subj) || subj.some(t => /^\uE000/.test(t)) || subj.length > 6 ||
+            /^(?:the|this|that|these|those|my|your|his|her|its|our|their|it|they|he|she|we|you|i|what|which|who|every|each|all|some|no|any|both|either|neither|most|many|few|several|everything|nothing|something|anything|everyone|someone|no one|nobody|one|there)$/.test(first) ||
+            /['\u2019]s$/.test(first) || (/^(?:a|an)$/.test(first) && subj.length < 2)) return null;
+        const be = m[2], denied = !!m[3], impossible = m[4] === 'impossible', said = m[1];
+        // "Zombies are not impossible": not asked here.
+        if (denied && impossible) return null;
+        const exist = be === 'are' ? 'exist' : 'exists', not = be === 'are' ? 'do not exist' : 'does not exist';
+        const kinds = ['metaphysically', 'logically', 'physically'].map(k => said + ' ' + be + ' ' + (denied ? 'not ' : '') + k + ' ' + m[4]);
+        // What is known: "for all we know, zombies exist" where that is the
+        // whole box; inside a longer one, what it says, "it has not been
+        // established that zombies do not exist" ("... false if, for all we
+        // know, zombies exist" is not read so).
+        const whole = !!claimBoxRaw && normalizeClaimText(claimBoxRaw).replace(/[.!?]+$/, '').trim() === s;
+        const known = denied || impossible ? 'it has been established that ' + said + ' ' + not
+            : whole ? 'for all we know, ' + said + ' ' + exist : 'it has not been established that ' + said + ' ' + not;
+        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known]).map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+    }
+    const CLAIM_TWO_FRAME_VERBS = Object.assign(Object.create(null), {
+        make: { pp: 'made', give: 'for', as: 'into' }, find: { pp: 'found', give: 'for', as: 'to be' },
+        keep: { pp: 'kept', give: 'for', as: 'as' }, leave: { pp: 'left', give: 'to', as: 'as' } });
+    const CLAIM_PHRASE_START = /^(?:a|an|the|this|that|these|those|my|your|his|her|its|our|their|some|another|one|two|three|four|five|six|seven|eight|nine|ten|many|several|few)$/;
+    function claimTwoFrameQuestion(s) {
+        const toks = claimTokens(s), l = toks.map(claimWord);
+        if (l.some(w => /^(?:that|whether|if|who|which|whom|whose|because|since|when|while|although|though|unless|until)$/.test(w))) return null;
+        for (let i = 1; i < toks.length - 2; i++) {
+            const bases = claimUnique(claimPastBases(l[i]).concat(claimParticipleBases(l[i]), claimRegularBases(l[i], 's'), [l[i]]));
+            const verb = bases.find(b => CLAIM_TWO_FRAME_VERBS[b]);
+            if (!verb) continue;
+            const frame = CLAIM_TWO_FRAME_VERBS[verb], head = toks.slice(0, i + 1), r = toks.slice(i + 1), lr = l.slice(i + 1);
+            for (let e = 1; e < r.length; e++) {
+                const one = r.slice(0, e), two = r.slice(e), w1 = lr.slice(0, e), w2 = lr.slice(e);
+                const thing = CLAIM_PHRASE_START.test(w2[0]) || /['\u2019]s$/.test(w2[0]) || (two.length === 1 && claimEndsInS(two[0]) && !claimKnownAdjective(w2[0]));
+                const who = one.every(t => /^\uE000/.test(t)) || (one.length === 1 && /^(?:him|them|me|us|you)$/.test(w1[0])) ||
+                    (one.length > 1 && (/^(?:the|a|an|my|your|his|our|their|this|that|these|those)$/.test(w1[0]) || /['\u2019]s$/.test(w1[0]))) ||
+                    (one.length === 1 && claimEndsInS(one[0]) && !claimKnownAdjective(w1[0]));
+                // One phrase each: none set off by a comma ("makes a plain support, the default
+                // look"), and the first with no phrase of its own ("the gap at its minimum").
+                if (!thing || !who || !claimWholePhrase(one) || !claimWholePhrase(two) || one.some(t => /[,;:]$/.test(t)) ||
+                    w1.some(w => CLAIM_PREPOSITIONS.has(w) || CLAIM_MORE_PREPOSITIONS.test(w))) continue;
+                const labels = [head.concat(two, [frame.give], one, verb === 'leave' ? [] : ['to', 'have']).join(' '), head.concat(one, frame.as.split(' '), two).join(' ')];
+                const said = claimShowWords(one.join(' '));
+                return claimAmbiguous('"' + claimShowWords(one.concat(two).join(' ')) + '" may say what was ' + frame.pp + ' ' + frame.give + ' ' + said + ', or what ' + said +
+                    ' was ' + frame.pp + ' ' + frame.as, labels.map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+            }
+            return null;
         }
         return null;
     }
@@ -18584,7 +18668,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return f && (n.length === 1 && claimPluralWord(n[0]) || barePlural(n)) ? claimNoIndividual(f) : f;
             });
             if (!forms.every(Boolean)) return null;
-            return kind === 'neither' ? claimList('and', forms.map(negateClaim)) : claimList(kind, forms);
+            // Said of each, one part of a longer list whose halves are parts
+            // too: "Bob and Mary lifted the piano, and Al cried" gives "Bob
+            // lifted the piano" (r27.171; it had been no step, and the question
+            // of each or together was not asked).
+            const list = kind === 'neither' ? claimList('and', forms.map(negateClaim)) : claimList(kind, forms);
+            return list.kind === 'and' ? Object.assign(list, { eachOf: true }) : list;
         };
         if (kind !== 'and' || marked) { const f = each(); return f ? (denyBoth ? negateClaim(f) : f) : claimAtom(s); }
         const only = claimTogetherOnly(vp);
@@ -18605,9 +18694,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             return each() || claimAtom(s);
         }
+        // Each reading in place in a longer box: "Both Bob and Mary walked to
+        // the castle, and the former cried" (r27.171; it had been written as
+        // the clause alone, and so not offered).
         return claimAmbiguous('"' + subjectSaid + '" can be said of each, or of them together', [
             { label: 'both ' + subjectTokens.join(' ') + ' ' + vp.join(' '), build: each },
-            { label: subjectTokens.join(' ') + ' together ' + vp.join(' '), build: togetherSaid }], false) || claimAtom(s);
+            { label: subjectTokens.join(' ') + ' together ' + vp.join(' '), build: togetherSaid }], false, { part: s }) || claimAtom(s);
     }
     // A word that opens the box with a capital and is no word the lists know
     // as common: a name, unmarked only because the box begins with it.
@@ -20311,17 +20403,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // metaphysically necessary that ravens are black" (r27.169). Not "God",
     // "Mary", "Socrates".
     const claimOpeningPlural = w => claimSingularOf(w) !== w && !CLAIM_SINGULAR_S.has(w);
+    // So a word that opens a box where the next word is small and of the
+    // same phrase: "Time travel", "Black ravens" -- "for all we know, time
+    // travel exists", "it is metaphysically necessary that black ravens are
+    // black" (r27.172). Not "God exists", "Mary Smith sings", "Bob and Mary".
+    const claimOpeningInPhrase = original => {
+        // A word of one capital and small letters: not "X", "NASA".
+        if (!/^[^A-Za-z]*[A-Z][a-z'\u2019-]+(?![A-Za-z])/.test(String(original || ''))) return false;
+        const t = claimTokens(normalizeClaimText(String(original || ''))), w = claimWord(t[1] || '');
+        return t.length > 2 && /^[a-z]/.test(t[1]) && !/['\u2019]s?$/.test(t[0]) && !CLAIM_FUNCTION_WORDS.has(w) && !CLAIM_VERB_MARKERS.has(w) && claimSynSubjectEnd(t) > 1;
+    };
     function claimRecase(label, original) {
         const caps = new Map();
-        const lower = new Set(String(original).match(/\b[a-z][A-Za-z'\u2019-]*\b/g) || []);
-        const capitals = String(original).match(/\b[A-Z][A-Za-z'\u2019-]*\b/g) || [], opening = /^[^A-Za-z]*[A-Z]/.test(String(original));
+        // A word with its digits ("P1"); its capitals found however the
+        // reader wrote it ("DOM", which opening the box it read "dOM";
+        // r27.171).
+        const lower = new Set(String(original).match(/\b[a-z][A-Za-z0-9'\u2019-]*\b/g) || []);
+        const capitals = String(original).match(/\b[A-Z][A-Za-z0-9'\u2019-]*\b/g) || [], opening = /^[^A-Za-z]*[A-Z]/.test(String(original));
         capitals.forEach((w, k) => {
             const l = w.toLowerCase();
-            if (k === 0 && opening && capitals.indexOf(w, 1) < 0 && claimOpeningPlural(l)) return;
+            if (k === 0 && opening && capitals.indexOf(w, 1) < 0 && (claimOpeningPlural(l) || claimOpeningInPhrase(original))) return;
             if (!CLAIM_NOT_A_NAME.has(l) && !/^(?:even|only|every|each|all|no|some|any|not|it|there)$/i.test(w) && !CLAIM_RELATIVE_HEADS.test(l) && !lower.has(l) && !claimKnownAdjective(l)) caps.set(l, w);
         });
-        return String(label).replace(/\b[a-z][A-Za-z'\u2019-]*\b/g, (w, at, all) =>
-            /(?:\b(?:all|some|most|every|each|no|the|a|an|these|those|this|many|few|several|any)|\bgenerally,)\s+$/i.test(all.slice(0, at)) ? w : caps.get(w) || w);
+        return String(label).replace(/\b[a-z][A-Za-z0-9'\u2019-]*\b/g, (w, at, all) =>
+            /(?:\b(?:all|some|most|every|each|no|the|a|an|these|those|this|many|few|several|any)|\bgenerally,)\s+$/i.test(all.slice(0, at)) ? w : caps.get(w.toLowerCase()) || w);
     }
     // A reading's words as offered: a name with its capital.
     const claimLabel = t => String(t).replace(/\uE000([a-z])/g, (m, c) => c.toUpperCase());
@@ -22730,7 +22835,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           // halves are parts too: "Bob is tall, but Al is a physical space"
           // gives "Al is physical" (r27.161).
           test: (P, C) => P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
-              [P[0].parts, [].concat(...P[0].parts.map(p => p.kind === 'and' && p.compound && !p.iff ? p.parts : [p]))].some(parts =>
+              [P[0].parts, [].concat(...P[0].parts.map(p => p.kind === 'and' && (p.compound || p.eachOf) && !p.iff ? p.parts : [p]))].some(parts =>
                   parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, parts) ||
                       (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts))))) },
         { id: 'or-intro', name: 'disjunction introduction',
@@ -34294,7 +34399,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const at = m.index + m[1].length;
         let said = claimRecase(claimLabel(label), entry.text).trim().replace(/[.!?]+$/, '');
         if (at === 0) said = said.charAt(0).toUpperCase() + said.slice(1);
-        return entry.text.slice(0, at) + said + entry.text.slice(at + m[2].length);
+        // "For all we know" inside a sentence, set off by commas: "If, for all
+        // we know, God exists, then ..." (r27.172; "if for all we know, God
+        // exists" had been written, since r27.168).
+        let before = entry.text.slice(0, at);
+        if (at > 0 && /^for all we know,/i.test(said) && !/,\s*$/.test(before)) before = before.replace(/\s+$/, '') + ', ';
+        return before + said + entry.text.slice(at + m[2].length);
     }
     const claimStepSignature = step => (step.premiseTexts || []).join('\u0002') + '\u0001' + (step.conclusionText || '');
     function placeReadingChooser(pop, anchor) {

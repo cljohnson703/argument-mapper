@@ -899,12 +899,14 @@ try {
         // should ask"); answered, the step follows.
         const gen = tagOf(['Mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria');
         const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
+        // r27.172: "zombies are possible" asks which kind; said, it follows.
+        const zp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
         ok(gen[0] === '? generic' && gen[1] === 'Did you mean “All mosquitoes carry malaria”, “Some mosquitoes carry malaria”, “Most mosquitoes carry malaria”, or “Generally, mosquitoes carry malaria”?' &&
             rule(['All mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria') === 'universal modus ponens' &&
-            rule(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false') === 'modus ponens' &&
+            zp[0] === '? ambiguous' && rule(['If zombies are metaphysically possible, then physicalism is false', 'Zombies are metaphysically possible'], 'Physicalism is false') === 'modus ponens' &&
             lights[0] === '? ambiguous' && /did you mean “If functionalism is true, then a mere series of lights is able to produce consciousness”, “If functionalism is true, then it is possible for a mere series of lights to produce consciousness”, or /.test(lights[1]) &&
             rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true') === 'modus tollens',
-            'a generic asks all, some or most where the answer decides the step; "zombies are possible" asks nothing here; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens', J([gen, lights]));
+            'a generic asks all, some or most where the answer decides the step; "zombies are possible" asks which kind (r27.172), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens', J([gen, lights, zp]));
         // An indefinite in an if-clause asks, in whole sentences.
         const ifA = tagOf(['If a raven sings, it is black', 'Fido is a raven', 'Fido sings'], 'Fido is black');
         // r27.166: both readings read back -- "generally, ..." had come back as
@@ -1007,7 +1009,8 @@ try {
             'the offer is checked before it is made: a conditional box needs no brackets in it', J([cb, coffer]));
         // A bare step whose box is argued for below it is an argument through
         // that argument; alone it has no force.
-        const zombie = ['If zombies are possible, then physicalism is false', 'Zombies are possible'];
+        // "Metaphysically possible": "possible" asks which kind (r27.172).
+        const zombie = ['If zombies are metaphysically possible, then physicalism is false', 'Zombies are metaphysically possible'];
         const denied = verdictOf([node('M', 'contention', ['Physicalism is true'], [node('O', 'objection', ['Physicalism is false'])])]);
         const deniedBelow = verdictOf([node('M', 'contention', ['Physicalism is true'], [node('O', 'objection', ['Physicalism is false'], [node('OS', 'support', zombie)])])]);
         const restated = verdictOf([node('M', 'contention', ['Physicalism is false'], [node('S', 'support', ['Physicalism is false'], [node('SS', 'support', zombie)])])]);

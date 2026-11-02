@@ -441,13 +441,13 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         ['If the street is wet and it is cold, then Bob stays in.', '“it” may be “the street” or the weather',
             ['If the street is wet and the street is cold, then Bob stays in.', 'If it is cold and the street is wet, then Bob stays in.']],
         ['If the street is wet and the sky is grey, then it is cold.', '“it” may be “the street” or “the sky”, or the weather',
-            ['If the street is wet and the sky is grey, then the street is cold.', 'If the street is wet and the sky is grey, then the sky is cold.', 'It is cold if the street is wet and the sky is grey.']],
+            ['If the street is wet and the sky is grey, then the street is cold.', 'If the street is wet and the sky is grey, then the sky is cold.', 'It is cold if (the street is wet and the sky is grey).']],
         ['The street is wet; it is cold.', '“it” may be “the street” or the weather', ['The street is wet; the street is cold.', 'It is cold; the street is wet.']],
         ['The meeting ran long and it is late.', '“it” may be “the meeting” or the time', ['The meeting ran long and the meeting is late.', 'It is late and the meeting ran long.']],
     ];
     const got = cases.map(([t]) => asks(t));
     ok(got.every((g, i) => !!g && g[0] === cases[i][1] && J(g[1]) === J(cases[i][2])),
-        '"it" after a thing may be the weather (or the time): that reading moves its clause in front, in the box\'s own words -- and "the fact that the street is wet is cold" is no reading', J(got));
+        '"it" after a thing may be the weather (or the time): that reading moves its clause in front, in the box\'s own words, two conditions in brackets (r27.173) -- and "the fact that the street is wet is cold" is no reading', J(got));
     const back = ['It is cold and the street is wet.', 'It is hot if Poe is a stove.', 'If it is cold and the street is wet, then Bob stays in.', 'Mary is sad and it is cold.'].map(t => read(t).notes);
     ok(back.every(n => !n.length), 'and read back, each says the weather, asking nothing; so does "it" with no thing before it', J(back));
     const house = read('In the old house, it is cold.').notes;
