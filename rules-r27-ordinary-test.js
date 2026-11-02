@@ -1125,8 +1125,36 @@ console.log('\n-- 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": e
         'said of each, "Bob and Mary lifted the piano" is one part of its list whose halves are parts too: conjunction elimination; said of the two together, no step', J(each));
     const nasa = step(['NASA and ESA launched a probe, and Al cried.'], 'NASA launched a probe.');
     ok(/^Did you mean “Both NASA and ESA launched a probe, and Al cried”/.test(nasa.why), 'a word in capitals keeps them in a reading ("NASA", which opening the box had been read "nASA")', nasa.why);
+    // With "Ask which modality is meant" on (r27.175): off, no reading gives
+    // this step, and nothing is asked.
+    ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
     const p1 = step(['P1 can explain the data.'], 'Al is happy.');
+    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
     ok(/“It is possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1")', p1.why);
+}
+
+console.log('\n-- 42. (r27.178) "Bob called Mary a taxi": a taxi called for Mary, or what Mary was called -- asked every time --');
+{
+    // The user, of "Bob called Mary 'a taxi'", what Mary was called, in
+    // quotation marks: "Okay."
+    const asked = [['Bob called Mary a taxi.', 'Did you mean “Bob called a taxi for Mary” or “Bob called Mary \'a taxi\'”?'],
+        ['Bob named Mary a price.', 'Did you mean “Bob named a price for Mary” or “Bob named Mary \'a price\'”?']]
+        .map(([t, want]) => { const r = step([t, 'Al cried.'], 'Al cried.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
+    ok(!asked.length, '"called Mary a taxi", "named Mary a price": a thing called or named for Mary, or what Mary was called or named, in quotation marks -- asked, every time', J(asked));
+    const inside = step(['If Bob called Mary a taxi, then Al is happy.', 'Bob called a taxi for Mary.'], 'Al is happy.');
+    ok(!inside.rule && inside.why === 'Did you mean “If Bob called a taxi for Mary, then Al is happy” or “If Bob called Mary \'a taxi\', then Al is happy”?',
+        'inside a longer box, each reading put in place', J(inside));
+    const answered = [step(['If Bob called a taxi for Mary, then Al is happy.', 'Bob called a taxi for Mary.'], 'Al is happy.'),
+        step(["If Bob called Mary 'a taxi', then Al is happy.", "Bob called Mary 'a taxi'."], 'Al is happy.')].map(r => r.rule);
+    ok(J(answered) === J(['modus ponens', 'modus ponens']), 'each reading, written in, asks nothing more: the step follows', J(answered));
+    // Words in quotation marks are words: "Bob called Mary 'a taxi'" says
+    // nothing of taxis, nor that Mary is one.
+    const taxi = step(["Bob called Mary 'a taxi'."], 'Mary is a taxi.');
+    ok(!taxi.rule && taxi.why === '“Bob called Mary \'a taxi\'.”: words in quotation marks are read as words, so nothing inside the quotes is used.',
+        '"Bob called Mary \'a taxi\'" does not give "Mary is a taxi"; the box says why (it had said "quoted words name a sentence")', J(taxi));
+    const quiet = ['Bob called Mary names.', 'Bob called Mary.', 'Bob called Mary happy.'].map(t => [t, step([t, 'Al cried.'], 'Al cried.')])
+        .filter(([, r]) => /did you mean|may say what was/i.test(r.why)).map(([t, r]) => t + ': ' + r.why);
+    ok(!quiet.length, 'not "called Mary names", which says neither; nor "called Mary", nor "called Mary happy"', J(quiet));
 }
 
 ok(errors.length === 0, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

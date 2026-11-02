@@ -2975,7 +2975,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-02 r27.173';
+    const APP_BUILD = '2026-11-02 r27.178';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6944,6 +6944,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const LOGIC_SYLLOGISM_NAMES_GLOSS = 'Names the universal and existential syllogisms by their mood: "categorical syllogism (Barbara)", Celarent, Darii, Ferio. The other moods have no other name.';
     const LOGIC_WOULD_GLOSS = 'Reads "would" and "could" said of a choice as opposites, with "not" moved: "everyone would choose to stay" denies "someone could choose not to stay". "Decide", "opt" and "elect" too. Off, "would" after "then" makes a what-if claim.';
     const LOGIC_MODAL_GLOSS = 'Reads "it is metaphysically necessary that …", "it is metaphysically possible that …", □ and ◇, and takes steps by the axioms switched on.';
+    const LOGIC_MODAL_ASK_NOTE = 'On: “can”, “necessarily”, “possible” … ask which is meant, every time. Off: they ask only where the answer decides the step.';
+    const LOGIC_MODAL_ASK_GLOSS = 'Whether “necessarily”, “possibly” and “possible” mean metaphysical, logical or physical modality, or what is known; whether “can” means able, possible or allowed.';
     const LOGIC_MODAL_AXIOMS = {
         D: 'D: □A → ◇A. What is necessary is possible.',
         T: 'T: □A → A. What is necessary is so, and what is so is possible.',
@@ -7045,6 +7047,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Modal logic (r27.101): a kind of necessity switched on, its axioms
         // -- those chosen, and those they imply -- and its system's name.
         body.appendChild(el('div', 'logic-ext-label', 'Modal logic'));
+        // "Ask which modality is meant" (r27.175): off unless a map switches it on.
+        const arow = el('div', 'logic-group-row'), abox = el('input');
+        abox.type = 'checkbox'; abox.id = 'logic-modal-ask'; abox.dataset.modal = 'ask';
+        abox.addEventListener('change', () => switchLogicRules(['modal-ask'], abox.checked));
+        const alabel = el('label', null, 'Ask which modality is meant');
+        alabel.htmlFor = abox.id;
+        alabel.title = LOGIC_MODAL_ASK_GLOSS;
+        arow.appendChild(abox); arow.appendChild(alabel);
+        body.appendChild(arow);
+        body.appendChild(el('div', 'logic-basis-note', LOGIC_MODAL_ASK_NOTE));
         const mrow = el('div', 'logic-group-row'), mbox = el('input');
         mbox.type = 'checkbox'; mbox.id = 'logic-modal-meta'; mbox.dataset.modal = 'meta';
         mbox.addEventListener('change', () => switchLogicRules(['modal-meta'], mbox.checked));
@@ -7129,6 +7141,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         const wbox = body.querySelector('[data-modal="would"]');
         if (wbox) { wbox.checked = claimWouldCouldOn(); wbox.disabled = ro; }
+        const abox = body.querySelector('[data-modal="ask"]');
+        if (abox) { abox.checked = claimModalAsking(); abox.disabled = ro; }
     }
     function renderEvalOverview() {
         renderLogicPanel();
@@ -14128,21 +14142,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const last = words[at > 0 ? at - 1 : words.length - 1], head = claimWord(last);
         const be = subj === 'i' ? 'am' : /^(?:we|you|they)$/.test(subj) ? 'are'
             : !/^\uE000/.test(last) && (claimKnownPlural(head) || claimOpeningPlural(head)) ? 'are' : 'is';
-        const obj = CLAIM_FOR_PERSON[subj] || subj, who = claimShowWords(subj), not = denied ? 'not ' : '';
+        const obj = CLAIM_FOR_PERSON[subj] || subj, who = subj === 'i' ? 'I' : claimShowWords(subj), not = denied ? 'not ' : '';
         const labels = [subj + ' ' + be + ' ' + not + 'able to ' + vp, 'it is ' + not + 'possible for ' + obj + ' to ' + vp, subj + ' ' + be + ' ' + not + 'allowed to ' + vp];
         // Its words as "can VP" has them, so that its objects are compared as theirs are.
         const possible = Object.assign({}, denied ? form.inner : form, { possible: true, src: subj + ' can ' + vp },
             denied ? { subjectText: form.subjectText || subj, vpText: 'can ' + vp } : {});
-        // "Poe can fly or swim", read as "Poe can fly, or Poe can swim": each
-        // reading is one claim, "Poe is able to fly or swim" -- what one is
+        // "Poe can fly or swim", read as "Poe can fly, or Poe can swim": read
+        // as "able", one claim, "Poe is able to fly or swim" -- what one is
         // able to do one or the other of, one need not be able to do either
-        // of (Kenny's cards), so the "can" is not spread over the "or".
+        // of (Kenny's cards), so the "can" is not spread over the "or"; as
+        // "possible", spread (r27.176).
         const spread = form.kind === 'or', one = spread ? claimCanOne(form, subj, vp) : null;
         return claimAmbiguous(claimRecase('"' + (denied ? 'can\u2019t' : 'can') + '" may say what ' + who + ' ' + be + ' ' + not + 'able to do, what is ' + not + 'possible for ' +
                 claimShowWords(obj) + ', or what ' + who + ' ' + be + ' ' + not + 'allowed to do', claimBoxRaw || ''),
-            [{ label: labels[0], build: () => spread ? one : form }, { label: labels[1], build: () => spread ? one && Object.assign({}, one, { possible: true }) : denied ? negateClaim(possible) : possible },
-             { label: labels[2], build: () => readClaim(labels[2]) }], true,
-            { generic: true, canScope: true, canPlain: true, canDenied: !!denied, ask: true, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be }) || form;
+            [{ label: labels[0], build: () => spread ? one : form }, { label: labels[1], build: () => spread ? Object.assign({}, form, { parts: form.parts.map(p => Object.assign({}, p, { possible: true })), src: subj + ' can ' + vp }) : denied ? negateClaim(possible) : possible },
+             { label: labels[2], build: () => readClaim(labels[2]) }], claimModalAsking(),
+            Object.assign({ generic: true, canScope: true, canPlain: true, canDenied: !!denied, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be },
+                claimModalAsking() ? { ask: true } : {})) ||
+            // Unanswered, "able": "Poe can fly or swim" one claim too, so that
+            // with the switch off, where the step is checked as written, the
+            // "can" is not spread over the "or" (r27.175).
+            (spread ? one || Object.assign(claimAtom(text), { src: text }) : form);
     }
     // "We can conclude that P" read as what is possible for us: a predication
     // marked so (the "can" ab esse ad posse and "we do" speak to).
@@ -14154,13 +14174,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             { subjectText: form.parts[0].subjectText || subj, vpText: 'can ' + vp, src: subj + ' can ' + vp }) : null;
     }
     function claimPossibleCan(text) {
-        let f = claimWithout('established', text);
-        // "It is possible for Poe to fly or swim": one claim (r27.169).
+        // A clause joined to it is read at the junction: "it is possible for
+        // Poe to fly, and Poe is a bird"; "..., or it is possible for me to
+        // draw a black card" (r27.176; the whole had been read as one claim,
+        // and asked which "can" was meant).
+        if (/,\s+(?:and|or|but)\s/.test(claimTopLevelMask(text))) return null;
         const m = /^(.+?) can (.+)$/.exec(text);
-        if (f && f.kind === 'or' && !f.iff && m && f.parts.every(p => p.kind === 'pred' && /^~can /.test(p.prop) && p.term === f.parts[0].term)) f = claimCanOne(f, m[1], m[2]);
+        // "It is possible for Poe to fly or swim": what is possible for one or
+        // the other is possible for one of them -- "it is possible for Poe to
+        // fly, or it is possible for Poe to swim" (r27.176; the user, of
+        // Kenny's cards: "I read this as, 'Is there a possible world where you
+        // draw a red card?'"). It had been one claim (r27.169), as "Poe is
+        // able to fly or swim" is: on ability it is not so.
+        const spread = f => !!f && f.kind === 'or' && !f.iff && !!m && f.parts.every(p => p.kind === 'pred' && !p.possible && /^~can /.test(p.prop) && p.term === f.parts[0].term);
+        const fit = f => !!f && ((f.kind === 'pred' && /^~can /.test(f.prop)) || spread(f));
+        // Read quietly first: a sentence this is not ("... or it is possible
+        // for me to ...") leaves no question of its own behind.
+        if (!fit(claimQuietly(() => claimWithout('established', text)))) return null;
+        const f = claimWithout('established', text);
+        if (spread(f)) return Object.assign({}, f, { parts: f.parts.map(p => Object.assign({}, p, { possible: true })), src: text });
         // One wording, however it is said ("it is possible for us to
         // conclude that P"), so it is one claim.
-        return f && f.kind === 'pred' && /^~can /.test(f.prop) ? Object.assign(f, { possible: true, src: text }) : null;
+        return fit(f) ? Object.assign(f, { possible: true, src: text }) : null;
     }
     // The question, both readings in the words the box can be given: "we are
     // not entitled to conclude that P" or "it is impossible for us to
@@ -14174,8 +14209,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             'it is ' + (denied ? 'impossible' : 'possible') + ' for ' + obj + ' to ' + can.verb + ' ' + conj + ' ' + said];
         const possible = () => { const f = claimPossibleCan(can.subj + ' can ' + can.verb + ' ' + conj + ' ' + said); return f && (denied ? negateClaim(f) : f); };
         return claimAmbiguous('"' + (denied ? 'can\u2019t ' : 'can ') + can.verb + '" may mean ' + (denied ? 'it has not been established, or that it is impossible for ' : 'it has been established, or that it is possible for ') + obj,
-            [{ label: labels[0], build: established }, { label: labels[1], build: possible }], false,
-            { generic: true, canScope: true, canDenied: denied, subject: 'can ' + can.verb }) || established();
+            [{ label: labels[0], build: established }, { label: labels[1], build: possible }], claimModalAsking(),
+            Object.assign({ generic: true, canScope: true, canDenied: denied, subject: 'can ' + can.verb }, claimModalAsking() ? { ask: true } : {})) || established();
     }
     // Read before the qualifiers: "it is impossible for us to conclude that
     // P", and an affirmation beside its own denial ("we know that P" beside
@@ -14750,14 +14785,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // 'possibly', etc., they need to specify the modality, and the checker
     // should ask"): metaphysical -- the kind the axioms are for -- logical,
     // physical, and what is known. `op`: 'nec' or 'poss'; `denied`: "not
-    // necessary", "impossible". Each read as its words are.
+    // necessary", "impossible". Each read as its words are. What is known,
+    // said of what is established, each the denial of its dual's: "possibly
+    // P", "it has not been established that not P", which "it is impossible
+    // that P", "it has been established that not P", denies (r27.174; it had
+    // been "for all we know, P", which the check does not read as that
+    // denial).
     function claimModalReadings(op, denied, clause) {
         const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
         // What is known not to be: "it has been established that God does not exist".
         const not = () => { const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
             return n ? normalizeClaimText(n) : 'it is not the case that ' + clause; };
         const known = op === 'nec' ? (denied ? 'it has not been established that ' + clause : 'it has been established that ' + clause)
-            : denied ? 'it has been established that ' + not() : 'for all we know, ' + clause;
+            : 'it has ' + (denied ? '' : 'not ') + 'been established that ' + not();
         return ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' that ' + clause).concat([known])
             .map(label => ({ label, build: () => readClaim(label) }));
     }
@@ -14765,7 +14805,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // readings in place in a longer box -- or null; unanswered, the sentence
     // is read as one claim, and said to be.
     const claimModalWhy = (word, op) => '"' + word + '" does not say which kind of ' + (op === 'nec' ? 'necessity' : 'possibility') + ' is meant: metaphysical, logical, physical, or what is known';
-    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause), true, { ask: true, part: s });
+    // "Ask which modality is meant" (r27.175; the user, of a switch to make
+    // the app pedantic about modal words or not: "Probably off by default";
+    // off, a modal word asks "only where the answer decides the step":
+    // "Sure"): a map's switch, off unless the map says on. On, "can",
+    // "necessarily", "possibly", "possible" and the rest ask which is meant
+    // every time (r27.168-r27.172), and "we can't conclude" too; off, only
+    // where one reading gives the step and another does not
+    // (claimGenericRole).
+    function claimModalAsking() {
+        const set = claimRuleSettings();
+        return !!(set && set['modal-ask']);
+    }
+    // A modal question's marks: asked every time, its readings in place in a
+    // longer box; or, off, asked where the answer decides the step -- the
+    // questions in every box answered together, kind for kind.
+    const claimModalMarks = s => claimModalAsking() ? { ask: true, part: s } : { generic: true, modal: true, subject: 'modality', part: s };
+    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause), claimModalAsking(), claimModalMarks(s));
     function claimModalUnasked(word, op, s) {
         claimUnread(claimModalWhy(word, op) + ': the sentence is read as one claim');
         return Object.assign(claimAtom(s), { src: s });
@@ -16212,7 +16268,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Quoted words no reading above took up are the sentence's own words:
         // "the argument with premises "A" and "B" fails" is not "A" and "B".
         if (claimHasQuotation(s) && !claimQuotedOnly(s)) {
-            claimUnread('quoted words name a sentence, so nothing inside the quotes is used');
+            claimUnread('words in quotation marks are read as words, so nothing inside the quotes is used');
             return claimAtom(s);
         }
         if ((m = s.match(CLAIM_NOT_FIRST_ORDER))) {
@@ -16282,7 +16338,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // 'necessarily', 'possibly', etc., they need to specify the modality, and
     // the checker should ask"), in the words the user's maps use -- "zombies
     // are metaphysically possible", "... logically", "... physically" -- or
-    // what is known, "for all we know, zombies exist". "Impossible" and "not
+    // what is known, "it has not been established that zombies do not exist"
+    // (r27.174; it had been "for all we know, zombies exist" where that was
+    // the whole box, another claim than the same words inside a longer one,
+    // and than the denial of "impossible"'s). "Impossible" and "not
     // possible": "...
     // metaphysically impossible", "... not metaphysically possible", or "it
     // has been established that zombies do not exist". Said of a kind or of
@@ -16300,20 +16359,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const be = m[2], denied = !!m[3], impossible = m[4] === 'impossible', said = m[1];
         // "Zombies are not impossible": not asked here.
         if (denied && impossible) return null;
-        const exist = be === 'are' ? 'exist' : 'exists', not = be === 'are' ? 'do not exist' : 'does not exist';
+        const not = be === 'are' ? 'do not exist' : 'does not exist';
         const kinds = ['metaphysically', 'logically', 'physically'].map(k => said + ' ' + be + ' ' + (denied ? 'not ' : '') + k + ' ' + m[4]);
-        // What is known: "for all we know, zombies exist" where that is the
-        // whole box; inside a longer one, what it says, "it has not been
-        // established that zombies do not exist" ("... false if, for all we
-        // know, zombies exist" is not read so).
-        const whole = !!claimBoxRaw && normalizeClaimText(claimBoxRaw).replace(/[.!?]+$/, '').trim() === s;
-        const known = denied || impossible ? 'it has been established that ' + said + ' ' + not
-            : whole ? 'for all we know, ' + said + ' ' + exist : 'it has not been established that ' + said + ' ' + not;
-        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known]).map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+        const known = 'it has ' + (denied || impossible ? '' : 'not ') + 'been established that ' + said + ' ' + not;
+        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(), claimModalMarks(s));
     }
+    // "Bob called Mary a taxi": a taxi called for Mary, or what Mary was
+    // called, said in quotation marks -- words, not a taxi (r27.178; the
+    // user, of "Bob called Mary 'a taxi'": "Okay."). So "named".
     const CLAIM_TWO_FRAME_VERBS = Object.assign(Object.create(null), {
         make: { pp: 'made', give: 'for', as: 'into' }, find: { pp: 'found', give: 'for', as: 'to be' },
-        keep: { pp: 'kept', give: 'for', as: 'as' }, leave: { pp: 'left', give: 'to', as: 'as' } });
+        keep: { pp: 'kept', give: 'for', as: 'as' }, leave: { pp: 'left', give: 'to', as: 'as' },
+        call: { pp: 'called', give: 'for', quote: true }, name: { pp: 'named', give: 'for', quote: true } });
     const CLAIM_PHRASE_START = /^(?:a|an|the|this|that|these|those|my|your|his|her|its|our|their|some|another|one|two|three|four|five|six|seven|eight|nine|ten|many|several|few)$/;
     function claimTwoFrameQuestion(s) {
         const toks = claimTokens(s), l = toks.map(claimWord);
@@ -16333,10 +16390,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // look"), and the first with no phrase of its own ("the gap at its minimum").
                 if (!thing || !who || !claimWholePhrase(one) || !claimWholePhrase(two) || one.some(t => /[,;:]$/.test(t)) ||
                     w1.some(w => CLAIM_PREPOSITIONS.has(w) || CLAIM_MORE_PREPOSITIONS.test(w))) continue;
-                const labels = [head.concat(two, [frame.give], one, verb === 'leave' ? [] : ['to', 'have']).join(' '), head.concat(one, frame.as.split(' '), two).join(' ')];
+                // "Called Mary names" says neither.
+                if (frame.quote && w2.length === 1 && w2[0] === 'names') continue;
+                const labels = [head.concat(two, [frame.give], one, verb === 'leave' || frame.quote ? [] : ['to', 'have']).join(' '),
+                    frame.quote ? head.concat(one).join(' ') + " '" + two.join(' ') + "'" : head.concat(one, frame.as.split(' '), two).join(' ')];
                 const said = claimShowWords(one.join(' '));
                 return claimAmbiguous('"' + claimShowWords(one.concat(two).join(' ')) + '" may say what was ' + frame.pp + ' ' + frame.give + ' ' + said + ', or what ' + said +
-                    ' was ' + frame.pp + ' ' + frame.as, labels.map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
+                    ' was ' + frame.pp + (frame.as ? ' ' + frame.as : ''), labels.map(label => ({ label, build: () => readClaim(label) })), true, { ask: true, part: s });
             }
             return null;
         }
@@ -19935,7 +19995,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         claimNearMisses = []; claimWorded = true;
         try {
             const rule = claimCertifiesOrRestates(premises, conclusions, attack);
-            return rule && claimNearMisses.some(p => p.worded) ? { rule, pairs: claimNearMisses.filter(p => p.worded) } : null;
+            // Not by explosion: premises worded alike so that they contradict
+            // each other give anything, and that is no hint (r27.177; "Poe can
+            // fly or swim" and "Poe can't fly" had been told to be worded
+            // alike, "Poe can fly", to give "Poe can swim").
+            return rule && rule.id !== 'explosion' && claimNearMisses.some(p => p.worded) ? { rule, pairs: claimNearMisses.filter(p => p.worded) } : null;
         } finally {
             claimNearMisses = saved; claimWorded = savedWorded;
         }
@@ -24433,9 +24497,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!unread.some(u => u.text === texts[i] && u.message === note.message)) unread.push({ text: texts[i], message: note.message });
                 return;
             }
-            // Which "can" is meant in "we can't conclude" is asked of the whole
-            // step, where it matters (claimGenericRole), not one box at a time;
-            // a plain "can", which asks every time (r27.169), of its box.
+            // Which "can" is meant is asked of the whole step, where it matters
+            // (claimGenericRole), not one box at a time -- unless "Ask which
+            // modality is meant" is on (r27.175), and then of its box, every
+            // time.
             if (note.canScope && !note.ask) return;
             const derives = [];
             note.readings.forEach((label, reading) => {
@@ -24455,7 +24520,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!note.always && !derives.length) return;
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
-                canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null,
+                canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
                 typo: !!note.typo, missing: !!note.missing, single: !!note.single };
             // A question offers its readings in words the check reads back,
             // and asks only where there are two or more, each of them so
@@ -25020,9 +25085,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // (claimGenericRole).
     const claimAsksCache = new Map();
     function claimAsksUser(text) {
-        const key = String(text == null ? '' : text);
+        const said = String(text == null ? '' : text), key = (claimModalAsking() ? 'M' : '') + '\u0001' + said;
         if (claimAsksCache.has(key)) return claimAsksCache.get(key);
-        const asks = parseClaimFull(key).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && (n.readings || []).length >= 2)));
+        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && (n.readings || []).length >= 2)));
         if (claimAsksCache.size > 5000) claimAsksCache.clear();
         claimAsksCache.set(key, asks);
         return asks;
@@ -25157,7 +25222,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const groups = new Map();
         reads.forEach((r, i) => r.notes.forEach(n => {
             if (n.kind !== 'ambiguous' || !n.generic) return;
-            const key = plain(n.subject) + '\u0001' + n.readings.length;
+            // A step's plain "can"s, whatever their verbs, together: "Poe can
+            // fly or swim", "Poe can't fly", so "Poe can swim" follows on
+            // "possible" (r27.176).
+            const key = (n.canPlain ? 'can' : plain(n.subject)) + '\u0001' + n.readings.length;
             if (!groups.has(key)) groups.set(key, []);
             groups.get(key).push({ box: i, note: n });
         }));
@@ -25188,8 +25256,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const said = entries[0].note.readings.map(String), all = said.findIndex(r => /^all /.test(r)), some = said.findIndex(r => /^some /.test(r));
             if (all >= 0 && some >= 0 && results[all] && results[some] && groups.size === 1 && !weak &&
                 claimGenericSure(entries, texts, read[all], read[some], attack)) { every = results[all]; continue; }
-            if (entries[0].note.canScope ? !results[0] && results.some(Boolean) : results.some(Boolean) && !results.every(Boolean))
+            // "We can't conclude" asks only where the step follows on "it is
+            // impossible for us" and not on "we are not entitled"; a plain
+            // "can", with "Ask which modality is meant" off, wherever the
+            // answer decides the step (r27.175).
+            if (entries[0].note.canScope && !entries[0].note.canPlain ? !results[0] && results.some(Boolean) : results.some(Boolean) && !results.every(Boolean))
                 return { entries, derives: results.map((rule, r) => rule ? { reading: r, rule } : null).filter(Boolean) };
+            // A modal word, with "Ask which modality is meant" off: where the
+            // step follows on every kind, it follows -- the words as written,
+            // read as one claim, need not give it ("if zombies are possible,
+            // ...", "possibly, zombies exist"; r27.175).
+            if (entries[0].note.modal && results.every(Boolean) && !every) every = results[0];
         }
         return every ? { every } : null;
     }
@@ -25468,6 +25545,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         const role = !asks && !warrantTarget ? (generic && !generic.every ? generic : null) ||
                             (!found.rule ? claimObjectRole(premiseTexts, conclusionText, attack, weak) : null) : null;
                         if (role && (found.rule || !found.why || !found.why.ambiguous.some(a => a.generic))) {
+                            // Held as written for the answer: what would make
+                            // it follow is no hint (r27.175).
+                            const held = !!found.rule;
                             found.rule = null;
                             found.nearMiss = null;
                             const why = found.why || diagnoseDeductiveStep(premiseTexts, diagnosticText, diagnosticAttack, null, warrantTarget ? false : weak) ||
@@ -25476,7 +25556,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             const quote = t => '\u201c' + stripClaimMarkup(t) + '\u201d';
                             const asked = role.entries.filter((e, k, all) => all.findIndex(x => x.box === e.box) === k).map(e => ({
                                 text: texts[e.box], message: e.note.message, readings: e.note.readings, site: e.note.site, generic: true, anyScope: !!e.note.anyScope, canScope: !!e.note.canScope, someScope: !!e.note.someScope, canDenied: !!e.note.canDenied,
-                                canPlain: !!e.note.canPlain, canFrom: e.note.canFrom || null, canBe: e.note.canBe || null, grammar: false,
+                                canPlain: !!e.note.canPlain, canFrom: e.note.canFrom || null, canBe: e.note.canBe || null, grammar: false, part: e.note.part || null, modal: !!e.note.modal,
                                 subject: e.note.subject || null, object: !!e.note.object,
                                 // Answered together (r27.120): each box's reading, with the others'.
                                 derives: role.joint ? [{ label: e.note.readings[e.reading], rule: role.rule, joint: role.entries.length > 1 }]
@@ -25494,7 +25574,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             // An object's question is the step's hint: what the words
                             // as written would give, or how else to word them, is not
                             // said beside it -- only how the boxes were read (r27.120).
-                            const after = role.object ? (why.unread || []).map(u => quote(u.text) + ': ' + u.message + '.').join(' ') : why.text;
+                            const after = role.object || held ? (why.unread || []).map(u => quote(u.text) + ': ' + u.message + '.').join(' ') : why.text;
                             found.why = why.ambiguous.some(a => a.generic) ? why : Object.assign({}, why, { ambiguous: asked.concat(why.ambiguous),
                                 text: said.join(' ') + (after ? ' ' + after : '') });
                             found.counterexample = null;
@@ -34013,7 +34093,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimAskedKind(step) {
         const asked = (step.why && step.why.ambiguous) || [];
         return asked.some(a => a.typo) ? 'typo' : asked.some(a => a.missing) ? 'no referent' : asked.some(a => a.grammar) ? 'grammar'
-            : asked.length && asked.every(a => a.generic && !a.anyScope && !a.canScope && !a.someScope && !a.grouping) ? 'generic' : 'ambiguous';
+            : asked.length && asked.every(a => a.generic && !a.anyScope && !a.canScope && !a.someScope && !a.grouping && !a.modal) ? 'generic' : 'ambiguous';
     }
     // Its tag: a typo or a missing referent is a fault ("✗"), the rest questions.
     function claimAskedTag(step) {

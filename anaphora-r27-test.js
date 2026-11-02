@@ -234,8 +234,14 @@ console.log('\n-- 9. a clause cut short --');
         '"did too", "so does", "neither did", "will too", "is too" after "is able to", "does too" after "has a car"');
     // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
     // etc., they need to specify the modality, and the checker should ask"):
-    // "can" asks which is meant, "Mary can too" with it.
-    ok(step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag === '? ambiguous', '"can too": "can" asks which is meant (r27.169)');
+    // "can" asks which is meant, "Mary can too" with it -- with "Ask which
+    // modality is meant" on (r27.175); off, the default, it follows on every
+    // reading, and asks nothing.
+    ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
+    const tooOn = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
+    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    const tooOff = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
+    ok(tooOn === '? ambiguous' && tooOff === '✓ conjunction elimination', '"can too": "can" asks which is meant (r27.169), with the switch on; off, conjunction elimination (r27.175)', J([tooOn, tooOff]));
     ok(step(['Poe is black, but Fido is not.'], 'Fido is not black.').tag === '✓ conjunction elimination' &&
         step(["Poe is black, but Fido isn't."], 'Fido is not black.').tag === '✓ conjunction elimination',
         '"Fido is not", "Fido isn\'t"');

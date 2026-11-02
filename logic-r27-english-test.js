@@ -663,9 +663,11 @@ function reportCorpus(name, res) {
                 exact: denies('The argument is invalid', 'The argument is valid') && denies('Consciousness is non-physical', 'Consciousness is physical') &&
                     denies("We're unable to leave", 'We can leave') && key('We are able to leave') === key('We can leave'),
                 contraries: !denies('Poe is unhappy', 'Poe is happy') && !denies('This is invaluable', 'This is valuable'),
-                // "We are not able to": "can't" asks which is meant (r27.169).
+                // "We are not able to": "can't" asks which is meant (r27.169) --
+                // with "Ask which modality is meant" on (r27.175).
                 hedge: step(["We are not able to leave"], 'We should be able to leave', 'objection'),
-                cant: step(["We can't leave"], 'We should be able to leave', 'objection'),
+                cant: (function () { state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+                    try { return step(["We can't leave"], 'We should be able to leave', 'objection'); } finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
                 generic: [step(['Ravens are black'], 'Something is black').rule, step(['All black things are dark', 'Ravens are black'], 'Ravens are dark').rule,
                     step(['A raven is black'], 'Something is black').rule, step(['It rains'], 'Something rains').rule],
                 individual: step(['All black things are dark', 'Poe is black'], 'Poe is dark').rule,
@@ -684,7 +686,7 @@ function reportCorpus(name, res) {
             d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
             '"We are not able to leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
         ok(d.cant && d.cant.rule === null && /^Did you mean “We are not able to leave”, “It is not possible for us to leave”, or “We are not allowed to leave”\?/.test(d.cant.why),
-            '"We can\'t leave" asks which "can" is meant (r27.169)', J(d.cant));
+            '"We can\'t leave" asks which "can" is meant (r27.169), with the switch on', J(d.cant));
         // Since r27.157, "all black things are dark" and "ravens are black" give
         // "ravens are dark" however "ravens" is read: by universal syllogism,
         // the rule on "all" -- never universal modus ponens, of one thing.
@@ -989,6 +991,18 @@ function reportCorpus(name, res) {
     // on "possible" and not on "able".
     console.log('\n-- plain "can": possible, able, allowed --');
     try {
+        // r27.175: these are the questions asked with "Ask which modality is
+        // meant" on; off, the default, below.
+        const offBoth = T(W, `state.logic = { base: 'standard', rules: {} };
+            state.trees = [{ id: 'M', type: 'contention', texts: ['Poe is a bird'], collapsed: [], x: 0, y: 0, children: [
+                { id: 'A', type: 'support', texts: ['If Poe can fly, then Poe is a bird', 'Poe can fly'], collapsed: [], children: [] } ] }];
+            deductiveCache.clear(); ensureCollabFields(state); var s = collectDeductiveSteps(state.trees)[0];
+            state.trees[0].children[0].texts = ['Poe flies']; state.trees[0].texts = ['Poe can fly']; deductiveCache.clear();
+            var f = collectDeductiveSteps(state.trees)[0];
+            state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+            return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f) };`);
+        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? ambiguous',
+            'off, the default: "Poe can fly" in both boxes of a modus ponens asks nothing -- it follows whichever is meant; "Poe flies", so "Poe can fly" still asks (r27.175)', J(offBoth));
         const c = T(W, `
             var step = function (premises, conclusion) {
                 state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
@@ -1055,6 +1069,55 @@ function reportCorpus(name, res) {
                 ['Mary can sing and Bob is not able to dance.', 'Mary can sing and it is not possible for Bob to dance.', 'Mary can sing and Bob is not allowed to dance.']]) &&
             /^C\[/.test(two.key),
             'two "can"s in one box, each asked and answered in place; "it is possible for Mary to sing and ..." is two claims (r27.169)', J(two));
+        // r27.176 (the user, of Kenny's cards: "I read this as, 'Is there a
+        // possible world where you draw a red card?'"): what is possible for
+        // one or the other is possible for one of them -- on ability it is
+        // not so. Two clauses joined to "it is possible for ..." are read at
+        // their junction, and ask no "can" of their own.
+        const either = T(W, `
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear(); ensureCollabFields(state);
+                var s = collectDeductiveSteps(state.trees)[0]; return deductiveStepTagText(s) + (s.why && s.why.text ? ' | ' + s.why.text : '');
+            };
+            var asks = function (t) { return parseClaimFull(t).notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message; }); };
+            var r = {
+                ds: step(['It is possible for Poe to fly or swim.', 'It is not possible for Poe to fly.'], 'It is possible for Poe to swim.'),
+                able: step(['Poe is able to fly or swim.', 'Poe is not able to fly.'], 'Poe is able to swim.'),
+                clauses: asks('It is possible for me to draw a red card, or it is possible for me to draw a black card.'),
+                clausesKey: claimKey(parseClaim('It is possible for me to draw a red card, or it is possible for me to draw a black card.')),
+                bird: step(['It is possible for Poe to fly, and Poe is a bird.'], 'Poe is a bird.'),
+                i: asks('I can fly.'),
+                rows: step(['Poe can fly or swim.'], 'Al is happy.')
+            };
+            state.logic = { base: 'standard', rules: {} };
+            r.off = step(['Poe can fly or swim.', 'Poe can\u2019t fly.'], 'Poe can swim.');
+            state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+            return r;`);
+        ok(/^✓ disjunctive syllogism/.test(either.ds) && !/^✓/.test(either.able),
+            '"it is possible for Poe to fly or swim" and "it is not possible for Poe to fly" give "it is possible for Poe to swim"; on ability, not (r27.176; it had been one claim)', J([either.ds, either.able]));
+        ok(J(either.clauses) === '[]' && /^D\[/.test(either.clausesKey) && either.bird === '✓ conjunction elimination',
+            '"it is possible for me to draw a red card, or it is possible for me to draw a black card": an "or", asking nothing; "it is possible for Poe to fly, and Poe is a bird", the same (r27.176; the first had been one garbled claim, and each asked which "can" was meant)', J(either));
+        ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “It is possible for Poe to fly or swim”, or “Poe is allowed to fly or swim”?',
+            '"I", not "i", in what "can" may say; "Poe can fly or swim" still offers each reading (r27.176)', J([either.i, either.rows]));
+        ok(/^\? ambiguous \| Did you mean “Poe is able to fly or swim”, “It is possible for Poe to fly or swim”, or “Poe is allowed to fly or swim”\?/.test(either.off) || /“Poe can fly or swim\.”: did you mean “Poe is able to fly or swim”/.test(either.off),
+            'with "Ask which modality is meant" off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" asks: on "possible" it follows, on "able" it does not (r27.176)', either.off);
+        // r27.177: no hint to word two premises alike so that they contradict
+        // each other -- it had said "... would give 'I am able to draw a black
+        // card' by explosion". A contradiction as spelled, but for a capital
+        // or a space, is still said.
+        const boom = T(W, `
+            var step = function (premises, conclusion) {
+                state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
+                    { id: 'A', type: 'support', texts: premises, collapsed: [], children: [] } ] }];
+                deductiveCache.clear(); ensureCollabFields(state);
+                var s = collectDeductiveSteps(state.trees)[0]; return deductiveStepTagText(s) + ' | ' + (s.why && s.why.text || '');
+            };
+            return { able: step(['I am able to draw a red card or a black card.', 'I am not able to draw a red card.'], 'I am able to draw a black card.'),
+                capital: step(['Poe is black.', 'Poe is not Black.'], 'Fido is white.') };`);
+        ok(boom.able === '? not recognized | ' && /^✗ spelled differently \| Spelled the same way each time, the premises would give “Fido is white” by explosion/.test(boom.capital),
+            'no hint to word the premises alike so that they contradict each other ("... by explosion"); premises that contradict each other but for a capital are still told so (r27.177)', J(boom));
         // r27.169: "is able to" read as "can" is, its objects too: "is not able
         // to perform all the functions" is "cannot perform all the functions"
         // read as ability -- one claim.
@@ -1062,6 +1125,7 @@ function reportCorpus(name, res) {
                 return !!n && claimSame(parseClaim('Otto cannot perform all the functions.', { site: n.site, reading: 0 }), parseClaim('Otto is not able to perform all the functions.'));`) === true,
             '"is not able to perform all the functions" is "cannot perform all the functions" read as ability (r27.169; "all the functions" had been kept as written)');
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
+    T(W, `state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
 
     /* ---------------- 3. diagnosis on a map ---------------- */
     console.log('\n-- ambiguous steps --');

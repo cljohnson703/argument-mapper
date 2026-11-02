@@ -963,9 +963,10 @@ const moreEnglish = (function () {
 })();
 
 /* ================= hard cases ================= */
-// [expect, kind, premises, parent, label]; expect: 'yes', 'no', 'amb' (not
+// [expect, kind, premises, parent, label, ask]; expect: 'yes', 'no', 'amb' (not
 // certified, flagged ambiguous), or the rule's name. kind: S support, O
-// objection, W weak objection.
+// objection, W weak objection. ask: checked with "Ask which modality is
+// meant" on (r27.175).
 const HARD_CASES = [
     // ---- "any", "some" and polarity ----
     ['no', 'S', ['If Poe can not beat any player, then Poe is weak', 'Poe is not weak'], 'Poe can beat any player', 'free-choice "any" is not the "any" a denial takes'],
@@ -973,7 +974,7 @@ const HARD_CASES = [
     // r27.169: "can" asks which is meant (the user: "Any time someone writes,
     // 'necessarily', 'possibly', etc., they need to specify the modality, and
     // the checker should ask"); "is able to", answered, as "can" was read.
-    ['amb', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat any player', '"can" asks which is meant (r27.169)'],
+    ['amb', 'S', ['If Poe can beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe can not beat any player', '"can" asks which is meant (r27.169)', 'ask'],
     ['modus tollens', 'S', ['If Poe is able to beat any player, then Poe is a champion', 'Poe is not a champion'], 'Poe is not able to beat any player', '"any" in a condition is "a"'],
     ['modus tollens', 'S', ['If Poe is able to beat a player, then Poe is a champion', 'Poe is not a champion'], 'Poe is not able to beat any player', 'MT with "a player"'],
     ['no', 'O', ['Poe does not like some raven'], 'Poe likes some raven', '"not ... some" does not deny "some"'],
@@ -999,7 +1000,7 @@ const HARD_CASES = [
     // r27.169: "can fly or swim" asks which "can"; answered, one claim -- what
     // one is able to do one or the other of, one need not be able to do
     // either of (Kenny's cards). It had been read "can fly, or can swim".
-    ['amb', 'S', ['Poe can fly or swim', 'Poe cannot fly'], 'Poe can swim', '"can" over "or": which "can" is asked (r27.169)'],
+    ['amb', 'S', ['Poe can fly or swim', 'Poe cannot fly'], 'Poe can swim', '"can" over "or": which "can" is asked (r27.169)', 'ask'],
     ['no', 'S', ['Poe is able to fly or swim', 'Poe is not able to fly'], 'Poe is able to swim', '"able to fly or swim" is one claim, not "able to fly, or able to swim" (Kenny)'],
     ['disjunctive syllogism', 'S', ['Poe will fly or swim', 'Poe will not fly'], 'Poe will swim', '"will" spreads over "or"'],
 
@@ -1124,13 +1125,13 @@ const HARD_CASES = [
     // 'possibly', etc., they need to specify the modality, and the checker
     // should ask"): "not necessarily" asks which kind -- "it has not been
     // established" one of them, a bare challenge.
-    ["amb", "W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\": asked which kind"],
-    ["amb", "W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\": asked which kind"],
-    ["amb", "W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\": asked which kind"],
+    ["amb", "W",["It's not necessarily the case that God exists"],"God exists","\"it's not necessarily the case that\": asked which kind", 'ask'],
+    ["amb", "W",["Poe is not necessarily guilty"],"Poe is guilty","\"X is not necessarily Y\": asked which kind", 'ask'],
+    ["amb", "W",["Poe doesn't necessarily fly"],"Poe flies","\"X does not necessarily Y\": asked which kind", 'ask'],
     ["bare", "W",["It has not been established that Poe is guilty"],"Poe is guilty","its reading \"it has not been established that\""],
-    ["amb", "W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\": asked which kind"],
-    ["amb","O",["God does not necessarily exist"],"God necessarily exists","\"not necessarily\": the modal sense is flagged"],
-    ["amb","O",["Poe is not necessarily black"],"Poe is necessarily black","\"is not necessarily\": the modal sense is flagged"],
+    ["amb", "W",["That God exists isn't necessary"],"God exists","\"that P isn't necessary\": asked which kind", 'ask'],
+    ["amb","O",["God does not necessarily exist"],"God necessarily exists","\"not necessarily\": the modal sense is flagged", 'ask'],
+    ["amb","O",["Poe is not necessarily black"],"Poe is necessarily black","\"is not necessarily\": the modal sense is flagged", 'ask'],
     ["no","O",["Poe is not necessarily guilty"],"Poe is guilty","\"not necessarily\" denies nothing"],
     ["no","W",["We can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'"],"God exists","a claim about one argument does not challenge its conclusion outright"],
     ["a premise not established","S",["It has not been shown that there is no infinite regress"],"We can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'","a premise not established"],
@@ -1255,8 +1256,10 @@ window.__stress = (function () {
     {
         const kinds = { S: 'support', O: 'objection', W: 'weak-objection' };
         const groups = new Map();
-        HARD_CASES.forEach(([expect, kind, premises, parent, label], i) => {
+        HARD_CASES.forEach(([expect, kind, premises, parent, label, ask], i) => {
+            if (ask) W.dom.window.eval("state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear();");
             const s = app.step(premises, parent, kinds[kind]);
+            if (ask) W.dom.window.eval("state.logic = null; deductiveCache.clear();");
             // An objection that only states its box's denial is a bare denial
             // -- no argument, but a "yes": it denies. A weak objection that only
             // says its box has not been established is a bare challenge.

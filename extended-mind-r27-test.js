@@ -86,13 +86,21 @@ console.log('\n-- 1. a clause cut short, inside a condition and after "it\'s not
         'the clause itself where its helping verb is of the kind ("does": "knows"), the one inside it where only that one\'s is ("can")', J(k));
     // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
     // etc., they need to specify the modality, and the checker should ask"):
-    // "cannot perform" asks which is meant; the step, with its answer.
+    // "cannot perform" asks which is meant; the step, with its answer -- with
+    // "Ask which modality is meant" on (r27.175); off, the default, every
+    // reading gives the step, and it follows as written.
+    ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
     const asked = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");
     ok(asked.tag === '? ambiguous' && asked.why.indexOf("did you mean “If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs”, " +
             "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, ") > 0,
-        'as written, "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169)', asked.why);
+        'as written, "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169), with the switch on', asked.why);
+    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    const off = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
+        "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
+        "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");
+    ok(off.rule === 'modus ponens', 'off, as written: modus ponens -- the step follows whichever "cannot" is meant (r27.175)', J(off));
     const s = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.");

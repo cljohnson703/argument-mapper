@@ -4,6 +4,113 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 2: "Bob called Mary a taxi" asks, every time: a taxi called for Mary, or what Mary was called (r27.178)
+
+The user, of what Mary was called, written with the words in quotation marks, "Bob called Mary 'a taxi'": "Okay."
+
+* "Bob called Mary a taxi" asks every time, as "Bob made Mary a cake" does (r27.170): "Did you mean “Bob called a taxi for Mary” or “Bob called Mary 'a taxi'”?" So "named": "Did you mean “Bob named a price for Mary” or “Bob named Mary 'a price'”?"
+  * It had been read as one verb phrase, and had asked nothing.
+* What Mary was called is said in quotation marks: words, not a taxi. "Bob called Mary 'a taxi'" gives nothing about taxis, nor that Mary is one.
+* Inside a longer box each reading is put in place: "If Bob called Mary 'a taxi', then Al is happy".
+* Not "called Mary names", which says neither. Not "called Mary", nor "called Mary happy".
+* What quotation marks do is said of a phrase as of a sentence: "words in quotation marks are read as words, so nothing inside the quotes is used". It had been "quoted words name a sentence".
+
+Tests:
+* rules-r27-ordinary-test.js has 169 checks. Section 42 is new: five checks, three of which fail on r27.177. The two that pass there are that each reading, written in, gives modus ponens, and that "called Mary names" asks nothing.
+* Take-one-out: each of the 3 changes is caught.
+* 289 sentences in the corpus read differently, each only in the note on quoted words, as above.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: no hint says to word two premises alike so that they contradict each other (r27.177)
+
+* "I am able to draw a red card or a black card" and "I am not able to draw a red card", so "I am able to draw a black card", had been told: "Worded the same way each time, the premises would give “I am able to draw a black card” by explosion, but ‘i am able to draw a red card’ and ‘i am able to draw a red card or a black card’ differ".
+  * So the hint said: word the first premise as the second denies it, and the premises contradict each other, and give anything.
+  * Two claims worded nearly alike are two claims. A contradiction made by wording them alike is not one the premises have. That hint is no longer given, and the step is "? not recognized", as it should be on ability.
+* Premises that contradict each other as written, but for a capital or a space, are still told so: "Spelled the same way each time, the premises would give “Fido is white” by explosion, but ‘black’ and ‘Black’ differ in capital letters."
+
+Tests:
+* logic-r27-english-test.js has 141 checks; one is new, and it fails on r27.176.
+* Take-one-out: the change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "It is possible for me to draw a red card or a black card" is said over the "or" (r27.176)
+
+The user, of Kenny's cards: "I read this as, 'Is there a possible world where you draw a red card?' And yes, there is. Therefore, I can draw a red card."
+
+* "It is possible for Poe to fly or swim" now says what "it is possible for Poe to fly, or it is possible for Poe to swim" says. What is possible for one or the other is possible for one of them. On ability it is not so (Kenny's cards): "Poe is able to fly or swim" is still one claim.
+  * So "It is possible for Poe to fly or swim" and "It is not possible for Poe to fly" give "It is possible for Poe to swim" by the disjunctive syllogism. On "able", they do not.
+  * It had been one claim (r27.169), as "able" is.
+* "Poe can fly or swim", answered "possible", reads the same way.
+* "It is possible for me to draw a red card, or it is possible for me to draw a black card" is an "or" of two claims, and asks nothing.
+  * It had been read as one garbled claim, and had asked which "can" was meant, of a box that says.
+  * "It is possible for Poe to fly, and Poe is a bird" had asked it too. It is read at its junction now, and gives "Poe is a bird".
+* With "Ask which modality is meant" off, a step's plain "can"s are answered together, whatever their verbs. So "Poe can fly or swim" and "Poe can't fly", so "Poe can swim", asks: on "possible" it follows, on "able" it does not.
+* "I", not "i", in what "can" may say: "what I am able to do".
+* Not yet: an "or" of objects, "draw a red card or a black card", is one claim on every reading. So is "Poe eats fish or meat".
+
+Tests:
+* logic-r27-english-test.js has 140 checks; four are new, and each fails on r27.175.
+* Take-one-out: each of the 4 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "Ask which modality is meant", a switch in the Logic panel, off by default (r27.175)
+
+The user, of a switch to make the app pedantic about modal words or not: "Probably off by default". Off, a modal word asks "only where the answer decides the step": "Sure". The switch sits in the Logic panel, as the mockup had it.
+
+* The Logic panel's Modal logic section begins with "Ask which modality is meant". Under it: "On: “can”, “necessarily”, “possible” … ask which is meant, every time. Off: they ask only where the answer decides the step." It is off unless a map switches it on.
+* On, the questions are asked every time, as r27.168–r27.172 had them. "We can't conclude" asks too: "Did you mean “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black” or “If we lack reasons to think that Poe is black, then it is impossible for us to conclude that Poe is black”?" It had been asked only where the step followed on the second reading and not the first.
+* Off:
+  * Where every reading gives the step, nothing is asked, and the step follows.
+    * "If zombies are possible, then physicalism is false" and "Zombies are possible" give "Physicalism is false" by modus ponens. So do "If Poe can fly, then Poe is a bird" and "Poe can fly".
+    * So do "If it is necessary that God exists, then evil is unexplained" and "Necessarily, God exists": as written, two claims; on every reading, one.
+  * Where one reading gives the step and another does not, it asks, as before: "Poe flies", so "Poe can fly"; "If zombies are metaphysically possible, …" beside "Zombies are possible".
+  * Where no reading gives the step, nothing is asked: "Necessarily, all ravens are black" and "Poe is a raven", so "Poe is black", with metaphysical necessity off.
+  * A step's modal questions are answered together, kind for kind. With metaphysical necessity on, "Necessarily, God exists", so "Possibly, God exists", asks of both boxes.
+  * "Poe can fly or swim", unanswered, is one claim, read as "able", so "Poe can't fly" does not give "Poe can swim". Until answered it had been read over the "or"; asked every time, that had decided no step.
+  * Read as "able", "Poe can fly" follows beside "If Poe is able to fly, then Poe is a bird"; read as "possible", it does not. So the step asks, and "able" is not chosen for the user.
+  * "We can't conclude" is as it was: read as "we are not entitled to conclude" wherever that gives the step.
+* A modal question's tag is "? ambiguous", not "? generic".
+* A step that follows as written, held only for its question, says nothing but the question. It had added "With the parts of the claims in the same order and grouping, the premises would give …".
+
+Tests:
+* modal-r27-test.js has 66 checks. Sections 1–7 now run with the switch on. Section 8 is new: 12 checks of the switch, off and on, and of the panel. Six of them fail on r27.174.
+* Checks elsewhere of questions asked every time now run with the switch on. Where it matters they also say what off does:
+  * anaphora-r27-test.js: "Mary can too", off, gives conjunction elimination.
+  * extended-mind-r27-test.js: "cannot perform", off, gives modus ponens.
+  * logic-r27-basis-test.js: "a mere series of lights can …", off, gives modus tollens, and "zombies are possible" modus ponens. The panel has 18 rows.
+  * logic-r27-english-test.js: "Poe can fly" in both boxes of a modus ponens, off, asks nothing; "Poe flies", so "Poe can fly", still asks.
+  * language-r27-qualifier-test.js: on, "we can't conclude" asks beside "can't produce".
+  * logic-r27-stress-test.js: 8 hard cases are marked to run with the switch on.
+  * reading-r27-chooser-test.js and rules-r27-ordinary-test.js: one check each, with the switch on.
+* Take-one-out: each of the 15 changes is caught.
+* One sentence in the corpus reads differently: "Poe can fly or swim", one claim until answered.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
+### November 2: "what is known", said one way: "it has not been established that zombies do not exist" (r27.174)
+
+The fourth reading of "possibly" and "possible", what is known, had been "for all we know, …". Of "impossible" it was "it has been established that …". The check reads those as two claims that do not deny each other: "for all we know" is said of what we know, "established" of what has been shown.
+
+* "Zombies are possible", read as what is known, is now "It has not been established that zombies do not exist", alone in a box and inside a longer one. "Zombies are impossible" is "It has been established that zombies do not exist", which denies it.
+  * It had been "For all we know, zombies exist" alone in a box, but the "established" wording inside a longer one: two claims. So "If zombies are possible, then physicalism is false" and "Zombies are possible", both answered so, gave no modus ponens.
+* "Possibly, Poe is not black", read as what is known, is "It has not been established that Poe is black". "It is impossible that Poe is not black" denies it.
+* The other readings are as they were: "It is metaphysically possible that …", "… logically …", "… physically …".
+
+Tests:
+* modal-r27-test.js has 54 checks. The questions' fourth readings now read "It has not been established that …"; four checks fail on r27.173. Two new checks:
+  * what is known is one claim alone and inside an "if", and "impossible" denies it; this fails on r27.173.
+  * those readings written in give modus ponens, and the one denies the other; this passes on r27.173 too.
+* language-r27-qualifier-test.js: the "possibly" check now expects "It has not been established that Poe is black"; it fails on r27.173.
+* Take-one-out: each of the 2 changes is caught.
+* 6 sentences in the corpus read differently, each with "possible" or "possibly", as above.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 2: the weather's reading of "it", its conditions in brackets (r27.173)
 
 The user, of "every reading can be written": "I'm not sure what you mean". The example given in reply was the weather's reading of "if the street is wet and the sky is grey, then it is cold", which could not be written, with the thought that brackets might do it.

@@ -816,9 +816,10 @@ try {
                 options: [].map.call(document.querySelectorAll('#eval-logic-base option'), function (o) { return o.textContent + (o.disabled ? '-' : '+'); }),
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
         // Modal logic is a group the map switches on, not a base (r27.101);
-        // "would" and "could" under it (r27.112).
-        ok(built.groups === 17 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, metaphysical necessity, and "would" and "could"', J(built));
+        // "would" and "could" under it (r27.112), and "Ask which modality is
+        // meant" (r27.175).
+        ok(built.groups === 18 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, "ask which modality is meant", metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
         // Nine since r27.141: modifiers has dropping a "that" clause. Ten
@@ -898,6 +899,11 @@ try {
         // 'possibly', etc., they need to specify the modality, and the checker
         // should ask"); answered, the step follows.
         const gen = tagOf(['Mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria');
+        // With "Ask which modality is meant" on (r27.175); off, the default,
+        // both follow as written, whichever is meant.
+        const offLights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
+        const offZp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
+        ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
         const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
         // r27.172: "zombies are possible" asks which kind; said, it follows.
         const zp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
@@ -907,6 +913,9 @@ try {
             lights[0] === '? ambiguous' && /did you mean “If functionalism is true, then a mere series of lights is able to produce consciousness”, “If functionalism is true, then it is possible for a mere series of lights to produce consciousness”, or /.test(lights[1]) &&
             rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true') === 'modus tollens',
             'a generic asks all, some or most where the answer decides the step; "zombies are possible" asks which kind (r27.172), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens', J([gen, lights, zp]));
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ok(offLights[0] === '✓ modus tollens' && offZp[0] === '✓ modus ponens',
+            'with "Ask which modality is meant" off: "a series of lights can ..." and "zombies are possible" follow as written, whichever is meant (r27.175)', J([offLights, offZp]));
         // An indefinite in an if-clause asks, in whole sentences.
         const ifA = tagOf(['If a raven sings, it is black', 'Fido is a raven', 'Fido sings'], 'Fido is black');
         // r27.166: both readings read back -- "generally, ..." had come back as

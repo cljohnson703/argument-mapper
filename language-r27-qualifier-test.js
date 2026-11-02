@@ -101,15 +101,16 @@ try {
         // 'possibly', etc., they need to specify the modality, and the checker
         // should ask"): which kind -- metaphysical, logical, physical, or not
         // ruled out by what is known -- in the box's own words.
-        // Inside the sentence, "for all we know" set off by commas (r27.172).
-        const kinds = (pre, said) => 'Did you mean “' + pre + 'it is metaphysically possible that ' + said + '”, “' + pre + 'it is logically possible that ' + said + '”, “' +
-            pre + 'it is physically possible that ' + said + '”, or “' + pre.replace(/\s+$/, '') + ', for all we know, ' + said + '”?';
+        // What is known: "it has not been established that Poe is black"
+        // (r27.174; it had been "for all we know, Poe is not black").
+        const kinds = (pre, said, known) => 'Did you mean “' + pre + 'it is metaphysically possible that ' + said + '”, “' + pre + 'it is logically possible that ' + said + '”, “' +
+            pre + 'it is physically possible that ' + said + '”, or “' + pre + 'it has not been established that ' + known + '”?';
         ok(flagged.every(t => { const s = step([t], 'Poe is black.', 'weak-objection'); return !s.rule && s.ambiguous &&
                 s.why === 'Did you mean “It is metaphysically possible that Poe is not black”, “It is logically possible that Poe is not black”, ' +
-                    '“It is physically possible that Poe is not black”, or “For all we know, Poe is not black”?'; }) &&
+                    '“It is physically possible that Poe is not black”, or “It has not been established that Poe is black”?'; }) &&
             ['possibly Poe is not black.', 'it is possible that Poe is not black.', 'Poe is possibly not black.'].every(t => { const s = step(['If Poe is a crow, then ' + t, 'Poe is a crow.'], 'Poe is black.', 'weak-objection');
-                return !s.rule && s.ambiguous && s.why === kinds('If Poe is a crow, then ', 'Poe is not black'); }),
-            '"possibly" asks which kind of possibility is meant: metaphysical, logical, physical, or "for all we know" -- alone, and inside an "if"');
+                return !s.rule && s.ambiguous && s.why === kinds('If Poe is a crow, then ', 'Poe is not black', 'Poe is black'); }),
+            '"possibly" asks which kind of possibility is meant: metaphysical, logical, physical, or what is known -- alone, and inside an "if"');
         const conditions = [[['When Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black when Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['Given that Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['Poe is black given that Poe is a raven.', 'Poe is a raven.'], 'Poe is black.'],
             [['In case Poe is a raven, Poe is black.', 'Poe is a raven.'], 'Poe is black.'], [['While Poe is black, Fido is white.'], 'Fido is white.'],
@@ -375,12 +376,16 @@ try {
     console.log('\n-- wording and claims about one argument --');
     {
         // r27.169: "can't produce" asks which is meant; with an answer, the
-        // words that differ are said as before.
+        // words that differ are said as before -- with "Ask which modality is
+        // meant" on (r27.175).
+        ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
         const asked = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
-        ok(!asked.rule && /^Did you mean “If we don't possess .+, then we can't conclude that a mere series of flashing lights is not able to produce consciousness”, /.test(asked.why),
-            '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169)', asked.why);
+        ok(!asked.rule && /did you mean “If we don't possess .+, then we can't conclude that a mere series of flashing lights is not able to produce consciousness”, /.test(asked.why) &&
+            /did you mean “If we don't possess .+, then we are not entitled to conclude that a mere series of flashing lights can't produce consciousness” or /.test(asked.why),
+            '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169), with the switch on -- and "we can\'t conclude" with it (r27.175)', asked.why);
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
         const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness, then we can't conclude that it is not possible for a mere series of flashing lights to produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness."],
             "It is not possible for a mere series of flashing lights and control circuitry to produce consciousness.", 'weak-objection');

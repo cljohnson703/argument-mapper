@@ -320,8 +320,12 @@ const J = JSON.stringify;
         t.unfit = pop ? pop.querySelectorAll('.rc-unfit').length : 0;
         closeReadingChooser();
         return t;`);
-    // "It is not possible for Poe to beat any player" asks of "any" in turn.
+    // "It is not possible for Poe to beat any player" asks of "any" in turn
+    // -- with "Ask which modality is meant" on (r27.175); off, no reading
+    // gives the step, and nothing is asked.
+    T(W, `state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
     const beat = asked('Poe cannot beat any player.', 'Poe is weak.');
+    T(W, `state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
         beat.title.indexOf('“Poe cannot beat any player.” is ambiguous: "can’t" may say what Poe is not able to do, what is not possible for Poe, or what Poe is not allowed to do.') >= 0,
         'a question one of whose readings does not read back is not asked -- "it is not possible for Poe to beat any player" asks of "any" in turn -- the box is said to be ambiguous, and the tag opens the list', J(beat));
