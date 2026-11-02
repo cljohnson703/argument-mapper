@@ -165,17 +165,26 @@ console.log('\n-- 3. people --');
 console.log('\n-- 4. "must" read as written --');
 {
     // Reading "must" as what follows is axiom T for a modality: a modal step,
-    // for the modal extensions (the user, 2026-10-13).
-    ['Socrates must be mortal.', 'If Socrates is a man, then Socrates must be mortal.', 'It must be the case that Socrates is mortal.', 'All men must be mortal.']
-        .forEach(t => ok(!read(t).asked.some(m => /"must"/.test(m)), '"must" asks nothing: ' + t, J(read(t))));
-    ok(refused(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.') &&
-        refused(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.') &&
-        refused(['Socrates must be mortal.', 'If Socrates is mortal, then Socrates is not a god.'], 'Socrates is not a god.'),
-        'so no step through it gives the plain claim, or "must" from it');
+    // for the modal extensions (the user, 2026-10-13). Since r27.179 "must"
+    // asks which is meant -- what follows one of its readings, chosen by the
+    // user, never taken for them -- of a plain subject; not yet of "it" or a
+    // quantifier's.
+    ['Socrates must be mortal.', 'If Socrates is a man, then Socrates must be mortal.']
+        .forEach(t => ok(read(t).asked.some(m => /"must"/.test(m)), '"must" asks which is meant (r27.179): ' + t, J(read(t))));
+    ['It must be the case that Socrates is mortal.', 'All men must be mortal.']
+        .forEach(t => ok(!read(t).asked.some(m => /"must"/.test(m)), '"must" asks nothing yet: ' + t, J(read(t))));
+    const through = [step(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.'),
+        step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'),
+        step(['Socrates must be mortal.', 'If Socrates is mortal, then Socrates is not a god.'], 'Socrates is not a god.')];
+    ok(through.every(s => !s.rule && s.tag === '? ambiguous'),
+        'so no step through it gives the plain claim, or "must" from it: each asks which "must" is meant (r27.179)', J(through.map(s => s.tag)));
     ok(certifies(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates must be mortal.', 'modus ponens'),
         'a step in its own words still follows');
-    ok(refused(['Socrates is mortal.'], 'Socrates must be mortal.') && refused(['Socrates must be mortal.'], 'Socrates is necessarily mortal.') &&
-        refused(['If you are a citizen, you must vote.', 'You are a citizen.'], 'You vote.'), 'and nothing modal: not "what is, must be", nor a duty done');
+    ok(refused(['Socrates is mortal.'], 'Socrates must be mortal.') && refused(['Socrates must be mortal.'], 'Socrates is necessarily mortal.'),
+        'and nothing modal: not "what is, must be"');
+    const duty = step(['If you are a citizen, you must vote.', 'You are a citizen.'], 'You vote.');
+    ok(!duty.rule && duty.tag === '? ambiguous' && /, or “If you are a citizen, then you are required to vote”\?$/.test(duty.why),
+        'nor a duty done: "you must vote" asks which is meant -- what follows, or what is required, among the rest (r27.179)', J(duty));
     const sh = step(['If Socrates is a man, then Socrates should be mortal.', 'Socrates is a man.'], 'Socrates is mortal.');
     ok(!sh.rule && !sh.rows.some(r => /^\[ok\]/.test(r)), '"should" as before: "it should be here by now" does not say that it is', J(sh));
 }

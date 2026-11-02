@@ -450,6 +450,40 @@ console.log('\n-- 8. "Ask which modality is meant": off unless a map switches it
         'the Logic panel: "Ask which modality is meant" first under Modal logic, off by default, with what on and off do; it switches on and off', J(panel));
 }
 
+console.log('\n-- 9. "must": which is meant --');
+{
+    // r27.179 (the user, of "must", "might", "may" and "could": "However many
+    // readings are possible. If there are too many, we can give the option
+    // 'Other', which would encourage the user to rewrite it to avoid the
+    // ambiguity"; the mockup of "If Poe is a raven, then Poe must be black").
+    askModality = true; setModal(null);
+    const black = step(['Poe must be black.'], 'Al is happy.'), cond = step(['If Poe is a raven, then Poe must be black.'], 'Al is happy.');
+    ok(black.why === 'Did you mean “Poe is black”, “It is metaphysically necessary that Poe is black”, “It is logically necessary that Poe is black”, “It is physically necessary that Poe is black”, ' +
+            '“It has been established that Poe is black”, or “Poe is required to be black”?',
+        '"Poe must be black": what follows, what is necessary -- metaphysically, logically or physically -- what is known, or what is required', black.why);
+    ok(cond.why === 'Did you mean “If Poe is a raven, then Poe is black”, “It is logically necessary that if Poe is a raven, then Poe is black”, “If Poe is a raven, then it is metaphysically necessary that Poe is black”, ' +
+            '“If Poe is a raven, then it is logically necessary that Poe is black”, “If Poe is a raven, then it is physically necessary that Poe is black”, or “If Poe is a raven, then Poe is required to be black”?',
+        '"If Poe is a raven, then Poe must be black": asked of the whole, as the mockup had it -- what follows, that it is logically necessary that if ..., then ..., what is necessary if it holds, or what is required', cond.why);
+    const words = [step(['Poe must not fly.'], 'Al is happy.').why, step(['The ravens must be black.'], 'Al is happy.').why, step(['There must be a cause.'], 'Al is happy.').why,
+        step(['If you are a citizen, you must vote.'], 'Al is happy.').why];
+    ok(/^Did you mean “Poe does not fly”, “It is metaphysically necessary that Poe does not fly”, .+, or “Poe is required not to fly”\? “Poe must not fly\.”: "must not" is not read as a denial of "must": the two differ\.$/.test(words[0]) &&
+        /^Did you mean “The ravens are black”, .+, or “The ravens are required to be black”\?$/.test(words[1]) && /^Did you mean “There is a cause”, /.test(words[2]) &&
+        /^Did you mean “If you are a citizen, then you vote”, /.test(words[3]),
+        '"must not", each reading denied ("must not" no longer said to be unread); "the ravens are"; "there is a cause"; "if P, Q" asked of the whole as "if P, then Q" is', J(words));
+    ok(!/did you mean/i.test(step(['All ravens must be black.'], 'Al is happy.').why) && !/did you mean/i.test(step(['It must be that Poe is black.'], 'Al is happy.').why),
+        'not yet of a quantifier\'s "must" ("all ravens must be black": of each, or of the whole?), nor of "it must be that ..."');
+    // Each reading, written in, is read as it says.
+    ok(step(['If Poe is a raven, then Poe is black.', 'Poe is a raven.'], 'Poe is black.').rule === 'modus ponens' &&
+        key('It is logically necessary that if Poe is a raven, then Poe is black.') === '□logic(I(P:poe|=raven>P:poe|=black))'.replace(/poe/g, ev(`return claimKey(parseClaim('Poe is black.')).split('|')[0].slice(2);`)),
+        'each reading written in: "if Poe is a raven, then Poe is black", modus ponens; the logical necessity of the whole, one claim');
+    // Off, the default: where the answer decides the step.
+    askModality = false; setModal(null);
+    const off = { soc: step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'), mp: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe must be black.'),
+        plain: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe is black.') };
+    ok(off.soc.asks && /^Did you mean “Socrates is mortal”, /.test(off.soc.why) && off.mp.rule === 'modus ponens' && off.plain.asks && /^Did you mean “If Poe is a raven, then Poe is black”, /.test(off.plain.why),
+        'off: "so Socrates must be mortal" asks -- what follows gives the step, necessity does not; "must" in both boxes of a modus ponens follows as written; "so Poe is black" from "then Poe must be black" asks', J(off));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

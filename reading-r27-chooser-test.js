@@ -382,6 +382,27 @@ const J = JSON.stringify;
         forMary.box === 'Bob bought Mary a book and Al cried.' && forMary.after === '✓ conjunction elimination',
         '"for Mary" holds back even a step the words give, and asks; "Bob bought Mary a book" chosen, it is written in, and the step follows', J(forMary));
 
+    // r27.179 (the user: "If there are too many, we can give the option
+    // 'Other', which would encourage the user to rewrite it to avoid the
+    // ambiguity"): a question of five readings or more ends with "Other",
+    // which opens the box to be reworded.
+    const otherRow = T(W, `state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+        __c.load(${J(MAP('If Poe is a raven, then Poe must be black.', 'Al is happy.'))});
+        __c.tag('S').click();
+        var pop = __c.pop(), rows = pop ? [].slice.call(pop.querySelectorAll('.rc-row')) : [], last = rows[rows.length - 1];
+        var r = { rows: rows.length, other: last ? last.textContent : null, otherClass: last ? last.className : null, italic: last ? getComputedStyle(last).fontStyle === 'italic' : false };
+        if (last) { var radio = last.querySelector('input'); radio.checked = true; radio.dispatchEvent(new Event('change')); }
+        var host = document.querySelector('.node[data-node-id="S"][data-node-idx="0"]'), ed = host && host.querySelector('.box-editor');
+        r.closed = !__c.pop(); r.editing = !!ed && ed.style.display !== 'none' && document.activeElement === ed;
+        __c.load(${J(MAP('Poe can fly.', 'Al is happy.'))});
+        __c.tag('S').click();
+        var pop2 = __c.pop(); r.canRows = pop2 ? pop2.querySelectorAll('.rc-row').length : 0; r.canOther = pop2 ? pop2.querySelectorAll('.rc-other').length : -1;
+        closeReadingChooser(); state.logic = { base: 'standard', rules: {} };
+        return r;`);
+    ok(otherRow.rows === 7 && otherRow.other === 'Other: none of these. I will reword the box myself.' && /rc-other/.test(otherRow.otherClass) && otherRow.italic && otherRow.closed && otherRow.editing &&
+        otherRow.canRows === 3 && otherRow.canOther === 0,
+        'six readings of "must", then "Other: none of these. I will reword the box myself.", which closes the list and opens the box; not after three readings of "can" (r27.179)', J(otherRow));
+
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);
     W.dom.window.close();

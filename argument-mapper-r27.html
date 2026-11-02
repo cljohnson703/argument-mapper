@@ -1256,6 +1256,8 @@
     #reading-chooser .rc-row input { margin-top: 3px; flex-shrink: 0; }
     #reading-chooser .rc-row.rc-unfit { cursor: default; opacity: 0.75; }
     #reading-chooser .rc-own { display: block; font-size: 11px; color: #999; }
+    #reading-chooser .rc-other { font-style: italic; border-top: 1px dashed #777; margin-top: 6px; padding-top: 8px; }
+    body.bg-light #reading-chooser .rc-other { border-top-color: #bbb; }
     #reading-chooser .rc-apply { display: block; margin: 6px 0 2px auto; padding: 4px 10px; border-radius: 5px;
         border: 1px solid #666; background: #3a3a40; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
     #reading-chooser .rc-apply:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -2975,7 +2977,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-02 r27.178';
+    const APP_BUILD = '2026-11-02 r27.179';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13029,7 +13031,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             words = [first].concat(words.slice(1));
         } else if (CLAIM_VERB_MARKERS.has(first) && claimWord(words[1]) === 'not') {
             if (CLAIM_SCOPED_NOT.has(first)) {
-                claimUnread('"' + first + ' not" is not read as a denial of "' + first + '": the two differ, and the checker does not read "' + first + '" yet');
+                // "Must" is asked about (r27.179): only that the two differ.
+                claimUnread('"' + first + ' not" is not read as a denial of "' + first + '": the two differ' + (first === 'must' ? '' : ', and the checker does not read "' + first + '" yet'));
             } else {
                 negated = true;
                 words = [first].concat(words.slice(2));
@@ -14163,6 +14166,68 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // with the switch off, where the step is checked as written, the
             // "can" is not spread over the "or" (r27.175).
             (spread ? one || Object.assign(claimAtom(text), { src: text }) : form);
+    }
+    // "Poe must be black" (r27.179; the user, of "must", "might", "may" and
+    // "could": "However many readings are possible. If there are too many,
+    // we can give the option 'Other', which would encourage the user to
+    // rewrite it to avoid the ambiguity"): what follows -- "Poe is black" --
+    // what is necessary, metaphysically, logically or physically, what is
+    // known, or what is required. Asked as "possibly" is (claimModalMarks);
+    // unanswered, read as written, "must" a word of its verb (r27.97). Of a
+    // plain subject: "there must be a cause" -- not "all ravens must be
+    // black", whose "must" may be said of each or of the whole, nor "it must
+    // be that ...".
+    const CLAIM_MUST_PARTICIPLE = /^(?:been|had|done|gone|seen|known|flown|given|taken|made|said|[a-z]+(?:ed|en|wn))$/;
+    // A subject's "be": "the records in Otto's notebook are" (r27.169).
+    function claimSubjectBe(subj) {
+        const words = String(subj).split(' ');
+        const at = words.findIndex((x, i) => i > 0 && (CLAIM_PREPOSITIONS.has(claimWord(x)) || CLAIM_MORE_PREPOSITIONS.test(claimWord(x)) || /^(?:that|who|which|whom|whose)$/.test(claimWord(x))));
+        const last = words[at > 0 ? at - 1 : words.length - 1], head = claimWord(last);
+        return subj === 'i' ? 'am' : /^(?:we|you|they)$/.test(subj) ? 'are'
+            : !/^/.test(last) && (claimKnownPlural(head) || claimOpeningPlural(head)) ? 'are' : 'is';
+    }
+    // What "must" is said of, as a plain claim: "poe is black", "poe flies",
+    // "poe has flown"; denied, "poe is not black", "poe does not fly".
+    function claimMustClause(subj, vp, be, denied) {
+        const words = vp.split(' '), v = words[0], sg = be === 'is', after = words.length > 1 ? ' ' + words.slice(1).join(' ') : '';
+        const aux = v === 'be' || (v === 'have' && CLAIM_MUST_PARTICIPLE.test(words[1] || ''));
+        if (!denied) return subj + ' ' + (v === 'be' ? be : v === 'have' ? (sg ? 'has' : 'have') : v === 'do' ? (sg ? 'does' : 'do') : sg ? claimThirdPerson(v) : v) + after;
+        if (aux) return subj + ' ' + (v === 'be' ? be : sg ? 'has' : 'have') + ' not' + after;
+        return subj + ' ' + (sg ? 'does' : 'do') + ' not ' + vp;
+    }
+    const CLAIM_MUST_WHY = '"must" may say what follows, what is necessary (metaphysically, logically or physically), what is known, or what is required';
+    function claimMustParts(clause) {
+        const m = /^(.+?) must (not )?(.+)$/.exec(clause);
+        // Not over an "or" or "and" of verbs ("must fly or swim" has its own
+        // note), not yet.
+        if (!m || /\b(?:if|then|that|whether|and|or|but|not|must|it|all|every|each|some|no|any|most|many|few|several|both|either|neither)\b/.test(m[1]) || /\b(?:must|and|or|nor|but)\b/.test(m[3])) return null;
+        const subj = m[1], denied = !!m[2], vp = m[3], be = claimSubjectBe(subj);
+        return { subj, denied, vp, be, said: claimMustClause(subj, vp, be, denied), required: subj + ' ' + be + ' required ' + (denied ? 'not ' : '') + 'to ' + vp };
+    }
+    function claimMustQuestion(text) {
+        const p = claimMustParts(text);
+        if (!p) return null;
+        const labels = [p.said].concat(['metaphysically', 'logically', 'physically'].map(k => 'it is ' + k + ' necessary that ' + p.said),
+            ['it has been established that ' + p.said, p.required]);
+        return claimAmbiguous(CLAIM_MUST_WHY, labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
+            Object.assign(claimModalMarks(text), { must: true }, claimModalAsking() ? {} : { subject: 'must' }));
+    }
+    // "If Poe is a raven, then Poe must be black": asked of the whole, as the
+    // mockup had it -- what follows from the condition, that it is logically
+    // necessary that if it holds the rest does, what is necessary if it
+    // holds, or what is required. The "then" clause's own question goes.
+    function claimMustConditional(text, noteMark) {
+        const st = claimReadState, m = /^if (.+?)(?:,\s*then\s+|\s+then\s+|,\s+)(.+)$/.exec(text);
+        if (!m || !st || st.quiet) return null;
+        const at = st.notes.findIndex((n, i) => i >= noteMark && n.kind === 'ambiguous' && n.must);
+        const p = claimMustParts(m[2]);
+        if (at < 0 || !p) return null;
+        const cond = 'if ' + m[1] + ', then ';
+        const labels = [cond + p.said, 'it is logically necessary that ' + cond + p.said]
+            .concat(['metaphysically', 'logically', 'physically'].map(k => cond + 'it is ' + k + ' necessary that ' + p.said), [cond + p.required]);
+        st.notes.splice(at, 1);
+        return claimAmbiguous(CLAIM_MUST_WHY, labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
+            Object.assign(claimModalMarks(text), { must: true }, claimModalAsking() ? {} : { subject: 'must if' }));
     }
     // "We can conclude that P" read as what is possible for us: a predication
     // marked so (the "can" ab esse ad posse and "we do" speak to).
@@ -15548,6 +15613,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "Poe can fly or swim", "can" read over each: the same (r27.169).
         else if (!would && form && form.kind === 'or' && !form.iff && form.parts.length > 1 && form.parts.every(p => p.kind === 'pred' && !p.possible && /^~can /.test(p.prop) && p.term === form.parts[0].term) &&
             !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.canPlain))) form = claimPlainCan(String(text || '').trim(), form) || form;
+        // "Poe must be black": which "must" -- once (r27.179). "If ..., then
+        // Poe must be black": asked of the whole.
+        if (!would && form && form.kind === 'pred' && /^~must /.test(form.prop) &&
+            !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.must))) form = claimMustQuestion(String(text || '').trim()) || form;
+        else if (!would && form && form.kind === 'if' && !form.counterfactual && form.conds.length === 1 && form.cons && form.cons.kind === 'pred' && /^~must /.test(form.cons.prop))
+            form = claimMustConditional(String(text || '').trim(), noteMark) || form;
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
         return form;
@@ -34342,6 +34413,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // A question to choose among readings: two or more offered, and no typo
     // or slip of grammar, which are fixed, not chosen among (r27.166).
     const claimAskedChoice = a => !a.typo && !a.grammar && (a.offers || []).length >= 2;
+    // From so many readings, "Other" too (r27.179; the user: "If there are too
+    // many, we can give the option 'Other', which would encourage the user to
+    // rewrite it to avoid the ambiguity").
+    const CLAIM_OTHER_FROM = 5;
     // What a step asks, in a few words (r27.166; the user: "Did you mean:
     // ..."; "Don't overcomplicate instructions for the user"): each
     // question's readings as the box would say them, the box named where the
@@ -34707,6 +34782,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 row.appendChild(text);
                 pop.appendChild(row);
             });
+            // "Other": none of these -- the box opened, to be reworded (r27.179).
+            if (claimAskedChoice(entry) && entry.offers.length >= CLAIM_OTHER_FROM) {
+                const row = document.createElement('label'), radio = document.createElement('input'), text = document.createElement('span');
+                row.className = 'rc-row rc-other' + (where && !readOnly ? '' : ' rc-unfit');
+                radio.type = 'radio';
+                radio.name = 'rc-' + n;
+                radio.disabled = !where || readOnly;
+                radio.addEventListener('change', () => { closeReadingChooser(); editNodeText(where.id, where.idx); });
+                text.textContent = 'Other: none of these. I will reword the box myself.';
+                row.appendChild(radio);
+                row.appendChild(text);
+                pop.appendChild(row);
+            }
             if (!apply) return;
             apply.addEventListener('click', () => {
                 if (apply.disabled || !where || !apply.dataset.words || readOnly) return;

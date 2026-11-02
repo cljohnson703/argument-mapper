@@ -147,14 +147,18 @@ console.log('\n-- 4. two rules in one step --');
 console.log('\n-- 5. "must" read as written --');
 {
     // Taken as what follows, "must" is a modal step (the user, 2026-10-13): it
-    // is read as written, and the check says what the step would be without it.
+    // is read as written. Since r27.179 it asks which "must" is meant where
+    // the answer decides the step -- "Socrates is mortal", what follows, one
+    // of the readings -- and where it is not asked ("some Greeks must be
+    // mortal"), the check says what the step would be without it.
     const c = step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.');
-    ok(!c.rule && c.why === 'The premises give “Socrates is mortal” by universal modus ponens, but not “Socrates must be mortal”: the checker has no rules for “must” yet, as they belong to modal logic.',
-        'in a conclusion', J(c));
-    ok(/^With “If Socrates is a man, then he is mortal” for “If Socrates is a man, then he must be mortal”, the premises would give “Socrates is mortal” by modus ponens\. But the checker has no rules for “must” yet/.test(
+    ok(!c.rule && c.why === 'Did you mean “Socrates is mortal”, “It is metaphysically necessary that Socrates is mortal”, “It is logically necessary that Socrates is mortal”, ' +
+            '“It is physically necessary that Socrates is mortal”, “It has been established that Socrates is mortal”, or “Socrates is required to be mortal”?',
+        'in a conclusion: asked which "must" is meant (r27.179)', J(c));
+    ok(/^Did you mean “If Socrates is a man, then Socrates is mortal”, “It is logically necessary that if Socrates is a man, then Socrates is mortal”, /.test(
             step(['If Socrates is a man, then he must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why) &&
         /^The premises give “Some Greeks are mortal” by existential syllogism, but not “Some Greeks must be mortal”/.test(step(['All men are mortal.', 'Some Greeks are men.'], 'Some Greeks must be mortal.').why),
-        'in a premise\'s consequent; after "some Greeks", "are"');
+        'in a premise\'s consequent, asked of the whole "if" (r27.179); after "some Greeks", "are", not asked, and said as before');
     const what = step(['Socrates is mortal.'], 'Socrates must be mortal.');
     ok(!what.rule && !/“must”/.test(what.why), 'not where taking it out leaves the premise said again ("what is, must be")', J(what));
     ok(!step(['If Socrates is a man, then he must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.').rule, 'and nothing is certified');

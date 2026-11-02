@@ -4,6 +4,41 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 2: "must" asks which is meant; "Other" (r27.179)
+
+The user, of "must", "might", "may" and "could": "However many readings are possible. If there are too many, we can give the option 'Other', which would encourage the user to rewrite it to avoid the ambiguity". The mockup asked of "If Poe is a raven, then Poe must be black", with six readings and "Other".
+
+* "Poe must be black" asks which "must" is meant: "Did you mean “Poe is black”, “It is metaphysically necessary that Poe is black”, “It is logically necessary that Poe is black”, “It is physically necessary that Poe is black”, “It has been established that Poe is black”, or “Poe is required to be black”?"
+  * The first reading is what follows: "must" marking a conclusion. It is never taken for the user. Taken as what follows unasked, "must" is a modal step (the user, 2026-10-13).
+* "If Poe is a raven, then Poe must be black" asks of the whole, as the mockup had it:
+  * “If Poe is a raven, then Poe is black”;
+  * “It is logically necessary that if Poe is a raven, then Poe is black”;
+  * “If Poe is a raven, then it is metaphysically necessary that Poe is black”, and so logically and physically;
+  * “If Poe is a raven, then Poe is required to be black”.
+  * "If you are a citizen, you must vote" is asked so too, each reading with "then".
+* Each reading is in the box's words: "Poe must not fly", "Poe does not fly" … "Poe is required not to fly"; "the ravens are black"; "there is a cause".
+* It is asked as "possibly" is (r27.175):
+  * with "Ask which modality is meant" on, every time;
+  * off, where the answer decides the step. "All men are mortal" and "Socrates is a man", so "Socrates must be mortal", asks: what follows gives the step, necessity does not. "Must" in both boxes of a modus ponens follows as written.
+  * Unanswered, "must" is read as it was (r27.97).
+* "Must not" is no longer said to be unread: only that it does not deny "must".
+* "Other": a question of five readings or more ends with "Other: none of these. I will reword the box myself." Choosing it closes the list and opens the box. It is set off by a dashed line, in italics, as in the mockup.
+* Not yet:
+  * a quantifier's "must", "all ravens must be black", which may be said of each or of the whole;
+  * "it must be that …";
+  * "must" over an "or" or an "and" of verbs, "must fly or swim";
+  * "might", "may" and "could".
+* Where "must" is not asked, the hint is as it was: "The premises give “Some Greeks are mortal” by existential syllogism, but not “Some Greeks must be mortal”".
+
+Tests:
+* modal-r27-test.js has 72 checks. Section 9 is new: six checks of "must", four of which fail on r27.178. The two that pass there are that a quantifier's "must" asks nothing yet, and that each reading, written in, is read as it says.
+* reading-r27-chooser-test.js has 41 checks; one is new, of "Other" (after six readings of "must", not after three of "can"), and it fails on r27.178.
+* hints-r27-test.js and locutions-r27-test.js: their checks of "must" now expect the question where the answer decides the step. Where it is not asked ("some Greeks", "it must be", "all men must"), they expect what they did.
+* Take-one-out: each of the 6 changes is caught, the "Other" row's style too.
+* 20 sentences in the corpus read differently, each with "must", each now asking which is meant.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 2: "Bob called Mary a taxi" asks, every time: a taxi called for Mary, or what Mary was called (r27.178)
 
 The user, of what Mary was called, written with the words in quotation marks, "Bob called Mary 'a taxi'": "Okay."
