@@ -339,9 +339,13 @@ const J = JSON.stringify;
         /“Poe is a good pianist\.” is ambiguous: a good pianist is a pianist, but need not be good, only good for a pianist\./.test(pianist.title),
         'a lone reading that is no sentence ("A pianist that is good") is not offered: the box is said to be ambiguous', J(pianist));
     const longer = asked('Ravens fly and crows sing.', 'Some raven flies.');
+    // r27.185: "crows" asks too -- "Ravens fly and crows generally sing", its
+    // reading in general, now reads back as two claims ("generally" had been
+    // taken for a verb, and the box read as one claim).
     ok(longer.tag === '? generic' && longer.chooser && !longer.unfit &&
-        J(longer.rows) === J(['All ravens fly and crows sing.', 'Some ravens fly and crows sing.', 'Most ravens fly and crows sing.', 'Ravens generally fly and crows sing.']),
-        'a generic inside a longer box: its four readings, each in place -- "in general" too, as "ravens generally fly" -- and each can be chosen', J(longer));
+        J(longer.rows) === J(['All ravens fly and crows sing.', 'Some ravens fly and crows sing.', 'Most ravens fly and crows sing.', 'Ravens generally fly and crows sing.',
+            'Ravens fly and all crows sing.', 'Ravens fly and some crows sing.', 'Ravens fly and most crows sing.', 'Ravens fly and crows generally sing.']),
+        'a generic inside a longer box: its four readings, each in place -- "in general" too, as "ravens generally fly" -- and each can be chosen; so for "crows", the second (r27.185)', J(longer));
     const general = T(W, `return [['Ravens generally fly.', 'Generally, ravens fly.'], ['A raven generally flies.', 'Generally, a raven flies.']].map(function (p) {
         var a = parseClaimFull(p[0]), b = parseClaimFull(p[1]);
         return claimKey(a.form) === claimKey(b.form) && JSON.stringify(a.notes.map(function (n) { return n.message; })) === JSON.stringify(b.notes.map(function (n) { return n.message; })); });`);
@@ -356,12 +360,11 @@ const J = JSON.stringify;
         __c.tag('S').click(); pop = __c.pop(); rows = [].slice.call(pop.querySelectorAll('.rc-row'));
         pick(1); pop.querySelector('.rc-apply').click();
         return { general: general, some: { box: __c.text('S'), tag: __c.tag('S').textContent } };`);
-    // r27.184: with Semantic mode on, "crows" asks too, every time -- where
-    // its readings can be written into the box: not beside "some ravens fly",
-    // where "crows generally sing" would make the whole box one claim.
+    // r27.184: with Semantic mode on, "crows" asks too, every time -- beside
+    // "some ravens fly" as well, since r27.185.
     ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? generic' &&
-        !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '✓ conjunction elimination',
-        'written in: "ravens generally fly" is one claim, and "crows" asks; "some ravens fly", it follows by conjunction elimination', J(written));
+        !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '? generic',
+        'written in: "ravens generally fly" is one claim, and "some ravens fly" is "some"; and "crows" asks, beside either (r27.185)', J(written));
     const back = T(W, `var t = 'If computer programs are only formal (syntactic), then computers lack semantics.';
         var n = parseClaimFull(t).notes.filter(function (x) { return x.generic; })[0];
         return claimReadingRoundTrips(Object.assign({ text: t }, n), 0, 'If all computer programs are only formal (syntactic), then computers lack semantics.');`);

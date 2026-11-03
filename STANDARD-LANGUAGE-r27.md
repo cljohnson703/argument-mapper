@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 3: an adverb before a verb is no verb (r27.185)
+
+The user, of "Some ravens fly and crows generally sing": "Adding 'generally' in front of 'crows sing' doesn't seem to turn two claims ('Some ravens fly AND crows sing') into one". It does not; the checker had made it one.
+
+* The check for an object two verbs may share ("Mary washes and dries the dishes") took the first word of the last part of an "and" for its verb. So in "Ravens fly and dogs generally bark" it took "generally" for a verb, and "bark" for what "fly" might take too. The box was read as one claim, and it asked whether "bark" went with "fly". So for "Mary sings and generally dances", "Poe flies and Bob apparently sings", and "typically", "normally". "Usually", "often" and "always" had passed only because the checker knows them as short words of their own.
+* An adverb before the verb is now passed over, and the verb after it is the verb:
+  * "Ravens fly and dogs generally bark": two claims, the second "generally, dogs bark".
+  * "Mary sings and generally dances": two claims.
+  * "Mary sings and generally dances the tango" asks whether "the tango" goes with "sings" too (it had asked whether "dances the tango" went with "generally").
+* So "crows" in "Ravens fly and crows sing" and "Some ravens fly and crows sing" is asked about with Semantic mode on (r27.184): its reading in general, "… and crows generally sing", now reads back as two claims, and can be offered. It had not been asked.
+
+Tests:
+* syntax-r27-test.js has 113 checks; the new one, of four boxes, fails on r27.184.
+* reading-r27-chooser-test.js: "Ravens fly and crows sing" now offers the four readings of "crows" after those of "ravens", and "Some ravens fly and crows sing" asks of "crows".
+* Take-one-out: the change is caught.
+* No sentence of the corpus reads differently. Of its 566 questions, 65 still cannot be offered (66 had not), most a plural with a pronoun after it ("Black ravens fly and they caw").
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 3: Semantic mode (r27.184)
 
 The user, of a semantic mode: "Every. Any time there is a semantic ambiguity, this thing triggers". Off, "it relies exactly on the content of what was written": "Poe can fly" no longer counts as "Poe is able to fly" ("That's right"), and "We can't conclude that P" no longer counts as "P has not been established" ("Correct"). On by default: "Sure". The mockup put it first in the Logic panel.

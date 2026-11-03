@@ -375,6 +375,15 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
         hall.notes[0].message === '"in the hall" may go with "sang" as well as "danced", or with "danced" alone' &&
         J(hall.notes[0].readings) === J(['mary sang, and danced, in the hall', 'mary sang, and mary danced in the hall']),
         'a place after two verbs is asked about -- with Semantic mode on, every time (r27.184); meanwhile the box says what both readings say', J(hall));
+    // r27.185 (the user, of "Some ravens fly and crows generally sing":
+    // "Adding 'generally' in front of 'crows sing' doesn't seem to turn two
+    // claims ... into one"): an adverb before the verb is no verb.
+    const adverb = ev(`return ['Ravens fly and dogs generally bark.', 'Mary sings and generally dances.', 'Poe flies and Bob apparently sings.', 'Mary sings and generally dances the tango.'].map(function (t) {
+        var r = parseClaimFull(t); return [claimKey(r.form).replace(/\\uE000/g, ''), r.notes.filter(function (n) { return n.kind === 'ambiguous' && / may go with /.test(n.message); }).map(function (n) { return n.message.replace(/\\uE000/g, ''); })]; });`);
+    ok(adverb[0][0] === 'C[P:ravens|~fly;A:generally, dogs bark]' && !adverb[0][1].length && adverb[1][0] === 'C[P:mary|~sing;P:mary|~generally dance]' && !adverb[1][1].length &&
+        adverb[2][0] === 'C[P:poe|~fly;A:apparently, bob sings]' && !adverb[2][1].length &&
+        J(adverb[3][1]) === J(['"the tango" may go with "sings" as well as "dances", or with "dances" alone']),
+        '"and dogs generally bark", "and generally dances", "and Bob apparently sings": two claims -- "generally" is no verb, nor "bark" its object (they had been one claim, asking whether "bark" went with "fly"); "and generally dances the tango" asks of "the tango"', J(adverb));
     ok(bakery.key === 'A:mary runs and bob owns the bakery' && bakery.notes.length === 1 &&
         J(bakery.notes[0].readings) === J(['mary runs, and bob owns, the bakery', 'mary runs, and bob owns the bakery']),
         'an object after two clauses is asked about, its readings in the user\'s commas', J(bakery));

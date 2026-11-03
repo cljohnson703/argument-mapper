@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-03 r27.184';
+    const APP_BUILD = '2026-11-03 r27.185';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -12611,6 +12611,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (/^(?:is|are|am|was|were|be|been|being|isn't|aren't|wasn't|weren't)$/.test(ws[0].w)) return null;
             g = claimSynGroupEnd(ws, 0);
         } else if (ws[0].closed) return null;
+        // An adverb before the verb ("generally barks"): the verb is the
+        // word after it (r27.185; "generally" had been taken for the verb,
+        // and its verb for what the verbs before it might take).
+        else if (ws[0].adv && !ws[0].verb) {
+            if (!ws[1] || !ws[1].verb || ws[1].closed || ws[1].adv) return null;
+            g = 2;
+        }
         const t0 = ws[g];
         // Words, not a symbol or a bracketed claim.
         if (!t0 || !/^\uE000?[a-z0-9]/i.test(last[g]) || last.slice(g).some(t => /[()[\]{}|]/.test(t))) return null;
