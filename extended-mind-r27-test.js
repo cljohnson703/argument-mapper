@@ -54,6 +54,12 @@ function ok(cond, label, detail) {
 }
 // A step's tag, its rule, what the check says of it, and its premises' colors
 // ("class: words", the words of one class run together).
+// Read exactly as written, nothing asked (r27.184: Semantic mode off): for
+// checks of what the words give, where a box may be read more than one way.
+const asWritten = f => {
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+};
 const step = (premises, conclusion, type) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: ${J(type || 'support')}, texts: ${J(premises)}, collapsed: [], children: [] } ] }];
@@ -87,20 +93,18 @@ console.log('\n-- 1. a clause cut short, inside a condition and after "it\'s not
     // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
     // etc., they need to specify the modality, and the checker should ask"):
     // "cannot perform" asks which is meant; the step, with its answer -- with
-    // "Ask which modality is meant" on (r27.175); off, the default, every
-    // reading gives the step, and it follows as written.
-    ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
+    // Semantic mode on, the default (r27.184); off, it follows as written.
+    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
     const asked = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");
     ok(asked.tag === '? ambiguous' && asked.why.indexOf("did you mean “If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs”, " +
             "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, ") > 0,
-        'as written, "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169), with the switch on', asked.why);
-    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-    const off = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
+        'as written, "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169), with Semantic mode on', asked.why);
+    const off = asWritten(() => step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
-        "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");
-    ok(off.rule === 'modus ponens', 'off, as written: modus ponens -- the step follows whichever "cannot" is meant (r27.175)', J(off));
+        "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs."));
+    ok(off.rule === 'modus ponens', 'off, as written: modus ponens -- "cannot" the same words in both boxes (r27.184)', J(off));
     const s = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.");
@@ -182,10 +186,10 @@ console.log('\n-- 4. "a subject ... that subject": any subject, said of the one 
         step([U, 'The records are not mental states of Otto.'], "The records are not a part of Otto's mind."),
         step([U, 'Mary is a subject.'], I)];
     ok(not.every(x => !x.rule), 'not of another subject, not under "some", not the converse, the other way round, or the antecedent denied', J(not.map(x => x.rule)));
-    const extra = step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
+    const extra = asWritten(() => step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
         "Non-occurrent beliefs within a subject's brain are mental states of that subject.",
         "Anything that plays the same causal/explanatory role as non-occurrent beliefs within a subject's brain plays the same causal/explanatory role as mental states of that subject."],
-        "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.");
+        "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto."));
     ok(!extra.rule && extra.why.startsWith('“Non-occurrent beliefs within a subject\'s brain are mental states of that subject” is not needed: the other premises give ' +
         '“The records in Otto\'s notebook play the same causal/explanatory role as mental states of Otto” by universal modus ponens, and a step uses every premise.'),
         'a premise the step does not use: said, with what the others give', extra.why);
@@ -207,11 +211,11 @@ console.log('\n-- 6. what the check says --');
         'All non-occurrent beliefs have to have the capacity to influence reasoning without being consciously recalled.'], 'Influencing reasoning is not a necessary function of non-occurrent beliefs.', 'rebuttal');
     ok(/‘influencing reasoning is a necessary function of non-occurrent beliefs’ differ: “fucntion” in one where the other has “function”\.$/.test(typo.why),
         'what a denial denies, in its own words: "is a necessary function" (it had been "influencing reasoning necessary function"), and the one word that differs', typo.why);
-    const mind = step(["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."],
-        "Minds don't extend into the world.", 'objection');
+    const mind = asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."],
+        "Minds don't extend into the world.", 'objection'));
     ok(mind.tag === '✗ spelled differently' && /^Worded the same way each time, the premises would give the denial of “Minds don't extend into the world” by modus ponens, but ‘the mind extends into the world’ and ‘minds extend into the world’ are worded differently\./.test(mind.why),
         '"the mind" and "minds": "Worded", not "Spelled", the same way', mind.why);
-    ok(step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of his mind."], "Minds don't extend into the world.", 'objection').rule === 'modus ponens',
+    ok(asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of his mind."], "Minds don't extend into the world.", 'objection').rule) === 'modus ponens',
         'so worded, the objection follows');
     // With "is able to" for "can", which asks which is meant (r27.169).
     const ob = step(['If the notebook is able to perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs.',
@@ -236,8 +240,8 @@ console.log('\n-- 6. what the check says --');
         'The notebook is able to perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.", 'objection');
     ok(can.rule === 'modus ponens' && can.colors[0].includes('ic-c ic-neg: are'),
         'an objection\'s "are" red in "are able" against "are not able", though "non-occurrent" is said in both (r27.118; "can" against "cannot" asks, r27.169)', J(can.colors[0]));
-    const syn = step(['Computer programs are only syntactical.', 'Syntactics is not sufficient for semantics.',
-        'If computer programs are only syntactical and syntax is not sufficient for semantics, then computers lack semantics.'], 'Computers lack semantics.');
+    const syn = asWritten(() => step(['Computer programs are only syntactical.', 'Syntactics is not sufficient for semantics.',
+        'If computer programs are only syntactical and syntax is not sufficient for semantics, then computers lack semantics.'], 'Computers lack semantics.'));
     ok(/‘syntactics is not sufficient for semantics’ and ‘syntax is not sufficient for semantics’ differ: “syntactics” in one where the other has “syntax”\.$/.test(syn.why),
         'a copula\'s number is no difference in words ("syntactics are" and "syntax is" differ in "syntactics" alone)', syn.why);
     const verdict = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ["Minds don't extend into the world."], collapsed: [], x: 0, y: 0, children: [
@@ -253,8 +257,8 @@ console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (
     // and it doesn't certify."
     const s = step(["If an AI system is reliably and routinely consulted by a student as part of the student's thinking process, then the AI system functions as a cognitive extension.",
         "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.');
-    const t = step(["Every AI system that is reliably and routinely consulted by a student as part of the student's thinking process functions as a cognitive extension.",
-        "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.');
+    const t = asWritten(() => step(["Every AI system that is reliably and routinely consulted by a student as part of the student's thinking process functions as a cognitive extension.",
+        "An AI system is reliably and routinely consulted by a student as part of the student's thinking process."], 'The AI system functions as a cognitive extension.'));
     // Since r27.145 "the AI system" is the one "an AI system" speaks of (the
     // user chose it over keeping "the" for one fixed thing): the step asks
     // what "an AI system" after "if" means, as it does with "they"; read as
@@ -264,13 +268,19 @@ console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (
     // "might steer less discerning individuals in the wrong direction"): the
     // question gives the readings, not the one the step follows on; answered
     // "every", it follows (the next check).
-    ok(s.tag === '? generic' && s.why.indexOf('Did you mean \u201cEvery AI system that is reliably and routinely consulted by a student as part of the student\'s thinking process ' +
+    // r27.184 (Semantic mode on, the default: "Any time there is a semantic
+    // ambiguity, this thing triggers"): "an AI system" in the second box is
+    // asked about too -- every one, some one, or in general.
+    ok(s.tag === '? generic' && s.why.indexOf('\u201cIf an AI system is reliably and routinely consulted by a student as part of the student\'s thinking process, then the AI system functions as a cognitive extension.\u201d: ' +
+        'did you mean \u201cEvery AI system that is reliably and routinely consulted by a student as part of the student\'s thinking process ' +
         'functions as a cognitive extension\u201d or \u201cGenerally, if an AI system is reliably and routinely consulted by a student as part of the student\'s thinking process, ' +
-        'then the AI system functions as a cognitive extension\u201d?') === 0 && !/follows by/.test(s.why),
-        'the step asks what "an AI system" after "if" means: "every AI system ..." or "generally, ..." -- not which the step follows on', J(s));
+        'then the AI system functions as a cognitive extension\u201d? \u201cAn AI system is reliably and routinely consulted by a student as part of the student\'s thinking process.\u201d: did you mean ' +
+        '\u201cEvery AI system is reliably and routinely consulted by a student as part of the student\'s thinking process\u201d, \u201cSome AI system is reliably and routinely consulted by a student as part of the student\'s thinking process\u201d, ' +
+        'or \u201cGenerally, an AI system is reliably and routinely consulted by a student as part of the student\'s thinking process\u201d?') === 0 && !/follows by/.test(s.why),
+        'the step asks what "an AI system" after "if" means: "every AI system ..." or "generally, ..." -- not which the step follows on; and, with Semantic mode on, what the second box\'s "an AI system" means (r27.184)', J(s));
     ok(t.rule === 'universal modus ponens' && J(t.colors) === J([["ic-k0: Every AI system that is reliably and routinely consulted by a student as part of the student's thinking process",
         'ic-c: functions as a cognitive extension', 'ic-rest: .'], ['ic-c: An AI system', "ic-k0: is reliably and routinely consulted by a student as part of the student's thinking process", 'ic-rest: .']]),
-        'answered "every": universal modus ponens; the kind meets what the premise says, and "An AI system" goes on as "the AI system"', J(t));
+        'answered "every", and read as written: universal modus ponens; the kind meets what the premise says, and "An AI system" goes on as "the AI system"', J(t));
     ok(key('Bob is reliably and routinely consulted.') === 'P:bob|=reliably and routinely consulted' && /^C\[/.test(key('Bob is happy and rich.')),
         '"is reliably and routinely consulted": adverbs joined, one part; "is happy and rich", two', key('Bob is reliably and routinely consulted.'));
     ok(ev(`return parseClaimFull('Seven is not even or odd.').notes.some(function (n) { return /"not" can deny the whole "or"/.test(n.message); });`),

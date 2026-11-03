@@ -37,6 +37,10 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// What the words give, read exactly as written (r27.184: Semantic mode
+// off): with it on, a box that may be read more than one way asks first,
+// and its step waits.
+ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -127,7 +131,7 @@ console.log('\n-- 3. hints --');
         'contraries taken for contradictories: said so', J(reversed));
     const lost = step(['Mary did not win the race.'], 'Mary lost the race.');
     ok(!lost.rule && /^‘win’ and ‘lose’ are contraries: one can be neither, so “Mary did not win the race” does not give “Mary lost the race”\.$/.test(lost.why), 'so of verbs', J(lost));
-    const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: {} }; setDeductiveRule('opposites', false);
+    const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: { semantic: false } }; setDeductiveRule('opposites', false);
         var r = __step(['Mary is unhappy.'], 'Mary is not happy.'); state.logic = was; claimRulesCache = null; return r;`);
     ok(!off.rule && off.why === 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give “Mary is not happy” by contraries ‘unhappy’ and ‘happy’.',
         'switched off in the Logic panel: the step is not taken, and the hint says what would take it', J(off));

@@ -4,6 +4,31 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 3: Semantic mode (r27.184)
+
+The user, of a semantic mode: "Every. Any time there is a semantic ambiguity, this thing triggers". Off, "it relies exactly on the content of what was written": "Poe can fly" no longer counts as "Poe is able to fly" ("That's right"), and "We can't conclude that P" no longer counts as "P has not been established" ("Correct"). On by default: "Sure". The mockup put it first in the Logic panel.
+
+* "Semantic mode" is the first row of the Logic panel, in bold, with "On: whatever can be read more than one way asks which is meant, every time. Off: each box is read exactly as written, and nothing is asked." It is on unless a map switches it off. It takes the place of "Ask which modality is meant" (r27.175), which is gone.
+* On, every question of two or more readings is asked, every time, and its step waits for the answer: a generic ("Ravens are black"), "a student" after "if", "can", "can't conclude", "must", "might", "necessarily", "possible", "for Mary", an object two verbs share ("Mary sings and loves Bob"), the past or the present after "would". It is asked where every reading gives the step too.
+  * A question is asked only where each of its readings can be written into the box and read back (r27.166). Else the box is read as it was, and said to be ambiguous where the step does not follow. "Some ravens fly and crows sing" does not ask about "crows": "crows generally sing" there would make the whole box one claim.
+  * A bare plural after a verb ("the same role as non-occurrent beliefs") is asked where the step turns on it, with the boxes' own questions, all at once.
+* Off, nothing is asked, and each box is read as written:
+  * "Poe can fly" is one claim, "can" a word of it, not "Poe is able to fly"; "Poe can't fly" is its denial. Its objects are as the reading has them: "Poe can not beat any player" denies "Poe can beat a player", not "Poe can beat any player".
+  * "We can't conclude that P" is not "P has not been established", so as a challenge it does not follow. "We can conclude that any machine …" beside it is its denial, "any" read as "every", as it is where nothing is asked of it.
+  * "Necessarily" beside "it is necessary that", "possibly" beside "it is possible that": one family of words; where the step follows on every kind, it follows. Not "might", "may", "could" or "must" beside them. "Zombies might exist" and "if it is possible that zombies exist, …" are, as written, two claims.
+  * Where another reading would give the step, the check says so: "On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading."
+  * A typo, a slip of grammar, or a word with nothing to point to is said either way.
+* The bare-challenge hint still offers "If we lack reasons to think that Poe is black, then we can't conclude that Poe is black". With Semantic mode on, those premises ask which "can't" is meant; off, they are not offered, since "we can't conclude" would not challenge.
+
+Tests:
+* modal-r27-test.js: section 8 is now "Semantic mode", 15 checks: on, every case asks; off, as written, with the hint; the panel; the switch. Sections 7, 9 and 10 read their steps as written where a generic or a modal word is not what they check.
+* 16 other suites changed: anaphora, colors (as written throughout), extended-mind, hints, language-qualifier, locutions, logic-basis, logic-english, logic-stress, named-claims, opposites, premise-links, reading-chooser, reference-arguments, rules-ordinary, syntax. Checks of what the words give now run with Semantic mode off; checks of questions expect them every time.
+* logic-r27-stress-test.js caught one unsound step on the way: off, "If Poe can not beat any player, then Poe is weak" and "Poe is not weak" had given "Poe can beat any player" by modus tollens. The claim is now built from its reading, which takes "any" after "not" as "a".
+* Take-one-out: each of the 22 changes in code is caught; the 23rd changes a comment.
+* With Semantic mode on, no sentence of the corpus reads differently: only whether it asks has changed. Off, 85 of 4542 read differently, each with "can", "can't" or "cannot".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 2: what has been established, and what we know: two readings (r27.183)
 
 The user, of "it has been established that …" and "we know that …": "I think these are two meanings that should be offered as disambiguations".

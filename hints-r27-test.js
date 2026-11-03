@@ -64,6 +64,12 @@ function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
     else { failed++; console.log('  ✗ FAIL: ' + label + (detail ? ' — ' + detail : '')); }
 }
+// Read exactly as written, nothing asked (r27.184: Semantic mode off): for
+// checks of what the words give, where a box may be read more than one way.
+const asWritten = f => {
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+};
 // A step's tag, its rule, and what the check says of it.
 const step = (premises, conclusion) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
@@ -267,7 +273,8 @@ console.log('\n-- 8. what the premises give (r27.99) --');
 
 console.log('\n-- 9. "must" in a premise (r27.99) --');
 {
-    const poe = step(['Poe must be black.'], 'Poe is black.');
+    // As written (r27.184: Semantic mode off); on, "must" asks which is meant (r27.179).
+    const poe = asWritten(() => step(['Poe must be black.'], 'Poe is black.'));
     ok(!poe.rule && poe.why === 'Getting from “Poe must be black” to “Poe is black” takes a rule for “must”, and the checker has none yet: such rules belong to modal logic.',
         '"Poe must be black" to "Poe is black": the step takes a rule for "must"', J(poe));
     ok(step(['All ravens must be black.'], 'All ravens are black.').why ===
@@ -360,8 +367,9 @@ console.log('\n-- 11. what someone knows, shows or believes (r27.100) --');
         'With “All men are mortal” for “Everyone agrees that all men are mortal”, the premises would give “Socrates is mortal” by universal modus ponens. ' +
         'But “Everyone agrees that all men are mortal” does not give “All men are mortal”: what is agreed on can be false.', '"everyone agrees that": what is agreed on can be false');
     ok(step(['Mary believes that God exists.'], 'God exists.').why === '“Mary believes that God exists” does not give “God exists”: what is believed can be false.' &&
+        // "Studies", a generic, asks with Semantic mode on (r27.184): as written.
         ['We know that God exists.', 'Studies have shown that smoking causes cancer.', 'It is known that God exists.'].every((t, i) =>
-            step([t], i === 1 ? 'Smoking causes cancer.' : 'God exists.').rule === 'factive verbs'),
+            asWritten(() => step([t], i === 1 ? 'Smoking causes cancer.' : 'God exists.').rule) === 'factive verbs'),
         'from the claim alone: "believes" gives nothing; "know", "have shown", "it is known" give it, by factive verbs');
     ok(!step(['Mary believes that God exists.'], 'God exists.').rule && !step(['We know that all men are mortal.', 'Socrates is a man.'], 'Socrates is mortal.').rule,
         'and what is believed, or a step of two, is not certified');

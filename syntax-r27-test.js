@@ -40,6 +40,12 @@ function ok(cond, label, detail) {
 // A sentence's subject and the rest, as the phrases have it: "[the black raven] left".
 const split = t => ev(`var b = claimSynBrackets(normalizeClaimText(${J(t)})); return b && b.replace(/\\uE000/g, '');`);
 const key = t => ev('var f = parseClaim(' + J(t) + '); return f ? claimKey(f).replace(/\\uE000/g, "") : null;');
+// Read exactly as written, nothing asked (r27.184: Semantic mode off): for
+// checks of what the words give, where a box may be read more than one way.
+const asWritten = f => {
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+};
 const clause = t => ev('return claimLooksLikeClause(normalizeClaimText(' + J(t) + '));');
 
 console.log('\n-- words --');
@@ -161,10 +167,10 @@ console.log('\n-- joins inside an object, "some", longer subjects (r27.61) --');
     // clause after it, are inside the verb's object: nothing is split there.
     const said = 'We do not have widely accepted, or independently motivated, reasons that a series of lights and circuits cannot produce thought.';
     ok(key(said) === 'N(P:we|~have widely accepted or independently motivated reasons that series of lights and circuits can not produce thought)' &&
-        ev(`var trees = [{ id: 'M', type: 'contention', texts: ['We cannot conclude that a series of lights and circuits cannot produce thought.'], collapsed: [], children: [
+        asWritten(() => ev(`var trees = [{ id: 'M', type: 'contention', texts: ['We cannot conclude that a series of lights and circuits cannot produce thought.'], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ['If ' + ${J(said)}.charAt(0).toLowerCase() + ${J(said)}.slice(1, -1) + ', then we cannot conclude that a series of lights and circuits cannot produce thought.', ${J(said)}], collapsed: [], children: [] }] }];
-            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`) === '\u2713 modus ponens',
-        '"do not have widely accepted, or independently motivated, reasons that ... lights and circuits ...": one denied claim; modus ponens with it certifies');
+            return deductiveStepTagText(collectDeductiveSteps(trees)[0]);`)) === '\u2713 modus ponens',
+        '"do not have widely accepted, or independently motivated, reasons that ... lights and circuits ...": one denied claim; modus ponens with it certifies, read as written ("cannot conclude" asks with Semantic mode on)');
     ok(key('Some ravens and crows are black.') === 'C[E:=raven|=black;E:=crow|=black]' &&
         key('Some ravens or crows are black.') === 'D[E:=raven|=black;E:=crow|=black]' &&
         key('The raven that Mary saw and the crow flew.') === 'C[P:the raven that mary saw|~did flew;P:the crow|~did flew]',
@@ -287,10 +293,12 @@ console.log('\n-- an object that may be shared (r27.64) --');
         every(['Mary sings and loves Bob.'], 'Mary sings.') === null && every(['Mary sang and wrote a song.'], 'Mary sang.') === null,
         'a step that follows on every reading is certified, none chosen ("so Mary loves Bob"); one that follows on only one waits for the answer ("so Mary sings")');
     const tag = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
-        var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, tag: deductiveStepTagText(st), asked: (st.why && st.why.ambiguous || []).map(function (a) { return a.readings.length; }) } : null;`);
+        var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, tag: deductiveStepTagText(st), asked: (st.why && st.why.ambiguous || []).map(function (a) { return a.readings.length; }), why: st.why ? st.why.text : '' } : null;`);
     const yes = tag(['Mary sings and loves Bob.'], 'Mary loves Bob.'), wait = tag(['Mary sings and loves Bob.'], 'Mary sings.');
-    ok(yes && yes.rule === 'conjunction elimination' && wait && !wait.rule && J(wait.asked) === '[2]',
-        'on the map: "so Mary loves Bob" is certified; "so Mary sings" offers the two readings', J([yes, wait]));
+    const yesOff = asWritten(() => tag(['Mary sings and loves Bob.'], 'Mary loves Bob.')), waitOff = asWritten(() => tag(['Mary sings and loves Bob.'], 'Mary sings.'));
+    ok(yes && !yes.rule && J(yes.asked) === '[2]' && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
+        waitOff.why === 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
+        'on the map, with Semantic mode on, "so Mary loves Bob" and "so Mary sings" each offer the two readings, every time (r27.184); as written, "so Mary loves Bob" is certified -- it follows on every reading -- and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
 }
 
 console.log('\n-- misreadings found beside it (r27.64) --');
@@ -363,10 +371,10 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
         key('Mary is kind, and she is loyal to Bob.') === 'C[P:mary|=kind;P:mary|=loyal to bob]',
         'two clauses, each with its subject, read the last alone, as the user wrote it ("Mary washes, and she dries the dishes")');
     const hall = asked('Mary sang and danced in the hall.'), bakery = asked('Mary runs and Bob owns the bakery.');
-    ok(hall.key === 'C[P:mary|~did sang;P:mary|~did danced in the hall]' && hall.notes.length === 1 && !hall.notes[0].always &&
+    ok(hall.key === 'C[P:mary|~did sang;P:mary|~did danced in the hall]' && hall.notes.length === 1 && hall.notes[0].always &&
         hall.notes[0].message === '"in the hall" may go with "sang" as well as "danced", or with "danced" alone' &&
         J(hall.notes[0].readings) === J(['mary sang, and danced, in the hall', 'mary sang, and mary danced in the hall']),
-        'a place after two verbs is asked about, when a step needs it; meanwhile the box says what both readings say', J(hall));
+        'a place after two verbs is asked about -- with Semantic mode on, every time (r27.184); meanwhile the box says what both readings say', J(hall));
     ok(bakery.key === 'A:mary runs and bob owns the bakery' && bakery.notes.length === 1 &&
         J(bakery.notes[0].readings) === J(['mary runs, and bob owns, the bakery', 'mary runs, and bob owns the bakery']),
         'an object after two clauses is asked about, its readings in the user\'s commas', J(bakery));
@@ -381,10 +389,11 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
     const sang = tag(['Mary sang and danced in the hall.'], 'Mary sang.'), inHall = tag(['Mary sang and danced in the hall.'], 'Mary sang in the hall.');
     const risky = tag(['If Mary sang and danced in the hall, then the party was fun.', 'Mary sang, and Mary danced in the hall.'], 'The party was fun.');
     const owns = tag(['Mary runs and Bob owns the bakery.'], 'Bob owns the bakery.'), runs = tag(['Mary runs and Bob owns the bakery.'], 'Mary runs.');
-    ok(sang && sang.rule === 'conjunction elimination' && inHall && !inHall.rule && J(inHall.asked) === '[2]' && risky && !risky.rule && J(risky.asked) === '[2]',
-        'on the map: "so Mary sang" passes; "so Mary sang in the hall" asks; the "if" step that needs the hall for "danced" only asks, not passes', J([sang, inHall, risky]));
-    ok(owns && owns.rule === 'conjunction elimination' && runs && !runs.rule && J(runs.asked) === '[2]',
-        '"so Bob owns the bakery" passes on every reading; "so Mary runs" asks', J([owns, runs]));
+    const sangOff = asWritten(() => tag(['Mary sang and danced in the hall.'], 'Mary sang.')), ownsOff = asWritten(() => tag(['Mary runs and Bob owns the bakery.'], 'Bob owns the bakery.'));
+    ok(sang && !sang.rule && J(sang.asked) === '[2]' && inHall && !inHall.rule && J(inHall.asked) === '[2]' && risky && !risky.rule && J(risky.asked) === '[2]' && sangOff && sangOff.rule === 'conjunction elimination',
+        'on the map, with Semantic mode on, "so Mary sang", "so Mary sang in the hall" and the "if" step that needs the hall for "danced" each ask, every time (r27.184); as written, "so Mary sang" passes', J([sang, inHall, risky, sangOff]));
+    ok(owns && !owns.rule && J(owns.asked) === '[2]' && runs && !runs.rule && J(runs.asked) === '[2]' && ownsOff && ownsOff.rule === 'conjunction elimination',
+        '"so Bob owns the bakery" and "so Mary runs" ask, with Semantic mode on; as written, "so Bob owns the bakery" passes on every reading', J([owns, runs, ownsOff]));
     const back = ev(`return ['Mary sang and danced in the hall.', 'Mary runs and Bob owns the bakery.', 'Mary washes and dries the dishes.', 'Mary arrived and left Monday.',
         'Mary washes, and dries the dishes.'].map(function (t) {
         var n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
@@ -545,9 +554,11 @@ console.log('\n-- "-able" words (r27.65) --');
     const asked = [tag(['We can conceive of zombies.'], 'Zombies are conceivable.'), tag(['Zombies can be conceived.'], 'Zombies are conceivable.')];
     ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cIt is possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
         '"we can conceive of zombies", "zombies can be conceived": which "can" is asked (r27.169)', J(asked));
-    const yes = [tag(['We are able to conceive of zombies.'], 'Zombies are conceivable.'), tag(['We are able to conceive of zombies.'], 'Zombies are able to be conceived.'),
+    // As written (r27.184): "zombies are able to be conceived", a generic,
+    // asks with Semantic mode on.
+    const yes = asWritten(() => [tag(['We are able to conceive of zombies.'], 'Zombies are conceivable.'), tag(['We are able to conceive of zombies.'], 'Zombies are able to be conceived.'),
         tag(['Zombies are able to be conceived.'], 'Zombies are conceivable.'), tag(['Mary is able to prove the theorem.'], 'The theorem is provable.'),
-        tag(['It is possible for us to conceive of zombies.'], 'Zombies are conceivable.')];
+        tag(['It is possible for us to conceive of zombies.'], 'Zombies are conceivable.')]);
     ok(yes.every(r => r && r.rule === 'meaning of \u2018-able\u2019'),
         '"we are able to conceive of zombies" gives "zombies are conceivable" and "zombies are able to be conceived", by the meaning of "-able"; so "provable"; so "it is possible for us to conceive"', J(yes));
     const no = [tag(['Zombies are conceivable.'], 'We are able to conceive of zombies.'), tag(['We are not able to conceive of zombies.'], 'Zombies are not conceivable.'),
@@ -599,10 +610,10 @@ console.log('\n-- adjectives before a plural (r27.102) --');
     const denies = ev(`var a = parseClaim('Pre-linguistic humans lack minds.'), b = parseClaim("Pre-linguistic humans don't lack minds.");
         return [claimDenies(a, b), claimDenies(b, a)];`);
     ok(J(denies) === J([true, true]), '"Pre-linguistic humans don\'t lack minds" denies "Pre-linguistic humans lack minds", and the other way', J(denies));
-    const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Pre-linguistic humans lack minds.'], collapsed: [], children: [{ id: 'O', type: 'objection',
+    const step = asWritten(() => ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Pre-linguistic humans lack minds.'], collapsed: [], children: [{ id: 'O', type: 'objection',
         texts: ["If babies think, then pre-linguistic humans don't lack minds.", 'Babies think.'], collapsed: [], children: [] }] }];
-        var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null;`);
-    ok(step === 'modus ponens', 'so an objection that gives the denial is certified', J(step));
+        var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null;`));
+    ok(step === 'modus ponens', 'so an objection that gives the denial is certified, read as written', J(step));
     // Found beside it: "Free will exists" had been "[free] will exists".
     const will = [
         ['Free will exists.', '[free will] exists'],
@@ -759,11 +770,12 @@ console.log('\n-- a clause after "after", "before", "as" (r27.128) --');
         step(['The dog left after Bob arrived.'], 'Something arrived.') === '? ambiguous' &&
         step(['Every dog left after Bob arrived.', 'Rex is a dog.'], 'Rex left after Bob arrived.') === '? ambiguous',
         'where a step turns on the grouping, it waits for the answer');
-    ok(step(['Every dog left after Bob arrived.', 'Rex is a dog left after Bob.'], 'Rex arrived.') === '? not recognized',
-        'unanswered, it is read as its first reading says, word for word: nothing follows from a third way of reading it');
-    ok(step(['The dog left after Bob arrived.', 'If the dog left after Bob arrived, then Al cried.'], 'Al cried.') === '✓ modus ponens' &&
+    ok(asWritten(() => step(['Every dog left after Bob arrived.', 'Rex is a dog left after Bob.'], 'Rex arrived.')) === '? not recognized',
+        'read as written, it is read as its first reading says, word for word: nothing follows from a third way of reading it');
+    ok(asWritten(() => step(['The dog left after Bob arrived.', 'If the dog left after Bob arrived, then Al cried.'], 'Al cried.')) === '✓ modus ponens' &&
+        step(['The dog left after Bob arrived.', 'If the dog left after Bob arrived, then Al cried.'], 'Al cried.') === '? ambiguous' &&
         step(['The letters sent after the election arrived late.', 'Everything that arrived late was lost.'], 'The letters sent after the election were lost.') === '✓ universal modus ponens',
-        'a step that follows either way follows; "sent", with no object after it, says which letters are meant');
+        'a step that follows either way follows as written, and with Semantic mode on asks (r27.184); "sent", with no object after it, says which letters are meant');
 }
 
 console.log('\n-- "both" after a subject; "not only ... but also" (r27.131) --');

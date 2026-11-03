@@ -61,6 +61,9 @@ try{
     const zombieConditional="If at least one metaphysical framework in which zombies are not possible is not ruled out, then we can't conclude that zombies are metaphysically possible.";
     const owner=n('Z','weak-rebuttal',claim),sources=n('ZS','support',[zombieConditional,premise]);
     owner.crossRefs=[[arg('ZA','weak-rebuttal',[],[ref('ZS',0),ref('ZS',1)])]];
+    // Read as written (r27.184: Semantic mode off): with it on, "we can't
+    // conclude" asks which is meant, in both boxes.
+    state.logic={base:'standard',rules:{semantic:false}};deductiveCache.clear();
     state.trees=[owner,sources];r=read(state.trees);
     check(!r.steps[0].rule&&!r.steps[0].directSupportRule,'only the selected argument type is checked');
     render();openReferenceArguments('Z',0);check(document.querySelector('.reference-argument-result').textContent===deductiveStepTagText(r.steps[0])&&!document.querySelector('.reference-role-fix'),'ordinary result without alternative-type suggestion');
@@ -70,6 +73,7 @@ try{
     render();openReferenceArguments('Z',0);
     const referenceTag=document.querySelector('.reference-argument-result').textContent;
     check(referenceTag===deductiveStepTagText(read(state.trees).steps.find(st=>st.referenceArgument))&&!referenceTag.includes('unsettled'),'reference tag shows inference validity only');
+    state.logic={base:'standard',rules:{}};deductiveCache.clear();
     deductiveLive=false;
     const originalCollect=collectDeductiveSteps,originalVerdict=claimMapVerdict;let evaluations=0;
     collectDeductiveSteps=(...a)=>{evaluations++;return originalCollect(...a);};claimMapVerdict=(...a)=>{evaluations++;return originalVerdict(...a);};

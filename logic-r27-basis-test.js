@@ -43,6 +43,15 @@ const step = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', te
     { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
     var s = collectDeductiveSteps(trees)[0]; return { rule: s.rule ? s.rule.name : null, ambiguous: !!s.ambiguous, why: s.why ? s.why.text : '', restates: !!s.restates };`);
 const rule = (ps, c) => step(ps, c).rule;
+// Read exactly as written, nothing asked (r27.184: Semantic mode off), the
+// map's other rules kept: for checks of what the words give, where a box
+// may be read more than one way.
+const asWritten = f => {
+    ev(`window.__logic = state.logic ? JSON.parse(JSON.stringify(state.logic)) : null;
+        state.logic = Object.assign({ base: 'standard' }, state.logic || {}, { rules: Object.assign({}, (state.logic && state.logic.rules) || {}, { semantic: false }) });
+        claimRulesCache = null; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = window.__logic; claimRulesCache = null; deductiveCache.clear(); return 1;`); }
+};
 const thm = t => ev('var r = logicalTheorem(' + J(t) + '); return r ? r.rule.name : null;');
 const key = t => ev('var f = parseClaim(' + J(t) + '); return f ? claimKey(f) : null;');
 const fol = t => ev('var f = parseClaim(' + J(t) + '); var g = f && claimFolOf(f); return g ? symbolicText(g, {}) : null;');
@@ -579,9 +588,11 @@ try {
 
         // Conditions together, and the premises that give them (r27.45).
         // "Are able to" for "can", which asks which is meant (r27.169).
-        ok(rule(['Imagination is a non-physical event', 'Imaginary objects are able to cause people to feel fear',
+        // As written (r27.184): "imaginary objects", a generic, asks with
+        // Semantic mode on.
+        ok(asWritten(() => rule(['Imagination is a non-physical event', 'Imaginary objects are able to cause people to feel fear',
                 'If imaginary objects are able to cause people to feel fear and imagination is a non-physical event, then non-physical events are able to cause people to feel fear.'],
-                'Non-physical events are able to cause people to feel fear') === 'modus ponens, conditions together' &&
+                'Non-physical events are able to cause people to feel fear')) === 'modus ponens, conditions together' &&
             rule(['Poe is small and black', 'Fido sings', 'If Poe is black and small and Fido sings, then Rex flies'], 'Rex flies') === null,
             'a premise that the reader takes as two claims ("a non-physical event") gives its run of the conditions; in another order it does not');
         const tA = "Poe isn't overdetermined", tB = 'Poe has a physical cause', tC = 'Mary causes the effect', tD = 'Mary is physical';
@@ -893,17 +904,17 @@ try {
             J(slips('The ravens is black.')) === J([['The ravens are black.', 'The raven is black.']]) &&
             J(slips('A raven are black.')) === J([['A raven is black.', 'Ravens are black.']]),
             'names, relative clauses, verbs joined, nouns of both numbers and plural modifiers are no slips; a plural with "is" is');
-        // Generics are asked where the answer decides the step; a kind's
-        // predicate is not asked outright. "Can" asks which is meant, every
+        // Generics are asked -- with Semantic mode on, every time (r27.184); a
+        // kind's predicate is not asked outright. "Can" asks which is meant, every
         // time (r27.169; the user: "Any time someone writes, 'necessarily',
         // 'possibly', etc., they need to specify the modality, and the checker
         // should ask"); answered, the step follows.
         const gen = tagOf(['Mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria');
-        // With "Ask which modality is meant" on (r27.175); off, the default,
-        // both follow as written, whichever is meant.
-        const offLights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
-        const offZp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
-        ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
+        // With Semantic mode on, the default (r27.184); off, both follow as
+        // written: the same words in both boxes.
+        const offLights = asWritten(() => tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true'));
+        const offZp = asWritten(() => tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false'));
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
         const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
         // r27.172: "zombies are possible" asks which kind; said, it follows.
         const zp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
@@ -911,11 +922,10 @@ try {
             rule(['All mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria') === 'universal modus ponens' &&
             zp[0] === '? ambiguous' && rule(['If zombies are metaphysically possible, then physicalism is false', 'Zombies are metaphysically possible'], 'Physicalism is false') === 'modus ponens' &&
             lights[0] === '? ambiguous' && /did you mean “If functionalism is true, then a mere series of lights is able to produce consciousness”, “If functionalism is true, then it is possible for a mere series of lights to produce consciousness”, or /.test(lights[1]) &&
-            rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true') === 'modus tollens',
-            'a generic asks all, some or most where the answer decides the step; "zombies are possible" asks which kind (r27.172), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens', J([gen, lights, zp]));
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+            asWritten(() => rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true')) === 'modus tollens',
+            'a generic asks all, some or most; "zombies are possible" asks which kind (r27.172), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens ("a mere series", read as written)', J([gen, lights, zp]));
         ok(offLights[0] === '✓ modus tollens' && offZp[0] === '✓ modus ponens',
-            'with "Ask which modality is meant" off: "a series of lights can ..." and "zombies are possible" follow as written, whichever is meant (r27.175)', J([offLights, offZp]));
+            'with Semantic mode off: "a series of lights can ..." and "zombies are possible" follow as written -- the same words in both boxes (r27.184)', J([offLights, offZp]));
         // An indefinite in an if-clause asks, in whole sentences.
         const ifA = tagOf(['If a raven sings, it is black', 'Fido is a raven', 'Fido sings'], 'Fido is black');
         // r27.166: both readings read back -- "generally, ..." had come back as
@@ -928,11 +938,13 @@ try {
                 'return !!e && claimReadingRoundTrips({ text: "If a raven sings, it is black", site: e.site }, 0, "Every raven that sings is black.");'),
             'an indefinite in an if-clause asks: any one (every raven that sings is black), or in general -- and each answer reads back', J(ifA));
         // A conditional's "would" belongs to the "if".
-        ok(rule(['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], "Mary doesn't know everything") === 'modus tollens' &&
+        // As written (r27.184): "if God existed" asks, with Semantic mode on,
+        // whether it is now or in the past.
+        ok(asWritten(() => rule(['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], "Mary doesn't know everything") === 'modus tollens' &&
             rule(['If Mary had known everything, Mary would not be surprised', 'Mary is surprised'], "Mary didn't know everything") === 'modus tollens' &&
             rule(['If the vase had been dropped, the vase would have broken', 'The vase was dropped'], 'The vase broke') === 'modus ponens' &&
             rule(['If God existed, there would be no evil', 'There is evil'], 'God does not exist') === 'modus tollens' &&
-            rule(['Mary would not be surprised'], 'Mary is not surprised') === null,
+            rule(['Mary would not be surprised'], 'Mary is not surprised') === null),
             'a conditional\'s "would" belongs to the "if": modus tollens and ponens take the plain claims; "would" said alone stays', '');
         const past = tagOf(['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], "Mary didn't know everything");
         // r27.166: "if Mary knew everything now, ..." does not read back as the
@@ -974,9 +986,10 @@ try {
         // subject may be a noun compound, its predicate one that splits.
         const should = tagOf(['If Mary knew the facts, then Mary should not be surprised', 'Mary is surprised'], "Mary doesn't know the facts");
         ok(should[0] === '? not recognized' && /With “would” for “should”, the premises would give “Mary doesn.t know the facts” by modus tollens/.test(should[1]) &&
-            rule(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false') === 'modus ponens' &&
+            asWritten(() => rule(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false')) === 'modus ponens' &&
+            tagOf(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false')[0] === '? generic' &&
             tagOf(['Color sensations are non-physical events', 'Red is a color sensation'], 'Red is a non-physical event')[0] === '? generic',
-            '"should" is not "would" (and the diagnosis says so); a generic ("color sensations are ...") is asked where its answer decides the step, not in a modus ponens that holds on every answer', J(should));
+            '"should" is not "would" (and the diagnosis says so); a generic ("color sensations are ...") is asked, with Semantic mode on, in a modus ponens that holds on every answer too (r27.184); read as written, that one follows', J(should));
         // A box moved past its co-premises takes its branch -- a child with no
         // target of its own too (it stands on the first box).
         const moved = ev(`var node = { id: 'G', type: 'support', texts: ['A', 'B', 'C'], collapsed: [], children: [
@@ -1004,17 +1017,29 @@ try {
         // A weak objection that only says its box has not been established
         // is a bare challenge: no force. The premises its message offers
         // instead pass, and do challenge.
+        // With Semantic mode on, the default (r27.184), the offer's "can't
+        // conclude" asks which is meant; "we are not entitled to conclude"
+        // written in, they pass.
+        const entitled = ps => (ps || []).map(t => t.replace('we can\u2019t conclude', 'we are not entitled to conclude'));
         const bc = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection'), offer = offered(bc[1]);
         const bareMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', ['It has not been shown that Poe is black'])]);
-        const arguedMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', offer || [])]);
-        ok(bc[0] === '\u2717 bare challenge' && !!offer && tagOf(offer, 'Poe is black', 'weak-objection')[0] === '\u2713 modus ponens' &&
+        const arguedMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', entitled(offer))]);
+        ok(bc[0] === '\u2717 bare challenge' && !!offer && tagOf(offer, 'Poe is black', 'weak-objection')[0] === '? ambiguous' &&
+            tagOf(entitled(offer), 'Poe is black', 'weak-objection')[0] === '\u2713 modus ponens' &&
             verdictOf([bareMap]).status === 'asserted' && verdictOf([arguedMap]).status === 'unresolved',
-            'a bare challenge ("It has not been shown that P" alone) has no force; the premises it offers instead pass, and challenge', J([bc, offer]));
+            'a bare challenge ("It has not been shown that P" alone) has no force; the premises it offers ask which "can\'t" is meant (r27.184), and answered "not entitled", pass, and challenge', J([bc, offer]));
+        // Off (r27.184): "we can't conclude", as written, is not "not
+        // established", so the offer is not made -- it is checked first.
+        ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+        const bcOff = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection');
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ok(bcOff[0] === '\u2717 bare challenge' && bcOff[1].endsWith('A challenge needs reasons too: give them as its premises.'),
+            'with Semantic mode off, no premises are offered: "we can\'t conclude", read as written, would not challenge', J(bcOff));
         // For a conditional box, the offer says the box as it is, each "if"
         // with its own "then" (r27.93; it had been bracketed) -- and it passes.
         const cb = tagOf(['It has not been shown that if Poe is a raven, then Poe is black'], 'If Poe is a raven, then Poe is black', 'weak-objection'), coffer = offered(cb[1]);
         ok(cb[0] === '\u2717 bare challenge' && !!coffer && /think that if Poe is a raven, then Poe is black, then we can/.test(coffer[0]) &&
-            tagOf(coffer, 'If Poe is a raven, then Poe is black', 'weak-objection')[0] === '\u2713 modus ponens',
+            tagOf(entitled(coffer), 'If Poe is a raven, then Poe is black', 'weak-objection')[0] === '\u2713 modus ponens',
             'the offer is checked before it is made: a conditional box needs no brackets in it', J([cb, coffer]));
         // A bare step whose box is argued for below it is an argument through
         // that argument; alone it has no force.

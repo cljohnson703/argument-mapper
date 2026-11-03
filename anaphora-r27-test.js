@@ -51,6 +51,12 @@ const read = t => ev(`var r = parseClaimFull(${J(t)});
     return { said: claimShowForm(r.form), kind: r.form && r.form.kind, term: r.form && r.form.term || null,
         notes: r.notes.map(function (n) { return n.kind + ': ' + n.message; }) };`);
 // A step's tag, and, where it is asked about, the chooser's rows.
+// Read exactly as written, nothing asked (r27.184: Semantic mode off): for
+// checks of what the words give, where a box may be read more than one way.
+const asWritten = f => {
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+};
 const step = (premises, conclusion) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ${J(premises)}, collapsed: [], children: [] } ] }];
@@ -234,14 +240,12 @@ console.log('\n-- 9. a clause cut short --');
         '"did too", "so does", "neither did", "will too", "is too" after "is able to", "does too" after "has a car"');
     // r27.169 (the user: "Any time someone writes, 'necessarily', 'possibly',
     // etc., they need to specify the modality, and the checker should ask"):
-    // "can" asks which is meant, "Mary can too" with it -- with "Ask which
-    // modality is meant" on (r27.175); off, the default, it follows on every
-    // reading, and asks nothing.
-    ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
-    const tooOn = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
+    // "can" asks which is meant, "Mary can too" with it -- with Semantic mode
+    // on, the default (r27.184); off, as written, it follows.
     ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-    const tooOff = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
-    ok(tooOn === '? ambiguous' && tooOff === '✓ conjunction elimination', '"can too": "can" asks which is meant (r27.169), with the switch on; off, conjunction elimination (r27.175)', J([tooOn, tooOff]));
+    const tooOn = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
+    const tooOff = asWritten(() => step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag);
+    ok(tooOn === '? ambiguous' && tooOff === '✓ conjunction elimination', '"can too": "can" asks which is meant (r27.169), with Semantic mode on; off, as written, conjunction elimination (r27.184)', J([tooOn, tooOff]));
     ok(step(['Poe is black, but Fido is not.'], 'Fido is not black.').tag === '✓ conjunction elimination' &&
         step(["Poe is black, but Fido isn't."], 'Fido is not black.').tag === '✓ conjunction elimination',
         '"Fido is not", "Fido isn\'t"');
@@ -306,7 +310,7 @@ console.log('\n-- 12. "himself" --');
     ok(step(['Bob praises himself.'], 'Bob praises Bob.').tag === '✗ restates its box' &&
         step(['The teacher blames herself.'], 'The teacher blames the teacher.').tag === '✗ restates its box',
         'one claim, so a box that gives one as the other restates it');
-    ok(step(['Ravens love themselves.'], 'Ravens love ravens.').tag === '? not recognized' &&
+    ok(asWritten(() => step(['Ravens love themselves.'], 'Ravens love ravens.').tag) === '? not recognized' &&
         step(["Bob loves Bob's dog."], 'Bob loves himself.').tag === '? not recognized',
         'not of many ("ravens love ravens"), nor a possessive ("Bob\'s dog")');
 }
@@ -419,8 +423,8 @@ console.log('\n-- 18. "fake ones in it": in its own clause --');
     const own = read(IF);
     ok(/than fake experiences in the experience machine$/.test(own.said) && own.notes.some(n => /“it” as “the experience machine”/.test(n)) && !own.notes.some(n => /“it” may be/.test(n)),
         '"outside the experience machine ... fake ones in it": "it" is the experience machine, in its own clause -- not "the world", in the "if" before it', J(own));
-    ok(step([IF, 'We are unable to say what makes real experiences outside the experience machine more valuable than fake ones in it.'],
-        'Real experiences are not more valuable than fake ones in the world of the experience machine.').tag === '✓ modus tollens', 'so the step follows: modus tollens');
+    ok(asWritten(() => step([IF, 'We are unable to say what makes real experiences outside the experience machine more valuable than fake ones in it.'],
+        'Real experiences are not more valuable than fake ones in the world of the experience machine.').tag) === '✓ modus tollens', 'so the step follows, as written: modus tollens');
     // Not always (the user: "is it always the case that 'it' will always take
     // the container from its own clause?"): where the clause says the same
     // thing is outside it, it is asked (r27.110).

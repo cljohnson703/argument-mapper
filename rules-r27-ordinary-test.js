@@ -236,6 +236,18 @@ const step = (premises, conclusion, type) => ev('return __step(' + J(premises) +
 const misses = (cases, rule) => cases.map(([p, c]) => [p, c, step(p, c)]).filter(([, , r]) => !r || r.rule !== rule).map(([p, c, r]) => p.join(' / ') + ' ∴ ' + c + ': ' + (r && r.rule));
 // ... and those certified at all.
 const certified = cases => cases.map(([p, c]) => [p, c, step(p, c)]).filter(([, , r]) => r && r.rule).map(([p, c, r]) => p.join(' / ') + ' ∴ ' + c + ': ' + r.rule);
+// Read exactly as written, nothing asked (r27.184: Semantic mode off), the
+// map's other rules kept: for checks of what the words give, where a box
+// may be read more than one way.
+const asWritten = f => {
+    ev(`window.__logic = state.logic ? JSON.parse(JSON.stringify(state.logic)) : null;
+        state.logic = Object.assign({ base: 'standard' }, state.logic || {}, { rules: Object.assign({}, (state.logic && state.logic.rules) || {}, { semantic: false }) });
+        claimRulesCache = null; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = window.__logic; claimRulesCache = null; deductiveCache.clear(); return 1;`); }
+};
+// A step that asks (r27.184: with Semantic mode on, whatever may be read
+// more than one way asks, every time).
+const asks = (p, c) => { const r = step(p, c); return !!r && !r.rule && /(?:^|: )[Dd]id you mean /.test(r.why); };
 // With a rule switched off.
 const without = (id, f) => { ev('setDeductiveRule(' + J(id) + ', false); return 1;'); try { return f(); } finally { ev('setDeductiveRule(' + J(id) + ', true); return 1;'); } };
 
@@ -489,8 +501,9 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
     const GLAD = [[['Bob is glad that Mary left.'], 'Bob is glad.'], [['Bob was glad that Mary left.'], 'Bob was glad.'],
         [['The man is grateful that Mary came.'], 'The man is grateful.'], [['Bob might be relieved that Mary left.'], 'Bob might be relieved.'],
         [['Bob is very glad that Mary left.'], 'Bob is very glad.']];
-    ok(!misses(GLAD, 'dropping a \u2018that\u2019 clause').length, '"Bob is glad that Mary left" gives "Bob is glad", in any tense, after "might be" too (it had not)',
-        J(misses(GLAD, 'dropping a \u2018that\u2019 clause')));
+    // As written (r27.184): "might" asks which is meant, with Semantic mode on.
+    ok(!asWritten(() => misses(GLAD, 'dropping a \u2018that\u2019 clause')).length, '"Bob is glad that Mary left" gives "Bob is glad", in any tense, after "might be" too (it had not)',
+        J(asWritten(() => misses(GLAD, 'dropping a \u2018that\u2019 clause'))));
     ok(step(['Bob is glad that Mary left.'], 'Mary left.').rule === 'factive verbs', '... and still gives "Mary left", by factive verbs');
     const NOT = [[['Bob is not glad that Mary left.'], 'Bob is not glad.'], [['Bob is glad.'], 'Bob is glad that Mary left.'], [['Bob is glad that Mary left.'], 'Al is glad.'],
         [['Bob believes that Mary left.'], 'Bob believes.'], [['Bob is certain that Mary left.'], 'Bob is certain.'], [['Bob is unaware that Mary left.'], 'Bob is unaware.'],
@@ -654,12 +667,15 @@ console.log('\n-- 19. (r27.145) "the student" is the one "a student" speaks of -
         'with Bob: the question "a student" after "if" asks, as it does for "they"; "every" written in, universal modus ponens', J(bob));
     const DEF = [[['Every student that cheats will be caught.', 'A student cheats.'], 'The student will be caught.'],
         [['Every AI system that is reliably and routinely consulted functions as a cognitive extension.', 'An AI system is reliably and routinely consulted.'], 'The AI system functions as a cognitive extension.']];
-    ok(!misses(DEF, 'universal modus ponens').length, 'a conclusion\'s "the student" is the one a premise\'s "a student" speaks of: universal modus ponens', J(misses(DEF, 'universal modus ponens')));
+    // As written (r27.184): "a student cheats" asks, with Semantic mode on,
+    // every one, some one, or in general.
+    ok(!asWritten(() => misses(DEF, 'universal modus ponens')).length && DEF.every(([p, c]) => asks(p, c)),
+        'a conclusion\'s "the student" is the one a premise\'s "a student" speaks of: universal modus ponens, read as written; with Semantic mode on, "a student cheats" asks', J(asWritten(() => misses(DEF, 'universal modus ponens'))));
     const NOT = [[['A dog barked.'], 'The dog bit Bob.'], [['A dog barked.', 'A dog slept.'], 'The dog barked.'],
         [['Every student that cheats will be caught.', 'A teacher cheats.'], 'The student will be caught.']];
     ok(!certified(NOT).length, 'not what the premise does not say; not with two dogs "the dog" could be; not another noun', J(certified(NOT)));
-    ok(step(['If a student cheats, the teacher will be angry.', 'A student cheats.'], 'The teacher will be angry.').rule === 'modus ponens',
-        '"the teacher" is not the student: modus ponens, as before');
+    ok(asWritten(() => step(['If a student cheats, the teacher will be angry.', 'A student cheats.'], 'The teacher will be angry.').rule) === 'modus ponens',
+        '"the teacher" is not the student: modus ponens, as before, read as written');
     const KIND = [[['Every tool that is used by a carpenter is sharp.', 'The saw is a tool that is used by a carpenter.'], 'The saw is sharp.'],
         [['Every tool that a carpenter uses is sharp.', 'The saw is a tool that a carpenter uses.'], 'The saw is sharp.'],
         [['Every AI system that is consulted by a student functions as an extension.', 'ChatGPT is an AI system that is consulted by a student.'], 'ChatGPT functions as an extension.']];
@@ -888,8 +904,9 @@ console.log('\n-- 27. (r27.153) active and passive; the indirect object --');
 console.log('\n-- 28. (r27.154) "most" and "in general" decided by "all" and "some" --');
 {
     const AND = [[['Ravens are birds and black.'], 'Ravens are black.'], [['Ravens are black and old.'], 'Ravens are black.'], [['Dogs bark and bite.'], 'Dogs bark.']];
-    ok(!misses(AND, 'conjunction elimination').length, 'half of an "and" said of ravens follows whatever "ravens" means: no question (it had asked, the check reading no "most" or "in general")',
-        J(misses(AND, 'conjunction elimination')));
+    ok(!asWritten(() => misses(AND, 'conjunction elimination')).length && AND.every(([p, c]) => asks(p, c)),
+        'half of an "and" said of ravens follows whatever "ravens" means, read as written; with Semantic mode on, "ravens" asks, every time (r27.184)',
+        J(asWritten(() => misses(AND, 'conjunction elimination'))));
     const poe = step(['Ravens are black.', 'Poe is a raven.'], 'Poe is black.');
     ok(!poe.rule && poe.why === 'Did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”?', 'where it follows on "all" only, it still asks', J(poe));
 }
@@ -936,8 +953,9 @@ console.log('\n-- 30. (r27.156) the four gaps --');
 console.log('\n-- 31. (r27.157) "most" from "all" and "some" only where that is sure --');
 {
     const SYL = [[['Ravens are birds.', 'Every bird is an animal.'], 'Ravens are animals.'], [['Ravens are birds.', 'No bird is a fish.'], 'Ravens are not fish.']];
-    ok(!misses(SYL, 'universal syllogism').length, 'sure to follow however "ravens" is read, the step follows, by its rule on "all" (it had been "not recognized")',
-        J(misses(SYL, 'universal syllogism')));
+    ok(!asWritten(() => misses(SYL, 'universal syllogism')).length && SYL.every(([p, c]) => asks(p, c)),
+        'sure to follow however "ravens" is read, the step follows as written, by its rule on "all" (it had been "not recognized"); with Semantic mode on, "ravens" asks (r27.184)',
+        J(asWritten(() => misses(SYL, 'universal syllogism'))));
     const pin = step(['Ravens are black.', 'Black ravens are big.'], 'Ravens are big.');
     ok(!pin.rule, '"ravens are black" and "black ravens are big" do not give "ravens are big": it follows on "all" and on "some", not on "most"', J(pin));
     const sure = ev(`var f = function (texts, boxes, all, some) {
@@ -1046,7 +1064,8 @@ console.log('\n-- 37. (r27.163) "no one is a student and a singer" is "no studen
 console.log('\n-- 38. (r27.164) the step tried on one raven nothing else names --');
 {
     const ONE = [[['Ravens are birds that chase ravens.'], 'Ravens are birds.'], [['Ravens that fly are birds and black.'], 'Ravens that fly are black.']];
-    ok(!misses(ONE, 'conjunction elimination').length, '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read (it had asked)', J(misses(ONE, 'conjunction elimination')));
+    ok(!asWritten(() => misses(ONE, 'conjunction elimination')).length && ONE.every(([p, c]) => asks(p, c)),
+        '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read, as written; with Semantic mode on, "ravens" asks (r27.184)', J(asWritten(() => misses(ONE, 'conjunction elimination'))));
     const two = step(['Ravens are black.', 'Ravens are big.'], 'Ravens are black and big.');
     ok(!two.rule && two.why.indexOf('“Ravens are black.”: did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”? ' +
         '“Ravens are big.”: did you mean “All ravens are big”, ') === 0, 'with the plural in two premises, it still asks, of each box', J(two));
@@ -1063,7 +1082,10 @@ console.log('\n-- 39. (r27.167) "for Mary": on whose behalf, or who is to have i
     ok(J(asked.map(a => [a.rule, a.why])) === J([
             [null, 'Did you mean “Bob bought a book on Mary\'s behalf” or “Bob bought Mary a book”?'],
             [null, 'Did you mean “Bob made a cake on Mary\'s behalf” or “Bob made a cake for Mary to have”?'],
-            [null, 'Did you mean “Students buy books on teachers\' behalf” or “Students buy teachers books”?'],
+            // With Semantic mode on, "students" asks too, in each box (r27.184).
+            [null, '“Students buy books for teachers.”: did you mean “Students buy books on teachers\' behalf” or “Students buy teachers books”? ' +
+                '“Students buy books for teachers.”: did you mean “All students buy books for teachers”, “Some students buy books for teachers”, “Most students buy books for teachers”, or “Generally, students buy books for teachers”? ' +
+                '“Students buy books.”: did you mean “All students buy books”, “Some students buy books”, “Most students buy books”, or “Generally, students buy books”?'],
             [null, 'Did you mean “Bob will buy a book on the teacher\'s behalf” or “Bob will buy the teacher a book”?']]),
         '"for" and a person after a verb of getting or making: "on Mary\'s behalf", or "Bob bought Mary a book" -- "made", "for Mary to have"', J(asked));
     const held = step(['Bob bought a book for Mary and Al cried.'], 'Al cried.');

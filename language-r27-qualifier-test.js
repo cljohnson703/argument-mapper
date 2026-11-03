@@ -378,19 +378,23 @@ try {
         // r27.169: "can't produce" asks which is meant; with an answer, the
         // words that differ are said as before -- with "Ask which modality is
         // meant" on (r27.175).
-        ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
         const asked = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
         ok(!asked.rule && /did you mean “If we don't possess .+, then we can't conclude that a mere series of flashing lights is not able to produce consciousness”, /.test(asked.why) &&
             /did you mean “If we don't possess .+, then we are not entitled to conclude that a mere series of flashing lights can't produce consciousness” or /.test(asked.why),
-            '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169), with the switch on -- and "we can\'t conclude" with it (r27.175)', asked.why);
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-        const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness, then we can't conclude that it is not possible for a mere series of flashing lights to produce consciousness.",
+            '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169), with Semantic mode on -- and "we can\'t conclude" with it (r27.184)', asked.why);
+        // Read as written (r27.184: Semantic mode off), where "we can't
+        // conclude" is not "not established" (the user: "Correct"): so worded
+        // "we are not entitled to conclude".
+        ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+        const s = step(["If we don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness, then we are not entitled to conclude that it is not possible for a mere series of flashing lights to produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that it is not possible for a mere series of flashing lights and control circuitry to produce consciousness."],
             "It is not possible for a mere series of flashing lights and control circuitry to produce consciousness.", 'weak-objection');
         ok(!s.rule && /Worded the same way each time, the premises would give .+ by modus ponens/.test(s.why) && /“and control circuitry” is in one and not the other/.test(s.why),
             'a step that would follow if two claims were worded alike says which words differ', s.why);
+        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
         ok(ev('var f = parseClaim("The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” is unsound."); return f.kind === "unsound" && f.from.length === 2;'),
             '"the argument with premises “A” and “B” is unsound" is about that argument');
         ok(step(['Zombies are not metaphysically possible.'], 'The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” to the conclusion that consciousness is non-physical is unsound.').rule === 'a false premise',

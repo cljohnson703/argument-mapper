@@ -112,6 +112,9 @@ const T = (W, body) => JSON.parse(W.win.eval(`JSON.stringify((function () { ${bo
     const W = makeWin('premise-links');
     await sleep(250);
     W.win.eval(HELPERS);
+    // What the words give, read exactly as written (r27.184: Semantic mode
+    // off): with it on, a box that may be read more than one way asks first.
+    W.win.eval("state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear();");
 
     console.log('\n-- (1) shown by the label the box has now --');
     {

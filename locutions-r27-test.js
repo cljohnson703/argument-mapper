@@ -69,6 +69,12 @@ const read = t => ev(`var r = parseClaimFull(${J(t)});
     return { said: claimShowForm(r.form).split(String.fromCharCode(57344)).join(''), kind: r.form && r.form.kind,
         asked: r.notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message; }),
         notes: r.notes.map(function (n) { return n.kind + ': ' + n.message; }) };`);
+// Read exactly as written, nothing asked (r27.184: Semantic mode off): for
+// checks of what the words give, where a box may be read more than one way.
+const asWritten = f => {
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+};
 // A step's tag, and, where it is asked about, the chooser's rows: [ok] for
 // a reading the box can be rewritten to in one click.
 const step = (premises, conclusion) => ev(`
@@ -178,8 +184,8 @@ console.log('\n-- 4. "must" read as written --');
         step(['Socrates must be mortal.', 'If Socrates is mortal, then Socrates is not a god.'], 'Socrates is not a god.')];
     ok(through.every(s => !s.rule && s.tag === '? ambiguous'),
         'so no step through it gives the plain claim, or "must" from it: each asks which "must" is meant (r27.179)', J(through.map(s => s.tag)));
-    ok(certifies(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates must be mortal.', 'modus ponens'),
-        'a step in its own words still follows');
+    ok(asWritten(() => certifies(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates must be mortal.', 'modus ponens')),
+        'a step in its own words still follows, read as written (r27.184: with Semantic mode on, "must" asks)');
     ok(refused(['Socrates is mortal.'], 'Socrates must be mortal.') && refused(['Socrates must be mortal.'], 'Socrates is necessarily mortal.'),
         'and nothing modal: not "what is, must be"');
     const duty = step(['If you are a citizen, you must vote.', 'You are a citizen.'], 'You vote.');

@@ -995,7 +995,7 @@ const HARD_CASES = [
     ['conjunction elimination', 'S', ['Poe is a raven and black'], 'Poe is black', 'noun and adjective joined'],
     ['no', 'S', ['Poe must fly or swim', 'It is not the case that Poe must fly'], 'Poe must swim', '"must" does not spread over "or"'],
     ['disjunctive syllogism', 'S', ['Poe must fly or Poe must swim', 'It is not the case that Poe must fly'], 'Poe must swim', '"must" written twice'],
-    ['amb', 'S', ['Poe can fly', 'Poe can swim'], 'Poe can fly and swim', '"can" over "and": each, or both together'],
+    ['amb', 'S', ['Poe can fly', 'Poe can swim'], 'Poe can fly and swim', '"can" over "and": each, or both together', 'ask'],
     ['conjunction elimination', 'S', ['Poe must fly and swim'], 'Poe must fly', '"must" spreads over "and"'],
     // r27.169: "can fly or swim" asks which "can"; answered, one claim -- what
     // one is able to do one or the other of, one need not be able to do
@@ -1014,7 +1014,7 @@ const HARD_CASES = [
     // r27.58 (the user: "Verbs alone, plural nouns"): a plural noun is said of each, unasked;
     // an adjective is still asked about.
     ['conjunction elimination', 'S', ['Poe and Fido are ravens'], 'Poe is a raven', '"X and Y are" + a plural noun: each'],
-    ['amb', 'S', ['Poe and Fido are tall'], 'Poe is tall', '"X and Y are" + an adjective: each, or together'],
+    ['amb', 'S', ['Poe and Fido are tall'], 'Poe is tall', '"X and Y are" + an adjective: each, or together', 'ask'],
     ['conjunction elimination', 'S', ['All ravens and crows are black'], 'All crows are black', 'nouns joined under "all"'],
     ['no', 'S', ['Some ravens and crows are black'], 'Crows are black', 'nouns joined under "some"'],
     ['conjunction elimination', 'S', ['No raven or crow is white'], 'No crow is white', 'nouns joined under "no"'],
@@ -1045,7 +1045,7 @@ const HARD_CASES = [
     ['modus tollens', 'S', ['If it had rained, then the match would have been cancelled', 'The match was not cancelled'], 'It did not rain', 'counterfactual modus tollens'],
     ['no', 'S', ['If it had rained, then the match would have been cancelled', 'It rained'], 'The match would have been cancelled', 'a "would" said alone is not what the conditional gives'],
     ['modus tollens', 'S', ['If God existed, there would be no evil', 'There is evil'], 'God does not exist', 'a present counterfactual: "existed" is the present'],
-    ['amb', 'S', ['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], 'Mary did not know everything', '... the past a reading, offered'],
+    ['amb', 'S', ['If Mary knew everything, Mary would not be surprised', 'Mary is surprised'], 'Mary did not know everything', '... the past a reading, offered', 'ask'],
     ['modus ponens', 'S', ['If Mary were rich, Mary would be happy', 'Mary is rich'], 'Mary is happy', '"were" is "is"'],
     ['no', 'S', ['Mary would not be surprised'], 'Mary is not surprised', 'said alone, "would" stays'],
     ['no', 'S', ['If it had rained and it had been cold, then it would have snowed'], 'If it had rained, then if it had been cold, then it would have snowed', 'counterfactuals do not export'],
@@ -1053,14 +1053,14 @@ const HARD_CASES = [
     ['no', 'S', ['If it would rain, then it would snow', 'If it would snow, then it would be cold'], 'If it would rain, then it would be cold', 'counterfactual hypothetical syllogism'],
 
     // ---- conditions after their claims ----
-    ['amb', 'S', ['It snows if it rains and it is cold'], 'It is cold', '"if" may take in "and"'],
+    ['amb', 'S', ['It snows if it rains and it is cold'], 'It is cold', '"if" may take in "and"', 'ask'],
     ['modus ponens', 'S', ['Not all crows are birds provided that Rex is white', 'Rex is white'], 'Not all crows are birds', '"not all" before a condition'],
     ['modus ponens', 'S', ['Rex is white or old only if some crows are old', 'Rex is white or old'], 'Some crows are old', 'verb phrases joined before "only if"'],
     ['modus ponens', 'S', ['Only if it is warm, Poe flies', 'Poe flies'], 'It is warm', '"only if" in front'],
     ['biconditional elimination', 'S', ['Poe flies if, and only if, it is warm', 'It is warm'], 'Poe flies', '"if, and only if,"'],
-    ['amb', 'S', ['If it rains, then the ground is wet, and the match is off'], 'The match is off', '"and" after the comma'],
+    ['amb', 'S', ['If it rains, then the ground is wet, and the match is off'], 'The match is off', '"and" after the comma', 'ask'],
     ['modus ponens', 'S', ['If it rains, then the ground is wet and the match is off', 'It rains'], 'The ground is wet and the match is off', 'no comma: all consequent'],
-    ['amb', 'S', ['It is not the case that it rains or it snows'], 'It does not rain and it does not snow', '"it is not the case that" before an "or": all of it, or only its first part -- flagged'],
+    ['amb', 'S', ['It is not the case that it rains or it snows'], 'It does not rain and it does not snow', '"it is not the case that" before an "or": all of it, or only its first part -- flagged', 'ask'],
     ['De Morgan’s laws', 'S', ['It is not the case that either it rains or it snows'], 'It does not rain and it does not snow', '"either" says the denial takes in the "or"'],
     ['conjunction elimination', 'S', ['Poe thinks and is wise'], 'Poe is wise', 'verb phrases joined after a plain verb'],
     ['no', 'O', ['Not surprisingly, Poe is black'], 'Surprisingly, Poe is black', '"not surprisingly" denies nothing'],
@@ -1086,8 +1086,12 @@ const HARD_CASES = [
     // ---- weak objections: what has not been established ----
     // Alone, each only says that its box has not been established: a bare
     // challenge, no argument (the user, 2026-09-24).
-    ['bare', 'W', ['We cannot conclude that God exists'], 'God exists', '"we cannot conclude that"'],
-    ['bare', 'W', ["We can't conclude that God exists"], 'God exists', '"we can\'t conclude that"'],
+    // "We can't conclude": with Semantic mode on, which is meant is asked --
+    // "not entitled" (not established) or "impossible for us"; read as
+    // written, it is not "not established" (r27.184; the user: "Correct").
+    ['amb', 'W', ['We cannot conclude that God exists'], 'God exists', '"we cannot conclude that": asks which is meant', 'ask'],
+    ['amb', 'W', ["We can't conclude that God exists"], 'God exists', '"we can\'t conclude that": asks which is meant', 'ask'],
+    ['no', 'W', ["We can't conclude that God exists"], 'God exists', '"we can\'t conclude that", as written: not "not established"'],
     ['bare', 'W', ['It cannot be concluded that God exists'], 'God exists', '"it cannot be concluded that"'],
     ['bare', 'W', ['It does not follow that God exists'], 'God exists', '"it does not follow that"'],
     ['bare', 'W', ['There is no evidence that God exists'], 'God exists', '"there is no evidence that"'],
@@ -1149,10 +1153,14 @@ const HARD_CASES = [
     ["a premise not established","S",["It has not been shown that there is no infinite regress"],"We cannot conclude from the premises that everything has a cause and that there is no infinite regress that God exists","\"from the premises that P1 and that P2\""],
     ["a premise not established","S",["It has not been shown that there is no infinite regress"],"'Everything has a cause' and 'There is no infinite regress' do not show that God exists","\"P1 and P2 do not show that P\""],
     ["no","S",["It has not been shown that there is no infinite regress"],"God exists does not follow from 'Everything has a cause' and 'There is no infinite regress'","\"does not follow from\" says invalid"],
-    ["bare", "W",["We can't conclude that consciousness arises from the brain"],"Consciousness arises from the brain","a claim with \"from\" in it is not a claim about an argument"],
+    ["amb", "W",["We can't conclude that consciousness arises from the brain"],"Consciousness arises from the brain","a claim with \"from\" in it is not a claim about an argument: which \"can't\" is asked", 'ask'],
+    ["bare", "W",["We are not entitled to conclude that consciousness arises from the brain"],"Consciousness arises from the brain","a claim with \"from\" in it is not a claim about an argument"],
     ["no","O",["It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'"],"We can't conclude that God exists","denying a claim about one argument is no denial of the outright claim"],
     ["no","S",["If the universe is caused, then we can't conclude that God exists","It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'"],"The universe is not caused","modus tollens: a claim about one argument is not the outright claim it resembles"],
-    ['modus ponens', 'W', ['If the evidence is circumstantial, then we cannot conclude that Poe is guilty', 'The evidence is circumstantial'], 'Poe is guilty', 'derived by modus ponens'],
+    // With Semantic mode on, which "cannot" is meant is asked; as written,
+    // "we are not entitled to conclude" (r27.184).
+    ['amb', 'W', ['If the evidence is circumstantial, then we cannot conclude that Poe is guilty', 'The evidence is circumstantial'], 'Poe is guilty', 'derived by modus ponens: which "cannot" is asked', 'ask'],
+    ['modus ponens', 'W', ['If the evidence is circumstantial, then we are not entitled to conclude that Poe is guilty', 'The evidence is circumstantial'], 'Poe is guilty', 'derived by modus ponens, as written'],
     ['no', 'W', ['It has not been shown that it is not the case that it does not rain'], 'It rains', 'no rewriting inside "not shown"'],
     ['no', 'S', ['It has not been shown that God exists'], 'We cannot conclude that God exists', 'two ways of saying "not established" are different claims']
 ];
@@ -1256,10 +1264,14 @@ window.__stress = (function () {
     {
         const kinds = { S: 'support', O: 'objection', W: 'weak-objection' };
         const groups = new Map();
+        // Read as written, nothing asked (r27.184: Semantic mode off) -- but the
+        // cases marked 'ask', run with it on, the default, where whatever may
+        // be read more than one way asks.
+        const asWritten = "state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear();";
         HARD_CASES.forEach(([expect, kind, premises, parent, label, ask], i) => {
-            if (ask) W.dom.window.eval("state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear();");
+            W.dom.window.eval(ask ? "state.logic = null; deductiveCache.clear();" : asWritten);
             const s = app.step(premises, parent, kinds[kind]);
-            if (ask) W.dom.window.eval("state.logic = null; deductiveCache.clear();");
+            W.dom.window.eval("state.logic = null; deductiveCache.clear();");
             // An objection that only states its box's denial is a bare denial
             // -- no argument, but a "yes": it denies. A weak objection that only
             // says its box has not been established is a bare challenge.
@@ -1329,7 +1341,15 @@ window.__stress = (function () {
         ok(stats.unsound.length === 0, stats.steps + ' steps -- rule instances, their mutants, fallacies, objections -- and none certified that does not follow (' + stats.certified + ' certified)', sample(stats.unsound));
         ok(stats.incomplete.length === 0, stats.instances + ' instances of the rules, in every spelling, all certified', sample(stats.incomplete));
     }
+    // Its readings with Semantic mode on, the default -- unanswered, a box is
+    // read as it was -- and its steps as written (r27.184: Semantic mode
+    // off), where "Rex must fly" would ask.
     W.dom.window.eval('state.logic = null; claimRulesCache = null;');
+    const stepOn = app.step;
+    app.step = (p, c, k) => {
+        W.dom.window.eval("state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear();");
+        try { return stepOn(p, c, k); } finally { W.dom.window.eval('state.logic = null; deductiveCache.clear();'); }
+    };
 
     /* ---------------- 3. English at random ---------------- */
     console.log('\n-- English at random --');
@@ -1400,6 +1420,9 @@ window.__stress = (function () {
         ok(stats.incomplete.length === 0, stats.instances + ' instances of the rules in English, and the newer constructions, all certified', sample(stats.incomplete));
         ok(stats.wrong.length === 0, stats.expected + ' weak objections and counterfactual steps come out as they should', sample(stats.wrong));
     }
+
+    app.step = stepOn;
+    W.dom.window.eval('state.logic = null; claimRulesCache = null; deductiveCache.clear();');
 
     /* ---------------- 4. Derive Parent ---------------- */
     console.log('\n-- Derive Parent --');

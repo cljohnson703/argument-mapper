@@ -57,7 +57,7 @@ function ok(cond, label, detail) {
 // meant" on (r27.168-r27.172); section 8, off, the default (r27.175).
 let askModality = true;
 const setModal = axioms => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign(axioms ? Object.assign({ 'modal-meta': true },
-    ...['D', 'T', '4', 'B', '5'].map(a => ({ ['modal-meta-' + a]: axioms.includes(a) }))) : {}, askModality ? { 'modal-ask': true } : {}))} }; deductiveCache.clear(); return 1;`);
+    ...['D', 'T', '4', 'B', '5'].map(a => ({ ['modal-meta-' + a]: axioms.includes(a) }))) : {}, askModality ? {} : { semantic: false }))} }; deductiveCache.clear(); return 1;`);
 const key = t => ev(`return claimKey(parseClaim(${J(t)}));`);
 const step = (premises, conclusion, kind) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
@@ -373,18 +373,20 @@ console.log('\n-- 7. "would" and "could" --');
     const IF = 'If real experiences are not more valuable than fake ones in the world of the experience machine, then everyone would rationally choose to plug into the experience machine.';
     const R = 'Real experiences are not more valuable than fake ones in the world of the experience machine.';
     const S = 'Someone could rationally choose not to plug into the experience machine.';
-    setModal(null);
+    // As written (r27.184): "real experiences", a generic, would ask with
+    // Semantic mode on; it is the same in both boxes.
+    askModality = false; setModal(null);
     const on = attack([IF, R], S), mt = step(['If it rains, then Bob would choose to stay.', 'Bob could choose not to stay.'], 'It does not rain.');
     const same = [key('Everyone would decide to leave.') === key('No one could decide not to leave.'), key('Bob would choose to stay.') === key('It is not the case that Bob could choose not to stay.'),
         step(['If it rains, then Bob would choose to stay.', 'It rains.'], 'Bob could not choose not to stay.').rule === 'modus ponens'];
     ok(on === 'modus ponens' && mt.rule === 'modus tollens' && same.every(Boolean),
         '"everyone would rationally choose to plug in" denies "someone could rationally choose not to plug in": the objection follows by modus ponens; modus tollens with "could choose not to"; "everyone would decide to leave" is "no one could decide not to leave"',
         J([on, mt, same]));
-    ev(`state.logic = { base: 'standard', rules: { 'modal-would': false } }; deductiveCache.clear(); return 1;`);
+    ev(`state.logic = { base: 'standard', rules: { 'modal-would': false, semantic: false } }; deductiveCache.clear(); return 1;`);
     const off = attack([IF, R], S);
     ok(off === null && key('Bob would choose to stay.') !== key('It is not the case that Bob could choose not to stay.'),
         'switched off, not certified: "would" after "then" makes a what-if claim, as before', J(off));
-    setModal(null);
+    askModality = true; setModal(null);
     const wet = step(['If it rains, the ground would be wet.', 'It rains.'], 'The ground is wet.');
     ok(wet.rule === 'modus ponens', 'a "would" not said of a choice is a what-if, as before: "if it rains, the ground would be wet" and "it rains" give "the ground is wet"', J(wet));
     const panel = ev(`renderLogicPanel(); var b = document.getElementById('eval-logic-body'), w = b.querySelector('[data-modal="would"]');
@@ -395,62 +397,79 @@ console.log('\n-- 7. "would" and "could" --');
         'the Logic panel: "“Would” and “could”" under Modal logic, on by default; it switches off and back on', J(panel));
 }
 
-console.log('\n-- 8. "Ask which modality is meant": off unless a map switches it on --');
+console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
 {
-    // r27.175 (the user, of a switch to make the app pedantic about modal
-    // words or not: "Probably off by default"; off, a modal word asks "only
-    // where the answer decides the step": "Sure").
-    askModality = false; setModal(null);
-    ok(ev(`return typeof claimModalAsking === 'function' && claimModalAsking() === false;`), 'off unless a map switches it on');
-    const off = {
-        mp: step(['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'),
-        can: step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'),
-        every: step(['If it is necessary that God exists, then evil is unexplained.', 'Necessarily, God exists.'], 'Evil is unexplained.'),
-        decides: step(['If zombies are metaphysically possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'),
-        flies: step(['Poe flies.'], 'Poe can fly.'),
-        inPlace: step(['If zombies are possible, then physicalism is false.', 'Possibly, zombies exist.'], 'Physicalism is false.'),
-        ravens: step(['Necessarily, all ravens are black.', 'Poe is a raven.'], 'Poe is black.'),
-        kenny: step(['Poe can fly or swim.', 'Poe can\u2019t fly.'], 'Poe can swim.'),
-        cant: step(['If we lack reasons to think that Poe is black, then we can\u2019t conclude that Poe is black.', 'We lack reasons to think that Poe is black.'], 'Poe is black.', 'weak-objection')
-    };
-    ok(off.mp.rule === 'modus ponens' && off.can.rule === 'modus ponens' && off.every.rule === 'modus ponens',
-        'off: where every reading gives the step, nothing is asked -- "if zombies are possible, ...", "if Poe can fly, ..."; and "it is necessary that" beside "necessarily", which as written are two claims', J([off.mp, off.can, off.every]));
-    ok(off.decides.asks && /^Did you mean “Zombies are metaphysically possible”/.test(off.decides.why) && off.flies.asks && /^Did you mean “Poe is able to fly”/.test(off.flies.why),
-        'off: where the answer decides the step, asked as before', J([off.decides, off.flies]));
-    ok(off.inPlace.asks && off.inPlace.why.indexOf('“If zombies are possible, then physicalism is false.”: did you mean “If zombies are metaphysically possible, then physicalism is false”, ') === 0 &&
-        /“Possibly, zombies exist\.”: did you mean “It is metaphysically possible that zombies exist”/.test(off.inPlace.why),
-        'off: answered together, each box asked, its readings in place in a longer box', off.inPlace.why);
-    ok(!off.ravens.rule && !off.ravens.asks, 'off: where no reading gives the step, nothing is asked', J(off.ravens));
-    // Read as "able" it follows, as written; read as "possible", it does not:
-    // asked, and no "able" chosen -- nor a hint of what would make it follow.
-    const able = step(['If Poe is able to fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.');
-    ok(able.asks && able.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
-        'off: "Poe can fly" beside "if Poe is able to fly, ..." asks -- it follows as written, read as "able", but not on "possible" -- and says nothing else', J(able));
-    ok(!off.kenny.rule, 'off: "Poe can fly or swim", unanswered, is one claim, so "Poe can\'t fly" does not give "Poe can swim" by the disjunctive syllogism', J(off.kenny));
-    ok(off.cant.rule === 'modus ponens', 'off: "we can\'t conclude" as before -- read as "we are not entitled to conclude" where that gives the step', J(off.cant));
-    setModal(['T', '5']);
-    const nec = step(['Necessarily, God exists.'], 'God exists.'), dual = step(['Necessarily, God exists.'], 'Possibly, God exists.');
-    ok(nec.asks && nec.tag === '? ambiguous' && /^Did you mean “It is metaphysically necessary that God exists”/.test(nec.why) &&
-        dual.asks && dual.tag === '? ambiguous' && /“Necessarily, God exists\.”: did you mean/.test(dual.why) && /“Possibly, God exists\.”: did you mean/.test(dual.why),
-        'off, with metaphysical necessity on: "necessarily, God exists" gives "God exists" by T on one reading, so it asks ("? ambiguous"); "possibly" beside it, answered together', J([nec, dual]));
-    // On: every time, as r27.168-r27.172 had it -- and "we can't conclude" too.
+    // r27.184 (the user, of a semantic mode: "Every. Any time there is a
+    // semantic ambiguity, this thing triggers"; off, "it relies exactly on the
+    // content of what was written"; on by default: "Sure"). It takes the
+    // place of r27.175's "Ask which modality is meant", whose off asked only
+    // where the answer decided the step.
     askModality = true; setModal(null);
-    const on = { mp: step(['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'),
-        cant: step(['If we lack reasons to think that Poe is black, then we can\u2019t conclude that Poe is black.', 'We lack reasons to think that Poe is black.'], 'Poe is black.', 'weak-objection') };
-    ok(on.mp.asks && on.cant.asks && on.cant.why === 'Did you mean “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black” or ' +
-            '“If we lack reasons to think that Poe is black, then it is impossible for us to conclude that Poe is black”?',
-        'on: asked every time, "we can\'t conclude" too', J(on));
-    // What a box asks follows the switch (claimAsksUser), not what it asked before.
+    ok(ev(`return typeof claimSemanticMode === 'function' && claimSemanticMode() === true && claimModalAsking() === true;`), 'on unless a map switches it off');
+    const HINT = 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.';
+    const cases = {
+        mp: [['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'],
+        can: [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'],
+        every: [['If it is necessary that God exists, then evil is unexplained.', 'Necessarily, God exists.'], 'Evil is unexplained.'],
+        decides: [['If zombies are metaphysically possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'],
+        flies: [['Poe flies.'], 'Poe can fly.'],
+        inPlace: [['If zombies are possible, then physicalism is false.', 'Possibly, zombies exist.'], 'Physicalism is false.'],
+        might: [['If it is possible that zombies exist, then physicalism is false.', 'Zombies might exist.'], 'Physicalism is false.'],
+        ravens: [['Necessarily, all ravens are black.', 'Poe is a raven.'], 'Poe is black.'],
+        able: [['If Poe is able to fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'],
+        kenny: [['Poe can fly or swim.', 'Poe can’t fly.'], 'Poe can swim.'],
+        cant: [['If we lack reasons to think that Poe is black, then we can’t conclude that Poe is black.', 'We lack reasons to think that Poe is black.'], 'Poe is black.', 'weak-objection'],
+        anyRaven: [['If Mary believes that any raven is black, then Mary is wrong.', 'Mary believes that any raven is black.'], 'Mary is wrong.']
+    };
+    const run = () => Object.fromEntries(Object.entries(cases).map(([k, c]) => [k, step(c[0], c[1], c[2])]));
+    const on = run();
+    ok(Object.keys(cases).filter(k => k !== 'ravens' && k !== 'kenny' && k !== 'anyRaven').every(k => on[k].asks && on[k].tag === '? ambiguous' && !on[k].rule) && on.ravens.asks && on.kenny.asks,
+        'on: every box that may be read more than one way asks, every time -- where every reading gives the step too ("if zombies are possible, ..." and "zombies are possible"; "if Poe can fly, ..." and "Poe can fly"); the step waits for the answer',
+        J(Object.fromEntries(Object.entries(on).map(([k, r]) => [k, r.tag]))));
+    ok(on.cant.why === 'Did you mean “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black” or ' +
+            '“If we lack reasons to think that Poe is black, then it is impossible for us to conclude that Poe is black”?' &&
+        on.able.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?' &&
+        /^“If zombies are possible, then physicalism is false\.”: did you mean “If zombies are metaphysically possible, then physicalism is false”, /.test(on.mp.why) &&
+        /“Zombies are possible\.”: did you mean “Zombies are metaphysically possible”, /.test(on.mp.why),
+        'on: "we can\'t conclude" asks too; each box by name where more than one asks; no reading marked as the one the step follows on', J([on.cant.why, on.able.why, on.mp.why]));
+    // Off: read exactly as written, and nothing asked.
     askModality = false; setModal(null);
-    ok(step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.').rule === 'modus ponens', 'switched off again, the box asks nothing: what it asked before is not kept');
-    const panel = ev(`renderLogicPanel(); var b = document.getElementById('eval-logic-body'), a = b.querySelector('[data-modal="ask"]');
+    ok(ev(`return claimSemanticMode() === false && claimModalAsking() === false;`), 'off where the map says so');
+    const off = run();
+    ok(Object.values(off).every(r => !r.asks && r.tag !== '? ambiguous' && r.tag !== '? generic'), 'off: nothing is asked', J(Object.fromEntries(Object.entries(off).map(([k, r]) => [k, r.tag]))));
+    ok(off.mp.rule === 'modus ponens' && off.can.rule === 'modus ponens' && off.every.rule === 'modus ponens' && off.anyRaven.rule === 'modus ponens',
+        'off: the same words in both boxes follow as written -- "if zombies are possible, ...", "if Poe can fly, ...", "if Mary believes that any raven is black, ..."; and "it is necessary that" beside "necessarily", one family of words, on every kind', J([off.mp, off.can, off.every, off.anyRaven]));
+    ok(!off.decides.rule && off.decides.why.endsWith(' ' + HINT) && !off.flies.rule && off.flies.why === HINT && !off.able.rule && off.able.why === HINT &&
+        !off.inPlace.rule && off.inPlace.why.endsWith(' ' + HINT),
+        'off: where the words as written do not give the step and another reading does, it says so -- "Poe can fly" is not "Poe is able to fly" (the user: "That\'s right")', J([off.decides, off.flies, off.able, off.inPlace]));
+    ok(!off.might.rule && off.might.why.endsWith(HINT),
+        'off: "zombies might exist" beside "if it is possible that zombies exist, ...": other words, whose kinds are not taken to be the same (r27.175 had answered them together, kind for kind)', J(off.might));
+    ok(!off.cant.rule && off.cant.why === HINT,
+        'off: "we can\'t conclude" is not "not entitled to conclude", so not "not established": the challenge does not follow as written (the user: "Correct"), and it says that read another way it would', J(off.cant));
+    ok(!off.ravens.rule && off.ravens.why.indexOf(HINT) < 0, 'off: where no reading gives the step, no reading is offered', J(off.ravens));
+    ok(!off.kenny.rule, 'off: "Poe can fly or swim" is one claim, so "Poe can\'t fly" does not give "Poe can swim" by the disjunctive syllogism', J(off.kenny));
+    ok(ev(`return [parseClaim('Poe can fly.'), parseClaim('Poe is able to fly.'), parseClaim('Poe can’t fly.'), parseClaim('We can’t conclude that Poe is black.'), parseClaim('It has not been established that Poe is black.')].map(claimKey);`)
+            .every((k, i, all) => all.indexOf(k) === i) &&
+        ev(`return claimDenies(parseClaim('Poe can’t fly.'), parseClaim('Poe can fly.'));`),
+        'off: "Poe can fly", "Poe is able to fly", "Poe can\'t fly", "we can\'t conclude that ...", "it has not been established that ..." -- five claims; "can\'t" denies "can"');
+    setModal(['T', '5']);
+    const nec = step(['Necessarily, God exists.'], 'God exists.');
+    ok(!nec.asks && !nec.rule && nec.why.endsWith(' ' + HINT), 'off, with metaphysical necessity on: "necessarily, God exists" gives "God exists" by T on one reading: said, not asked', J(nec));
+    // What a box asks follows the switch (claimAsksUser), not what it asked before.
+    askModality = true; setModal(null);
+    const again = step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.');
+    askModality = false; setModal(null);
+    ok(again.asks && step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.').rule === 'modus ponens',
+        'switched off, the box asks nothing: what it asked before is not kept');
+    const panel = ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); renderLogicPanel(); var b = document.getElementById('eval-logic-body'), a = b.querySelector('[data-semantic]');
         if (!a) return null;
-        var r = { checked: a.checked, label: a.nextSibling.textContent, note: a.parentNode.nextSibling.textContent, under: a.parentNode.previousSibling.textContent === 'Modal logic' };
-        a.click(); r.on = state.logic.rules['modal-ask'] === true && claimModalAsking() && b.querySelector('[data-modal="ask"]').checked;
-        a.click(); r.off = !claimModalAsking() && !b.querySelector('[data-modal="ask"]').checked; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
-    ok(!!panel && !panel.checked && panel.label === 'Ask which modality is meant' && panel.under &&
-        panel.note === 'On: “can”, “necessarily”, “possible” … ask which is meant, every time. Off: they ask only where the answer decides the step.' && panel.on && panel.off,
-        'the Logic panel: "Ask which modality is meant" first under Modal logic, off by default, with what on and off do; it switches on and off', J(panel));
+        var r = { checked: a.checked, label: a.nextSibling.textContent, note: a.parentNode.nextSibling.textContent, first: b.firstElementChild === a.parentNode, gone: !b.querySelector('[data-modal="ask"]'),
+            bold: getComputedStyle(a.nextSibling).fontWeight === '600', gap: getComputedStyle(a.parentNode.nextSibling).marginBottom === '10px' };
+        a.click(); r.off = state.logic.rules.semantic === false && !claimSemanticMode() && !b.querySelector('[data-semantic]').checked;
+        a.click(); r.on = state.logic.rules.semantic === true && claimSemanticMode() && b.querySelector('[data-semantic]').checked; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
+    ok(!!panel && panel.checked && panel.label === 'Semantic mode' && panel.first && panel.gone && panel.bold && panel.gap &&
+        panel.note === 'On: whatever can be read more than one way asks which is meant, every time. Off: each box is read exactly as written, and nothing is asked.' && panel.on && panel.off,
+        'the Logic panel: "Semantic mode" first, its name in bold, on by default, with what on and off do; it switches off and on; "Ask which modality is meant" is gone', J(panel));
 }
 
 console.log('\n-- 9. "must": which is meant --');
@@ -479,12 +498,14 @@ console.log('\n-- 9. "must": which is meant --');
     ok(step(['If Poe is a raven, then Poe is black.', 'Poe is a raven.'], 'Poe is black.').rule === 'modus ponens' &&
         key('It is logically necessary that if Poe is a raven, then Poe is black.') === '□logic(I(P:poe|=raven>P:poe|=black))'.replace(/poe/g, ev(`return claimKey(parseClaim('Poe is black.')).split('|')[0].slice(2);`)),
         'each reading written in: "if Poe is a raven, then Poe is black", modus ponens; the logical necessity of the whole, one claim');
-    // Off, the default: where the answer decides the step.
+    // Semantic mode off (r27.184): as written, "must" a word of its verb
+    // (r27.97); where a reading gives the step, said so.
     askModality = false; setModal(null);
+    const HINT = 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.';
     const off = { soc: step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'), mp: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe must be black.'),
         plain: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe is black.') };
-    ok(off.soc.asks && /^Did you mean “Socrates is mortal”, /.test(off.soc.why) && off.mp.rule === 'modus ponens' && off.plain.asks && /^Did you mean “If Poe is a raven, then Poe is black”, /.test(off.plain.why),
-        'off: "so Socrates must be mortal" asks -- what follows gives the step, necessity does not; "must" in both boxes of a modus ponens follows as written; "so Poe is black" from "then Poe must be black" asks', J(off));
+    ok(!off.soc.asks && !off.soc.rule && off.soc.why.endsWith(' ' + HINT) && off.mp.rule === 'modus ponens' && !off.plain.asks && !off.plain.rule && off.plain.why.endsWith(' ' + HINT),
+        'off: "so Socrates must be mortal" does not follow as written, and read as what follows it would: said, not asked; "must" in both boxes of a modus ponens follows as written; so "so Poe is black" from "then Poe must be black"', J(off));
 }
 
 console.log('\n-- 10. "might", "may" and "could": which is meant --');
@@ -520,8 +541,8 @@ console.log('\n-- 10. "might", "may" and "could": which is meant --');
     askModality = false; setModal(null);
     const off = [step(['If zombies could exist, then physicalism is false.', 'Zombies could exist.'], 'Physicalism is false.').rule,
         step(['If it is possible that zombies exist, then physicalism is false.', 'Zombies might exist.'], 'Physicalism is false.').rule];
-    ok(J(off) === J(['modus ponens', 'modus ponens']),
-        'off: "could" in both boxes of a modus ponens follows; so "zombies might exist" beside "if it is possible that zombies exist, ...", which as written are two claims -- answered together, kind for kind, on every kind one', J(off));
+    ok(J(off) === J(['modus ponens', null]),
+        'off: "could" in both boxes of a modus ponens follows as written; "zombies might exist" beside "if it is possible that zombies exist, ...", other words, does not (r27.184; r27.180 had answered them together, kind for kind)', J(off));
 }
 
 console.log('\n-- 11. what has been established, and what we know --');

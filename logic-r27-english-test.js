@@ -668,12 +668,16 @@ function reportCorpus(name, res) {
                     denies("We're unable to leave", 'We can leave') && key('We are able to leave') === key('We can leave'),
                 contraries: !denies('Poe is unhappy', 'Poe is happy') && !denies('This is invaluable', 'This is valuable'),
                 // "We are not able to": "can't" asks which is meant (r27.169) --
-                // with "Ask which modality is meant" on (r27.175).
+                // with Semantic mode on, the default (r27.184).
                 hedge: step(["We are not able to leave"], 'We should be able to leave', 'objection'),
-                cant: (function () { state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+                cant: (function () { state.logic = { base: 'standard', rules: {} };
                     try { return step(["We can't leave"], 'We should be able to leave', 'objection'); } finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
-                generic: [step(['Ravens are black'], 'Something is black').rule, step(['All black things are dark', 'Ravens are black'], 'Ravens are dark').rule,
-                    step(['A raven is black'], 'Something is black').rule, step(['It rains'], 'Something rains').rule],
+                // Read as written (r27.184: Semantic mode off): "ravens", a
+                // generic, asks with it on.
+                generic: (function () { state.logic = { base: 'standard', rules: { semantic: false } };
+                    try { return [step(['Ravens are black'], 'Something is black').rule, step(['All black things are dark', 'Ravens are black'], 'Ravens are dark').rule,
+                        step(['A raven is black'], 'Something is black').rule, step(['It rains'], 'Something rains').rule]; }
+                    finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
                 individual: step(['All black things are dark', 'Poe is black'], 'Poe is dark').rule,
                 forms: { hoped: denies('Poe hoped', 'Poe did not hop'), hopped: denies('Poe hopped', 'Poe did not hop'),
                     learnt: denies('Poe learnt Latin', 'Poe did not learn Latin'), men: step(['All men are mortal', 'Socrates is a man'], 'Socrates is mortal').rule,
@@ -690,7 +694,7 @@ function reportCorpus(name, res) {
             d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
             '"We are not able to leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
         ok(d.cant && d.cant.rule === null && /^Did you mean “We are not able to leave”, “It is not possible for us to leave”, or “We are not allowed to leave”\?/.test(d.cant.why),
-            '"We can\'t leave" asks which "can" is meant (r27.169), with the switch on', J(d.cant));
+            '"We can\'t leave" asks which "can" is meant (r27.169), with Semantic mode on', J(d.cant));
         // Since r27.157, "all black things are dark" and "ravens are black" give
         // "ravens are dark" however "ravens" is read: by universal syllogism,
         // the rule on "all" -- never universal modus ponens, of one thing.
@@ -873,18 +877,27 @@ function reportCorpus(name, res) {
             var P2 = 'If ' + ev + ", and if we can't conclude that any machine that passes the Turing test can think, then we can't conclude that others think";
             var MID = "If we can't conclude that any machine that passes the Turing test can think, then we can't conclude that others think";
             var C = 'We can conclude that any machine that passes the Turing test can think';
+            // With Semantic mode on, the default (r27.184), each box with "can't
+            // conclude" or "any" asks, every time: what is asked, here; the
+            // steps' rules below are read as written, Semantic mode off.
+            var on = { tollens: step([MID, 'We can conclude that others think'], C),
+                belief: step(['If Mary believes that any raven is black, then Mary is wrong', 'Mary believes that every raven is black'], 'Mary is wrong') };
+            state.logic = { base: 'standard', rules: { semantic: false } };
             var out = {
                 lone: step(['All men are mortal', 'Socrates is a man'], 'We can conclude that Socrates is mortal'),
                 one: step([EV, P2, 'We can conclude that others think'], C),
                 ponens: step([EV, P2], MID),
                 tollens: step([MID, 'We can conclude that others think'], C),
-                every: step([MID.replace('any machine', 'every machine'), 'We can conclude that others think'], C),
+                every: step([MID.replace('any machine', 'every machine'), 'We can conclude that others think'], C.replace('any machine', 'every machine')),
+                anyEvery: step([MID.replace('any machine', 'every machine'), 'We can conclude that others think'], C),
                 alike: step([MID, "It is not the case that we can't conclude that others think"], "It is not the case that we can't conclude that any machine that passes the Turing test can think"),
                 notBoth: step(['It is not the case both that Bob sings and that Mary dances', 'Mary dances'], 'Bob does not sing'),
                 both: step(["Both we can't conclude that others think and the evidence is the same"], "We can't conclude that others think"),
                 belief: step(['If Mary believes that any raven is black, then Mary is wrong', 'Mary believes that every raven is black'], 'Mary is wrong'),
                 beliefEvery: step(['If Mary believes that every raven is black, then Mary is wrong', 'Mary believes that any raven is black'], 'Mary is wrong')
             };
+            out.on = on;
+            state.logic = { base: 'standard', rules: {} };
             // The question, answered in the box: "any" rewritten as "every".
             state.trees = [{ id: 'M', type: 'contention', texts: [C], collapsed: [], x: 0, y: 0, children: [
                 { id: 'A', type: 'support', texts: [MID, 'We can conclude that others think'], collapsed: [], children: [] } ] }];
@@ -901,18 +914,23 @@ function reportCorpus(name, res) {
         ok(g.ponens.rule === 'modus ponens', 'its first step: the evidence condition first, modus ponens gives "if we can\'t conclude that any machine ..., then we can\'t conclude that others think"', J(g.ponens));
         // r27.166: the readings, not which the step follows on (written in,
         // "every" gives it: the check after the next).
-        ok(g.tollens.rule === null && g.tollens.tag === '? ambiguous' &&
-            g.tollens.why === "Did you mean “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
-                "“If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think”?",
-            'its second step asks what "any machine" means there: "every machine" or "some machine" -- not which the step follows on', J(g.tollens));
-        ok(g.every.rule === 'modus tollens', 'with "every" in that box, modus tollens: "we can conclude that X" denies "we can\'t conclude that X"', J(g.every));
-        ok(g.alike.rule === 'modus tollens', 'worded alike in both boxes, it follows on either reading of "any", and nothing is asked', J(g.alike));
-        ok(J(g.offered) === J(["If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think",
-                "If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think"]),
+        ok(g.on.tollens.rule === null && g.on.tollens.tag === '? ambiguous' &&
+            g.on.tollens.why.indexOf("“If we can't conclude that any machine that passes the Turing test can think, then we can't conclude that others think”: did you mean " +
+                "“If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
+                "“If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think”?") === 0 && !/follows by/.test(g.on.tollens.why),
+            'its second step asks what "any machine" means there: "every machine" or "some machine" -- not which the step follows on; with Semantic mode on, each "can\'t conclude" too (r27.184)', J(g.on.tollens));
+        ok(g.tollens.rule === 'modus tollens', 'read as written, "any machine" in both boxes: modus tollens (r27.184)', J(g.tollens));
+        ok(g.every.rule === 'modus tollens', 'with "every" in those boxes, modus tollens: "we can conclude that X" denies "we can\'t conclude that X"', J(g.every));
+        ok(g.anyEvery.rule === 'modus tollens',
+            'read as written, "any machine" is read as "any" is where nothing is asked of it, every machine: modus tollens with "every" beside it (r27.184)', J(g.anyEvery));
+        ok(g.alike.rule === 'modus tollens', 'worded alike in both boxes, it follows as written', J(g.alike));
+        ok(["If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think",
+                "If we can't conclude that some machine that passes the Turing test can think, then we can't conclude that others think"].every(function (r) { return g.offered.indexOf(r) >= 0; }) &&
+            !g.offered.some(function (r) { return /follows/.test(r); }),
             'answered in the box: "any machine" rewritten "every machine" or "some machine", neither marked', J(g.offered));
         ok(g.notBoth.rule === 'conjunctive syllogism', '"It is not the case both that A and that B" is "not both A and B" (it was read as about "it")', J(g.notBoth));
         ok(g.both.rule === 'conjunction elimination', '"both" holds its own "and": "Both we can\'t conclude that P and Q" is two claims (the that-clause had taken in "and Q")', J(g.both));
-        ok(g.belief.rule === null && g.belief.tag === '? ambiguous' && /"any raven" may mean every one or at least one/.test(g.belief.why),
+        ok(g.on.belief.rule === null && g.on.belief.tag === '? ambiguous' && /"any raven" may mean every one or at least one/.test(g.on.belief.why),
             'in a condition, "believes that any raven is black" keeps its "any", and asks what it means where the step turns on it (it had been dropped)', J(g.belief));
         ok(g.beliefEvery.rule === 'modus ponens', 'said plainly, "Mary believes that any raven is black" is every raven: modus ponens, nothing asked', J(g.beliefEvery));
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
@@ -945,7 +963,8 @@ function reportCorpus(name, res) {
                     { id: 'U', type: 'support', targetIndex: 1, texts: ['We do conclude that others think'], collapsed: [], children: [] } ] } ] }]; };
             var cant = "we can't conclude", imp = 'it is impossible for us to conclude';
             var mid = function (h1, h2, any) { return 'If ' + h1 + ' that ' + any + ' machine that passes the Turing test can think, then ' + h2 + ' that others think'; };
-            return {
+            // With Semantic mode on, the default; and off, read as written (r27.184).
+            var all = function () { return {
                 skeptic: step(['If I know that I have hands, then I know that I am not a brain in a vat', "I don't know that I am not a brain in a vat"], "I don't know that I have hands"),
                 shown: step(['If it has been shown that the drug works, then the trial succeeded', 'The trial did not succeed'], 'It has not been shown that the drug works'),
                 // "Are able to": "can" asks which is meant (r27.169).
@@ -962,12 +981,18 @@ function reportCorpus(name, res) {
                 anyone: step(["If we can't conclude that anyone left, then we can't conclude that others think", 'We can conclude that others think'], 'We can conclude that everyone left'),
                 reason: parseClaimFull("We can't conclude that there is any reason to doubt it").notes.filter(function (n) { return n.anyScope; }).length,
                 beliefObject: step(['If Mary believes that Poe loves any raven, then Mary is wrong', 'Mary believes that Poe loves every raven'], 'Mary is wrong')
-            };`);
+            }; };
+            var on = all();
+            state.logic = { base: 'standard', rules: { semantic: false } };
+            var off = all();
+            state.logic = { base: 'standard', rules: {} }; deductiveCache.clear();
+            return Object.assign(on, { off: off });`);
         ok(/✓ modus tollens/.test(h.skeptic), 'the skeptic\'s modus tollens: "I know that I am not a brain in a vat" beside "I don\'t know that ..." denies it', h.skeptic);
         ok(/✓ modus tollens/.test(h.shown) && /✓ disjunctive syllogism/.test(h.knowDS), 'so for "it has been shown that" and "we know that": one rule for every phrasing', J([h.shown, h.knowDS]));
         ok(/in a box/.test(h.marker), '"We can conclude that Q" beside a different denial ("it has not been shown that P") is still an inference word', h.marker);
-        ok(/^S ✓ modus tollens$/.test(h.written[0]) && h.written[1] === 'U ? ambiguous | Did you mean “We are entitled to conclude that others think” or “It is possible for us to conclude that others think”?',
-            '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can" (worded "possible for us", it follows by ab esse ad posse: below)', J(h.written));
+        ok(h.off.written[0] === 'S ✓ modus tollens' && /^S \? ambiguous \| “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think”: did you mean /.test(h.written[0]) &&
+            h.written[1].indexOf('U ? ambiguous | “We can conclude that others think”: did you mean “We are entitled to conclude that others think” or “It is possible for us to conclude that others think”?') === 0,
+            '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can" (worded "possible for us", it follows by ab esse ad posse: below); the step above it follows as written, and with Semantic mode on asks of its "can\'t" (r27.184)', J([h.written, h.off.written]));
         ok(h.answered[0].indexOf("S ? ambiguous | “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think”: did you mean " +
                 "“If we are not entitled to conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
                 "“If it is impossible for us to conclude that every machine that passes the Turing test can think, then we can't conclude that others think”?") === 0 &&
@@ -975,9 +1000,11 @@ function reportCorpus(name, res) {
         ok(J(h.plain) === J(['S ✓ modus tollens', 'U ✓ ab esse ad posse']), 'worded "impossible/possible for us", modus tollens and ab esse ad posse, nothing asked', J(h.plain));
         ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
         ok(/in a box/.test(h.lone), 'alone, "We can conclude that ..." is still an inference word', h.lone);
-        ok(/✓ modus ponens/.test(h.challenge), 'a weak objection\'s "we can\'t conclude that ..." is "not established", as before: nothing asked', h.challenge);
-        ok(h.object === "A ? ambiguous | Did you mean “If we can't conclude that Mary loves every raven, then we can't conclude that others think” or “If we can't conclude that Mary loves some raven, then we can't conclude that others think”?" &&
-            h.anyone === "A ? ambiguous | Did you mean “If we can't conclude that everyone left, then we can't conclude that others think” or “If we can't conclude that someone left, then we can't conclude that others think”?",
+        ok(/^A \? ambiguous \| Did you mean “If we lack reasons to think that the tests are reliable, then we are not entitled to conclude that the tests are reliable” or /.test(h.challenge) &&
+            h.off.challenge === 'A ? not recognized | On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
+            'a weak objection\'s "we can\'t conclude that ..." asks which is meant, with Semantic mode on; off, as written, it is not "not established": the challenge does not follow, and it says that read another way it would (r27.184)', J([h.challenge, h.off.challenge]));
+        ok(h.object.indexOf("A ? ambiguous | “If we can't conclude that Mary loves any raven, then we can't conclude that others think”: did you mean “If we can't conclude that Mary loves every raven, then we can't conclude that others think” or “If we can't conclude that Mary loves some raven, then we can't conclude that others think”?") === 0 &&
+            h.anyone.indexOf("A ? ambiguous | “If we can't conclude that anyone left, then we can't conclude that others think”: did you mean “If we can't conclude that everyone left, then we can't conclude that others think” or “If we can't conclude that someone left, then we can't conclude that others think”?") === 0,
             '"any" as an object, and "anyone", are asked about too', J([h.object, h.anyone]));
         ok(h.reason === 0, '"there is any reason": only "at least one" makes sense, so nothing is asked', h.reason);
         ok(/\? ambiguous \|.*"any raven" may mean every one or at least one/.test(h.beliefObject), 'a belief keeps an object\'s "any" too, and asks about it where it matters', h.beliefObject);
@@ -995,18 +1022,18 @@ function reportCorpus(name, res) {
     // on "possible" and not on "able".
     console.log('\n-- plain "can": possible, able, allowed --');
     try {
-        // r27.175: these are the questions asked with "Ask which modality is
-        // meant" on; off, the default, below.
-        const offBoth = T(W, `state.logic = { base: 'standard', rules: {} };
+        // r27.184: these are the questions asked with Semantic mode on, the
+        // default; off, read as written, below.
+        const offBoth = T(W, `state.logic = { base: 'standard', rules: { semantic: false } };
             state.trees = [{ id: 'M', type: 'contention', texts: ['Poe is a bird'], collapsed: [], x: 0, y: 0, children: [
                 { id: 'A', type: 'support', texts: ['If Poe can fly, then Poe is a bird', 'Poe can fly'], collapsed: [], children: [] } ] }];
             deductiveCache.clear(); ensureCollabFields(state); var s = collectDeductiveSteps(state.trees)[0];
             state.trees[0].children[0].texts = ['Poe flies']; state.trees[0].texts = ['Poe can fly']; deductiveCache.clear();
             var f = collectDeductiveSteps(state.trees)[0];
-            state.logic = { base: 'standard', rules: { 'modal-ask': true } };
-            return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f) };`);
-        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? ambiguous',
-            'off, the default: "Poe can fly" in both boxes of a modus ponens asks nothing -- it follows whichever is meant; "Poe flies", so "Poe can fly" still asks (r27.175)', J(offBoth));
+            state.logic = { base: 'standard', rules: {} };
+            return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f), flyWhy: f.why ? String(f.why.text) : '' };`);
+        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
+            'off: "Poe can fly" in both boxes of a modus ponens follows as written; "Poe flies", so "Poe can fly" does not -- "can" is not "possible" as written -- and it says that read another way it would (r27.184)', J(offBoth));
         const c = T(W, `
             var step = function (premises, conclusion) {
                 state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
@@ -1095,9 +1122,9 @@ function reportCorpus(name, res) {
                 i: asks('I can fly.'),
                 rows: step(['Poe can fly or swim.'], 'Al is happy.')
             };
-            state.logic = { base: 'standard', rules: {} };
+            state.logic = { base: 'standard', rules: { semantic: false } };
             r.off = step(['Poe can fly or swim.', 'Poe can\u2019t fly.'], 'Poe can swim.');
-            state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+            state.logic = { base: 'standard', rules: {} };
             return r;`);
         ok(/^✓ disjunctive syllogism/.test(either.ds) && !/^✓/.test(either.able),
             '"it is possible for Poe to fly or swim" and "it is not possible for Poe to fly" give "it is possible for Poe to swim"; on ability, not (r27.176; it had been one claim)', J([either.ds, either.able]));
@@ -1105,8 +1132,8 @@ function reportCorpus(name, res) {
             '"it is possible for me to draw a red card, or it is possible for me to draw a black card": an "or", asking nothing; "it is possible for Poe to fly, and Poe is a bird", the same (r27.176; the first had been one garbled claim, and each asked which "can" was meant)', J(either));
         ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “It is possible for Poe to fly or swim”, or “Poe is allowed to fly or swim”?',
             '"I", not "i", in what "can" may say; "Poe can fly or swim" still offers each reading (r27.176)', J([either.i, either.rows]));
-        ok(/^\? ambiguous \| Did you mean “Poe is able to fly or swim”, “It is possible for Poe to fly or swim”, or “Poe is allowed to fly or swim”\?/.test(either.off) || /“Poe can fly or swim\.”: did you mean “Poe is able to fly or swim”/.test(either.off),
-            'with "Ask which modality is meant" off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" asks: on "possible" it follows, on "able" it does not (r27.176)', either.off);
+        ok(either.off === '? not recognized | On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
+            'with Semantic mode off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" does not follow as written; read as "possible" it would, and it says so (r27.184)', either.off);
         // r27.177: no hint to word two premises alike so that they contradict
         // each other -- it had said "... would give 'I am able to draw a black
         // card' by explosion". A contradiction as spelled, but for a capital

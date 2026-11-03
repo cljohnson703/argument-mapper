@@ -125,6 +125,10 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
     const run = js => W.win.eval(js);
     const val = js => JSON.parse(run('JSON.stringify(' + js + ')'));
     const CSS = run(`Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\\n')`);
+    // The colors of what the words give, read exactly as written (r27.184:
+    // Semantic mode off): with it on, a box that may be read more than one
+    // way asks first, and its step waits.
+    run(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear();`);
     run(`window.__load = function (trees) { state.trees = trees; ensureCollabFields(state); selectedIds = []; render(); };
         // A red word inside a part's span (r27.106) is listed as a piece of the
         // part with "ic-neg" added, as when it was a span beside the others.

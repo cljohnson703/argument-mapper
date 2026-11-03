@@ -321,11 +321,9 @@ const J = JSON.stringify;
         closeReadingChooser();
         return t;`);
     // "It is not possible for Poe to beat any player" asks of "any" in turn
-    // -- with "Ask which modality is meant" on (r27.175); off, no reading
-    // gives the step, and nothing is asked.
-    T(W, `state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
-    const beat = asked('Poe cannot beat any player.', 'Poe is weak.');
+    // -- with Semantic mode on, the default (r27.184).
     T(W, `state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    const beat = asked('Poe cannot beat any player.', 'Poe is weak.');
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
         beat.title.indexOf('“Poe cannot beat any player.” is ambiguous: "can’t" may say what Poe is not able to do, what is not possible for Poe, or what Poe is not allowed to do.') >= 0,
         'a question one of whose readings does not read back is not asked -- "it is not possible for Poe to beat any player" asks of "any" in turn -- the box is said to be ambiguous, and the tag opens the list', J(beat));
@@ -358,9 +356,12 @@ const J = JSON.stringify;
         __c.tag('S').click(); pop = __c.pop(); rows = [].slice.call(pop.querySelectorAll('.rc-row'));
         pick(1); pop.querySelector('.rc-apply').click();
         return { general: general, some: { box: __c.text('S'), tag: __c.tag('S').textContent } };`);
-    ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? not recognized' &&
+    // r27.184: with Semantic mode on, "crows" asks too, every time -- where
+    // its readings can be written into the box: not beside "some ravens fly",
+    // where "crows generally sing" would make the whole box one claim.
+    ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? generic' &&
         !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '✓ conjunction elimination',
-        'written in: "ravens generally fly" is one claim, and the step is not recognized; "some ravens fly", it follows by conjunction elimination', J(written));
+        'written in: "ravens generally fly" is one claim, and "crows" asks; "some ravens fly", it follows by conjunction elimination', J(written));
     const back = T(W, `var t = 'If computer programs are only formal (syntactic), then computers lack semantics.';
         var n = parseClaimFull(t).notes.filter(function (x) { return x.generic; })[0];
         return claimReadingRoundTrips(Object.assign({ text: t }, n), 0, 'If all computer programs are only formal (syntactic), then computers lack semantics.');`);
@@ -386,7 +387,7 @@ const J = JSON.stringify;
     // 'Other', which would encourage the user to rewrite it to avoid the
     // ambiguity"): a question of five readings or more ends with "Other",
     // which opens the box to be reworded.
-    const otherRow = T(W, `state.logic = { base: 'standard', rules: { 'modal-ask': true } };
+    const otherRow = T(W, `state.logic = { base: 'standard', rules: {} };
         __c.load(${J(MAP('If Poe is a raven, then Poe must be black.', 'Al is happy.'))});
         __c.tag('S').click();
         var pop = __c.pop(), rows = pop ? [].slice.call(pop.querySelectorAll('.rc-row')) : [], last = rows[rows.length - 1];
