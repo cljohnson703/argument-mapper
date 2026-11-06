@@ -459,6 +459,18 @@ console.log('\n-- 12. (r27.137) dropping a modifier --');
         [['Bob behaved badly.'], 'Bob behaved.'], [['Bob visited family.'], 'Bob visited.'], [['Bob ran to the store.'], 'Bob ran.'], [['Bob ran.'], 'Bob ran quickly.'],
         [['Bob ran quickly.'], 'Al ran.']];
     ok(!certified(NOT).length, 'not "almost" or "hardly", not under "not", not "behaved badly", not "family", not a phrase, not added, not of another', J(certified(NOT)));
+    // r27.188 (the user, of "Mary quickly and quietly left the room": "from
+    // that sentence, I can infer that she left the room quickly"): adverbs
+    // joined by "and" each say how she left, and either may be left out --
+    // but the two said apart do not give them joined (she may have left
+    // twice), nor does "or" give either.
+    const JOINED = [[['Mary quickly and quietly left the room.'], 'Mary quickly left the room.'], [['Mary quickly and quietly left the room.'], 'Mary quietly left the room.'],
+        [['Mary quickly and quietly left the room.'], 'Mary left the room.']];
+    const NOT_JOINED = [[['Mary quickly left the room.', 'Mary quietly left the room.'], 'Mary quickly and quietly left the room.'],
+        [['Mary quickly or quietly left the room.'], 'Mary quickly left the room.'], [['Mary did not quickly and quietly leave the room.'], 'Mary did not quickly leave the room.']];
+    ok(!misses(JOINED, 'dropping a modifier').length && !certified(NOT_JOINED).length && step(['Bob left and quickly cried.'], 'Bob quickly cried.').rule === 'conjunction elimination',
+        '"Mary quickly and quietly left the room" gives "Mary quickly left the room", "... quietly ...", "Mary left the room"; not the other way, not from "or", not under "not"; "Bob left and quickly cried" gives "Bob quickly cried" (r27.188)',
+        J([misses(JOINED, 'dropping a modifier'), certified(NOT_JOINED)]));
     const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'modifiers'; }), g = DEDUCTIVE_EXTENSIONS[at];
         return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'relations'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
     // Since r27.141 with dropping a "that" clause (section 15).

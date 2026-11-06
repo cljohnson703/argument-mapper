@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 6: adverbs joined, dropped one at a time; commas with an adverb (r27.188)
+
+The user, of "Mary quickly and quietly left the room": "Isn't this two claims? She left the room quickly, and she left the room quietly? I.e., from that sentence, I can infer that she left the room quickly". Of "Bob washes and carefully dries the dishes": "This can be solved with commas. 'Bob washes, and carefully dries, the dishes' means 'the dishes' goes with both verbs".
+
+* "Mary quickly and quietly left the room" gives "Mary quickly left the room", "Mary quietly left the room" and "Mary left the room", by dropping a modifier. Adverbs joined by "and" each say how she left, and either may be left out, with its "and".
+  * It stays one claim, about one leaving. "Mary quickly left the room" and "Mary quietly left the room" do not give it back: she may have left twice, once each way.
+  * Not "or": "quickly or quietly" gives neither. Not under "not".
+* "Bob washes, and carefully dries, the dishes": the dishes go with both verbs, as the commas say. "Mary washes, and dries, the dishes" had been read so; with the adverb, the verbs had not been read apart, each part taken to begin with its verb.
+  * Without the commas, which is meant is asked, as before: "Did you mean 'Bob washes, and carefully dries, the dishes' or 'Bob washes, and Bob carefully dries the dishes'?"
+* A past after its adverbs keeps its "did": "Bob quickly cried" is in the past, as "Bob cried" is. It had been read without it, so "Bob left and quickly cried" did not give "Bob quickly cried".
+
+Tests:
+* rules-r27-ordinary-test.js has 170 checks; the new one fails on r27.187.
+* syntax-r27-test.js has 115 checks; the new one fails on r27.187. The r27.187 check now has "Mary quickly and quietly left the room" in the past.
+* Take-one-out: each of the 6 changes is caught.
+* No sentence of the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 6: the syntax tree, stage two begins: a verb group with no subject is no clause (r27.187)
 
 The user, of the older pattern tests: "Which older pattern tests can we safely replace with the syntax tree's decisions?"; "I have a feeling all these ad hoc fixes can be fixed with the syntax tree"; of starting stage two: "Sure".

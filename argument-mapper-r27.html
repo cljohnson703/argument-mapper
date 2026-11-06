@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-06 r27.187';
+    const APP_BUILD = '2026-11-06 r27.188';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11448,6 +11448,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // A verb in the past as a predicate, by its past form, so that "crossed the
     // rubicon" and "did cross the rubicon" are one predicate, and "hoped" is
     // never "hopped": "~did crossed the rubicon". "Did have" is "had".
+    // An adverb in -ly before a verb, or the "and" or "or" between two such
+    // ("quickly and quietly"): r27.188.
+    function claimSyntaxAdverbAt(words, k) {
+        const ly = w => /^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w);
+        const w = claimWord(words[k]);
+        if (ly(w)) return true;
+        return /^(?:and|or)$/.test(w) && k > 0 && ly(claimWord(words[k - 1])) && k + 1 < words.length && ly(claimWord(words[k + 1]));
+    }
     function claimPastProp(pastForm, after) {
         const rest = after.length ? ' ' + after.join(' ') : '';
         return pastForm === 'had' ? '~had' + rest : '~did ' + pastForm + rest;
@@ -13190,6 +13198,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             prop = '~have ' + rest;
         } else if (CLAIM_VERB_MARKERS.has(first)) {
             prop = '~' + first + (rest ? ' ' + rest : '');     // modals keep their force
+        } else if ((() => { let k = 0; while (k < words.length - 1 && claimSyntaxAdverbAt(words, k)) k++;
+            return k > 0 && claimPastStem(claimWord(words[k])) !== null && !claimKnownAdjective(words[k]); })()) {
+            // A past past its adverbs -- "quickly cried", "quickly and quietly
+            // left" -- is the past all the same, as "left and quickly cried"
+            // reads it (r27.188; it had lost its "did").
+            let k = 0;
+            while (k < words.length - 1 && claimSyntaxAdverbAt(words, k)) k++;
+            const v = claimWord(words[k]);
+            prop = '~did ' + words.slice(0, k).map(claimWord).join(' ') + ' ' + (CLAIM_PAST_VARIANTS[v] || v) + (k + 1 < words.length ? ' ' + words.slice(k + 1).join(' ') : '');
         } else if (claimPastStem(first) !== null) {
             prop = claimPastProp(CLAIM_PAST_VARIANTS[first] || first, words.slice(1));   // "crossed the rubicon"
         } else {
@@ -19107,15 +19124,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 { label: high, build: () => readVerbPhraseOf(term, vp, s, true) }], true) || claimAtom(s);
         }
         const partTokens = parts.map(claimTokens);
+        // A part's verb, past the adverbs before it: "carefully dries the
+        // dishes" (r27.188; a part had been taken to begin with its verb).
+        const verbOf = p => { let k = 0; while (k < p.length - 1 && (y => y.adv && !y.noun && !y.verb && !y.closed)(claimSynWord(p[k]))) k++; return p[k]; };
         const plainVerb = !head.length;
         const modal = head.length && !CLAIM_COPULAS.has(claimWord(CLAIM_NEGATED[lead] || lead)) && !/^(?:was|were)$/.test(claimWord(CLAIM_NEGATED[lead] || lead));
         const past = t => claimPastStem(claimWord(t)) !== null && !claimKnownAdjective(t);
-        const pastList = plainVerb && partTokens.every(p => p.length && past(p[0])) &&
+        const pastList = plainVerb && partTokens.every(p => p.length && past(verbOf(p))) &&
             !(partTokens.slice(0, -1).some(p => p.length === 1) && partTokens[partTokens.length - 1].length > 1);
         const spreads = partTokens.every((p, i) => p.length && (i === 0 ||
             CLAIM_VERB_MARKERS.has(claimWord(p[0])) || claimWord(p[0]) === 'not' ||
-            (plainVerb ? claimEndsInS(p[0]) || pastList : !modal || partTokens.every(q => q.length === 1))));
-        if (!spreads || (plainVerb && !claimEndsInS(partTokens[0][0]) && !pastList)) return whole();
+            (plainVerb ? claimEndsInS(verbOf(p)) || pastList : !modal || partTokens.every(q => q.length === 1))));
+        if (!spreads || (plainVerb && !claimEndsInS(verbOf(partTokens[0])) && !pastList)) return whole();
         const positiveHead = negated ? [CLAIM_NEGATED[lead] || lead] : head;
         const copulaHead = head.length > 0 && /^(?:is|are|am|was|were)$/.test(claimWord(CLAIM_NEGATED[lead] || lead));
         const predOf = (p, i) => {
@@ -22040,10 +22060,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const a = claimTokens(String(p.vpText).toLowerCase()).map(claimWord), b = claimTokens(String(C.vpText).toLowerCase()).map(claimWord);
         if (!b.length || b.length >= a.length || a.some(w => CLAIM_MANNER_VERBS.test(w))) return false;
         const modifier = w => !CLAIM_MODIFIER_KEEP.has(w) && (CLAIM_MODIFIER_DROP.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w)));
+        // Adverbs joined by "and" ("quickly and quietly left") each say how
+        // it was done: either may be left out, with its "and" (r27.188). Not
+        // "or": "quickly or quietly" does not give "quickly".
+        const joined = j => a[j] === 'and' && j > 0 && j + 1 < a.length && modifier(a[j - 1]) && modifier(a[j + 1]);
         let i = 0;
-        for (const w of a) {
+        for (let j = 0; j < a.length; j++) {
+            const w = a[j];
             if (i < b.length && w === b[i]) i++;
-            else if (!modifier(w)) return false;
+            else if (!modifier(w) && !joined(j)) return false;
         }
         return i === b.length;
     }

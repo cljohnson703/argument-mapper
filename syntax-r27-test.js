@@ -394,9 +394,16 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
         asked: ['Bob washes and carefully dries the dishes.', 'Bob carefully washes and dries the dishes.'].map(function (t) {
             return parseClaimFull(t).notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message.replace(/\\uE000/g, ''); }); }) };`);
     ok(J(tree.clause) === J([false, false, false, false, true, true]) &&
-        J(tree.keys) === J(['C[P:bob|~did arrived;P:bob|~did quickly left the room]', 'P:mary|~quickly and quietly left the room', 'P:mary|~did visited rooms a b and c']) &&
+        J(tree.keys) === J(['C[P:bob|~did arrived;P:bob|~did quickly left the room]', 'P:mary|~did quickly and quietly left the room', 'P:mary|~did visited rooms a b and c']) &&
         J(tree.asked) === J([['"the dishes" may go with "washes" as well as "dries", or with "dries" alone'], ['"the dishes" may go with "carefully washes" as well as "dries", or with "dries" alone']]),
         'a verb group with no subject before it is no clause ("quickly left the room", "is laid out"); so "Bob arrived and quickly left the room" is two claims, "Mary quickly and quietly left the room" one, said of Mary, and "Bob washes and carefully dries the dishes" asks of "the dishes", as "Bob carefully washes and dries the dishes" does -- "carefully" had been a subject (r27.187)', J(tree));
+    // r27.188 (the user, of "Bob washes, and carefully dries, the dishes":
+    // "'the dishes' goes with both verbs"): the commas say so, an adverb
+    // before the second verb as well; and a past past its adverbs keeps its
+    // "did", as the same words do after "and".
+    const commas = ev(`return ['Bob washes, and carefully dries, the dishes.', 'Bob washed, and carefully dried, the dishes.', 'Bob quickly cried.', 'Bob left and quickly cried.'].map(function (t) { return claimKey(parseClaim(t)).replace(/\\uE000/g, ''); });`);
+    ok(J(commas) === J(['C[P:bob|~wash the dishes;P:bob|~carefully dry the dishes]', 'C[P:bob|~did washed the dishes;P:bob|~did carefully dried the dishes]', 'P:bob|~did quickly cried', 'C[P:bob|~did left;P:bob|~did quickly cried]']),
+        '"Bob washes, and carefully dries, the dishes": the dishes go with both verbs, as the commas say (it had been one claim), in the past too; "Bob quickly cried" keeps the past, as "Bob left and quickly cried" does (r27.188)', J(commas));
     ok(bakery.key === 'A:mary runs and bob owns the bakery' && bakery.notes.length === 1 &&
         J(bakery.notes[0].readings) === J(['mary runs, and bob owns, the bakery', 'mary runs, and bob owns the bakery']),
         'an object after two clauses is asked about, its readings in the user\'s commas', J(bakery));
