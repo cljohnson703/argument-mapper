@@ -4,6 +4,22 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 6: the bare-challenge hint offers "we are not entitled to conclude" (r27.186)
+
+The user, of the example premise the bare-challenge hint offers, "we are not entitled to conclude" in place of "we can't conclude": "Yes".
+
+* A weak objection that only says its box has not been established is a bare challenge. The hint now offers premises that argue it: "If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black" and "We lack reasons to think that Poe is black".
+  * It had offered "we can't conclude". With Semantic mode on, those premises asked which "can't" is meant (r27.184). With it off, "we can't conclude" is not "not established", so no premises were offered.
+  * "Not entitled to conclude" has one reading. The premises are offered in either mode, and written in, the challenge follows.
+* With Semantic mode off, a box with a generic is offered premises too: "ravens are black", read as written, asks nothing, and its note no longer keeps the offer back.
+* The verdict's own explanation still says "we can't conclude that … from …". It is the checker's prose, not a premise to be written in.
+
+Tests:
+* logic-r27-basis-test.js: the offer says "we are not entitled to conclude" and passes, with Semantic mode on and off, and for "ravens are black" off. Three checks fail on r27.185.
+* Take-one-out: each of the 2 changes is caught.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 3: an adverb before a verb is no verb (r27.185)
 
 The user, of "Some ravens fly and crows generally sing": "Adding 'generally' in front of 'crows sing' doesn't seem to turn two claims ('Some ravens fly AND crows sing') into one". It does not; the checker had made it one.

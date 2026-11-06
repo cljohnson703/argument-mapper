@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-03 r27.185';
+    const APP_BUILD = '2026-11-06 r27.186';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -25828,9 +25828,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                     const p = claimRecase(box.charAt(0).toLowerCase() + box.slice(1), premiseTexts.concat([conclusionText]).map(stripClaimMarkup).join(' '));
                                     // Example premises that argue the challenge, offered only
                                     // once they are checked: said plainly, or with the box in
-                                    // brackets (a conditional box needs them).
-                                    const pair = q => ['If we lack reasons to think that ' + q + ', then we can\u2019t conclude that ' + q, 'We lack reasons to think that ' + q];
-                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope)) &&
+                                    // brackets (a conditional box needs them). "Not entitled
+                                    // to conclude", which has one reading (r27.186; the user:
+                                    // "Yes") -- "can't conclude" asks which is meant with
+                                    // Semantic mode on, and is not "not established" off.
+                                    const pair = q => ['If we lack reasons to think that ' + q + ', then we are not entitled to conclude that ' + q, 'We lack reasons to think that ' + q];
+                                    const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.literal && !n.anyScope && !n.canScope && !n.someScope)) &&
                                         (fs => fs.every(Boolean) && !!certifyStep(fs, conclusions, attack))(ps.map(t => parseClaim(t)));
                                     const offer = [pair(p), pair('(' + p + ')')].find(passes);
                                     return '\u201c' + stripClaimMarkup(premiseTexts[0]) + '\u201d only says that \u201c' + box +

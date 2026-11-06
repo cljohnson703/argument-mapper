@@ -1017,29 +1017,32 @@ try {
         // A weak objection that only says its box has not been established
         // is a bare challenge: no force. The premises its message offers
         // instead pass, and do challenge.
-        // With Semantic mode on, the default (r27.184), the offer's "can't
-        // conclude" asks which is meant; "we are not entitled to conclude"
-        // written in, they pass.
-        const entitled = ps => (ps || []).map(t => t.replace('we can\u2019t conclude', 'we are not entitled to conclude'));
+        // Since r27.186 (the user: "Yes"), they say "we are not entitled to
+        // conclude", which has one reading: "we can't conclude" had asked
+        // which is meant with Semantic mode on (r27.184), and off had not been
+        // "not established", so that nothing was offered.
         const bc = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection'), offer = offered(bc[1]);
         const bareMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', ['It has not been shown that Poe is black'])]);
-        const arguedMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', entitled(offer))]);
-        ok(bc[0] === '\u2717 bare challenge' && !!offer && tagOf(offer, 'Poe is black', 'weak-objection')[0] === '? ambiguous' &&
-            tagOf(entitled(offer), 'Poe is black', 'weak-objection')[0] === '\u2713 modus ponens' &&
+        const arguedMap = node('M', 'contention', ['Poe is black'], [node('W', 'weak-objection', offer || [])]);
+        ok(bc[0] === '✗ bare challenge' && !!offer && offer[0] === 'If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black' &&
+            tagOf(offer, 'Poe is black', 'weak-objection')[0] === '✓ modus ponens' &&
             verdictOf([bareMap]).status === 'asserted' && verdictOf([arguedMap]).status === 'unresolved',
-            'a bare challenge ("It has not been shown that P" alone) has no force; the premises it offers ask which "can\'t" is meant (r27.184), and answered "not entitled", pass, and challenge', J([bc, offer]));
-        // Off (r27.184): "we can't conclude", as written, is not "not
-        // established", so the offer is not made -- it is checked first.
+            'a bare challenge ("It has not been shown that P" alone) has no force; the premises it offers -- "we are not entitled to conclude" (r27.186) -- pass, and challenge', J([bc, offer]));
+        // Semantic mode off: offered too, and they pass as written; so for a
+        // box a generic is in ("ravens are black"), whose note asks nothing.
         ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
-        const bcOff = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection');
+        const bcOff = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection'), offerOff = offered(bcOff[1]);
+        const gen = tagOf(['It has not been shown that ravens are black'], 'Ravens are black', 'weak-objection'), offerGen = offered(gen[1]);
+        const passOff = offerOff ? tagOf(offerOff, 'Poe is black', 'weak-objection')[0] : null, passGen = offerGen ? tagOf(offerGen, 'Ravens are black', 'weak-objection')[0] : null;
         ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-        ok(bcOff[0] === '\u2717 bare challenge' && bcOff[1].endsWith('A challenge needs reasons too: give them as its premises.'),
-            'with Semantic mode off, no premises are offered: "we can\'t conclude", read as written, would not challenge', J(bcOff));
+        ok(bcOff[0] === '✗ bare challenge' && J(offerOff) === J(offer) && passOff === '✓ modus ponens' &&
+            gen[0] === '✗ bare challenge' && !!offerGen && offerGen[0] === 'If we lack reasons to think that ravens are black, then we are not entitled to conclude that ravens are black' && passGen === '✓ modus ponens',
+            'with Semantic mode off, the same premises are offered, and pass as written; so for "ravens are black" (r27.186; nothing had been offered)', J([bcOff, gen, passOff, passGen]));
         // For a conditional box, the offer says the box as it is, each "if"
         // with its own "then" (r27.93; it had been bracketed) -- and it passes.
         const cb = tagOf(['It has not been shown that if Poe is a raven, then Poe is black'], 'If Poe is a raven, then Poe is black', 'weak-objection'), coffer = offered(cb[1]);
-        ok(cb[0] === '\u2717 bare challenge' && !!coffer && /think that if Poe is a raven, then Poe is black, then we can/.test(coffer[0]) &&
-            tagOf(entitled(coffer), 'If Poe is a raven, then Poe is black', 'weak-objection')[0] === '\u2713 modus ponens',
+        ok(cb[0] === '✗ bare challenge' && !!coffer && /think that if Poe is a raven, then Poe is black, then we are not entitled to conclude that if Poe is a raven/.test(coffer[0]) &&
+            tagOf(coffer, 'If Poe is a raven, then Poe is black', 'weak-objection')[0] === '✓ modus ponens',
             'the offer is checked before it is made: a conditional box needs no brackets in it', J([cb, coffer]));
         // A bare step whose box is argued for below it is an argument through
         // that argument; alone it has no force.
@@ -1060,7 +1063,7 @@ try {
         const phys = tagOf(['It has not been shown that physicalism is true.'], 'Physicalism is true.', 'weak-objection');
         const bareWhy = tagOf(['Physicalism is false.'], 'Physicalism is true.', 'objection');
         ok(belowWhy.O === '\u201cPhysicalism is false\u201d only denies \u201cPhysicalism is true\u201d, but it is argued for in the boxes below it: this objection stands or falls with that argument.' &&
-            /that physicalism is true, then we can\u2019t conclude that physicalism is true\u201d/.test(phys[1]) && /that Poe is black, then/.test(bc[1]) &&
+            /that physicalism is true, then we are not entitled to conclude that physicalism is true\u201d/.test(phys[1]) && /that Poe is black, then/.test(bc[1]) &&
             /only denies \u201cPhysicalism is true\u201d\. A denial/.test(bareWhy[1]),
             'a step argued below says so; the offer writes a common noun small after "that" and keeps a name\'s capital; a quoted box ends without its own full stop', J([belowWhy.O, phys[1], bareWhy[1]]));
         // r27.49 -- the user: "A bare 'not P' doesn't need to be rejected ...
