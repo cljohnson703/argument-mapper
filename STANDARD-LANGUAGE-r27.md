@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 6: the syntax tree, stage two begins: a verb group with no subject is no clause (r27.187)
+
+The user, of the older pattern tests: "Which older pattern tests can we safely replace with the syntax tree's decisions?"; "I have a feeling all these ad hoc fixes can be fixed with the syntax tree"; of starting stage two: "Sure".
+
+* The clause test, set beside the tree on every fragment it was asked about while the corpus was read (1,888):
+  * They agree on 1,401.
+  * The tree cannot tell on 404.
+  * They differ on 83, the tree right on about half.
+  * Where the tree finds a verb group with nothing before it that could be its subject, it was right every time. That decision is the tree's now: "quickly left the room", "is laid out", "happily sings" begin no clause. The older tests had taken the first word for a subject.
+  * Where the tree reads the words as one noun phrase, it was wrong on short clauses whose verb could be a noun: "Mary washes", "water boils", "a student cheats". The older test keeps that decision for now.
+* The tree:
+  * Adverbs joined by "and" or "or" before a verb are one manner inside its verb group: "Mary quickly and quietly left the room" is one claim, said of Mary. It had been read as one claim with nothing inside it used.
+  * A word in -s with an object after it is a verb, as a past with one is: "dries the dishes". Not before "that", a name or a letter: "rooms A, B, and C".
+* So:
+  * "Bob arrived and quickly left the room" is two claims. It had been one.
+  * "Bob washes and carefully dries the dishes" asks whether "the dishes" goes with "washes" too, as "Mary washes and dries the dishes" does. "Carefully" had been read as a subject.
+  * "Bob carefully washes and dries the dishes" asks the same. The shared-object check takes a verb with an adverb before it as a verb.
+  * Joined past verbs may open with an adverb: "left and quickly cried".
+* The main-verb finder (claimMainVerbIndex) is no drop-in: it finds a helping verb or "is", not the main verb ("Mary thinks that Poe is black": "is", where the tree has "thinks"). Its callers are for later steps, one at a time.
+
+Tests:
+* syntax-r27-test.js has 114 checks; the new one, of six clause tests and five sentences, fails on r27.186.
+* Take-one-out: each of the 6 changes is caught.
+* 11 sentences in the corpus read differently. "Ctrl+Enter on a weak rebuttal adds a weak objection" has its subject whole; "When the dog barks, he wags his tail" is flagged as other "when" sentences are. The rest are labels of the app's own, read no better or worse.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 6: the bare-challenge hint offers "we are not entitled to conclude" (r27.186)
 
 The user, of the example premise the bare-challenge hint offers, "we are not entitled to conclude" in place of "we can't conclude": "Yes".

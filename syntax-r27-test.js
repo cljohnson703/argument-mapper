@@ -384,6 +384,19 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
         adverb[2][0] === 'C[P:poe|~fly;A:apparently, bob sings]' && !adverb[2][1].length &&
         J(adverb[3][1]) === J(['"the tango" may go with "sings" as well as "dances", or with "dances" alone']),
         '"and dogs generally bark", "and generally dances", "and Bob apparently sings": two claims -- "generally" is no verb, nor "bark" its object (they had been one claim, asking whether "bark" went with "fly"); "and generally dances the tango" asks of "the tango"', J(adverb));
+    // r27.187 (the syntax tree, stage two: "Which older pattern tests can we
+    // safely replace with the syntax tree's decisions?"): a verb group with
+    // nothing before it that could be its subject begins no clause, as the
+    // tree has it; adverbs joined before a verb are one manner in its group;
+    // a word in -s with an object after it is a verb.
+    const tree = ev(`return { clause: ['quickly left the room', 'is laid out', 'happily sings', 'carefully dries the dishes', 'Mary washes', 'Never has Bob lied'].map(function (t) { return claimLooksLikeClause(t); }),
+        keys: ['Bob arrived and quickly left the room.', 'Mary quickly and quietly left the room.', 'Mary visited rooms A, B, and C.'].map(function (t) { return claimKey(parseClaim(t)).replace(/\\uE000/g, ''); }),
+        asked: ['Bob washes and carefully dries the dishes.', 'Bob carefully washes and dries the dishes.'].map(function (t) {
+            return parseClaimFull(t).notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message.replace(/\\uE000/g, ''); }); }) };`);
+    ok(J(tree.clause) === J([false, false, false, false, true, true]) &&
+        J(tree.keys) === J(['C[P:bob|~did arrived;P:bob|~did quickly left the room]', 'P:mary|~quickly and quietly left the room', 'P:mary|~did visited rooms a b and c']) &&
+        J(tree.asked) === J([['"the dishes" may go with "washes" as well as "dries", or with "dries" alone'], ['"the dishes" may go with "carefully washes" as well as "dries", or with "dries" alone']]),
+        'a verb group with no subject before it is no clause ("quickly left the room", "is laid out"); so "Bob arrived and quickly left the room" is two claims, "Mary quickly and quietly left the room" one, said of Mary, and "Bob washes and carefully dries the dishes" asks of "the dishes", as "Bob carefully washes and dries the dishes" does -- "carefully" had been a subject (r27.187)', J(tree));
     ok(bakery.key === 'A:mary runs and bob owns the bakery' && bakery.notes.length === 1 &&
         J(bakery.notes[0].readings) === J(['mary runs, and bob owns, the bakery', 'mary runs, and bob owns the bakery']),
         'an object after two clauses is asked about, its readings in the user\'s commas', J(bakery));

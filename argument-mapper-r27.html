@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-06 r27.186';
+    const APP_BUILD = '2026-11-06 r27.187';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11523,6 +11523,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!tokens.length) return false;
         const first = claimWord(tokens[0]);
         if (/^(?:if|either|both|neither|unless|whenever|provided|assuming|although|though)$/.test(first)) return true;
+        // A verb group first, with nothing before it that could be its
+        // subject ("quickly left the room", "is laid out"): no clause, as the
+        // syntax tree has it (r27.187, stage two; the older tests below took
+        // its first word for a subject). Not after a closed adverb ("never
+        // has Bob lied"), which may put the verb before its subject.
+        { const ws = claimSynWords(tokens);
+          if (claimSynVerbStart(ws, 0, '?') === 'strong' && !ws[0].noun && !ws[0].name && !ws[0].pro && !ws[0].det && !ws[0].quant && !(ws[0].adv && ws[0].closed)) return false; }
         // A claim with its time in front: "when Mary exits the room, she learns a new fact".
         { const f = /^(?:when|while|whilst|after|before|once|since|because)\s+(.+?),\s+(.+)$/.exec(s);
           if (f && claimLooksLikeClause(f[1]) && claimLooksLikeClause(f[2])) return true; }
@@ -12635,7 +12642,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const lone = [];
         pieces.slice(0, -1).forEach((p, i) => {
             const t = claimTokens(p);
-            // A verb alone, or with its particle: "washes up and dries the dishes".
+            // A verb alone, or with its particle: "washes up and dries the dishes";
+            // an adverb before it passed over ("carefully washes", r27.187).
+            if (t.length > 1 && (y0 => y0.adv && !y0.verb && !y0.closed)(claimSynWord(t[0]))) t.shift();
             if (t.length !== 1 && !(t.length === 2 && CLAIM_SYN_PARTICLES.has(claimWord(t[1])))) return;
             const y = claimSynWord(t[0]);
             if (!y.w || y.closed || y.aux || y.name || y.poss) return;
@@ -12887,7 +12896,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const link = /\sand\s/.test(d[1]) && !/\sor\s/.test(d[1]) ? 'and' : /\sor\s/.test(d[1]) && !/\sand\s/.test(d[1]) ? 'or' : null;
         if (!link) return null;
         let pieces = d[1].split(new RegExp('\\s+' + link + '\\s+')).map(x => x.trim());
-        const verb = x => { const w = x.split(/\s+/)[0]; return /^[a-z][a-z-]*$/.test(w) && claimPastStem(w) !== null && !claimKnownAdjective(w); };
+        // Past its adverbs: "left and quickly cried" (r27.187).
+        const verb = x => { const t = x.split(/\s+/); let k = 0; while (k < t.length - 1 && (y => y.adv && !y.noun && !y.verb)(claimSynWord(t[k]))) k++;
+            const w = t[k]; return /^[a-z][a-z-]*$/.test(w) && claimPastStem(w) !== null && !claimKnownAdjective(w); };
         if (pieces.length < 2 || !pieces.every(verb)) return null;
         // As in the present: a place or a time after them ("sang and danced
         // in the hall") goes with the last alone or with each -- open, so
@@ -18209,7 +18220,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // consciousness"). They join no clauses and no verbs. Word positions, for
     // the verb group that begins at `from`.
     function claimSynInnerJoins(ws, from) {
-        const out = new Set(), g = claimSynGroupEnd(ws, from), v = ws[g - 1];
+        const out = new Set();
+        // Adverbs joined before the verb ("quickly and quietly left"): inside
+        // its verb group (r27.187).
+        for (let j = from; ws[j] && ws[j].adv && !ws[j].noun && ws[j + 1] && ws[j + 1].conj && /^(?:and|or)$/.test(ws[j + 1].w) && ws[j + 2] && ws[j + 2].adv && !ws[j + 2].noun; j += 2) out.add(j + 1);
+        const g = claimSynGroupEnd(ws, from), v = ws[g - 1];
         if (!v || g >= ws.length || /^(?:is|are|am|was|were|be|been|being|isn't|aren't|wasn't|weren't)$/.test(v.w)) return out;
         if (!claimSynNounPhrases(ws, g).some(o => o.end === ws.length)) return out;
         let rel = -1;
@@ -18336,12 +18351,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "every raven that sings | dries the dishes", not "... the | dishes".
         if (i > 0 && ws[i - 1] && !ws[i - 1].name && /^(?:the|a|an|my|your|his|its|our|their|whose)$/.test(ws[i - 1].w)) return null;
         if (y.aux) return 'strong';
+        // Adverbs joined, one manner: "quickly and quietly left" (r27.187).
+        if (y.adv && !y.noun && ws[i + 1] && ws[i + 1].conj && /^(?:and|or)$/.test(ws[i + 1].w) && ws[i + 2] && ws[i + 2].adv && !ws[i + 2].noun)
+            return claimSynVerbStart(ws, i + 2, number, depth);
         if ((y.adv && !y.noun) || /^(?:all|both|each|neither|either)$/.test(y.w)) return claimSynVerbStart(ws, i + 1, number, (depth || 0) + 1);
         if (y.closed || y.name || y.poss) return null;
         // A past that is also an adjective ("surprised", "closed") is a verb
         // with an object after it.
         if (y.past) { const z = ws[i + 1]; return !claimKnownAdjective(y.t) || (z && (z.det || z.name || z.poss || z.quant || z.num || z.pro === 'obj')) ? 'strong' : 'weak'; }
-        if (y.s && number !== 'pl' && number !== 'you') return y.knownVerb ? 'strong' : 'weak';
+        // A word in -s with an object after it is a verb, as a past with one
+        // is: "dries the dishes", "feeds them" (r27.187). Not "that" after
+        // it, which may open a clause about the noun ("dogs that bark"), nor
+        // a name or a letter ("rooms A, B and C").
+        if (y.s && number !== 'pl' && number !== 'you') {
+            const z = ws[i + 1];
+            return y.knownVerb || (z && ((z.det && z.w !== 'that') || z.poss || z.pro === 'obj')) ? 'strong' : 'weak';
+        }
         // "Every student read the book": after one, "read" is no present (r27.96).
         if (number === 'sg' && CLAIM_PAST_UNCHANGED.has(y.w)) return 'strong';
         if (!y.s && y.verb && (number === 'pl' || number === 'you' || number === '?')) return y.knownVerb ? 'strong' : 'weak';
