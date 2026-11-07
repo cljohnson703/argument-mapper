@@ -873,8 +873,8 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
         '"if it rains, then the ground is wet and the match is off" offers both groupings, as the comma does, each reading back; elsewhere "then" takes in both, as before', J([ifs, or]));
     const none = ['If it rains, then the ground is wet and slippery.', 'If it rains, then Poe is black and flies.', 'If it rains, then both the ground is wet and the match is off.',
         'Bob thinks that Poe is black and that Fido is white.', 'Bob thinks that Poe and Fido are black.', 'Bob thinks that both Poe is black and Fido is white.',
-        'Bob thinks that Poe is black and white.', 'Mary believes that Ann left and then Bob cried.'].map(t => said(t).readings.length);
-    ok(none.every(k => k === 0), 'no question where "and" joins no clause of its own, after "both", before "that" again, or in "and then"', J(none));
+        'Bob thinks that Poe is black and white.'].map(t => said(t).readings.length);
+    ok(none.every(k => k === 0), 'no question where "and" joins no clause of its own, after "both", or before "that" again', J(none));
     const thinks = [said('Bob thinks that Poe is black and Fido is white.'), said('Bob thinks that Poe is black, and Fido is white.')];
     ok(thinks.every(t => t.key === 'P:bob|~think that poe is black and fido is white' && t.step) &&
         J(thinks[0].readings) === J(['Fido is white, and Bob thinks that Poe is black.', 'Bob thinks that both Poe is black and Fido is white.']) &&
@@ -891,6 +891,20 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
     ok(/only repeats/.test(ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob thinks that both Poe is black and Fido is white.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob thinks that Poe is black and Fido is white.'], collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text : '';`)),
         '"thinks that both P and Q" says what "thinks that P and Q" says: "both" after "that" only groups');
+    // r27.190 (the user, of making a list and "and then" inside a that-clause
+    // ask the same way: "Yes").
+    const list = said('Mary knows that Poe flies, Fido sings, and Rex barks.'), then = said('Mary believes that Ann left and then Bob cried.');
+    ok(list.step && J(list.readings) === J(['Rex barks, and Mary knows that Poe flies, Fido sings.', 'Mary knows that (Poe flies, Fido sings, and Rex barks).']) &&
+        then.step && then.key === 'P:mary|~believe that ann left and then bob cried' &&
+        J(then.readings) === J(['First Mary believes that Ann left, and then Bob cried.', 'Mary believes that (Ann left and then Bob cried).']),
+        'a list in a that-clause, and an "and then" in one, offer both readings, each reading back -- brackets for all of it, "first ..., and then ..." for the sequence; elsewhere all of it is in the that-clause, as before (r27.190)', J([list, then]));
+    ok(key('First Mary believes that Ann left, and then Bob cried.').replace(/\uE000/g, '') === 'T[P:mary|~believe that ann left;P:bob|~did cried]' &&
+        key('First Ann left, and then Bob cried.').replace(/\uE000/g, '') === 'T[P:ann|~did left;P:bob|~did cried]',
+        '"first A, and then B" is the sequence of the two, split at the "and then" that pairs with "first" where the that-clause would take in the rest (r27.190)');
+    const held = [[['Mary believes that Ann left and then Bob cried.'], 'Bob cried.'], [['Mary knows that Poe flies, Fido sings, and Rex barks.'], 'Rex barks.']]
+        .map(([ps, c]) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`));
+    ok(held.every(h => h.rule === null && J(h.asked) === J([2])), 'so "Bob cried", "Rex barks": asked, where one reading gives them and the other does not (r27.190)', J(held));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

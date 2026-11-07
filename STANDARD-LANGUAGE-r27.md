@@ -4,6 +4,23 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: a list, and "and then", inside a that-clause ask too (r27.190)
+
+The user, of making a list inside a that-clause and "and then" inside one ask as r27.189's questions do: "Yes".
+
+* "Mary knows that Poe flies, Fido sings, and Rex barks" asks, where a step turns on it: "Rex barks, and Mary knows that Poe flies, Fido sings", or "Mary knows that (Poe flies, Fido sings, and Rex barks)". It had offered the first only, and asked nothing.
+* "Mary believes that Ann left and then Bob cried" asks too: "First Mary believes that Ann left, and then Bob cried", or "Mary believes that (Ann left and then Bob cried)". It had been read with all of it believed, and nothing asked.
+  * So "Bob cried" from it asks: it follows on the first reading and not the second.
+* Elsewhere each is read as before, all of it in the that-clause.
+* "First A, and then B" is the sequence of the two, split at the "and then" that pairs with "first", where the words would not otherwise be read so: "First Mary believes that Ann left, and then Bob cried" had been read with the that-clause taking in the rest.
+
+Tests:
+* syntax-r27-test.js has 123 checks; the 3 new ones fail on r27.189. The r27.189 check of boxes that ask nothing no longer lists "Mary believes that Ann left and then Bob cried".
+* Take-one-out: each of the 2 changes is caught.
+* 2 sentences in the corpus read differently: "Bob believes A, B, and C" and "Mary believes that Ann left and then Bob cried", each read as before, its question added.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: "if …, then B and C" and "thinks that B and C" ask where a step turns on them (r27.189)
 
 The user, of "If it rains, then the ground is wet and the match is off" and "Bob thinks that Poe is black and Fido is white": "these are ambiguous because of a lack of commas and 'both... and' structure"; of the comma: "This would need to be disambiguated"; of when to ask: "It depends on whether validity turns on the interpretation. If not, then we can go with the split. If so, even if it's the most unusual case, then we disambiguate absolutely everything."

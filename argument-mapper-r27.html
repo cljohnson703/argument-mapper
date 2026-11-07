@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-07 r27.189';
+    const APP_BUILD = '2026-11-07 r27.190';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -15200,21 +15200,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // turns on it; elsewhere all of it is thought.
                 const open = claimWord(tokens[att + 1]) === 'that' ? att + 2 : att + 1;
                 const paired = /^(?:both|either)$/.test(claimWord(tokens[open] || ''));
-                const cut = paired ? -1 : tokens.findIndex((t, i) => i > open && (held < 0 || i < held) && depth[i] === 0 && /^(?:and|or)$/.test(claimWord(t)) &&
-                    !/^(?:that|whether|if|then)$/.test(claimWord(tokens[i + 1] || '')) && claimLooksLikeClause(tokens.slice(i + 1).join(' ')) &&
+                // The join: "and", "or", or "and then" -- one token, "and-then",
+                // while an "and then" is read (r27.190).
+                const joinAt = i => {
+                    const w = claimWord(tokens[i] || '');
+                    return w === 'and-then' ? { kind: 'and then', skip: 1 } : w === 'and' && claimWord(tokens[i + 1] || '') === 'then' ? { kind: 'and then', skip: 2 }
+                        : /^(?:and|or)$/.test(w) ? { kind: w, skip: 1 } : null;
+                };
+                const cut = paired ? -1 : tokens.findIndex((t, i) => i > open && (held < 0 || i < held) && depth[i] === 0 && !!joinAt(i) &&
+                    !/^(?:that|whether|if)$/.test(claimWord(tokens[i + joinAt(i).skip] || '')) && claimLooksLikeClause(tokens.slice(i + joinAt(i).skip).join(' ')) &&
                     claimLooksLikeClause(tokens.slice(open, i).join(' ').replace(/,$/, '')));
                 if (cut > 0) {
-                    const first = tokens.slice(0, cut).join(' ').replace(/,$/, ''), second = tokens.slice(cut + 1).join(' '), kind = claimWord(tokens[cut]);
+                    const join = joinAt(cut), kind = join.kind;
+                    const first = tokens.slice(0, cut).join(' ').replace(/,$/, ''), second = tokens.slice(cut + join.skip).join(' ');
                     const inner = tokens.slice(open, cut).join(' '), lead = tokens.slice(0, open).join(' ') + (open === att + 1 ? ' that' : '');
-                    const readings = [
+                    const list = /,/.test(inner.replace(/,$/, ''));
+                    const readings = [kind === 'and then'
+                        // The sequence: "first ..., and then ..." says it (r27.190).
+                        ? { label: 'first ' + first + ', and then ' + second,
+                            build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? { kind: 'then', parts: [a, b], src: first + ' and then ' + second } : null; } }
                         // Said with the that-clause last, where it runs to the end.
-                        { label: second + ', ' + kind + ' ' + first, build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? claimList(kind, [a, b]) : null; } }];
-                    // All of it thought: "both ... and" says so -- of two
-                    // clauses, not a list ("believes A, B, and C"), which is
-                    // flagged as before.
-                    if (!/,/.test(inner.replace(/,$/, ''))) readings.push({ label: lead + ' ' + (kind === 'or' ? 'either ' : 'both ') + inner + ' ' + kind + ' ' + second, build: () => form });
-                    return claimAmbiguous('"' + kind + '" may join a claim of its own, or be part of what "' + tokens[att] + '" takes', readings,
-                        readings.length > 1, readings.length > 1 ? { stepDecides: true } : undefined) || form;
+                        : { label: second + ', ' + kind + ' ' + first, build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? claimList(kind, [a, b]) : null; } },
+                        // All of it thought: "both ... and" says so of two
+                        // clauses; brackets, of a list or an "and then" (r27.190).
+                        { label: lead + ' ' + (list || kind === 'and then' ? '(' + inner + ' ' + kind + ' ' + second + ')' : (kind === 'or' ? 'either ' : 'both ') + inner + ' ' + kind + ' ' + second),
+                            build: () => form }];
+                    return claimAmbiguous('"' + kind + '" may join a claim of its own, or be part of what "' + tokens[att] + '" takes', readings, true, { stepDecides: true }) || form;
                 }
                 return form;
             }
@@ -15624,11 +15635,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function readThenClaim(text) {
         const st = claimReadState;
         if (!st || /^(?:if|when|whenever|unless)\s/.test(text)) return null;
-        // "First A and then B": the sequence, grouped.
+        // "First A and then B": the sequence, grouped -- split at the "and
+        // then" that pairs with "first" where the words would not otherwise
+        // be read as one: "first Mary believes that Ann left, and then Bob
+        // cried", whose that-clause would take in the rest (r27.190).
         const opened = /^first,?\s+/.exec(text);
         if (opened) {
             const g = claimPairGroups(claimTopLevelMask(text)).find(g => g.from === 0);
-            if (g && g.end >= text.length) return readClaim(text.slice(opened[0].length));
+            if (g && g.end >= text.length) {
+                const rest = text.slice(opened[0].length), plain = claimQuietly(() => readClaim(rest)), then = /^and(?:\s+|-)then\s*/.exec(text.slice(g.pair));
+                if (plain && plain.kind !== 'then' && then) {
+                    const a = text.slice(opened[0].length, g.pair).replace(/,\s*$/, '').trim(), b = text.slice(g.pair + then[0].length).trim();
+                    const fa = readClaim(a), fb = readClaim(b);
+                    if (fa && fb) return { kind: 'then', parts: [fa, fb], src: rest };
+                }
+                return readClaim(rest);
+            }
         }
         // An "and then" at the top, not inside a group of its own.
         const cuts = [...claimPairMask(claimTopLevelMask(text)).matchAll(CLAIM_AND_THEN)]
