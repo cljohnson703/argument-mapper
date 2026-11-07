@@ -907,6 +907,20 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
     ok(held.every(h => h.rule === null && J(h.asked) === J([2])), 'so "Bob cried", "Rex barks": asked, where one reading gives them and the other does not (r27.190)', J(held));
 }
 
+console.log('\n-- the letter "A" at the start of a that-clause is no article (r27.191) --');
+{
+    // At the start of a that-clause "A" loses its capital, and with the commas
+    // set aside "A, B" had looked like an article and its noun.
+    const keys = ['Bob believes that A, B, and C.', 'Bob believes A, B, and C.', 'Bob denies that A, B, and C.', 'Bob believes that An, Bo, and Cy left.',
+        'Bob believes that A implies B.', 'Bob believes that a raven is black.', 'Bob believes a lie.'].map(key);
+    ok(J(keys) === J(['P:bob|~believe that a b and c', 'P:bob|~believe that a b and c', 'P:bob|~deny that a b and c', 'P:bob|~believe that an bo and cy left',
+        'P:bob|~believe that a implies b', 'P:bob|~believe that raven is black', 'P:bob|~believe lie']),
+        '"A" before a comma, or before a verb in -s, is a letter or a name, not the article ("believes that A, B, and C", "An, Bo, and Cy", "A implies B"); "a raven", "a lie" still drop theirs', J(keys));
+    const restated = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob believes that A, B, and C.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob believes that B and C.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text : '' };`);
+    ok(!restated.rule && !/only repeats/.test(restated.why), '"Bob believes that B and C" no longer restates "Bob believes that A, B, and C" (it had)', J(restated));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

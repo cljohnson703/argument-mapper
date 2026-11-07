@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-07 r27.190';
+    const APP_BUILD = '2026-11-07 r27.191';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13056,7 +13056,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     function verbPhraseProp(tokens) {
-        let words = tokens.map(t => t.replace(/,+$/, '')).filter(Boolean);
+        // "A," and "an," are never the article, which no comma follows: a
+        // letter or a name whose capital the start of a clause took away
+        // ("believes that A, B, and C", "that An, Bo, and Cy left"; r27.191).
+        let words = tokens.map(t => /^(?:a|an),+$/.test(t) ? '' + t.replace(/,+$/, '') : t.replace(/,+$/, '')).filter(Boolean);
         if (!words.length) return null;
         // "Believes that (P iff Q)": brackets round all of what is believed only
         // group it; so does "it is the case that" ("believes that it is the case
@@ -13130,7 +13133,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Not the letter "A" ("all B are A", r27.115), which keeps its mark,
         // nor one with no noun after it ("Bob believes A").
         words = words.filter((w, i) => i === 0 || /^/.test(w) || !(denied ? /^(?:a|an|any)$/ : /^(?:a|an)$/).test(claimWord(w)) ||
-            (/^(?:a|an)$/.test(claimWord(w)) && (i === words.length - 1 || /^(?:and|or|nor|but|then)$/.test(claimWord(words[i + 1])) || CLAIM_VERB_MARKERS.has(claimWord(words[i + 1])))));
+            (/^(?:a|an)$/.test(claimWord(w)) && (i === words.length - 1 || /^(?:and|or|nor|but|then)$/.test(claimWord(words[i + 1])) || CLAIM_VERB_MARKERS.has(claimWord(words[i + 1])) ||
+                // Nor one before a verb in -s, which no article stands before:
+                // "believes that A implies B" (r27.191).
+                (() => { const y = claimSynWord(words[i + 1] || ''); return !!(y.s && y.knownVerb); })())));
         words = claimCanonicalObjects(words, denied);
         // "We should be able to leave" may hedge "we can leave", or say what
         // ought to be: read as written, and flagged when the hedge would matter.

@@ -4,6 +4,22 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: the letter "A" at the start of a that-clause is no article (r27.191)
+
+The user: "Do this task here: Fix sentence letter 'A' read as the article 'a'".
+
+* "Bob believes that A, B, and C" had been read as "Bob believes that B and C". At the start of the that-clause "A" loses its capital (a capital that begins a clause says nothing), and with the commas set aside, "A, B" looked like "a B", an article and its noun.
+  * So "Bob believes that B and C" had been taken to restate it.
+  * So for "Bob believes A, B, and C", "Bob denies that A, B, and C", "that An, Bo, and Cy left" (the name "An"), and "believes that A implies B", which had been read as "believes that implies B".
+* An "a" or "an" is no article before a comma, which no article stands before, nor before a verb in -s ("implies", "entails"). "Believes that a raven is black" and "believes a lie" still drop theirs.
+
+Tests:
+* syntax-r27-test.js has 125 checks; the 2 new ones fail on r27.190.
+* Take-one-out: each of the 2 changes is caught.
+* 1 sentence in the corpus reads differently: "Bob believes A, B, and C", now with its "A".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: a list, and "and then", inside a that-clause ask too (r27.190)
 
 The user, of making a list inside a that-clause and "and then" inside one ask as r27.189's questions do: "Yes".
