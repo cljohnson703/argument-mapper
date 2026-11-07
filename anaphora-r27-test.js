@@ -559,6 +559,17 @@ console.log('\n-- the weather\'s "it" after "if", "unless", "when"; "it is Tuesd
         '"spicy" is no weather, as before');
 }
 
+console.log('\n-- a preposition that opens a sentence is no name (r27.194) --');
+{
+    // "With his help, Bob won" had read "his" as "With" ("with With's help").
+    const read = t => ev(`var r = parseClaimFull(${J(t)}); return { key: claimKey(r.form).replace(//g, ''), notes: r.notes.map(function (n) { return n.message; }) };`);
+    const got = ['With his help, Bob won.', 'Despite her doubts, Mary agreed.', 'In spite of his fear, Bob jumped.', 'Without her, Bob left.'].map(read);
+    ok(got[0].key === 'A:with his help, bob won' && got[0].notes.some(m => /“his” has nothing in this box to refer to/.test(m)) &&
+        got[1].key === "A:despite mary's doubts, mary agreed" && got[2].key === "A:in spite of bob's fear, bob jumped" &&
+        got[3].key === 'A:without her, bob left' && !got.some(g => g.notes.some(m => /With|Despite|Without/.test(m.replace(/\("[^"]*"\)/g, '')))),
+        'a preposition that opens a sentence is no name ("his" had been read as "With"); after "despite", as after "although", the pronoun is the one name the claim gives; after "with" it asks who it is, as one before a name does', J(got));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

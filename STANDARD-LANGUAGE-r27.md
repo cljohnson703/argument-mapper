@@ -4,6 +4,21 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: a preposition that opens a sentence is no name (r27.194)
+
+The user, of "With his help, Bob won" read as "with With's help, Bob won": "You can just do it here."
+
+* A capitalized preposition at the start of a sentence is no name. "With his help, Bob won" and "Despite her doubts, Mary agreed" had read "his" and "her" as "With" and "Despite", a name the claim seemed to give.
+* After "despite" or "in spite of", the pronoun is the one name the claim gives, as after "although": "Despite her doubts, Mary agreed" is about Mary's doubts, as "After his talk, Bob left" is about Bob's talk.
+* After "with" or "without", the pronoun asks who it is, as one before a name does: "his help" may be someone else's.
+
+Tests:
+* anaphora-r27-test.js has 117 checks; the new one fails on r27.193.
+* Take-one-out: each of the 2 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: readings without numbers; three readings of "neither ... if" (r27.193)
 
 The user, of "(1) If it rains, then the ground is wet, and (2) the match is off": "I don't mind numbered readings, and it would be good for the app to be able to recognize them. I think both should be allowed, but the second one ('The match is off, and if...') should be the default disambiguation instead of the numbered version"; of "Poe flies, and if it rains, then Fido sings" and "Mary left, and then, if it rained, Bob cried": "ok"; of "Neither Poe flies nor Fido sings if it rains": "Another reading is 'If it rains, then neither Poe flies nor Fido sings.' So, there's 3 readings, and each of them need to be available for the user to select between."

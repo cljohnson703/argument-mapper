@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-07 r27.193';
+    const APP_BUILD = '2026-11-07 r27.194';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9714,7 +9714,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_NOT_A_NAME = new Set(('while when if the a an in on at since because although every each all some no not it this that these those there ' +
         'and but or for we you they he she him his her hers himself herself i so then therefore thus either neither both whether after before during unless until whenever wherever ' +
         'where given suppose assume let consider according assuming supposing provided providing granted granting considering though whereas imagine nothing nobody someone somebody anyone anybody everyone everybody whatever whoever ' +
-        'nowadays today yesterday tomorrow first second third finally moreover furthermore however nevertheless still yet once twice').split(' '));
+        'nowadays today yesterday tomorrow first second third finally moreover furthermore however nevertheless still yet once twice ' +
+        // A preposition that opens a sentence: "With his help, Bob won" (r27.194;
+        // "his" had been read as "With").
+        'with without despite against among amongst through throughout under over by from to of into onto about like near beside besides ' +
+        'including except versus within beyond behind below above across along around toward towards upon via regarding concerning ' +
+        'notwithstanding amid amidst inside outside underneath beneath').split(' '));
     // Nouns that only ever name people: "anyone who is a man" is every man,
     // the "person" in "anyone" said by the noun (r27.96). Not those that may
     // name a thing or an animal: "a speaker", "a client", "a mother" (a cat
@@ -10737,7 +10742,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Where one clause ends and the next begins.
     const CLAIM_CLAUSE_BREAK = /[,.;:!?]|\b(?:and|or|but|nor|then|so|because|since|although|though|while|when|whenever|if|unless|until|after|before|that|which|who|whom|whose|where|as)\b/i;
     // A claim that opens with a clause waiting for its main one.
-    const CLAIM_LEADING_CLAUSE = /^\s*(?:before|after|when|while|since|if|although|though|unless|until|because|whenever|once|as)\b/i;
+    // "Despite her doubts, Mary agreed" waits for its main clause as "although
+    // she doubted it" does: Mary's doubts (r27.194).
+    const CLAIM_LEADING_CLAUSE = /^\s*(?:before|after|when|while|since|if|although|though|unless|until|because|whenever|once|as|despite|in spite of)\b/i;
     // What somebody believes, thinks, says or knows. A pronoun there reads as
     // any other (the user, 2026-09-28: "In 'Mary believes that she is late',
     // if that's all the content we have, then 'she' refers to 'Mary'"). Where
