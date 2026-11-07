@@ -349,7 +349,8 @@ const CORPUS = {
         ['All ravens are black', null],
         ['No raven is white', null],
         ['Poe is not black', null],
-        ['If it rains, then the ground is wet and the match is off', null],
+        // Without a comma "then" may still stop at "wet": asked where a step turns on it (r27.189).
+        ['If it rains, then the ground is wet and the match is off', 'ambiguous'],
         ['The constructor is broken', null],
         ['Constructors are useful', 'ambiguous']
     ]

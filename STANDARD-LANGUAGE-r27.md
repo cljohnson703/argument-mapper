@@ -4,6 +4,30 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: "if …, then B and C" and "thinks that B and C" ask where a step turns on them (r27.189)
+
+The user, of "If it rains, then the ground is wet and the match is off" and "Bob thinks that Poe is black and Fido is white": "these are ambiguous because of a lack of commas and 'both... and' structure"; of the comma: "This would need to be disambiguated"; of when to ask: "It depends on whether validity turns on the interpretation. If not, then we can go with the split. If so, even if it's the most unusual case, then we disambiguate absolutely everything."
+
+* "If it rains, then the ground is wet and the match is off" offers both groupings, as it did with a comma before "and": "If it rains, then both the ground is wet and the match is off" or "(1) If it rains, then the ground is wet, and (2) the match is off". So with "or", and with three or more joined by "and" alone.
+  * Only where "and" joins clauses: not "wet and slippery", "black and flies", or "then both … and …".
+* "Bob thinks that Poe is black and Fido is white", with its comma or without, offers "Fido is white, and Bob thinks that Poe is black" or "Bob thinks that both Poe is black and Fido is white". It had offered the first only, with the comma, and asked nothing.
+  * Not before "that" again ("and that Fido is white" is thought too), before "then" ("Ann left and then Bob cried" stays in the words), after "both", where the clause before "and" is not whole ("thinks that Poe and Fido are black"), or in a list ("believes A, B, and C", flagged as before).
+* Each asks only where a step turns on it. A step that follows on every reading stands, unasked; one that follows on none does not follow, unasked; one that follows on some waits for the answer.
+  * "If it rains, then the roads close and the schools close" and "It rains" give "The roads close and the schools close" by modus ponens.
+  * "If physicalism is false, then zombies are possible and zombies are not possible" still gives "Physicalism is true" (r27.181): on the other reading it follows in two steps.
+  * "If it rains, then the ground is wet and the match is off", so "the match is off": asked.
+  * A reading gives the step where its conclusion follows in one step, from the parts of a premise that joins two, in two steps, or by the connectives alone, with a step of its own between simple claims counted too ("Bob knows that Mary left" gives "Mary left").
+* Elsewhere the box is read as before: "then" over all that follows it, the that-clause over all that follows "that". With the comma, "if …, then B, and C" asks as before, read no way meanwhile.
+* "Bob thinks that both Poe is black and Fido is white" says what "Bob thinks that Poe is black and Fido is white" says: "both" (or "either" before "or") after "that" only groups, as brackets do.
+
+Tests:
+* syntax-r27-test.js has 120 checks; 4 of the 5 new ones fail on r27.188. The check of "the raven" said twice counts the box's own questions, not one asked where a step turns on it.
+* logic-r27-english-test.js: in the stress corpus, "If it rains, then the ground is wet and the match is off" is ambiguous; it had been read with no note.
+* Take-one-out: each of the 12 changes is caught.
+* 27 sentences in the corpus read differently: each is read as before, its question added ("If physics is complete, then it rains and it snows", "Mary knows that Bob can swim, and Sue can swim", "If Bob sings, then Mary dances and Ann runs and Tom walks").
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 6: adverbs joined, dropped one at a time; commas with an adverb (r27.188)
 
 The user, of "Mary quickly and quietly left the room": "Isn't this two claims? She left the room quickly, and she left the room quietly? I.e., from that sentence, I can infer that she left the room quickly". Of "Bob washes and carefully dries the dishes": "This can be solved with commas. 'Bob washes, and carefully dries, the dishes' means 'the dishes' goes with both verbs".

@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-06 r27.188';
+    const APP_BUILD = '2026-11-07 r27.189';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13225,6 +13225,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (alt) return alt;
             }
         }
+        // "Thinks that both P and Q" thinks what "thinks that P and Q" does:
+        // "both" before "and", or "either" before "or", after "that" changes
+        // nothing that is thought (r27.189).
+        prop = prop.replace(/(\bthat )both \uE000?(?=.+\sand\s)/, '$1').replace(/(\bthat )either \uE000?(?=.+\sor\s)/, '$1');
         return (negated ? '¬' : '') + prop;
     }
     // The subject of a quantifier, as a property: "ravens" -> "=raven", "things"
@@ -15187,13 +15191,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const held = tokens.findIndex((t, i) => i > att && depth[i] === 0 && claimWord(t) === 'it' && claimWord(tokens[i + 1]) === 'is' &&
                     (claimWord(tokens[i + 2]) === 'true' ? claimWord(tokens[i + 3]) === 'that'
                         : claimWord(tokens[i + 2]) === 'the' && claimWord(tokens[i + 3]) === 'case' && claimWord(tokens[i + 4]) === 'that'));
-                const cut = tokens.findIndex((t, i) => i > att + 1 && (held < 0 || i < held) && depth[i] === 0 && /,$/.test(t) && /^(?:and|or)$/.test(claimWord(tokens[i + 1] || '')) &&
-                    claimLooksLikeClause(tokens.slice(i + 2).join(' ')));
+                // With its comma or without (r27.189; the user: "these are
+                // ambiguous because of a lack of commas and 'both... and'
+                // structure"); not where the clause before it is not whole
+                // ("thinks that Poe and Fido are black"), before "that" again
+                // ("and that Fido is white" is thought too), before "then" ("A and
+                // then B" stays in the words), or after "both". Asked where a step
+                // turns on it; elsewhere all of it is thought.
+                const open = claimWord(tokens[att + 1]) === 'that' ? att + 2 : att + 1;
+                const paired = /^(?:both|either)$/.test(claimWord(tokens[open] || ''));
+                const cut = paired ? -1 : tokens.findIndex((t, i) => i > open && (held < 0 || i < held) && depth[i] === 0 && /^(?:and|or)$/.test(claimWord(t)) &&
+                    !/^(?:that|whether|if|then)$/.test(claimWord(tokens[i + 1] || '')) && claimLooksLikeClause(tokens.slice(i + 1).join(' ')) &&
+                    claimLooksLikeClause(tokens.slice(open, i).join(' ').replace(/,$/, '')));
                 if (cut > 0) {
-                    const first = tokens.slice(0, cut + 1).join(' ').replace(/,$/, ''), second = tokens.slice(cut + 2).join(' '), kind = claimWord(tokens[cut + 1]);
-                    return claimAmbiguous('"' + kind + '" may join a claim of its own, or be part of what "' + tokens[att] + '" takes', [
+                    const first = tokens.slice(0, cut).join(' ').replace(/,$/, ''), second = tokens.slice(cut + 1).join(' '), kind = claimWord(tokens[cut]);
+                    const inner = tokens.slice(open, cut).join(' '), lead = tokens.slice(0, open).join(' ') + (open === att + 1 ? ' that' : '');
+                    const readings = [
                         // Said with the that-clause last, where it runs to the end.
-                        { label: second + ', ' + kind + ' ' + first, build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? claimList(kind, [a, b]) : null; } }], false) || form;
+                        { label: second + ', ' + kind + ' ' + first, build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? claimList(kind, [a, b]) : null; } }];
+                    // All of it thought: "both ... and" says so -- of two
+                    // clauses, not a list ("believes A, B, and C"), which is
+                    // flagged as before.
+                    if (!/,/.test(inner.replace(/,$/, ''))) readings.push({ label: lead + ' ' + (kind === 'or' ? 'either ' : 'both ') + inner + ' ' + kind + ' ' + second, build: () => form });
+                    return claimAmbiguous('"' + kind + '" may join a claim of its own, or be part of what "' + tokens[att] + '" takes', readings,
+                        readings.length > 1, readings.length > 1 ? { stepDecides: true } : undefined) || form;
                 }
                 return form;
             }
@@ -15644,7 +15665,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return joins && joins.filter(j => j.then).length === thens.length ? joins : null;
         };
         const mark = st.notes.length, sites = st.sites;
-        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope).length;
+        // Not one asked only where a step turns on it (r27.189): "Mary
+        // believes that Ann left and then Bob cried" keeps its chain whole.
+        const asked = from => st.notes.slice(from).filter(n => n.kind === 'ambiguous' && !n.anyScope && !n.canScope && !n.someScope && !n.stepDecides).length;
         const whole = readClaim(joined), joins = joinsIn(whole);
         if (joins) {
             const parts = whole.parts;
@@ -17332,7 +17355,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         const readConds = () => claimWithAnyAsSome(() => claimSplitTop(condText, /,?\s+and\s+if,?\s+/).map(readClaim));
         // "If P, then Q, and R": R may be said outright, or only on condition P.
-        const junction = ['and|&|∧', 'or|∨'].map(w => claimQuietly(() => splitClaimOn(consText, w))).find(g => g && g.length > 1 && g.slice(1).some(x => /,/.test(x.sep || '')));
+        // So without the comma, where "and" or "or" joins clauses ("then the
+        // ground is wet and the match is off"): asked the same way (r27.189;
+        // the user: "these are ambiguous because of a lack of commas and
+        // 'both... and' structure"), where a step turns on it
+        // (claimStepDecidedVerdicts); elsewhere "then" takes all that follows.
+        const junction = ['and|&|∧', 'or|∨'].map(w => claimQuietly(() => splitClaimOn(consText, w)))
+            .find(g => g && g.length > 1 && (g.slice(1).some(x => /,/.test(x.sep || '')) || g.slice(1).every(x => /^\s*(?:and|or)\s*$/.test(x.sep || ''))));
         if (junction) {
             const last = junction[junction.length - 1], word = /\bor\b|∨/.test(last.sep || '') ? 'or' : 'and';
             const before = consText.slice(0, consText.lastIndexOf(last.sep + last.text)).trim();
@@ -17340,20 +17369,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // conditional, or all but the last -- the user says which, and
             // numbering where the list begins says it in the box.
             if (junction.length >= 3) {
-                const items = junction.map(g => g.text), head = 'if ' + condText + ', then ';
+                const items = junction.map(g => g.text), head = 'if ' + condText + ', then ', plain = junction.slice(1).every(g => !/,/.test(g.sep || ''));
                 return claimAmbiguous('"then" may cover the whole list after it, or only part of it: choose, or number the list ("then (1) …, (2) …, and (3) …")', [
                     head + claimListWords(items, word, true),
                     claimListWords([head + items[0]].concat(items.slice(1)), word, true),
                     claimListWords([head + claimGroupWords(items.slice(0, -1), word, true), items[items.length - 1]], word, true)
-                ].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom('if ' + rest);
+                ].map(label => ({ label, build: () => readClaim(label) })), true, plain ? { stepDecides: true } : undefined) || (plain ? readClaim(head + claimListWords(items, word, true)) : null) || claimAtom('if ' + rest);
             }
             const whole = () => { const conds = readConds(), cons = readClaim(consText); return conds.every(Boolean) && cons ? makeClaimConditional(conds, cons) : null; };
             const apart = () => { const conds = readConds(), cons = readClaim(before), rest = readClaim(last.text);
                 return conds.every(Boolean) && cons && rest ? claimList(word, [makeClaimConditional(conds, cons), rest]) : null; };
-            return claimAmbiguous('the "' + word + '" after the comma can be part of what follows "if ' + condText + '", or a claim of its own', [
+            const where = junction.slice(1).some(g => /,/.test(g.sep || '')) ? ' after the comma' : '';
+            return claimAmbiguous('the "' + word + '"' + where + ' can be part of what follows "if ' + condText + '", or a claim of its own', [
                 'if ' + condText + ', then ' + claimGroupWords(junction.map(g => g.text), word),
                 claimListWords(['if ' + condText + ', then ' + before, last.text], word, true)
-            ].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom('if ' + rest);
+            ].map(label => ({ label, build: () => readClaim(label) })), true, where ? undefined : { stepDecides: true }) || (where ? null : whole()) || claimAtom('if ' + rest);
         }
         const conds = readConds();
         const cons = readClaim(consText);
@@ -20248,8 +20278,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // compared by the key, which keeps their spelling and capitals.
         if ((a.kind === 'all' || a.kind === 'some') && a.kind === b.kind) return true;
         if (leaf(a) && leaf(b) && a.src !== undefined && b.src !== undefined) {
-            // Brackets round all of what follows a "that" only group it.
-            const unbracket = t => { const m = /^(.*\bthat )(\(.*\))$/.exec(t || ''); return m && claimBracketed(m[2]) ? m[1] + claimClauseStart(m[2].slice(1, -1)) : t; };
+            // Brackets round all of what follows a "that" only group it; so does
+            // "both ... and" ("either ... or") there (r27.189).
+            const unpaired = t => String(t || '').replace(/(\bthat )both \uE000?(?=.+\sand\s)/, '$1').replace(/(\bthat )either \uE000?(?=.+\sor\s)/, '$1');
+            const unbracket = t0 => { const t = t0 === undefined ? t0 : unpaired(t0); const m = /^(.*\bthat )(\(.*\))$/.exec(t || ''); return m && claimBracketed(m[2]) ? m[1] + claimClauseStart(m[2].slice(1, -1)) : t; };
             // "Poe is able to fly" says what "Poe can fly" says, read as ability
             // (its "can" of what is possible is marked, and keyed, apart) --
             // and its objects' words are logic as theirs are: "is able to
@@ -24753,6 +24785,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // gives the step.
             if (note.literal) { if (derives.some(d => d.rule)) hinted.push(texts[i]); return; }
             if (!note.always && !derives.length) return;
+            // Asked only where the step turns on it (r27.189): where some
+            // reading gives it and some does not (claimStepDecidedVerdicts).
+            if (note.stepDecides && !claimStepTurnsNow) return;
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
@@ -25335,7 +25370,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimAsksUser(text) {
         const said = String(text == null ? '' : text), key = (claimModalAsking() ? 'M' : '') + '\u0001' + said;
         if (claimAsksCache.has(key)) return claimAsksCache.get(key);
-        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && (n.readings || []).length >= 2 && claimNoteOffered(said, n))));
+        // A question asked only where a step turns on it (`stepDecides`;
+        // r27.189) does not hold the box's steps by itself.
+        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && !n.stepDecides && (n.readings || []).length >= 2 && claimNoteOffered(said, n))));
         if (claimAsksCache.size > 5000) claimAsksCache.clear();
         claimAsksCache.set(key, asks);
         return asks;
@@ -25365,6 +25402,80 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (g.boxes.indexOf(box) < 0) g.boxes.push(box);
         });
         return groups.map(g => (g.boxes.length > 2 ? g.boxes.slice(0, -1).join(', ') + ' and ' + g.boxes[g.boxes.length - 1] : g.boxes.join(' and ')) + ': ' + g.said + '.').join(' ');
+    }
+    // The step's verdict on each reading of the questions asked only where a
+    // step turns on them (`stepDecides`; r27.189; the user: "It depends on
+    // whether validity turns on the interpretation ... If so, even if it's the
+    // most unusual case, then we disambiguate"): each answered each way, the
+    // same words in two boxes the same way. A reading gives the step where its
+    // conclusion follows: in one step, from the parts of a premise that joins
+    // two, or in two steps ("if not P, then Q and not Q" gives P either way).
+    // { all, some: whether every reading, and one, gives it; every: the rule
+    // of a reading that gives it in one step, where all do }, or null.
+    let claimStepTurnsNow = false;
+    function claimStepDecidedVerdicts(premiseTexts, conclusionText, attack, weak) {
+        const texts = premiseTexts.concat([conclusionText]);
+        const reads = texts.map(t => parseClaimFull(t));
+        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous' && n.stepDecides && (n.readings || []).length >= 2));
+        if (!asked.some(a => a.length)) return null;
+        const keys = [...new Set(texts.filter((t, i) => asked[i].length))];
+        const choices = keys.map(t => asked[texts.indexOf(t)].reduce((maps, n) => [].concat(...maps.map(m => n.readings.map((_, r) => Object.assign({}, m, { [n.site]: r })))), [{}]));
+        if (choices.reduce((k, c) => k * c.length, 1) > 32) return { all: false, every: null, some: true, readings: 0 };
+        let combos = [[]];
+        choices.forEach(c => { combos = [].concat(...combos.map(x => c.map(m => x.concat([m])))); });
+        // By the connectives alone, each simple claim a letter, in any number of steps.
+        const byConnectives = (P, C) => {
+            const atoms = new Map();
+            const read = f => {
+                if (!f) return null;
+                if (f.kind === 'bottom') return () => false;
+                if (f.kind === 'not' && f.inner) { const a = read(f.inner); return a && (v => !a(v)); }
+                if ((f.kind === 'and' || f.kind === 'or') && !f.iff && Array.isArray(f.parts)) {
+                    const ps = f.parts.map(read);
+                    return ps.some(x => !x) ? null : (v => f.kind === 'and' ? ps.every(x => x(v)) : ps.some(x => x(v)));
+                }
+                if (f.kind === 'if' && !f.counterfactual && Array.isArray(f.conds) && f.cons) {
+                    const cs = f.conds.map(read), c = read(f.cons);
+                    return !c || cs.some(x => !x) ? null : (v => !cs.every(x => x(v)) || c(v));
+                }
+                const k = claimKey(f);
+                if (!atoms.has(k)) atoms.set(k, atoms.size);
+                const bit = 1 << atoms.get(k);
+                return v => !!(v & bit);
+            };
+            const before = P.map(read), after = C.map(read);
+            if (before.some(x => !x) || atoms.size > 12) return false;
+            // Where one simple claim gives another in a step of its own ("Bob
+            // knows that P" gives "P"), that link counts too.
+            const forms = new Map();
+            const collect = f => { if (!f) return; if (f.kind === 'not') return collect(f.inner); if ((f.kind === 'and' || f.kind === 'or') && !f.iff && Array.isArray(f.parts)) return f.parts.forEach(collect);
+                if (f.kind === 'if' && !f.counterfactual && Array.isArray(f.conds)) { f.conds.forEach(collect); return collect(f.cons); } forms.set(claimKey(f), f); };
+            P.forEach(collect); C.forEach(collect);
+            const links = [];
+            forms.forEach((x, kx) => forms.forEach((y, ky) => { if (kx !== ky && certifyStep([x], [y], false)) links.push([atoms.get(kx), atoms.get(ky)]); }));
+            if (links.length) before.push(v => links.every(([a, b]) => !(v & (1 << a)) || !!(v & (1 << b))));
+            return after.some(a => { if (!a) return false; for (let v = 0; v < (1 << atoms.size); v++) if (before.every(x => x(v)) && !a(v)) return false; return true; });
+        };
+        const gives = forms => {
+            const P = forms.slice(0, -1), C = claimStepConclusions(forms[forms.length - 1], attack, weak);
+            const one = certifyStep(P, C, attack);
+            if (one) return { rule: one };
+            if (byConnectives(P, C)) return { rule: null };
+            for (let i = 0; i < P.length; i++) {
+                const f = P[i];
+                if (f.kind !== 'and' || f.iff || !f.parts || f.parts.length < 2) continue;
+                const r = certifyStep(P.slice(0, i).concat(f.parts, P.slice(i + 1)), C, attack);
+                if (r && r.id !== DEDUCTIVE_SAME_CLAIM.id) return { rule: null };
+            }
+            return claimStepBetween(premiseTexts, P, C, attack) ? { rule: null } : null;
+        };
+        let rule = null, all = true, some = false;
+        for (const combo of combos) {
+            const forms = texts.map((t, i) => asked[i].length ? parseClaim(t, { sites: combo[keys.indexOf(t)] }) : reads[i].form);
+            const g = forms.every(Boolean) ? gives(forms) : null;
+            if (g) { some = true; rule = rule || g.rule; } else all = false;
+        }
+        return { all, every: all ? rule : null, some, readings: combos.length };
     }
     // A step whose boxes ask only where a shared object goes
     // (claimSharedTailQuestion), and that follows on every reading -- each
@@ -25777,9 +25888,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             const gives = conclusions.map(c => [c, certifyStep(premises, [c], warrantTarget ? false : attack)]).filter(([, r]) => r);
                             found.conclusion = ((gives.find(([, r]) => r.id === found.rule.id) || gives[0] || [])[0]) || found.conclusion;
                         }
+                        // A box read more than one way where a step turns on it
+                        // (r27.189): the step stands if every reading gives it,
+                        // waits for the answer if only some do (its question in
+                        // the diagnosis), and does not follow if none does.
+                        const decided = !asks && !warrantTarget && claimSemanticMode() ? claimStepDecidedVerdicts(premiseTexts, conclusionText, attack, weak) : null;
+                        if (decided) {
+                            found.rule = decided.all ? decided.every : null;
+                            if (found.rule && decided.readings > 1) found.everyReading = true;
+                        }
+                        claimStepTurnsNow = !!decided && decided.some && !decided.all;
                         // "Mary sings and loves Bob", so "Mary loves Bob": it
                         // follows however the object is read, and none is chosen.
-                        if (!found.rule && !asks && !warrantTarget) {
+                        if (!found.rule && !asks && !warrantTarget && !decided) {
                             const every = claimEveryReadingRule(premiseTexts, conclusionText, attack, weak);
                             if (every) { found.rule = every; found.everyReading = true; }
                         }

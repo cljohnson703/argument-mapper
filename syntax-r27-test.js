@@ -521,7 +521,8 @@ console.log('\n-- the r27.68 sweep --');
         'so under "every", "some" and "no", with "and" and with "or" (it had been one predicate, "is black and fly")');
     ok(/^A:/.test(key('Every raven is black and then flies.')) && !ev(`return parseClaimFull('Every raven is black and then flies.').notes.some(function (n) { return n.kind === 'ambiguous'; });`),
         '"every raven is black and then flies" is read as one claim (it had asked about "a black fly")');
-    const twice = ev(`var r = parseClaimFull('If the raven is black, then the raven is wise and it sings.'); return { key: claimKey(r.form).replace(/\uE000/g, ''), asks: r.notes.filter(function (n) { return n.kind === 'ambiguous'; }).length };`);
+    // Of "it": no question. (Whether "then" takes in "and it sings" asks where a step turns on it: r27.189.)
+    const twice = ev(`var r = parseClaimFull('If the raven is black, then the raven is wise and it sings.'); return { key: claimKey(r.form).replace(/\uE000/g, ''), asks: r.notes.filter(function (n) { return n.kind === 'ambiguous' && !n.stepDecides; }).length };`);
     ok(twice.key === 'I(P:the raven|=black>C[P:the raven|=wise;P:the raven|~sing])' && twice.asks === 0,
         '"the raven" said twice is one thing: "it" is the raven, not asked as "the raven" or "the raven"', J(twice));
 }
@@ -854,6 +855,42 @@ console.log('\n-- a clause or a phrase set off by commas: "Bob, who is rich, can
     ok(step(['Bob, who is rich, will pay.'], 'Bob is rich.') === '✓ conjunction elimination' && step(['Bob, a doctor, will pay.'], 'Bob is a doctor.') === '✓ conjunction elimination' &&
         step(['Mark Twain, who wrote Huckleberry Finn, was born in Missouri.'], 'Mark Twain wrote Huckleberry Finn.') === '✓ conjunction elimination',
         'so "Bob is rich", "Bob is a doctor", "Mark Twain wrote Huckleberry Finn" follow');
+}
+
+console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a comma: asked where a step turns on it (r27.189) --');
+{
+    // The user: "these are ambiguous because of a lack of commas and 'both...
+    // and' structure"; "It depends on whether validity turns on the
+    // interpretation ... If so, even if it's the most unusual case, then we
+    // disambiguate".
+    const said = t => ev(`var r = parseClaimFull(${J(t)}), n = r.notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return { key: claimKey(r.form).replace(//g, ''), readings: n ? n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
+            return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) : [], step: !!(n && n.stepDecides) };`);
+    const ifs = said('If it rains, then the ground is wet and the match is off.'), or = said('If it rains then the ground is wet or the match is off.');
+    ok(ifs.key === 'I(P:it|~rain>C[P:the ground|=wet;P:the match|=off])' && ifs.step &&
+        J(ifs.readings) === J(['If it rains, then both the ground is wet and the match is off.', '(1) If it rains, then the ground is wet, and (2) the match is off.']) &&
+        J(or.readings) === J(['If it rains, then either the ground is wet or the match is off.', '(1) If it rains, then the ground is wet, or (2) the match is off.']),
+        '"if it rains, then the ground is wet and the match is off" offers both groupings, as the comma does, each reading back; elsewhere "then" takes in both, as before', J([ifs, or]));
+    const none = ['If it rains, then the ground is wet and slippery.', 'If it rains, then Poe is black and flies.', 'If it rains, then both the ground is wet and the match is off.',
+        'Bob thinks that Poe is black and that Fido is white.', 'Bob thinks that Poe and Fido are black.', 'Bob thinks that both Poe is black and Fido is white.',
+        'Bob thinks that Poe is black and white.', 'Mary believes that Ann left and then Bob cried.'].map(t => said(t).readings.length);
+    ok(none.every(k => k === 0), 'no question where "and" joins no clause of its own, after "both", before "that" again, or in "and then"', J(none));
+    const thinks = [said('Bob thinks that Poe is black and Fido is white.'), said('Bob thinks that Poe is black, and Fido is white.')];
+    ok(thinks.every(t => t.key === 'P:bob|~think that poe is black and fido is white' && t.step) &&
+        J(thinks[0].readings) === J(['Fido is white, and Bob thinks that Poe is black.', 'Bob thinks that both Poe is black and Fido is white.']) &&
+        J(thinks[1].readings) === J(['Fido is white, and Bob thinks that Poe is black.', 'Bob thinks that both Poe is black, and Fido is white.']),
+        '"Bob thinks that Poe is black and Fido is white", comma or none, offers "Fido is white, and Bob thinks that Poe is black" and "Bob thinks that both ..." (it had offered the first only, and asked nothing); elsewhere all of it is thought', J(thinks));
+    const steps = [[['If it rains, then the ground is wet and the match is off.'], 'The match is off.'], [['If it rains, then the ground is wet and the match is off.', 'It rains.'], 'The ground is wet and the match is off.'],
+        [['If physicalism is false, then zombies are possible and zombies are not possible.'], 'Physicalism is true.'], [['If it rains, then the ground is wet and the match is off.'], 'Bob left.'],
+        [['Bob thinks that Poe is black and Fido is white.'], 'Fido is white.'], [['Bob thinks that Poe is black and Fido is white.'], 'Bob thinks that both Poe is black and Fido is white.']]
+        .map(([ps, c]) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`));
+    ok(steps[0].rule === null && J(steps[0].asked) === J([2]) && steps[1].rule === 'modus ponens' && steps[2].rule === 'reductio' &&
+        steps[3].rule === null && J(steps[3].asked) === J([]) && steps[4].rule === null && J(steps[4].asked) === J([2]),
+        'a step waits for the answer where one reading gives it and another does not ("so the match is off"); it stands where every reading gives it (modus ponens; one-box reductio, a step of two on the other reading), and does not follow, unasked, where none does', J(steps));
+    ok(/only repeats/.test(ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob thinks that both Poe is black and Fido is white.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob thinks that Poe is black and Fido is white.'], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text : '';`)),
+        '"thinks that both P and Q" says what "thinks that P and Q" says: "both" after "that" only groups');
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
