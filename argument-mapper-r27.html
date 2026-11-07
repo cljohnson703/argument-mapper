@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-07 r27.191';
+    const APP_BUILD = '2026-11-07 r27.192';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13055,6 +13055,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return out;
     }
+    // Inside a that-clause, words that only group it: "both ... and" and
+    // "either ... or" (r27.189); "first ... and then", and "that" again before
+    // each part of a list -- before a name, a pronoun or a determiner, where
+    // it can only begin a clause (r27.192). "Thinks that both P and Q",
+    // "thinks that P and that Q": what "thinks that P and Q" says.
+    function claimThatGrouping(text) {
+        const t = String(text || '').replace(/(\bthat )both \uE000?(?=.+\sand\s)/, '$1').replace(/(\bthat )either \uE000?(?=.+\sor\s)/, '$1')
+            .replace(/(\bthat )first \uE000?(?=.+\sand(?:\s+|-)then\s)/, '$1');
+        const at = t.search(/\bthat\s/);
+        if (at < 0) return t;
+        const head = t.slice(0, at + 5);
+        return head + t.slice(at + 5).replace(/(\S)\s+that\s+(?=\uE000|(?:the|a|an|every|each|some|no|all|any|this|these|those|he|she|it|they|we|i|you|there|his|her|its|their|our|my|your)\s)/g, '$1 ');
+    }
     function verbPhraseProp(tokens) {
         // "A," and "an," are never the article, which no comma follows: a
         // letter or a name whose capital the start of a clause took away
@@ -13234,7 +13247,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "Thinks that both P and Q" thinks what "thinks that P and Q" does:
         // "both" before "and", or "either" before "or", after "that" changes
         // nothing that is thought (r27.189).
-        prop = prop.replace(/(\bthat )both \uE000?(?=.+\sand\s)/, '$1').replace(/(\bthat )either \uE000?(?=.+\sor\s)/, '$1');
+        prop = claimThatGrouping(prop);
         return (negated ? '¬' : '') + prop;
     }
     // The subject of a quantifier, as a property: "ravens" -> "=raven", "things"
@@ -15228,8 +15241,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         // Said with the that-clause last, where it runs to the end.
                         : { label: second + ', ' + kind + ' ' + first, build: () => { const a = readClaim(first), b = readClaim(second); return a && b ? claimList(kind, [a, b]) : null; } },
                         // All of it thought: "both ... and" says so of two
-                        // clauses; brackets, of a list or an "and then" (r27.190).
-                        { label: lead + ' ' + (list || kind === 'and then' ? '(' + inner + ' ' + kind + ' ' + second + ')' : (kind === 'or' ? 'either ' : 'both ') + inner + ' ' + kind + ' ' + second),
+                        // clauses; "that" again before each part, of a list;
+                        // "first ... and then", of a sequence (r27.192; the user:
+                        // "We should never offer paraphrases with parentheses").
+                        { label: lead + ' ' + (kind === 'and then' ? 'first ' + inner + ' and then ' + second
+                            : list ? inner.replace(/,\s*$/, '').split(/,\s*/).map((x, k) => k ? 'that ' + x : x).join(', ') + ', ' + kind + ' that ' + second
+                            : (kind === 'or' ? 'either ' : 'both ') + inner + ' ' + kind + ' ' + second),
                             build: () => form }];
                     return claimAmbiguous('"' + kind + '" may join a claim of its own, or be part of what "' + tokens[att] + '" takes', readings, true, { stepDecides: true }) || form;
                 }
@@ -20308,7 +20325,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (leaf(a) && leaf(b) && a.src !== undefined && b.src !== undefined) {
             // Brackets round all of what follows a "that" only group it; so does
             // "both ... and" ("either ... or") there (r27.189).
-            const unpaired = t => String(t || '').replace(/(\bthat )both \uE000?(?=.+\sand\s)/, '$1').replace(/(\bthat )either \uE000?(?=.+\sor\s)/, '$1');
+            const unpaired = t => claimThatGrouping(t);
             const unbracket = t0 => { const t = t0 === undefined ? t0 : unpaired(t0); const m = /^(.*\bthat )(\(.*\))$/.exec(t || ''); return m && claimBracketed(m[2]) ? m[1] + claimClauseStart(m[2].slice(1, -1)) : t; };
             // "Poe is able to fly" says what "Poe can fly" says, read as ability
             // (its "can" of what is possible is marked, and keyed, apart) --
@@ -26034,7 +26051,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                     const pair = q => ['If we lack reasons to think that ' + q + ', then we are not entitled to conclude that ' + q, 'We lack reasons to think that ' + q];
                                     const passes = ps => ps.every(t => !parseClaimFull(t).notes.some(n => n.kind === 'ambiguous' && !n.literal && !n.anyScope && !n.canScope && !n.someScope)) &&
                                         (fs => fs.every(Boolean) && !!certifyStep(fs, conclusions, attack))(ps.map(t => parseClaim(t)));
-                                    const offer = [pair(p), pair('(' + p + ')')].find(passes);
+                                    // Grouped, where it must be, by "both ... and", "either ...
+                                    // or" or "it is the case that", not brackets (r27.192; the
+                                    // user: "We should never offer paraphrases with parentheses").
+                                    const offer = [pair(p), pair('both ' + p), pair('either ' + p), pair('it is the case that ' + p)].find(passes);
                                     return '\u201c' + stripClaimMarkup(premiseTexts[0]) + '\u201d only says that \u201c' + box +
                                         '\u201d has not been established. A challenge needs reasons too: give them as its premises' +
                                         (offer ? ', for instance \u201c' + offer[0] + '\u201d and \u201c' + offer[1] + '\u201d.' : '.');

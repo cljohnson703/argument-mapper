@@ -894,10 +894,23 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
     // r27.190 (the user, of making a list and "and then" inside a that-clause
     // ask the same way: "Yes").
     const list = said('Mary knows that Poe flies, Fido sings, and Rex barks.'), then = said('Mary believes that Ann left and then Bob cried.');
-    ok(list.step && J(list.readings) === J(['Rex barks, and Mary knows that Poe flies, Fido sings.', 'Mary knows that (Poe flies, Fido sings, and Rex barks).']) &&
+    // Since r27.192 (the user: "We should never offer paraphrases with
+    // parentheses"), "that" again before each part, and "first ... and then".
+    ok(list.step && J(list.readings) === J(['Rex barks, and Mary knows that Poe flies, Fido sings.', 'Mary knows that Poe flies, that Fido sings, and that Rex barks.']) &&
         then.step && then.key === 'P:mary|~believe that ann left and then bob cried' &&
-        J(then.readings) === J(['First Mary believes that Ann left, and then Bob cried.', 'Mary believes that (Ann left and then Bob cried).']),
-        'a list in a that-clause, and an "and then" in one, offer both readings, each reading back -- brackets for all of it, "first ..., and then ..." for the sequence; elsewhere all of it is in the that-clause, as before (r27.190)', J([list, then]));
+        J(then.readings) === J(['First Mary believes that Ann left, and then Bob cried.', 'Mary believes that first Ann left and then Bob cried.']),
+        'a list in a that-clause, and an "and then" in one, offer both readings, each reading back -- "that" again before each part, or "that first ... and then", for all of it; "first ..., and then ..." for the sequence; elsewhere all of it is in the that-clause, as before (r27.190, r27.192)', J([list, then]));
+    // r27.192: "that" again, "first ... and then" inside a that-clause only group it.
+    const same = (x, y) => ev(`var a = parseClaim(${J(x)}), b = parseClaim(${J(y)}); return !!a && !!b && claimSame(a, b);`);
+    ok(same('Bob thinks that Poe is black and that Fido is white.', 'Bob thinks that Poe is black and Fido is white.') &&
+        same('Mary knows that Poe flies, that Fido sings, and that Rex barks.', 'Mary knows that Poe flies, Fido sings, and Rex barks.') &&
+        same('Mary believes that first Ann left and then Bob cried.', 'Mary believes that Ann left and then Bob cried.') &&
+        key('Mary knows that Poe flies and that dog barks.') === 'P:mary|~know that poe flies and that dog barks',
+        '"thinks that P and that Q", "knows that P, that Q, and that R", "believes that first A and then B": what they say without the repeated "that" or the "first" (r27.192); "and that dog barks" keeps its "that"');
+    const hint = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Poe is black and Fido is white.'], collapsed: [], children: [{ id: 'W', type: 'weak-objection', texts: ['It has not been established that Poe is black and Fido is white.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text : '';`);
+    ok(/for instance \u201cIf we lack reasons to think that both Poe is black and Fido is white, then we are not entitled to conclude that both Poe is black and Fido is white\u201d/.test(hint) && !/\(/.test(hint),
+        'the bare-challenge hint groups a compound claim with "both ... and", not brackets (r27.192)', hint);
     ok(key('First Mary believes that Ann left, and then Bob cried.').replace(/\uE000/g, '') === 'T[P:mary|~believe that ann left;P:bob|~did cried]' &&
         key('First Ann left, and then Bob cried.').replace(/\uE000/g, '') === 'T[P:ann|~did left;P:bob|~did cried]',
         '"first A, and then B" is the sequence of the two, split at the "and then" that pairs with "first" where the that-clause would take in the rest (r27.190)');

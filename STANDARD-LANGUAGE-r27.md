@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: no brackets in what a question offers (r27.192)
+
+The user, of "Mary knows that (Poe flies, Fido sings, and Rex barks)": "We should never offer paraphrases with parentheses. It should be 'Mary knows that Poe flies, that Fido sings, and that Rex barks.'"; of "Mary believes that (Ann left and then Bob cried)": "What's the most natural paraphrase without parentheses?"
+
+* "Mary knows that Poe flies, Fido sings, and Rex barks" offers "Mary knows that Poe flies, that Fido sings, and that Rex barks" for all of it known. So "Bob believes that A, that B, and that C".
+* "Mary believes that Ann left and then Bob cried" offers "Mary believes that first Ann left and then Bob cried" for all of it believed.
+  * Each had been offered in brackets (r27.190).
+* So inside a that-clause, a "that" English may leave out, before a name, a pronoun or a determiner, is left out of what is said, and "first" before an "and then" only groups, as "both ... and" does (r27.189).
+  * "Knows that Poe flies and that Fido sings" says what "knows that Poe flies and Fido sings" says.
+  * "And that dog barks" keeps its "that", which may be the dog's.
+* The bare-challenge hint, where its example must group its claim, groups it with "both ... and" ("If we lack reasons to think that both Poe is black and Fido is white, then …"), "either ... or" or "it is the case that". It had used brackets.
+
+Tests:
+* syntax-r27-test.js has 127 checks; the 2 new ones and the r27.190 check of the readings, now without brackets, fail on r27.191.
+* Take-one-out: each of the 5 changes is caught.
+* 8 sentences in the corpus read differently: the two readings above, and six whose that-clause leaves out a "that" English may leave out ("... conclude that Mary is late and that she is tired", "the evidence that we have"), each the same claim as before.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: the letter "A" at the start of a that-clause is no article (r27.191)
 
 The user: "Do this task here: Fix sentence letter 'A' read as the article 'a'".
