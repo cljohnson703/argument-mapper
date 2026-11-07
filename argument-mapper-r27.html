@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-07 r27.192';
+    const APP_BUILD = '2026-11-07 r27.193';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10401,11 +10401,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             let text = null;
             if (/^(?:then|,)$/.test(c.by) && p.ci === clauses.length - 1 && toks[0].l === 'if' && clauses[0].by === 'if' &&
                 clauses.slice(1, p.ci).every(x => /^(?:and|or|but|;)$/.test(x.by))) {
-                // Two conditions or more in brackets: "It is cold if (the street
-                // is wet and the sky is grey)" -- without them the "if" may take
-                // in only the first, and the reading was not offered (r27.173).
-                const cond = t.slice(toks[clauses[0].from].at, endOf(clauses[p.ci - 1]));
-                text = it.charAt(0).toUpperCase() + it.slice(1) + ' if ' + (p.ci > 1 ? '(' + cond + ')' : cond) + stop;
+                // Two conditions grouped -- "It is cold if both the street is wet
+                // and the sky is grey" -- without which the "if" may take in only
+                // the first, and the reading was not offered (r27.173); three or
+                // more numbered; with "and" and "or" mixed, none (r27.193: not
+                // brackets).
+                const cond = t.slice(toks[clauses[0].from].at, endOf(clauses[p.ci - 1])), joins = clauses.slice(1, p.ci).map(x => x.by);
+                const word = joins.length && joins.every(j => j === joins[0]) && /^(?:and|or)$/.test(joins[0]) ? joins[0] : null;
+                const grouped = p.ci < 2 ? cond : !word ? null : p.ci === 2 ? (word === 'or' ? 'either ' : 'both ') + cond
+                    : claimListWords(clauses.slice(0, p.ci).map(x => clauseText(x).replace(/^(?:if|and|or)\s+/i, '').replace(/[\s,]+$/, '')), word, true);
+                if (grouped) text = it.charAt(0).toUpperCase() + it.slice(1) + ' if ' + grouped + stop;
             } else if (/^(?:and|but|;)$/.test(c.by)) {
                 let j = p.ci - 1;
                 while (j > 0 && /^(?:and|but|;)$/.test(clauses[j].by)) j--;
@@ -15309,6 +15314,39 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const n = numbered ? items.map((t, i) => '(' + (numbered === 'roman' ? CLAIM_ROMAN[i] : i + 1) + ') ' + t) : items;
         return n.length === 2 ? n.join((numbered ? ', ' : ' ') + word + ' ') : n.slice(0, -1).join(', ') + ', ' + word + ' ' + n[n.length - 1];
     }
+    // A reading said without numbers (r27.193; the user: "I think both should
+    // be allowed, but the second one ('The match is off, and if...') should be
+    // the default disambiguation instead of the numbered version"): what
+    // stands on its own first, then the part a condition, a denial or a
+    // sequence takes in -- "the match is off, and if it rains, then the ground
+    // is wet". Numbered lists are still read when written.
+    function claimFreeFirstWords(free, scoped, word) {
+        return free.length === 1 ? free[0] + ', ' + word + ' ' + scoped : claimListWords(free.concat([scoped]), word, false);
+    }
+    // Claims that may be put first: none with a pronoun, which would then
+    // come before what it points back to -- "it sings, and if the raven is
+    // black, then the raven is wise" (r27.193). Those stay numbered.
+    function claimMovable(items) {
+        return !items.some(t => /\b(?:he|she|him|her|his|hers|they|them|their|theirs|it|its|himself|herself|itself|themselves)\b/i.test(t));
+    }
+    // The first wording that reads as the numbered one does -- the order of
+    // an "and" or an "or" aside -- with no question of its own; else the
+    // numbered one (r27.193).
+    function claimUnnumbered(cands, numbered) {
+        const key = f => !f ? null : (f.kind === 'and' || f.kind === 'or') && Array.isArray(f.parts) ? f.kind + '[' + f.parts.map(key).sort().join(';') + ']' : claimKey(f);
+        const target = key(claimQuietly(() => readClaim(numbered)));
+        return (target && cands.find(c => c && key(claimQuietly(() => readClaim(c))) === target)) || numbered;
+    }
+    // A clause denied in its own words -- "Poe flies": "Poe does not fly" --
+    // or, where it has none, with "it is not the case that" (r27.193).
+    function claimDeniedClauseWords(clause) {
+        const f = claimQuietly(() => readClaim(clause));
+        if (f && f.kind === 'pred' && f.subjectText && f.vpText) {
+            const vp = claimDeniedVerbPhrase(f.vpText), w = vp && f.subjectText + ' ' + vp;
+            if (w && claimReadsAs(w, { kind: 'not', inner: f })) return w;
+        }
+        return 'it is not the case that ' + clause;
+    }
     // Claims grouped in English: two plain claims as "both A and B" or
     // "either A or B"; else a numbered list.
     function claimGroupWords(items, word, roman) {
@@ -15348,6 +15386,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let end = s.length, suffix = '';
         if (/(?:^|\s)(?:if|only if|unless|provided(?: that)?|providing(?: that)?|assuming(?: that)?|supposing(?: that)?|suppose(?: that)?|whenever|when)\s*$/.test(prefix)) {
             const t = /,?\s+then\b/.exec(claimTopLevelMask(s.slice(marks[marks.length - 1].end)));
+            if (t) { end = marks[marks.length - 1].end + t.index; suffix = s.slice(end); }
+        } else if (!prefix.trim()) {
+            // A list at the start ends at ", iff": "(1) A, (2) B, and (3) C, iff
+            // D" (r27.193), as one after "if" ends at "then".
+            const t = /,\s+(?:iff|if and only if)\s/.exec(claimTopLevelMask(s.slice(marks[marks.length - 1].end)));
             if (t) { end = marks[marks.length - 1].end + t.index; suffix = s.slice(end); }
         }
         const items = [], joins = [];
@@ -15615,8 +15658,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // English wordings for "and then" beside "or", "if", "unless" or a denial,
     // where "and" would be asked about (the user, 2026-09-29: "either ... or"
     // and "both ... and", not brackets): "first ... and then" groups a sequence
-    // as "both ... and" groups a list, and numbering sets its parts apart. The
-    // question and its two wordings, or null.
+    // as "both ... and" groups a list, and "first" in front sets apart its
+    // first part, as a comma does an "if" (r27.193: not numbers). The question
+    // and its two wordings, or null.
     function claimThenScopeReadings(text, cut) {
         const after = text.slice(cut.end);
         let m;
@@ -15625,7 +15669,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (cut.at > start) {
                 const a = text.slice(start, cut.at);
                 return { message: '"' + m[1] + '" can deny all of the "and then", or only its first part',
-                    labels: [m[1] + ' first ' + a + ' and then ' + after, '(1) ' + m[1] + ' ' + a + ', and then (2) ' + after] };
+                    labels: [m[1] + ' first ' + a + ' and then ' + after, claimUnnumbered(['first ' + m[1] + ' ' + a + ', and then ' + after], '(1) ' + m[1] + ' ' + a + ', and then (2) ' + after)] };
             }
         }
         if ((m = claimMatchTop(text, /^(.+?),?\s+(if|unless)\s+(.+)$/))) {
@@ -15633,12 +15677,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const message = '"' + marker + '" can take in all of what comes before or after it, or only part of it';
             if (cut.at > start) {
                 const a = text.slice(start, cut.at);
-                return { message, labels: [left + ' ' + marker + ' first ' + a + ' and then ' + after, '(1) ' + left + ' ' + marker + ' ' + a + ', and then (2) ' + after] };
+                return { message, labels: [left + ' ' + marker + ' first ' + a + ' and then ' + after,
+                    claimUnnumbered(['first ' + left + ' ' + marker + ' ' + a + ', and then ' + after], '(1) ' + left + ' ' + marker + ' ' + a + ', and then (2) ' + after)] };
             }
             if (cut.end <= left.length) {
                 const a = text.slice(0, cut.at), b = text.slice(cut.end, left.length);
                 return { message, labels: [(marker === 'if' ? 'if ' + right + ', then ' : 'unless ' + right + ', ') + a + ' and then ' + b,
-                    '(1) ' + a + ', and then (2) ' + b + ' ' + marker + ' ' + right] };
+                    claimUnnumbered([a + ', and then, ' + marker + ' ' + right + ', ' + b], '(1) ' + a + ', and then (2) ' + b + ' ' + marker + ' ' + right)] };
             }
         }
         const ors = [...claimPairMask(claimTopLevelMask(text)).matchAll(/,?\s+or\s+/g)];
@@ -16303,7 +16348,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!/^(?:if|only if|unless|when|whenever|provided)\b/.test(s) && (m = claimMatchTop(s, /^(.+?)(,?)\s+(and|but|or)\s+(if,?\s+.+)$/)) &&
             (!/\b(?:if|then)\b/.test(m[1]) || (afterIf = !!m[2] && !/\bthen\b/.test(m[1]) && claimIfThenWhole(m[4].replace(/^if,?\s+/, '')))) &&
             (m[2] || !/\b(?:that|whether)\b/.test(claimTopLevelMask(m[1])))) {
-            const word = m[3] === 'or' ? 'or' : 'and', a = readClaim(m[1]);
+            // "A, B, and if C, then D": the clauses before the commas are the
+            // list's first items, not one clause (r27.193; "the match is off,
+            // the roads close" had been read as "the match is off the roads close").
+            const firsts = m[2] && m[3] !== 'but' ? claimSplitTop(m[1], /,\s+/) : [m[1]];
+            const listed = firsts.length > 1 && firsts.every(t => claimLooksLikeClause(t)) && !claimScopingLead(m[1], null) ? firsts.map(t => readClaim(t)) : null;
+            const word = m[3] === 'or' ? 'or' : 'and', a = listed && listed.every(Boolean) ? claimList(word, listed) : readClaim(m[1]);
             // Not where what comes first may take in the rest: a denial in
             // front ("it is not the case that Poe flies, and if it rains, Poe
             // sings"), a qualifier ("probably"), or a that-clause ("Mary knows
@@ -16319,16 +16369,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const asked = claimReadState.notes.slice(mark).filter(n => n.kind === 'ambiguous' && !n.part && !n.anyScope && !n.canScope && !n.someScope);
                 // A list its answer gives goes on the first clause's list.
                 if (b && (b.kind === 'if' || (b.kind !== 'atom' && asked.length)))
-                    return claimList(word, [a].concat(b.kind === word && !b.iff && !b.compound && !b.grouped ? b.parts : [b]));
+                    return claimList(word, (listed && a.kind === word ? a.parts : [a]).concat(b.kind === word && !b.iff && !b.compound && !b.grouped ? b.parts : [b]));
                 // The conditional asks ("..., and if it rains, Poe sings, and
                 // Fido barks": does the condition take in Fido?), or is not
                 // read: then so is the whole -- read no other way -- its
-                // readings said with the first clause ("(1) Poe flies, (2) if
-                // it rains, then Poe sings, and (3) Fido barks").
+                // readings said with the first clause ("Poe flies, Fido barks,
+                // and if it rains, then Poe sings": a list said without numbers
+                // takes it in, r27.193).
                 if (b) {
                     asked.forEach(n => {
                         n.readings = word !== 'and' ? [] : n.readings.map(l => /^\(1\)\s/.test(l)
-                            ? '(1) ' + m[1] + ', ' + l.replace(/\((\d+)\)/g, (_, k) => '(' + (+k + 1) + ')') : m[1] + ', ' + m[3] + ' ' + l);
+                            ? '(1) ' + m[1] + ', ' + l.replace(/\((\d+)\)/g, (_, k) => '(' + (+k + 1) + ')')
+                            : claimQuietly(() => { const f = readClaim(l); return !!f && f.kind === word && !f.grouped; }) ? m[1] + ', ' + l : m[1] + ', ' + m[3] + ' ' + l);
                     });
                     return claimAtom(s);
                 }
@@ -16499,13 +16551,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const k = splits.findIndex(g => g && g.length > 1), joined = k >= 0 ? splits[k] : null;
             // Clauses joined, not an "or" inside a condition ("if Fido is wise or black, then ...").
             const junction = joined && !/^(?:if|only if|unless|when|whenever|provided|providing|assuming|supposing|in case)\b/.test(rest) &&
-                joined.every(g => claimLooksLikeClause(g.text)) ? joined : null;
+                joined.every(g => claimLooksLikeClause(g.text)) &&
+                // Not quoted claims a phrase joins ("we can't conclude that God
+                // exists from 'A' and 'B'", r27.193: it had offered "'B', and it
+                // is not the case that ... from 'A'").
+                !(!/^['"‘“]/.test(joined[0].text.trim()) && joined.slice(1).some(g => /^['"‘“]/.test(g.text.trim()))) ? joined : null;
             if (!joined || prefix !== 'not') {
                 if (junction) {
                     const word = k === 0 ? 'and' : 'or', first = junction[0].text, others = junction.slice(1).map(g => g.text);
                     return claimAmbiguous('"' + prefix + '" can deny all of the "' + word + '", or only its first part', [
                         prefix + ' ' + claimGroupWords(junction.map(g => g.text), word),
-                        claimListWords([prefix + ' ' + first].concat(others), word, true)
+                        claimUnnumbered([claimMovable(others) && claimFreeFirstWords(others, prefix + ' ' + first, word)], claimListWords([prefix + ' ' + first].concat(others), word, true))
                     ].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
                 }
                 const inner = claimWithAnyAsSome(() => readClaim(rest));
@@ -16824,16 +16880,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!inLeft && !inRight && !scope && !inVerbs) return build();
         const joinWord = g => (/\bor\b|∨/.test(g.sep || '') ? 'or' : 'and');
         // The main clause with its condition in front, where "then" settles it.
-        const fronted = main => (marker === 'if' ? 'if ' + right + ', then ' : marker + ' ' + right + ', ') + main;
+        const fronted = main => frontedOf(right, main);
+        const frontedOf = (cond, main) => (marker === 'if' ? 'if ' + cond + ', then ' : marker + ' ' + cond + ', ') + main;
         let whole, other;
         if (inRight) {
             const w = joinWord(inRight[inRight.length - 1]), items = inRight.map(g => g.text);
             whole = left + ' ' + marker + ' ' + claimGroupWords(items, w);
-            other = claimListWords([left + ' ' + marker + ' ' + items[0]].concat(items.slice(1)), w, true);
+            other = claimUnnumbered([claimMovable(items.slice(1)) && claimFreeFirstWords(items.slice(1), frontedOf(items[0], left), w)], claimListWords([left + ' ' + marker + ' ' + items[0]].concat(items.slice(1)), w, true));
         } else if (inLeft) {
             const w = joinWord(inLeft[inLeft.length - 1]), items = inLeft.map(g => g.text);
             whole = fronted(claimGroupWords(items, w));
-            other = claimListWords(items.slice(0, -1).concat([items[items.length - 1] + ' ' + marker + ' ' + right]), w, true);
+            other = claimUnnumbered([claimFreeFirstWords(items.slice(0, -1), fronted(items[items.length - 1]), w)],
+                claimListWords(items.slice(0, -1).concat([items[items.length - 1] + ' ' + marker + ' ' + right]), w, true));
         } else if (inVerbs) {
             const said = x => inVerbs.subj.concat(inVerbs.j.head, [x]).join(' '), w = inVerbs.j.kind, p = inVerbs.j.parts;
             whole = fronted(inVerbs.j.commaBefore ? said(p[0] + ' ' + w + ' ' + p[1]) : left);
@@ -16841,7 +16899,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "every raven"); else the question alone.
             const q = claimWord(inVerbs.subj[0] || '');
             other = claimRepeatableSubject(inVerbs.subj) || (w === 'and' && /^(?:every|each|all)$/.test(q))
-                ? claimListWords([said(p[0]), said(p[1]) + ' ' + marker + ' ' + right], w, true) : null;
+                ? claimUnnumbered([claimFreeFirstWords([said(p[0])], fronted(said(p[1])), w)], claimListWords([said(p[0]), said(p[1]) + ' ' + marker + ' ' + right], w, true)) : null;
             if (!other) {
                 claimAmbiguous('"' + marker + '" may cover both verbs, or only the last: put a comma after the last verb too to cover both', [], true);
                 return claimAtom(s);
@@ -16850,13 +16908,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Both A and B if C": the group's parts, the last with the condition.
             const pair = claimPairGroups(claimTopLevelMask(left)).find(g => g.from === 0);
             const w = scope[1] === 'either' ? 'or' : 'and';
+            const a = pair && left.slice(scope[1].length, pair.pair).trim().replace(/,$/, ''), b = pair && left.slice(pair.after).trim();
+            // Names joined, not clauses ("both Poe and Fido fly if it rains"):
+            // the condition takes in what they share (r27.193; it had offered
+            // "(1) Poe, and (2) Fido fly if it rains").
+            if (!pair || !claimLooksLikeClause(a) || !claimLooksLikeClause(b)) return build();
             whole = fronted(left);
-            other = pair && scope[1] !== 'neither'
-                ? claimListWords([left.slice(scope[1].length, pair.pair).trim().replace(/,$/, ''), left.slice(pair.after).trim() + ' ' + marker + ' ' + right], w, true)
-                : scope[1] + ' (' + left.slice(scope[1].length).trim() + ' ' + marker + ' ' + right + ')';
+            // "Neither A nor B if C": the condition on the whole; not A, and
+            // not the conditional; not A, and if C, then not B (r27.193; the
+            // user: "there's 3 readings, and each of them need to be available
+            // for the user to select between").
+            other = scope[1] === 'neither'
+                ? [claimDeniedClauseWords(a) + ', and it is not the case that ' + fronted(b), claimDeniedClauseWords(a) + ', and ' + fronted(claimDeniedClauseWords(b))]
+                : claimUnnumbered([claimFreeFirstWords([a], fronted(b), w)], claimListWords([a, b + ' ' + marker + ' ' + right], w, true));
         }
         return claimAmbiguous('"' + marker + '" can take in all of what comes before or after it, or only part of it',
-            [whole, other].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
+            [whole].concat(other).map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
     }
     // "Does it rain" -> "it does rain": a clause inverted after "neither"/"nor".
     function claimUninvert(text) {
@@ -17032,11 +17099,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const op = claimBracketed(left) ? null : claimFrontOperator(left);
         if (op && !op.denial) {
-            const list = junction(right), th = thatHead(op.head);
+            const list = junction(right), th = thatHead(op.head), side = th ? th + ' ' + op.clause : left;
+            // With a list of three or more after the "iff": what the words in
+            // front take in said last, where they can take in no more, and the
+            // list numbered; where the "iff" takes in only part of the list, its
+            // two ways said as two conditionals, whose "then"s close each side
+            // (r27.193; the user: "We should never offer paraphrases with
+            // parentheses" -- it had been "(S knows that p) iff (1) ...").
+            const sided = list && list.length >= 3 ? (() => {
+                const w = joinWord(list[list.length - 1]), items = list.map(g => g.text);
+                const both = a => 'if ' + side + ', then ' + a + ', and if ' + a + ', then ' + side;
+                return [claimListWords(items, w, true) + ', ' + word + ' ' + side,
+                    claimListWords([both(items[0])].concat(items.slice(1)), w, true),
+                    claimListWords([both(claimGroupWords(items.slice(0, -1), w, true)), items[items.length - 1]], w, true)
+                ].map(label => ({ label, build: () => readClaim(label) }));
+            })() : null;
             return flag('"' + claimShowWords(op.head.replace(/,$/, '')) + '" can take in the whole "' + word + '", or only its first part', [
                 { label: op.head + ' ' + caseThat(op.clause + ' ' + word + ' ' + right), build: () => claimWithout('biconditional', s) }].concat(
-                list && list.length >= 3 ? listReadings('(' + left + ') ' + word + ' ', list)
-                    : [{ label: right + ' ' + word + ' ' + (th ? th + ' ' + op.clause : left), build: () => iffOf(left, right) }]));
+                sided || [{ label: right + ' ' + word + ' ' + side, build: () => iffOf(left, right) }]));
         }
         const jr = junction(right);
         if (jr && jr.length >= 3)
@@ -17417,8 +17497,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const items = junction.map(g => g.text), head = 'if ' + condText + ', then ', plain = junction.slice(1).every(g => !/,/.test(g.sep || ''));
                 return claimAmbiguous('"then" may cover the whole list after it, or only part of it: choose, or number the list ("then (1) …, (2) …, and (3) …")', [
                     head + claimListWords(items, word, true),
-                    claimListWords([head + items[0]].concat(items.slice(1)), word, true),
-                    claimListWords([head + claimGroupWords(items.slice(0, -1), word, true), items[items.length - 1]], word, true)
+                    claimUnnumbered([claimMovable(items.slice(1)) && claimFreeFirstWords(items.slice(1), head + items[0], word)], claimListWords([head + items[0]].concat(items.slice(1)), word, true)),
+                    claimUnnumbered([claimMovable([items[items.length - 1]]) && claimFreeFirstWords([items[items.length - 1]], head + claimGroupWords(items.slice(0, -1), word, true), word)],
+                        claimListWords([head + claimGroupWords(items.slice(0, -1), word, true), items[items.length - 1]], word, true))
                 ].map(label => ({ label, build: () => readClaim(label) })), true, plain ? { stepDecides: true } : undefined) || (plain ? readClaim(head + claimListWords(items, word, true)) : null) || claimAtom('if ' + rest);
             }
             const whole = () => { const conds = readConds(), cons = readClaim(consText); return conds.every(Boolean) && cons ? makeClaimConditional(conds, cons) : null; };
@@ -17427,7 +17508,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const where = junction.slice(1).some(g => /,/.test(g.sep || '')) ? ' after the comma' : '';
             return claimAmbiguous('the "' + word + '"' + where + ' can be part of what follows "if ' + condText + '", or a claim of its own', [
                 'if ' + condText + ', then ' + claimGroupWords(junction.map(g => g.text), word),
-                claimListWords(['if ' + condText + ', then ' + before, last.text], word, true)
+                claimUnnumbered([claimMovable([last.text]) && claimFreeFirstWords([last.text], 'if ' + condText + ', then ' + before, word)], claimListWords(['if ' + condText + ', then ' + before, last.text], word, true))
             ].map(label => ({ label, build: () => readClaim(label) })), true, where ? undefined : { stepDecides: true }) || (where ? null : whole()) || claimAtom('if ' + rest);
         }
         const conds = readConds();
@@ -17554,9 +17635,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (commaOr !== commaAnd) return build(commaOr ? 'or' : 'and', commaOr ? ors : ands)();
             // Each part that holds the other word is grouped by its own: "both
             // A and B, or C"; "A, and either B or C". More parts are numbered.
+            const grouped = (groups, other) => groups.map(g => new RegExp('\\s' + other + '\\s').test(' ' + g.text + ' ') ? (other === 'and' ? 'both ' : 'either ') + g.text : g.text);
             const label = (groups, word, other) => groups.length === 2
-                ? groups.map(g => new RegExp('\\s' + other + '\\s').test(' ' + g.text + ' ') ? (other === 'and' ? 'both ' : 'either ') + g.text : g.text).join(', ' + word + ' ')
-                : claimListWords(groups.map(g => g.text), word, true);
+                ? grouped(groups, other).join(', ' + word + ' ')
+                : claimUnnumbered([claimListWords(grouped(groups, other), word, false)], claimListWords(groups.map(g => g.text), word, true));
             return claimAmbiguous('"and" and "or" can group this two ways', [label(ors, 'or', 'and'), label(ands, 'and', 'or')]
                 .map(l => ({ label: l, build: () => readClaim(l) })), true) || claimAtom(s);
         }
@@ -19191,9 +19273,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const at = claimTokens(parts[open]), r = claimRelativeIndex(at);
             const before = parts.slice(0, open).concat([at.slice(0, r + 1).join(' ')]).join(', ');
             const inner = [at.slice(r + 1).join(' ')].concat(parts.slice(open + 1));
-            const low = subj + ' ' + headText + ' ' + before + (inner.length === 2 ? ' either ' + inner.join(' or ') : ' (' + inner.join(' or ') + ')');
+            const low = subj + ' ' + headText + ' ' + before + ' either ' + (inner.length === 2 ? inner.join(' or ') : claimListWords(inner, 'or', false));
             const high = parts.length === 2 ? 'either ' + parts.map(p => subj + ' ' + headText + ' ' + p).join(', or ')
-                : claimListWords(parts.map(p => subj + ' ' + headText + ' ' + p), 'or', true);
+                : claimUnnumbered(['either ' + claimListWords(parts.map(p => subj + ' ' + headText + ' ' + p), 'or', false)], claimListWords(parts.map(p => subj + ' ' + headText + ' ' + p), 'or', true));
             return claimAmbiguous('"or" after "' + claimWord(at[r]) + ' ' + at.slice(r + 1).join(' ') + '" can join what the "' + claimWord(at[r]) + '" says, or the whole', [
                 { label: low, build: whole },
                 { label: high, build: () => readVerbPhraseOf(term, vp, s, true) }], true) || claimAtom(s);

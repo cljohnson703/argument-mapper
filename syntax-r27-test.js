@@ -436,7 +436,7 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
     const cond = ev(`return ['Poe flies, and sings, if it rains.', 'Poe flies, and sings if it rains.', 'Poe flies and sings if it rains.'].map(function (t) {
         var r = parseClaimFull(t); return claimKey(r.form).replace(/\uE000/g, '') + ' ' + r.notes.filter(function (n) { return n.kind === 'ambiguous'; })
             .map(function (n) { return n.readings.join(' | '); }).join(' ; ').replace(/\uE000/g, ''); });`);
-    const readings = 'if it rains, then poe flies and sings | (1) poe flies, and (2) poe sings if it rains';
+    const readings = 'if it rains, then poe flies and sings | poe flies, and if it rains, then poe sings';
     ok(cond[0] === 'I(P:it|~rain>C[P:poe|~fly;P:poe|~sing]) ' && cond[1] === 'A:poe flies, and sings if it rains ' + readings && cond[2] === 'A:poe flies and sings if it rains ' + readings,
         'an "if" after two verbs: both, with a comma before the "and" and one before the "if"; asked with one comma (r27.66), as with none, the same readings', JSON.stringify(cond));
 }
@@ -486,7 +486,7 @@ console.log('\n-- found beside it: a condition after "and"; a place after past v
             return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site }, i, w) ? '' : 'NOT BACK: ') + w; }) : null };`));
     ok(three.every(r => /^A:/.test(r.key) && r.readings && r.readings.length === 2 && r.readings.every(w => !/^NOT BACK/.test(w))) &&
         three[0].readings[0] === 'Poe flies, and if it rains, then both Poe sings and Fido barks.' &&
-        three[0].readings[1] === '(1) Poe flies, (2) if it rains, then Poe sings, and (3) Fido barks.',
+        three[0].readings[1] === 'Poe flies, Fido barks, and if it rains, then Poe sings.',
         'a list after the condition: the box asks whether the condition takes in its last part, read no way meanwhile, each reading the whole box and reading back', J(three));
     const tag = (ps, cc) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(cc)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, asked: (st.why && st.why.ambiguous || []).map(function (a) { return a.readings.length; }) } : null;`);
@@ -549,7 +549,7 @@ console.log('\n-- the r27.67 sweep --');
     // denial question's reading "only its first part".
     ok(key('(1) It is not the case that Poe flies, and (2) Mary sings.') === 'C[N(P:poe|~fly);P:mary|~sing]' &&
         key('(1) It is not the case that Poe flies, (2) Mary sings, and (3) Fido barks.') === 'C[N(P:poe|~fly);P:mary|~sing;P:fido|~bark]' &&
-        notesOf('It is not the case that Poe flies, and Fido sings.', { site: 0, reading: 1 }).key === 'C[N(P:poe|~fly);P:fido|~sing]' &&
+        notesOf('It is not the case that Poe flies, and Fido sings.', { site: 0, reading: 1 }).key === 'C[P:fido|~sing;N(P:poe|~fly)]' &&
         key('Mary knows that (Poe flies) and (Fido sings).') === 'P:mary|~know that (poe flies) and (fido sings)',
         'a numbered list with a denial in it is read, so the denial question\'s "only its first part" builds that (it had built "(it is the case that ...)" nonsense); a that-clause still takes bracketed claims');
     // A reading put in place where the box says "but".
@@ -868,9 +868,9 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
             return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) : [], step: !!(n && n.stepDecides) };`);
     const ifs = said('If it rains, then the ground is wet and the match is off.'), or = said('If it rains then the ground is wet or the match is off.');
     ok(ifs.key === 'I(P:it|~rain>C[P:the ground|=wet;P:the match|=off])' && ifs.step &&
-        J(ifs.readings) === J(['If it rains, then both the ground is wet and the match is off.', '(1) If it rains, then the ground is wet, and (2) the match is off.']) &&
-        J(or.readings) === J(['If it rains, then either the ground is wet or the match is off.', '(1) If it rains, then the ground is wet, or (2) the match is off.']),
-        '"if it rains, then the ground is wet and the match is off" offers both groupings, as the comma does, each reading back; elsewhere "then" takes in both, as before', J([ifs, or]));
+        J(ifs.readings) === J(['If it rains, then both the ground is wet and the match is off.', 'The match is off, and if it rains, then the ground is wet.']) &&
+        J(or.readings) === J(['If it rains, then either the ground is wet or the match is off.', 'The match is off, or if it rains, then the ground is wet.']),
+        '"if it rains, then the ground is wet and the match is off" offers both groupings, as the comma does, each reading back (since r27.193 the second without numbers); elsewhere "then" takes in both, as before', J([ifs, or]));
     const none = ['If it rains, then the ground is wet and slippery.', 'If it rains, then Poe is black and flies.', 'If it rains, then both the ground is wet and the match is off.',
         'Bob thinks that Poe is black and that Fido is white.', 'Bob thinks that Poe and Fido are black.', 'Bob thinks that both Poe is black and Fido is white.',
         'Bob thinks that Poe is black and white.'].map(t => said(t).readings.length);
@@ -932,6 +932,76 @@ console.log('\n-- the letter "A" at the start of a that-clause is no article (r2
     const restated = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob believes that A, B, and C.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob believes that B and C.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text : '' };`);
     ok(!restated.rule && !/only repeats/.test(restated.why), '"Bob believes that B and C" no longer restates "Bob believes that A, B, and C" (it had)', J(restated));
+}
+
+console.log('\n-- readings without numbers; three readings of "neither ... if" (r27.193) --');
+{
+    // The user: "I don't mind numbered readings, and it would be good for the
+    // app to be able to recognize them. I think both should be allowed, but the
+    // second one ('The match is off, and if...') should be the default
+    // disambiguation instead of the numbered version"; of "neither": "there's 3
+    // readings, and each of them need to be available for the user to select
+    // between".
+    const said = t => ev(`var r = parseClaimFull(${J(t)}), n = r.notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return { key: claimKey(r.form).replace(/\uE000/g, ''), unread: r.notes.some(function (x) { return x.kind === 'unread'; }), readings: n ? n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
+            return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) : [] };`);
+    const cases = [
+        ['It is not the case that Poe flies and Fido sings.', ['It is not the case that both Poe flies and Fido sings.', 'Fido sings, and it is not the case that Poe flies.']],
+        ['Poe flies if it rains and Fido sings.', ['Poe flies if both it rains and Fido sings.', 'Fido sings, and if it rains, then Poe flies.']],
+        // A clause with a pronoun is not put first, ahead of what it points back to: numbered.
+        ['If the raven is black, then the raven is wise and it sings.', ['If the raven is black, then both the raven is wise and it sings.', '(1) If the raven is black, then the raven is wise, and (2) it sings.']],
+        ['Poe flies and Fido sings if it rains.', ['If it rains, then both Poe flies and Fido sings.', 'Poe flies, and if it rains, then Fido sings.']],
+        ['Poe flies and sings if it rains.', ['If it rains, then Poe flies and sings.', 'Poe flies, and if it rains, then Poe sings.']],
+        ['Either Poe flies or Fido sings if it rains.', ['If it rains, then either Poe flies or Fido sings.', 'Poe flies, or if it rains, then Fido sings.']],
+        ['If it rains, then the ground is wet, the match is off, and the roads close.', ['If it rains, then (1) the ground is wet, (2) the match is off, and (3) the roads close.',
+            'The match is off, the roads close, and if it rains, then the ground is wet.', 'The roads close, and if it rains, then both the ground is wet and the match is off.']],
+        ['It is not the case that Ann left and then Bob cried.', ['It is not the case that first Ann left and then Bob cried.', 'First it is not the case that Ann left, and then Bob cried.']],
+        ['Poe flies if Ann left and then Bob cried.', ['Poe flies if first Ann left and then Bob cried.', 'First Poe flies if Ann left, and then Bob cried.']],
+        ['Mary left and then Bob cried if it rained.', ['If it rained, then Mary left and then Bob cried.', 'Mary left, and then, if it rained, Bob cried.']],
+        ['Poe flies and Fido sings or Rex barks and Ann runs.', ['Both Poe flies and Fido sings, or both Rex barks and Ann runs.', 'Poe flies, either Fido sings or Rex barks, and Ann runs.']],
+        ['Poe flies, and if it rains, Fido sings, and Rex barks.', ['Poe flies, and if it rains, then both Fido sings and Rex barks.', 'Poe flies, Rex barks, and if it rains, then Fido sings.']]];
+    const got = cases.map(([t]) => said(t).readings);
+    ok(cases.every(([, want], i) => J(got[i]) === J(want)),
+        'readings are offered without numbers where English has words for them -- what stands on its own first, then what a condition, a denial or a sequence takes in -- each reading back; the whole of a list of three after "then" stays numbered, and so does a reading that would put a pronoun ahead of what it points back to', J(got));
+    const neither = [said('Neither Poe flies nor Fido sings if it rains.'), said('Neither Poe flies nor Fido sings unless it rains.')];
+    ok(J(neither[0].readings) === J(['If it rains, then neither Poe flies nor Fido sings.', 'Poe does not fly, and it is not the case that if it rains, then Fido sings.', 'Poe does not fly, and if it rains, then Fido does not sing.']) &&
+        J(neither[1].readings) === J(['Unless it rains, neither Poe flies nor Fido sings.', 'Poe does not fly, and it is not the case that unless it rains, Fido sings.', 'Poe does not fly, and unless it rains, Fido does not sing.']),
+        '"neither A nor B if C" offers three readings, each reading back: the condition on the whole; not A, and not the conditional; not A, and if C, then not B (it had offered "Neither (A nor B if C)", which did not read back)', J(neither));
+    const numbered = [said('(1) If it rains, then the ground is wet, and (2) the match is off.'), said('If it rains, then (1) the ground is wet, (2) the match is off, and (3) the roads close.')];
+    ok(numbered[0].key === 'C[I(P:it|~rain>P:the ground|=wet);P:the match|=off]' && !numbered[0].readings.length &&
+        numbered[1].key === 'I(P:it|~rain>C[P:the ground|=wet;P:the match|=off;P:the roads|~close])' && !numbered[1].readings.length,
+        'numbered readings are still read when written, and ask nothing', J(numbered));
+    const names = ['Both Poe and Fido fly if it rains.', 'Either Poe or Fido flies if it rains.'].map(said);
+    ok(names.every(n => !n.readings.length) && names[0].key === 'I(P:it|~rain>C[P:poe|~fly;P:fido|~fly])',
+        '"both Poe and Fido fly if it rains": names joined, not clauses -- no question (it had offered "(1) Poe, and (2) Fido fly if it rains")', J(names));
+    const lists = [key('Poe flies, Rex barks, and if it rains, then Fido sings.'), key('The match is off, the roads close, and if it rains, then the ground is wet.'), key('In Paris, Poe flies, and if it rains, then Fido sings.')]
+        .map(k => k.replace(/\uE000/g, ''));
+    ok(lists[0] === 'C[P:poe|~fly;P:rex|~bark;I(P:it|~rain>P:fido|~sing)]' && lists[1] === 'C[P:the match|=off;P:the roads|~close;I(P:it|~rain>P:the ground|=wet)]' &&
+        /^A:/.test(lists[2]), '"A, B, and if C, then D": the clauses before the commas are the list\'s first items (they had been read as one clause, "poe flies rex barks"); a phrase in front is no clause', J(lists));
+    const quoted = said("It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'.");
+    ok(/^N\(W\(/.test(quoted.key) && !quoted.readings.length,
+        '"we can\'t conclude that ... from \'A\' and \'B\'" under a denial asks nothing: the quoted claims are what "from" joins (it had offered "\'B\', and it is not the case that ... from \'A\'")', J(quoted));
+    const weather = said('If the street is wet and the sky is grey, then it is cold.');
+    ok(weather.readings.includes('It is cold if both the street is wet and the sky is grey.'), 'the weather "it" put first groups its conditions with "both ... and" (it had been "if (the street is wet and the sky is grey)")', J(weather));
+    const jtb = said('S knows that p iff S believes that p, p is true, and S is justified.');
+    ok(J(jtb.readings) === J(['S knows that it is the case that p iff S believes that p, p is true, and S is justified.',
+            '(1) S believes that p, (2) p is true, and (3) S is justified, iff S knows that p.',
+            '(1) If S knows that p, then S believes that p, and if S believes that p, then S knows that p, (2) p is true, and (3) S is justified.',
+            '(1) If S knows that p, then both S believes that p and p is true, and if both S believes that p and p is true, then S knows that p, and (2) S is justified.']),
+        '"S knows that p iff (a list)": what "knows that" takes in said last, where it takes in no more, the list numbered; where the "iff" takes in part of the list, its two ways as two conditionals -- each reading back (they had been bracketed, "(S knows that p) iff ...")', J(jtb));
+    ok(key('(1) S believes that p, (2) p is true, and (3) S is justified, iff S knows that p.') === 'B[I(C[P:s|~believe that p;A:p;P:s|=justified]>P:s|~know that p);I(P:s|~know that p>C[P:s|~believe that p;A:p;P:s|=justified])]' &&
+        key('(1) Poe flies, (2) Fido sings, and (3) Rex barks iff Ann runs.') === 'C[P:poe|~fly;P:fido|~sing;B[I(P:rex|~bark>P:ann|~run);I(P:ann|~run>P:rex|~bark)]]',
+        'a numbered list at the start of a box ends at ", iff", as one after "if" ends at "then"; without the comma the last item keeps its "iff"');
+    // No reading anywhere puts words in brackets.
+    const sweep = ['Neither Poe flies nor Fido sings if it rains.', 'Poe is a bird that is black, white, or grey.', 'If the street is wet and the sky is grey, then it is cold.',
+        'Poe flies iff Fido sings, Rex barks, and Ann runs.', 'It is not the case that Poe flies, Fido sings, and Rex barks.', 'Necessarily, Poe flies iff Fido sings, Rex barks, and Ann runs.',
+        'S knows that p iff S believes that p, p is true, and S is justified.'].concat(cases.map(c => c[0]))
+        .map(t => ev(`var r = parseClaimFull(${J(t)}); return r.notes.filter(function (x) { return x.readings; }).reduce(function (a, n) { return a.concat(n.readings.map(function (l) { return claimReadingWords(l, ${J(t)}); })); }, []);`));
+    const bracketed = [].concat(...sweep).filter(w => /\((?!(?:\d{1,2}|[ivx]{1,4})\))/.test(w));
+    ok(!bracketed.length, 'no reading puts words in brackets (numbers alone may be)', J(bracketed));
+    const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Poe does not fly.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Neither Poe flies nor Fido sings if it rains.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`);
+    ok(step.rule === null && J(step.asked) === J([3]), '"so, Poe does not fly" waits for the answer: two of the three readings give it', J(step));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

@@ -564,10 +564,10 @@ try {
             ev('return parseClaim("Premise (1) is false").kind === "atom";'),
             'numbers in brackets that make no list refer to other claims: one claim, noted (it had given "(2) entail (3)")');
         ok(ev('var t = "If Bob sings, then Mary dances, Ann runs, and Tom walks", n = parseClaimFull(t).notes.filter(function (x) { return x.kind === "ambiguous"; })[0];' +
-                'return n.readings.length === 3 && n.readings.every(function (l, i) { var w = claimReadingWords(l, t); return /\(1\)/.test(w) && claimReadingRoundTrips({ text: t, site: n.site }, i, w); });') &&
+                'return n.readings.length === 3 && n.readings.every(function (l, i) { var w = claimReadingWords(l, t); return /\(1\)/.test(w) === (i === 0) && claimReadingRoundTrips({ text: t, site: n.site }, i, w); });') &&
             ev('var t = "S knows that p iff S believes that p, p is true, and S is justified", n = parseClaimFull(t).notes.filter(function (x) { return x.kind === "ambiguous"; })[0];' +
                 'return n.readings.length === 4 && n.readings.every(function (l, i) { return claimReadingRoundTrips({ text: t, site: n.site }, i, claimReadingWords(l, t)); });'),
-            'a list of three after "then" or "iff" stays flagged, its readings numbered; "S knows that p iff ..." is settled in one choice');
+            'a list of three after "then" or "iff" stays flagged: the whole list numbered, the other readings without numbers, the free part first (r27.193); "S knows that p iff ..." is settled in one choice');
 
         // "Both ... and", "either ... or", "neither ... nor" group, as brackets do (r27.45).
         ok(fol('Bob sings, and both Mary dances and Ann runs') === fol('Bob sings and (Mary dances and Ann runs)') &&
@@ -580,11 +580,11 @@ try {
             'a "both", "either" or "neither" holds its own group: "A, and both B and C"; "either A or B, and C"; "A and either B or C" is not flagged');
         const readingsOf = t => ev('var r = parseClaimFull(' + J(t) + ').notes.filter(function (n) { return n.kind === "ambiguous"; })[0];' +
             'return r ? r.readings.map(function (l) { return claimReadingWords(l, ' + J(t) + '); }) : [];');
-        ok(readingsOf('If Bob sings, then Mary dances, Ann runs, and Tom walks')[2] === '(1) If Bob sings, then both Mary dances and Ann runs, and (2) Tom walks' &&
+        ok(readingsOf('If Bob sings, then Mary dances, Ann runs, and Tom walks')[2] === 'Tom walks, and if Bob sings, then both Mary dances and Ann runs' &&
             readingsOf('Bob sings and Mary dances or Ann runs').join(' | ') === 'Both Bob sings and Mary dances, or Ann runs | Bob sings, and either Mary dances or Ann runs' &&
             readingsOf('Poe is not black or white').join(' | ') === 'Poe is not either black or white | Poe is either not black or white' &&
-            readingsOf('If Bob sings, then Mary dances, and Ann runs').join(' | ') === 'If Bob sings, then both Mary dances and Ann runs | (1) If Bob sings, then Mary dances, and (2) Ann runs',
-            'the chooser writes its readings with "both", "either" and numbering, not brackets, where English can');
+            readingsOf('If Bob sings, then Mary dances, and Ann runs').join(' | ') === 'If Bob sings, then both Mary dances and Ann runs | Ann runs, and if Bob sings, then Mary dances',
+            'the chooser writes its readings with "both", "either" and the free part first, not brackets or numbers, where English can (r27.193)');
 
         // Conditions together, and the premises that give them (r27.45).
         // "Are able to" for "can", which asks which is meant (r27.169).
@@ -1423,10 +1423,10 @@ try {
         ok(J(scopes) === J([
             ['"and then" and "or" can group this two ways', 'Either Mary left and then Bob cried, or Ann laughed.', 'Mary left, and then either Bob cried or Ann laughed.'],
             ['"and then" and "or" can group this two ways', 'Either Mary left or Bob cried, and then Ann laughed.', 'Either Mary left, or Bob cried and then Ann laughed.'],
-            ['"if" can take in all of what comes before or after it, or only part of it', 'Ann laughed if first Mary left and then Bob cried.', '(1) Ann laughed if Mary left, and then (2) Bob cried.'],
-            ['"if" can take in all of what comes before or after it, or only part of it', 'If Ann laughed, then Mary left and then Bob cried.', '(1) Mary left, and then (2) Bob cried if Ann laughed.'],
-            ['"unless" can take in all of what comes before or after it, or only part of it', 'Ann laughed unless first Mary left and then Bob cried.', '(1) Ann laughed unless Mary left, and then (2) Bob cried.'],
-            ['"it is not the case that" can deny all of the "and then", or only its first part', 'It is not the case that first Mary left and then Bob cried.', '(1) It is not the case that Mary left, and then (2) Bob cried.']]) &&
+            ['"if" can take in all of what comes before or after it, or only part of it', 'Ann laughed if first Mary left and then Bob cried.', 'First Ann laughed if Mary left, and then Bob cried.'],
+            ['"if" can take in all of what comes before or after it, or only part of it', 'If Ann laughed, then Mary left and then Bob cried.', 'Mary left, and then, if Ann laughed, Bob cried.'],
+            ['"unless" can take in all of what comes before or after it, or only part of it', 'Ann laughed unless first Mary left and then Bob cried.', 'First Ann laughed unless Mary left, and then Bob cried.'],
+            ['"it is not the case that" can deny all of the "and then", or only its first part', 'It is not the case that first Mary left and then Bob cried.', 'First it is not the case that Mary left, and then Bob cried.']]) &&
             plain('First Mary left and then Bob cried.') === 'T[P:mary|~did left;P:bob|~did cried]' &&
             plain('It is not the case that first Mary left and then Bob cried.') === 'N(T[P:mary|~did left;P:bob|~did cried])' &&
             plain('(1) Ann laughed if Mary left, and then (2) Bob cried.') === 'T[I(P:mary|~did left>P:ann|~did laughed);P:bob|~did cried]' &&

@@ -327,13 +327,14 @@ const J = JSON.stringify;
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
         beat.title.indexOf('“Poe cannot beat any player.” is ambiguous: "can’t" may say what Poe is not able to do, what is not possible for Poe, or what Poe is not allowed to do.') >= 0,
         'a question one of whose readings does not read back is not asked -- "it is not possible for Poe to beat any player" asks of "any" in turn -- the box is said to be ambiguous, and the tag opens the list', J(beat));
-    // r27.173: the weather's reading, its two conditions in brackets, is
-    // offered: "it is cold if the street is wet and the sky is grey" had
-    // asked what the "if" takes in, and the box had been said to be ambiguous.
+    // r27.173: the weather's reading, its two conditions grouped, is offered:
+    // "it is cold if the street is wet and the sky is grey" had asked what the
+    // "if" takes in, and the box had been said to be ambiguous. Grouped by
+    // "both ... and" since r27.193, by brackets before.
     const weather = asked('If the street is wet and the sky is grey, then it is cold.', 'It is cold.');
     ok(weather.chooser && J(weather.rows) === J(['If the street is wet and the sky is grey, then the street is cold.', 'If the street is wet and the sky is grey, then the sky is cold.',
-            'It is cold if (the street is wet and the sky is grey).']),
-        'the weather\'s reading written with its conditions in brackets: the street, the sky, or the weather, each offered (r27.173)', J(weather));
+            'It is cold if both the street is wet and the sky is grey.']),
+        'the weather\'s reading written with its conditions grouped by "both ... and": the street, the sky, or the weather, each offered (r27.173, r27.193)', J(weather));
     const pianist = asked('Poe is a good pianist.', 'Poe is good.');
     ok(pianist.tag === '? ambiguous' && !pianist.chooser && !/A pianist that is good/.test(pianist.title) &&
         /“Poe is a good pianist\.” is ambiguous: a good pianist is a pianist, but need not be good, only good for a pianist\./.test(pianist.title),

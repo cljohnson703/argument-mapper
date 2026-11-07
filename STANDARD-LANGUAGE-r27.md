@@ -4,6 +4,42 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 7: readings without numbers; three readings of "neither ... if" (r27.193)
+
+The user, of "(1) If it rains, then the ground is wet, and (2) the match is off": "I don't mind numbered readings, and it would be good for the app to be able to recognize them. I think both should be allowed, but the second one ('The match is off, and if...') should be the default disambiguation instead of the numbered version"; of "Poe flies, and if it rains, then Fido sings" and "Mary left, and then, if it rained, Bob cried": "ok"; of "Neither Poe flies nor Fido sings if it rains": "Another reading is 'If it rains, then neither Poe flies nor Fido sings.' So, there's 3 readings, and each of them need to be available for the user to select between."
+
+* A question offers its readings without numbers where English has words for them: what stands on its own first, then what a condition, a denial or a sequence takes in.
+  * "If it rains, then the ground is wet and the match is off" offers "The match is off, and if it rains, then the ground is wet".
+  * "Poe flies and Fido sings if it rains" offers "Poe flies, and if it rains, then Fido sings". "It is not the case that Poe flies and Fido sings" offers "Fido sings, and it is not the case that Poe flies".
+  * With "and then": "First it is not the case that Ann left, and then Bob cried"; "Mary left, and then, if it rained, Bob cried".
+  * Each is offered only where it reads as the numbered one did. Otherwise the numbered one stays:
+    * where a clause with a pronoun would be put first, ahead of what it points back to ("it sings, and if the raven is black, ...");
+    * for the whole of a list of three after "then";
+    * for the readings of "A iff B, and C", since "iff" has no place in front of a clause.
+  * Numbered readings are still read when written. A numbered list at the start of a box now ends at ", iff", as one after "if" ends at "then".
+* "Neither Poe flies nor Fido sings if it rains" offers three readings:
+  * "If it rains, then neither Poe flies nor Fido sings";
+  * "Poe does not fly, and it is not the case that if it rains, then Fido sings";
+  * "Poe does not fly, and if it rains, then Fido does not sing".
+  * It had offered "Neither (Poe flies nor Fido sings if it rains)", which did not read back.
+* The last brackets in offered readings are gone:
+  * "S knows that p iff S believes that p, p is true, and S is justified" offers "(1) S believes that p, (2) p is true, and (3) S is justified, iff S knows that p". Where the "iff" takes in only part of the list, it offers the two directions as two conditionals. It had offered "(S knows that p) iff ...".
+  * The weather reading is "It is cold if both the street is wet and the sky is grey".
+  * A relative clause's "or" reads "a bird that is either black, white, or grey".
+* Two questions that had nothing real to ask now ask nothing:
+  * "Both Poe and Fido fly if it rains" joins names, not clauses. It had offered "(1) Poe, and (2) Fido fly if it rains".
+  * "It is not the case that we can't conclude that God exists from 'Everything has a cause' and 'There is no infinite regress'": the "and" joins the quoted claims after "from". It had offered "'There is no infinite regress', and it is not the case that ...".
+* "Poe flies, Rex barks, and if it rains, then Fido sings" is a list of three. "Poe flies, Rex barks" had been read as one clause, "poe flies rex barks".
+
+Tests:
+* syntax-r27-test.js has 138 checks.
+  * 11 are new, and 10 of them fail on r27.192. The eleventh, "numbered readings are still read when written", holds on both.
+  * 4 checks in it, 3 in logic-r27-basis-test.js, and 1 each in anaphora-r27-test.js and reading-r27-chooser-test.js now expect the new wordings.
+* Take-one-out: each of the 21 changes is caught.
+* 31 sentences in the corpus read differently. 30 offer the new wordings, each the same claim as before. The God-exists sentence no longer asks, and is read as the denial of its "we can't conclude".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: no brackets in what a question offers (r27.192)
 
 The user, of "Mary knows that (Poe flies, Fido sings, and Rex barks)": "We should never offer paraphrases with parentheses. It should be 'Mary knows that Poe flies, that Fido sings, and that Rex barks.'"; of "Mary believes that (Ann left and then Bob cried)": "What's the most natural paraphrase without parentheses?"
