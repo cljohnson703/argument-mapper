@@ -126,8 +126,10 @@ try {
            'what everyone thinks, Bob thinks: the thinker is the subject');
         ok(step(['Bob thinks that Poe is black.'], 'It is not the case that Bob thinks that Poe is black.', 'objection').bare === true, 'a denied attitude is its denial (so the objection is a bare denial)');
         // "Bob does not think that P" may say that he thinks it is not so (neg-raising): flagged, both readings named.
+        // The thought that not P worded as one would write it, "Bob thinks that Poe is not black" (r27.199; it
+        // had been "thinks that it is not the case that Poe is black").
         const raised = step(['Bob thinks that Poe is black.'], 'Bob does not think that Poe is black.', 'objection');
-        ok(!raised.rule && raised.ambiguous && raised.why === 'Did you mean “It is not the case that Bob thinks that Poe is black” or “Bob thinks that it is not the case that Poe is black”?',
+        ok(!raised.rule && raised.ambiguous && raised.why === 'Did you mean “It is not the case that Bob thinks that Poe is black” or “Bob thinks that Poe is not black”?',
             '"does not think that P" is asked about: no such thought, or the thought that not P', raised.why);
         const s = step(['Bob thinks that Poe is black, and Fido is white.'], 'Fido is white.');
         ok(!s.rule && s.ambiguous, '"Bob thinks that P, and Q": whether Q is Bob\'s is flagged');

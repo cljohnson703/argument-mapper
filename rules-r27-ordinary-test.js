@@ -916,8 +916,10 @@ console.log('\n-- 27. (r27.153) active and passive; the indirect object --');
 console.log('\n-- 28. (r27.154) "most" and "in general" decided by "all" and "some" --');
 {
     const AND = [[['Ravens are birds and black.'], 'Ravens are black.'], [['Ravens are black and old.'], 'Ravens are black.'], [['Dogs bark and bite.'], 'Dogs bark.']];
-    ok(!asWritten(() => misses(AND, 'conjunction elimination')).length && AND.every(([p, c]) => asks(p, c)),
-        'half of an "and" said of ravens follows whatever "ravens" means, read as written; with Semantic mode on, "ravens" asks, every time (r27.184)',
+    // r27.199 (the user, of which rule every question follows: "(a)", ask
+    // where a step turns on it): following on every reading, it asks nothing.
+    ok(!asWritten(() => misses(AND, 'conjunction elimination')).length && AND.every(([p, c]) => !asks(p, c) && /^conjunction elimination/.test(step(p, c).rule || '')),
+        'half of an "and" said of ravens follows whatever "ravens" means, read as written; with Semantic mode on too, asking nothing (r27.199; r27.184 had asked)',
         J(asWritten(() => misses(AND, 'conjunction elimination'))));
     const poe = step(['Ravens are black.', 'Poe is a raven.'], 'Poe is black.');
     ok(!poe.rule && poe.why === 'Did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”?', 'where it follows on "all" only, it still asks', J(poe));
@@ -965,8 +967,8 @@ console.log('\n-- 30. (r27.156) the four gaps --');
 console.log('\n-- 31. (r27.157) "most" from "all" and "some" only where that is sure --');
 {
     const SYL = [[['Ravens are birds.', 'Every bird is an animal.'], 'Ravens are animals.'], [['Ravens are birds.', 'No bird is a fish.'], 'Ravens are not fish.']];
-    ok(!asWritten(() => misses(SYL, 'universal syllogism')).length && SYL.every(([p, c]) => asks(p, c)),
-        'sure to follow however "ravens" is read, the step follows as written, by its rule on "all" (it had been "not recognized"); with Semantic mode on, "ravens" asks (r27.184)',
+    ok(!asWritten(() => misses(SYL, 'universal syllogism')).length && SYL.every(([p, c]) => !asks(p, c) && step(p, c).rule === 'universal syllogism'),
+        'sure to follow however "ravens" is read, the step follows as written, by its rule on "all" (it had been "not recognized"); with Semantic mode on too, asking nothing (r27.199; r27.184 had asked)',
         J(asWritten(() => misses(SYL, 'universal syllogism'))));
     const pin = step(['Ravens are black.', 'Black ravens are big.'], 'Ravens are big.');
     ok(!pin.rule, '"ravens are black" and "black ravens are big" do not give "ravens are big": it follows on "all" and on "some", not on "most"', J(pin));
@@ -1076,8 +1078,8 @@ console.log('\n-- 37. (r27.163) "no one is a student and a singer" is "no studen
 console.log('\n-- 38. (r27.164) the step tried on one raven nothing else names --');
 {
     const ONE = [[['Ravens are birds that chase ravens.'], 'Ravens are birds.'], [['Ravens that fly are birds and black.'], 'Ravens that fly are black.']];
-    ok(!asWritten(() => misses(ONE, 'conjunction elimination')).length && ONE.every(([p, c]) => asks(p, c)),
-        '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read, as written; with Semantic mode on, "ravens" asks (r27.184)', J(asWritten(() => misses(ONE, 'conjunction elimination'))));
+    ok(!asWritten(() => misses(ONE, 'conjunction elimination')).length && ONE.every(([p, c]) => !asks(p, c) && /^conjunction elimination/.test(step(p, c).rule || '')),
+        '"ravens are birds that chase ravens" gives "ravens are birds" however "ravens" is read, as written; with Semantic mode on too, asking nothing (r27.199; r27.184 had asked)', J(asWritten(() => misses(ONE, 'conjunction elimination'))));
     const two = step(['Ravens are black.', 'Ravens are big.'], 'Ravens are black and big.');
     ok(!two.rule && two.why.indexOf('“Ravens are black.”: did you mean “All ravens are black”, “Some ravens are black”, “Most ravens are black”, or “Generally, ravens are black”? ' +
         '“Ravens are big.”: did you mean “All ravens are big”, ') === 0, 'with the plural in two premises, it still asks, of each box', J(two));
@@ -1089,8 +1091,12 @@ console.log('\n-- 39. (r27.167) "for Mary": on whose behalf, or who is to have i
     // disambiguation when we see 'for x'?"; "Always"; "Did you mean: - 'Bob
     // bought a book on Mary's behalf' - 'Bob bought Mary a book'"; of "made":
     // "Bob made a cake for Mary to have" -- "Sure".
-    const asked = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob made a cake for Mary.'], 'Bob made a cake.'],
-        [['Students buy books for teachers.'], 'Students buy books.'], [['Bob will buy a book for the teacher.'], 'Bob will buy a book.']].map(([p, c]) => step(p, c));
+    // Each where the step turns on it (r27.199; the user: "(a)"): to one of
+    // its readings -- "Bob made a cake", which neither reading gives, asks
+    // nothing. "Students buy books" has too many readings beside it to try:
+    // each question is asked.
+    const asked = [[['Bob bought a book for Mary.'], 'Bob bought Mary a book.'], [['Bob made a cake for Mary.'], 'Bob made a cake for Mary to have.'],
+        [['Students buy books for teachers.'], 'Students buy books.'], [['Bob will buy a book for the teacher.'], 'Bob will buy the teacher a book.']].map(([p, c]) => step(p, c));
     ok(J(asked.map(a => [a.rule, a.why])) === J([
             [null, 'Did you mean “Bob bought a book on Mary\'s behalf” or “Bob bought Mary a book”?'],
             [null, 'Did you mean “Bob made a cake on Mary\'s behalf” or “Bob made a cake for Mary to have”?'],
@@ -1100,9 +1106,10 @@ console.log('\n-- 39. (r27.167) "for Mary": on whose behalf, or who is to have i
                 '“Students buy books.”: did you mean “All students buy books”, “Some students buy books”, “Most students buy books”, or “Generally, students buy books”?'],
             [null, 'Did you mean “Bob will buy a book on the teacher\'s behalf” or “Bob will buy the teacher a book”?']]),
         '"for" and a person after a verb of getting or making: "on Mary\'s behalf", or "Bob bought Mary a book" -- "made", "for Mary to have"', J(asked));
+    // r27.199: a step that follows on every reading asks nothing.
     const held = step(['Bob bought a book for Mary and Al cried.'], 'Al cried.');
-    ok(!held.rule && held.why === 'Did you mean “Bob bought a book on Mary\'s behalf and Al cried” or “Bob bought Mary a book and Al cried”?',
-        'asked every time: the box holds back its step until it is answered, here a conjunction elimination the words as written give', J(held));
+    ok(held.rule === 'conjunction elimination' && !held.why,
+        'a conjunction elimination that follows however "for Mary" is meant asks nothing (r27.199; r27.167 had held it for the answer)', J(held));
     const quiet = [[['Bob bought a book for the party.'], 'Bob bought a book for the party.'], [['Bob bought a book for ten dollars.', 'Al cried.'], 'Al cried.'],
         [['Bob bought a book for Mary\'s birthday.', 'Al cried.'], 'Al cried.'], [['Bob thinks that Al bought a book for Mary.', 'Al cried.'], 'Al cried.'],
         [['Bob ran for an hour.', 'Al cried.'], 'Al cried.']].map(([p, c]) => step(p, c)).filter(r => /did you mean|on whose behalf/i.test(r.why));
@@ -1132,8 +1139,9 @@ console.log('\n-- 40. (r27.170) "Bob made Mary a cake": a cake for Mary, or Mary
         ['Bob made the old dog a bed.', 'Did you mean “Bob made a bed for the old dog to have” or “Bob made the old dog into a bed”?'],
         ['Bob made Mary cakes.', 'Did you mean “Bob made cakes for Mary to have” or “Bob made Mary into cakes”?'],
         ['Bob will make Mary a cake.', 'Did you mean “Bob will make a cake for Mary to have” or “Bob will make Mary into a cake”?']]
-        .map(([t, want]) => { const r = step([t, 'Al cried.'], 'Al cried.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
-    ok(!asked.length, '"made Mary a cake", "found Mary a job", "kept Mary a seat", "left Mary a widow": a thing for Mary, or what Mary is made, found, kept or left as -- asked, every time, the step held', J(asked));
+        // To its first reading, where the step turns on it (r27.199).
+        .map(([t, want]) => { const r = step([t], /“([^”]+)”/.exec(want)[1] + '.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
+    ok(!asked.length, '"made Mary a cake", "found Mary a job", "kept Mary a seat", "left Mary a widow": a thing for Mary, or what Mary is made, found, kept or left as -- asked where the step turns on it, the step held', J(asked));
     const inside = step(['If Bob made Mary a cake, then Al is happy.', 'Bob made a cake for Mary to have.'], 'Al is happy.');
     ok(!inside.rule && inside.why === 'Did you mean “If Bob made a cake for Mary to have, then Al is happy” or “If Bob made Mary into a cake, then Al is happy”?',
         'inside a longer box, each reading put in place', J(inside));
@@ -1162,7 +1170,7 @@ console.log('\n-- 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": e
     // With "Ask which modality is meant" on (r27.175): off, no reading gives
     // this step, and nothing is asked.
     ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
-    const p1 = step(['P1 can explain the data.'], 'Al is happy.');
+    const p1 = step(['P1 can explain the data.'], 'It is possible for P1 to explain the data.');
     ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
     ok(/“It is possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1")', p1.why);
 }
@@ -1173,8 +1181,9 @@ console.log('\n-- 42. (r27.178) "Bob called Mary a taxi": a taxi called for Mary
     // quotation marks: "Okay."
     const asked = [['Bob called Mary a taxi.', 'Did you mean “Bob called a taxi for Mary” or “Bob called Mary \'a taxi\'”?'],
         ['Bob named Mary a price.', 'Did you mean “Bob named a price for Mary” or “Bob named Mary \'a price\'”?']]
-        .map(([t, want]) => { const r = step([t, 'Al cried.'], 'Al cried.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
-    ok(!asked.length, '"called Mary a taxi", "named Mary a price": a thing called or named for Mary, or what Mary was called or named, in quotation marks -- asked, every time', J(asked));
+        // To its first reading, where the step turns on it (r27.199).
+        .map(([t, want]) => { const r = step([t], /“([^”]+)”/.exec(want)[1] + '.'); return !r.rule && r.why === want ? null : t + ': ' + r.why; }).filter(Boolean);
+    ok(!asked.length, '"called Mary a taxi", "named Mary a price": a thing called or named for Mary, or what Mary was called or named, in quotation marks -- asked where the step turns on it', J(asked));
     const inside = step(['If Bob called Mary a taxi, then Al is happy.', 'Bob called a taxi for Mary.'], 'Al is happy.');
     ok(!inside.rule && inside.why === 'Did you mean “If Bob called a taxi for Mary, then Al is happy” or “If Bob called Mary \'a taxi\', then Al is happy”?',
         'inside a longer box, each reading put in place', J(inside));

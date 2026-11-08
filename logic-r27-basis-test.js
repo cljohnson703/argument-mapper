@@ -325,9 +325,12 @@ try {
             'a pronoun takes the one name its own claim gives, and only where the name comes first');
         ok(ev('return claimNotes("When Mary exits the room, she learns a new fact").some(function (n) { return /read as/.test(n.message); });'),
             'the reading says what it made of the pronoun, so a wrong guess is visible');
+        // Asked where the step turns on it (r27.199; the user: "(a)"): "Mary
+        // told Alice that she was late" gives "Alice was late" on neither
+        // reading -- telling is no proof -- and asks nothing there.
         ok(rule(['Mary sings and she dances'], 'Mary dances') === 'conjunction elimination' &&
-            step(['Mary told Alice she was late'], 'Alice was late').ambiguous,
-            'so a step through a pronoun goes through, and two names stay ambiguous');
+            step(['Mary told Alice she was late'], 'Mary told Alice Alice was late').ambiguous && !step(['Mary told Alice she was late'], 'Alice was late').ambiguous,
+            'so a step through a pronoun goes through, and two names stay ambiguous, asked where the step turns on them (r27.199)');
         // A denial may be written with or without a pair of negations while
         // double negation is on, which it is by default (r27.32).
         ok(thm('\u00ac(P \u2228 \u00acP) \u2192 (\u00acP \u2227 P)') === 'De Morgan\u2019s laws' && thm('\u00ac(P \u2228 \u00acP) \u2192 (\u00acP \u2227 \u00ac\u00acP)') === 'De Morgan\u2019s laws' &&
@@ -918,13 +921,16 @@ try {
         ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
         const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
         // r27.172: "zombies are possible" asks which kind; said, it follows.
+        // r27.199 (the user: "(a)", ask where a step turns on it): the same
+        // words in both boxes are one question, answered the same way in both,
+        // and modus ponens holds on every answer -- so nothing is asked.
         const zp = tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false');
         ok(gen[0] === '? generic' && gen[1] === 'Did you mean “All mosquitoes carry malaria”, “Some mosquitoes carry malaria”, “Most mosquitoes carry malaria”, or “Generally, mosquitoes carry malaria”?' &&
             rule(['All mosquitoes carry malaria', 'Bob is a mosquito'], 'Bob carries malaria') === 'universal modus ponens' &&
-            zp[0] === '? ambiguous' && rule(['If zombies are metaphysically possible, then physicalism is false', 'Zombies are metaphysically possible'], 'Physicalism is false') === 'modus ponens' &&
+            zp[0] === '\u2713 modus ponens' && rule(['If zombies are metaphysically possible, then physicalism is false', 'Zombies are metaphysically possible'], 'Physicalism is false') === 'modus ponens' &&
             lights[0] === '? ambiguous' && /did you mean “If functionalism is true, then a mere series of lights is able to produce consciousness”, “If functionalism is true, then it is possible for a mere series of lights to produce consciousness”, or /.test(lights[1]) &&
             asWritten(() => rule(['If functionalism is true, then a mere series of lights is able to produce consciousness', 'A mere series of lights is not able to produce consciousness'], 'Functionalism is not true')) === 'modus tollens',
-            'a generic asks all, some or most; "zombies are possible" asks which kind (r27.172), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens ("a mere series", read as written)', J([gen, lights, zp]));
+            'a generic asks all, some or most; "zombies are possible" in both boxes, modus ponens however it is meant (r27.199), and said, modus ponens; "a series of lights can ..." asks which "can" (r27.169), and answered, modus tollens ("a mere series", read as written)', J([gen, lights, zp]));
         ok(offLights[0] === '✓ modus tollens' && offZp[0] === '✓ modus ponens',
             'with Semantic mode off: "a series of lights can ..." and "zombies are possible" follow as written -- the same words in both boxes (r27.184)', J([offLights, offZp]));
         // An indefinite in an if-clause asks, in whole sentences.
@@ -988,9 +994,9 @@ try {
         const should = tagOf(['If Mary knew the facts, then Mary should not be surprised', 'Mary is surprised'], "Mary doesn't know the facts");
         ok(should[0] === '? not recognized' && /With “would” for “should”, the premises would give “Mary doesn.t know the facts” by modus tollens/.test(should[1]) &&
             asWritten(() => rule(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false')) === 'modus ponens' &&
-            tagOf(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false')[0] === '? generic' &&
+            tagOf(['If color sensations are non-physical events, then physicalism is false', 'Color sensations are non-physical events'], 'Physicalism is false')[0] === '\u2713 modus ponens' &&
             tagOf(['Color sensations are non-physical events', 'Red is a color sensation'], 'Red is a non-physical event')[0] === '? generic',
-            '"should" is not "would" (and the diagnosis says so); a generic ("color sensations are ...") is asked, with Semantic mode on, in a modus ponens that holds on every answer too (r27.184); read as written, that one follows', J(should));
+            '"should" is not "would" (and the diagnosis says so); a generic ("color sensations are ...") is asked where the step turns on it, not in a modus ponens that holds on every answer (r27.199; the user: "(a)"); read as written, that one follows', J(should));
         // A box moved past its co-premises takes its branch -- a child with no
         // target of its own too (it stands on the first box).
         const moved = ev(`var node = { id: 'G', type: 'support', texts: ['A', 'B', 'C'], collapsed: [], children: [

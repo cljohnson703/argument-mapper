@@ -4,6 +4,46 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: every question asked where a step turns on it (r27.199)
+
+The user:
+* Of which rule every question follows: "(a)", ask where a step turns on it.
+* Of doing it next: "ok".
+
+Changes:
+* Every question is asked only where a step turns on it, as the grouping questions have been since r27.189 and "will" since r27.198. Semantic mode had asked every question every time (r27.184). A typo or a slip of grammar is still asked every time.
+  * A step stands where every reading gives it. "If Poe can fly, then Poe is a bird; Poe can fly; so Poe is a bird" stands by modus ponens, however "can" is meant; it had waited for "can" to be answered.
+  * It waits for the answer where the readings differ in what the step comes to. "Poe flies; so Poe can fly" asks which "can" is meant.
+  * It does not follow, and asks nothing, where no reading gives it. "Bob might win; so Bob wins".
+* On each reading, a step comes to one of three things:
+  * it follows;
+  * it is valid but no argument, because the box only says again what it supports, denies or challenges ("only repeats", a bare denial, a bare challenge) or a premise is idle;
+  * it does not follow.
+  * So "We cannot conclude that God exists", a weak objection alone, asks: on one reading it is a bare challenge, on the other it does not follow. "Poe can fly; so Poe can fly" asks nothing: it only repeats on every reading.
+* A step that waits asks the questions it turns on and no others: each whose answer, with the others held, changes what the step comes to. "Poe can fly; Bob might win; so it is possible for Poe to fly" asks about "can", not "might".
+* Each box is read as written too, as it is where nothing is asked. "Every dog that barks is hungry; a dog barks; so the dog is hungry" follows as written, though none of "every dog", "some dog" and "generally, a dog" gives it. So it waits for the answer, as it did.
+* The same question about the same words, in two boxes, is one question, answered once, whether or not a name opens the box. r27.198 had done this for "will" alone.
+* While a step waits, its question is all it says. There is no hint of what the words as written would give, and no "only repeats", "only denies" or "only says that ... has not been established".
+* "Bob does not think that it rains" offers "Bob thinks that it does not rain". It had offered "Bob thinks that it is not the case that it rains", which no step to "Bob thinks that it does not rain" took.
+* As before:
+  * a question that cannot be put, because some reading does not read back, leaves its box read as written;
+  * a step with more than 32 combinations of readings asks every question.
+* The Logic panel's note on Semantic mode now reads "On: whatever can be read more than one way asks which is meant, where a step turns on it." It had said "every time".
+
+Tests:
+* syntax-r27-test.js has 155 checks.
+  * 4 of the 6 new ones fail on r27.198, and so does the changed one: "Bob thinks that Poe is black and Fido is white", so "Bob thinks that both Poe is black and Fido is white", had said "only repeats" and now asks.
+  * The other 2 new ones hold on both: the dog step still waits, and a waiting step still says only its question.
+* 7 more suites had expected a question every time, or a step held for one. Their checks now:
+  * expect the step where every reading gives it;
+  * ask with a conclusion the step turns on;
+  * or read the question as a step that turns on it would put it.
+* language-r27-qualifier-test.js expects the new neg-raising wording.
+* Take-one-out: each of the 14 changes is caught.
+* 3 sentences in the corpus read differently, each the neg-raising wording: "Mary does not believe that God exists", "Bob does not think that Poe is black", "Bob does not think that it rains".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: a helping verb that may be a noun, where both are English; "is going to" (r27.198)
 
 The user:

@@ -136,9 +136,13 @@ console.log('\n-- 1. the user\'s example: a "then" with no "if" of its own --');
     ok(J(asked(side).readings) === J(['if it is the case that if X implies Y, then Z, then W', 'if X implies Y, then first Z and then W']) &&
         shape(asked(side).readings[0]) === '(((X → Y) → Z) → W)', '"if if" side by side: either meant twice gives one claim, offered once', J(side.asked));
     const pair = read('If it rains, then Poe flies, and if Mary sings, then Bob dances, then Ann laughs.');
-    ok(pair.asked.length === 1 && step(['If it rains, then Poe flies, and if Mary sings, then Bob dances, then Ann laughs.', 'It rains.'], 'Ann laughs.').rows[0] ===
-        'If it rains, then Poe flies, and if Mary sings implies that Bob dances, then Ann laughs.',
-        'in the second of two conditionals: asked once, each reading in the whole sentence', J(pair.asked));
+    // Asked where the step turns on it (r27.199): beside "if Mary sings, then
+    // Bob dances", one reading gives "Ann laughs" and the other does not;
+    // beside "it rains", neither does, and it asks nothing.
+    ok(pair.asked.length === 1 && step(['If it rains, then Poe flies, and if Mary sings, then Bob dances, then Ann laughs.', 'If Mary sings, then Bob dances.'], 'Ann laughs.').rows[0] ===
+        'If it rains, then Poe flies, and if Mary sings implies that Bob dances, then Ann laughs.' &&
+        !step(['If it rains, then Poe flies, and if Mary sings, then Bob dances, then Ann laughs.', 'It rains.'], 'Ann laughs.').rows.length,
+        'in the second of two conditionals: asked once, each reading in the whole sentence, where the step turns on it (r27.199)', J(pair.asked));
     ok(shape('If it rains, then by then Poe flies.') === '([it rains] → [by then poe flies])' && !read('If it rains, then by then Poe flies.').asked.length,
         '"by then" says when: it closes no "if"', J(read('If it rains, then by then Poe flies.')));
 }

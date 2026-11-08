@@ -888,9 +888,13 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
     ok(steps[0].rule === null && J(steps[0].asked) === J([2]) && steps[1].rule === 'modus ponens' && steps[2].rule === 'reductio' &&
         steps[3].rule === null && J(steps[3].asked) === J([]) && steps[4].rule === null && J(steps[4].asked) === J([2]),
         'a step waits for the answer where one reading gives it and another does not ("so the match is off"); it stands where every reading gives it (modus ponens; one-box reductio, a step of two on the other reading), and does not follow, unasked, where none does', J(steps));
-    ok(/only repeats/.test(ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob thinks that both Poe is black and Fido is white.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob thinks that Poe is black and Fido is white.'], collapsed: [], children: [] }] }];
-            var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text : '';`)),
-        '"thinks that both P and Q" says what "thinks that P and Q" says: "both" after "that" only groups');
+    // r27.199: on the reading that thinks it all, the box only says again what
+    // it supports; on the other, it does not give it -- so it asks (it had
+    // said "only repeats", as read before the answer).
+    ok(ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Bob thinks that both Poe is black and Fido is white.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Bob thinks that Poe is black and Fido is white.'], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text : '';`) === 'Did you mean \u201cFido is white, and Bob thinks that Poe is black\u201d or \u201cBob thinks that both Poe is black and Fido is white\u201d?' &&
+        ev(`return claimSame(parseClaim('Bob thinks that both Poe is black and Fido is white.'), parseClaim('Bob thinks that Poe is black and Fido is white.', { site: 0, reading: 1 }));`),
+        '"thinks that both P and Q" says what "thinks that P and Q" says on the reading that thinks it all: "both" after "that" only groups -- so where the other reading does not give it, it asks (r27.199)');
     // r27.190 (the user, of making a list and "and then" inside a that-clause
     // ask the same way: "Yes").
     const list = said('Mary knows that Poe flies, Fido sings, and Rex barks.'), then = said('Mary believes that Ann left and then Bob cried.');
@@ -1099,6 +1103,39 @@ console.log('\n-- a helping verb that may be a noun, where both are English; "is
         mp = step(['If the old will cost Ann the farm, then Ann is sad.', 'The old will cost Ann the farm.'], 'Ann is sad.');
     ok(held.rule === null && J(held.asked) === J([2]) && mp.rule === 'modus ponens',
         'a step that one reading gives waits for the answer; modus ponens stands, the clause read the same way in both boxes', J([held, mp]));
+}
+
+console.log('\n-- r27.199: every question asked where a step turns on it --');
+{
+    // The user, of which rule every question follows: "(a)" -- ask where a
+    // step turns on it; of doing it next: "ok".
+    const step = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '',
+            asked: st && st.why ? (st.why.ambiguous || []).filter(function (a) { return a.readings.length; }).map(function (a) { return a.readings.length; }) : [] };`);
+    const mp = step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'), flies = step(['Poe flies.'], 'Poe can fly.'), none = step(['Bob might win.'], 'Bob wins.');
+    ok(mp.rule === 'modus ponens' && !mp.why && flies.rule === null && J(flies.asked) === J([3]) && none.rule === null && !none.why,
+        'a step stands where every reading gives it ("if Poe can fly, ..." and "Poe can fly": one question, whether or not a name opens the box), waits where some do ("Poe flies", so "Poe can fly"), and does not follow, unasked, where none does ("Bob might win", so "Bob wins")', J([mp, flies, none]));
+    const dog = step(['Every dog that barks is hungry.', 'A dog barks.'], 'The dog is hungry.');
+    ok(dog.rule === null && dog.why === 'Did you mean “Every dog barks”, “Some dog barks”, or “Generally, a dog barks”?',
+        'each box is read as written too: "a dog barks" gives "the dog is hungry" as written, where none of "every dog", "some dog" and "generally, a dog" does -- so the step waits for the answer, as it did', J(dog));
+    const only = step(['Poe can fly.', 'Bob might win.'], 'It is possible for Poe to fly.');
+    ok(only.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
+        'a step that waits asks what it turns on, and nothing else: not "might", which no answer of it changes', J(only));
+    const lone = step(['We cannot conclude that God exists.'], 'God exists.', 'weak-objection'),
+        lack = step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable.", 'We lack reasons to think that the tests are reliable.'], 'The tests are reliable.', 'weak-objection'),
+        repeats = step(['Poe can fly.'], 'Poe can fly.'), denied = step(["Poe can't fly."], 'Poe can fly.', 'objection');
+    ok(J(lone.asked) === J([2]) && J(lack.asked) === J([2]) && /only repeats/.test(repeats.why) && !repeats.asked.length && J(denied.asked) === J([3, 3]),
+        'a reading on which the box only says again what it is for, or a premise is idle, is valid but no argument: where another reading does not give the step, it asks ("we cannot conclude that God exists", a bare challenge on one reading; "we lack reasons ..." beside "if ..., then it is impossible for us to conclude ...", its conditional idle); where every reading is so, it does not ("only repeats")', J([lone, lack, repeats, denied]));
+    const raised = step(['Bob does not think that it rains.'], 'Bob thinks that it does not rain.');
+    ok(raised.why === 'Did you mean “It is not the case that Bob thinks that it rains” or “Bob thinks that it does not rain”?',
+        '"does not think that it rains": the thought that it is not so, worded as one would write it -- "Bob thinks that it does not rain", which a step to those words turns on (it had been "thinks that it is not the case that it rains")', J(raised));
+    const tin = step(['The tin can hit the wall.'], 'The tin can did hit the wall.');
+    // And, said as where a step waits, not that a premise is not needed.
+    const person = ev(`claimStepTurnsNow = true;
+        try { var w = diagnoseDeductiveStep(['All ravens are black.', 'Poe is a raven.', 'Poe can fly.'], 'Poe is black.', false, null, false); return w ? w.text : ''; } finally { claimStepTurnsNow = false; }`);
+    ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “It is possible for the tin to hit the wall”, “The tin is allowed to hit the wall”, or “The tin can did hit the wall”?' &&
+        person === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
+        'where the step waits, the question is all it says: what the words as written would give is no hint, nor that a premise is not needed', J([tin, person]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

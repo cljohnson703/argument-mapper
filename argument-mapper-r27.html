@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.198';
+    const APP_BUILD = '2026-11-08 r27.199';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6948,7 +6948,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const LOGIC_SYLLOGISM_NAMES_GLOSS = 'Names the universal and existential syllogisms by their mood: "categorical syllogism (Barbara)", Celarent, Darii, Ferio. The other moods have no other name.';
     const LOGIC_WOULD_GLOSS = 'Reads "would" and "could" said of a choice as opposites, with "not" moved: "everyone would choose to stay" denies "someone could choose not to stay". "Decide", "opt" and "elect" too. Off, "would" after "then" makes a what-if claim.';
     const LOGIC_MODAL_GLOSS = 'Reads "it is metaphysically necessary that …", "it is metaphysically possible that …", □ and ◇, and takes steps by the axioms switched on.';
-    const LOGIC_SEMANTIC_NOTE = 'On: whatever can be read more than one way asks which is meant, every time. Off: each box is read exactly as written, and nothing is asked.';
+    const LOGIC_SEMANTIC_NOTE = 'On: whatever can be read more than one way asks which is meant, where a step turns on it. Off: each box is read exactly as written, and nothing is asked.';
     const LOGIC_SEMANTIC_GLOSS = 'Whether the check asks what words that can be read more than one way mean — which kind of necessity, which “can”, “all” or “some”, what a word points back to — or reads each box exactly as written.';
     const LOGIC_MODAL_AXIOMS = {
         D: 'D: □A → ◇A. What is necessary is possible.',
@@ -11255,9 +11255,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // ambiguity is), or only when one of its readings would derive the step
     // (a generic, which usually means what it says).
     // Semantic mode (r27.184): on, every question of two or more readings is
-    // asked, every time -- its step waits for the answer; off, none is: the
-    // box is read as written, and the question is kept only to say that,
-    // read another way, the step would follow. A typo, a slip of grammar, a
+    // asked where a step turns on it (r27.199; it had been every time); off,
+    // none is: the box is read as written, and the question is kept only to
+    // say that, read another way, the step would follow. A typo, a slip of grammar, a
     // word with nothing to point to: said either way.
     function claimAmbiguous(message, readings, always, marks) {
         const st = claimReadState;
@@ -15980,7 +15980,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const named = claimShowWords(subj), who = /\s/.test(named) ? named : named.replace(/^./, c => c.toUpperCase());
             return claimAmbiguous('"' + aux + ' not ' + verb + '" can say that ' + who + ' ' + said + ' no such thing, or that ' + who + ' ' + said + ' it is not so', [
                 { label: 'it is not the case that ' + subj + ' ' + said + ' that ' + clause, build: () => readClaim('it is not the case that ' + subj + ' ' + said + ' that ' + clause) },
-                { label: subj + ' ' + said + ' that it is not the case that ' + clause, build: () => readClaim(subj + ' ' + said + ' that it is not the case that ' + clause) }], true) || claimAtom(s);
+                { label: subj + ' ' + said + ' that ' + claimDeniedClauseWords(clause), build: () => readClaim(subj + ' ' + said + ' that ' + claimDeniedClauseWords(clause)) }], true) || claimAtom(s);
         }
         if ((m = s.match(/^(.+?\s(?:does|do|did|is|are|was|were|can|could|will|would|has|have)(?:\s+not|n't)\s+(?:[a-z-]+\s+){0,3})each\s+(.+)$/)) &&
             !CLAIM_CLAUSE_JOIN.test(m[1]) && !/\b(?:is|was)(?:\s+not|n't)\s+(?:the case|true|so)\s+that\s+$/.test(m[1]) && !joined()) {
@@ -25081,7 +25081,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!note.always && !derives.length) return;
             // Asked only where the step turns on it (r27.189): where some
             // reading gives it and some does not (claimStepDecidedVerdicts).
-            if (note.stepDecides && !claimStepTurnsNow) return;
+            if (claimTurnsOn(texts[i], note) && !(claimStepTurnsNow && (claimStepTurnsNow === true || claimStepTurnsNow.has(claimQuestionTag(note))))) return;
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
@@ -25195,7 +25195,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // is shown, as for "everyone" (r27.118). And a premise the step does not
         // use: the others give the conclusion by one rule, and a step uses every
         // premise.
-        if (!nearMiss && reads.every(r => r.form) && claimHintsAffordable(texts) && !texts.some(claimAsksUser)) {
+        if (!nearMiss && reads.every(r => r.form) && claimHintsAffordable(texts) && !texts.some(claimAsksUser) && !claimStepTurnsNow) {
             const forms = reads.map(r => r.form), P = forms.slice(0, -1), C = claimStepConclusions(forms[forms.length - 1], attack, weak);
             const said = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
             const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
@@ -25227,7 +25227,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         // Worded alike, would it follow? Then say which words differ.
         let worded = null;
-        const affordable = claimHintsAffordable(texts) && !texts.some(claimAsksUser);
+        const affordable = claimHintsAffordable(texts) && !texts.some(claimAsksUser) && !claimStepTurnsNow;
         if (affordable && !nearMiss && !ambiguous.some(x => x.derives.length) && reads.every(r => r.form)) {
             const forms = reads.map(r => r.form);
             worded = claimWordedNearMiss(forms.slice(0, -1), claimStepConclusions(forms[forms.length - 1], attack, weak), attack);
@@ -25644,29 +25644,44 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return flag;
     }
     // Whether a box asks the user something before its steps are checked: a
-    // slip of agreement (which fix?), and an ambiguity of a kind that asks
-    // every time (`ask`; r27.167; the user: "Always"): "for Mary" after
-    // "bought a book". A generic asks only where its answer decides a step
-    // (claimGenericRole).
+    // typo or a slip of agreement (which fix?). Every other question is asked
+    // where a step turns on it (claimTurnsOn, claimStepDecidedVerdicts;
+    // r27.199) -- "for Mary" after "bought a book" had been asked every time
+    // (r27.167).
     const claimAsksCache = new Map();
     // A question holds its box only where each of its readings can be
     // offered, in words the check reads back (r27.184; the user, r27.166:
     // "the user is notified only when two valid disambiguations are
-    // available"): with Semantic mode on, every question is asked, and one
-    // that cannot be put is not -- its box is read as it was, and said to be
-    // ambiguous where the step does not follow.
+    // available"): with Semantic mode on, a question is asked where a step
+    // turns on it (r27.199), and one that cannot be put is not -- its box is
+    // read as it was, and said to be ambiguous where the step does not follow.
     function claimNoteOffered(text, n) {
         const entry = { text, message: n.message, readings: n.readings, site: n.site, generic: !!n.generic, grouping: !!n.grouping, anyScope: !!n.anyScope, canScope: !!n.canScope,
             someScope: !!n.someScope, canDenied: !!n.canDenied, grammar: !!n.grammar, subject: n.subject || null, part: n.part || null, canPlain: !!n.canPlain, canFrom: n.canFrom || null,
             canBe: n.canBe || null, modal: !!n.modal, typo: !!n.typo, missing: !!n.missing, single: !!n.single, object: !!n.object };
         return claimReadingOffers(entry, null).length === n.readings.length;
     }
+    // A question a step waits on where it turns on it (r27.189, r27.199):
+    // every one but a typo's fix or a slip's, which is asked every time --
+    // where all its readings can be put; one that cannot be leaves its box
+    // read as written (claimNoteOffered).
+    function claimTurnsOn(text, n) {
+        return n.kind === 'ambiguous' && !n.typo && !n.grammar && (n.readings || []).length >= 2 && (!!n.stepDecides || (!!n.ask && claimNoteOffered(text, n)));
+    }
+    // The same question about the same words is one, in one box or two: "If
+    // Poe can fly, then ..." and "Poe can fly" (r27.198, r27.199) -- whether
+    // or not a name opens the box, which leaves its capital unmarked.
+    function claimQuestionTag(n) {
+        const same = x => String(x).replace(CLAIM_MARKS, '').toLowerCase().replace(/\s+/g, ' ').trim();
+        return same(n.message) + '\u0001' + (n.part ? claimTokens(String(n.part)).map(claimWord).join(' ') : (n.readings || []).map(same).join('\u0002'));
+    }
     function claimAsksUser(text) {
         const said = String(text == null ? '' : text), key = (claimModalAsking() ? 'M' : '') + '\u0001' + said;
         if (claimAsksCache.has(key)) return claimAsksCache.get(key);
-        // A question asked only where a step turns on it (`stepDecides`;
-        // r27.189) does not hold the box's steps by itself.
-        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo || (n.ask && !n.stepDecides && (n.readings || []).length >= 2 && claimNoteOffered(said, n))));
+        // A question is asked only where a step turns on it (r27.199; the
+        // user: "(a)"), and holds no step by itself; a typo or a slip of
+        // grammar does.
+        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo));
         if (claimAsksCache.size > 5000) claimAsksCache.clear();
         claimAsksCache.set(key, asks);
         return asks;
@@ -25710,26 +25725,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimStepDecidedVerdicts(premiseTexts, conclusionText, attack, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
-        const asked = reads.map(r => r.notes.filter(n => n.kind === 'ambiguous' && n.stepDecides && (n.readings || []).length >= 2));
+        // Every question that asks (r27.199; the user: "(a)"), one for the
+        // same question about the same words, read the same way wherever it
+        // is asked (claimQuestionTag) -- and each read as written too, as the
+        // box is where nothing is asked: "a dog barks" gives "the dog is
+        // hungry" from "every dog that barks is hungry" as written, where
+        // none of "every dog", "some dog" and "generally, a dog" does.
+        const asked = reads.map((r, i) => r.notes.filter(n => claimTurnsOn(texts[i], n)));
         if (!asked.some(a => a.length)) return null;
-        const keys = [...new Set(texts.filter((t, i) => asked[i].length))];
-        const choices = keys.map(t => asked[texts.indexOf(t)].reduce((maps, n) => [].concat(...maps.map(m => n.readings.map((_, r) => Object.assign({}, m, { [n.site]: r })))), [{}]));
-        if (choices.reduce((k, c) => k * c.length, 1) > 32) return { all: false, every: null, some: true, readings: 0 };
+        const slots = [];
+        asked.forEach(a => a.forEach(n => { const tag = claimQuestionTag(n); if (!slots.some(x => x.tag === tag)) slots.push({ tag, count: n.readings.length + 1 }); }));
+        if (slots.reduce((k, x) => k * x.count, 1) > 32) return { all: false, every: null, some: true, differ: true, readings: 0, turns: null };
         let combos = [[]];
-        choices.forEach(c => { combos = [].concat(...combos.map(x => c.map(m => x.concat([m])))); });
-        // One clause asked of in two boxes is read the same way in both: "If
-        // the old will cost Ann the farm, then Ann is sad" and "The old will
-        // cost Ann the farm" (r27.198).
-        combos = combos.filter(combo => {
-            const seen = new Map();
-            return combo.every((m, ki) => asked[texts.indexOf(keys[ki])].every(n => {
-                if (!n.part) return true;
-                const tag = n.message + '\u0001' + claimTokens(String(n.part)).map(claimWord).join(' '), r = m[n.site];
-                if (seen.has(tag) && seen.get(tag) !== r) return false;
-                seen.set(tag, r);
-                return true;
-            }));
-        });
+        slots.forEach(x => { combos = [].concat(...combos.map(c => Array.from({ length: x.count }, (_, r) => c.concat([r])))); });
+        const sitesOf = (i, combo) => {
+            const out = {};
+            asked[i].forEach(n => { const r = combo[slots.findIndex(x => x.tag === claimQuestionTag(n))]; if (r < n.readings.length) out[n.site] = r; });
+            return out;
+        };
         // By the connectives alone, each simple claim a letter, in any number of steps.
         const byConnectives = (P, C) => {
             const atoms = new Map();
@@ -25767,6 +25780,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const P = forms.slice(0, -1), C = claimStepConclusions(forms[forms.length - 1], attack, weak);
             const one = certifyStep(P, C, attack);
             if (one) return { rule: one };
+            // A step uses every premise (r27.199): a reading on which the
+            // others give the conclusion without one of them is valid, but no
+            // argument; so is one on which the box only says again what it
+            // supports, denies or challenges -- "only repeats", a bare denial,
+            // a bare challenge.
+            if (P.length > 1 && P.some((_, i) => byConnectives(P.filter((x, j) => j !== i), C))) return { idle: true };
+            if (P.length === 1 && P[0] && C.some(c => c && claimLoosely(() => claimSame(P[0], c)))) return { idle: true };
             if (byConnectives(P, C)) return { rule: null };
             for (let i = 0; i < P.length; i++) {
                 const f = P[i];
@@ -25777,12 +25797,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return claimStepBetween(premiseTexts, P, C, attack) ? { rule: null } : null;
         };
         let rule = null, all = true, some = false;
+        // What each combination comes to: it follows, it only says again
+        // what the box is for or leaves a premise idle (valid, but no
+        // argument: "only repeats", a bare challenge), or it does not follow.
+        const gave = new Map();
         for (const combo of combos) {
-            const forms = texts.map((t, i) => asked[i].length ? parseClaim(t, { sites: combo[keys.indexOf(t)] }) : reads[i].form);
+            const forms = texts.map((t, i) => asked[i].length ? parseClaim(t, { sites: sitesOf(i, combo) }) : reads[i].form);
             const g = forms.every(Boolean) ? gives(forms) : null;
-            if (g) { some = true; rule = rule || g.rule; } else all = false;
+            gave.set(combo.join(','), !g ? 'no' : g.idle ? 'idle' : 'yes');
+            if (g && !g.idle) { some = true; rule = rule || g.rule; } else all = false;
         }
-        return { all, every: all ? rule : null, some, readings: combos.length };
+        // It waits where the readings differ in what it comes to (r27.199),
+        // asking each question whose answer, the others' held, changes that --
+        // and no other.
+        const turns = new Set(slots.filter((x, k) => combos.some(c => Array.from({ length: x.count }, (_, r) => r).some(r => {
+            const d = c.slice();
+            d[k] = r;
+            return gave.get(d.join(',')) !== gave.get(c.join(','));
+        }))).map(x => x.tag));
+        return { all, every: all ? rule : null, some, differ: new Set(gave.values()).size > 1, readings: combos.length, turns };
     }
     // A step whose boxes ask only where a shared object goes
     // (claimSharedTailQuestion), and that follows on every reading -- each
@@ -26204,7 +26237,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                             found.rule = decided.all ? decided.every : null;
                             if (found.rule && decided.readings > 1) found.everyReading = true;
                         }
-                        claimStepTurnsNow = !!decided && decided.some && !decided.all;
+                        // The questions it waits on, where it does (r27.199): all of
+                        // them, where there were too many readings to try.
+                        claimStepTurnsNow = !!decided && decided.differ && !decided.all && (decided.turns || true);
                         // "Mary sings and loves Bob", so "Mary loves Bob": it
                         // follows however the object is read, and none is chosen.
                         if (!found.rule && !asks && !warrantTarget && !decided) {
@@ -26286,14 +26321,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         }
                         // A bare step is no argument however it is spelled: it
                         // says what it lacks, not how it is spelled.
-                        if (!found.rule && !asks && !warrantTarget && !attack && claimLoosely(() => claimRestatement(premises, conclusions))) {
+                        if (!found.rule && !asks && !claimStepTurnsNow && !warrantTarget && !attack && claimLoosely(() => claimRestatement(premises, conclusions))) {
                             found.restates = true;
                             found.nearMiss = null;
                             found.why = { unread: [], ambiguous: [], nearMiss: null, worded: null, ordered: null, short: null, partial: null,
                                 text: '\u201c' + stripClaimMarkup(premiseTexts[0]) + '\u201d only repeats \u201c' + stripClaimMarkup(conclusionText).trim().replace(/[.!?]+$/, '') +
                                     '\u201d, the box it supports: a claim is no reason for itself. Give the reasons for it as its premises.' };
                         }
-                        if (!found.rule && !asks && !warrantTarget && weak && premises.length === 1 && premises[0] &&
+                        if (!found.rule && !asks && !claimStepTurnsNow && !warrantTarget && weak && premises.length === 1 && premises[0] &&
                             claimLoosely(() => conclusions.some(c => c.kind === 'unestablished' && claimIs(premises[0])(c)))) {
                             found.bareChallenge = true;
                             found.nearMiss = null;
@@ -26322,7 +26357,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                                         (offer ? ', for instance \u201c' + offer[0] + '\u201d and \u201c' + offer[1] + '\u201d.' : '.');
                                 })() };
                         }
-                        if (!found.rule && !asks && !warrantTarget && attack && premises.length === 1 && premises[0] &&
+                        if (!found.rule && !asks && !claimStepTurnsNow && !warrantTarget && attack && premises.length === 1 && premises[0] &&
                             claimLoosely(() => conclusions.some(c => c.kind !== 'unestablished' && claimIs(premises[0])(c)))) {
                             found.bare = true;
                             found.nearMiss = null;

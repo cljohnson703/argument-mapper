@@ -671,8 +671,11 @@ function reportCorpus(name, res) {
                 // "We are not able to": "can't" asks which is meant (r27.169) --
                 // with Semantic mode on, the default (r27.184).
                 hedge: step(["We are not able to leave"], 'We should be able to leave', 'objection'),
+                // r27.199 (the user: "(a)"): asked where the step turns on it --
+                // against "should", which is not read, on no reading.
                 cant: (function () { state.logic = { base: 'standard', rules: {} };
-                    try { return step(["We can't leave"], 'We should be able to leave', 'objection'); } finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
+                    try { return [step(["We can't leave"], 'It is not possible for us to leave'), step(["We can't leave"], 'We should be able to leave', 'objection')]; }
+                    finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
                 // Read as written (r27.184: Semantic mode off): "ravens", a
                 // generic, asks with it on.
                 generic: (function () { state.logic = { base: 'standard', rules: { semantic: false } };
@@ -694,8 +697,9 @@ function reportCorpus(name, res) {
         ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true &&
             d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
             '"We are not able to leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
-        ok(d.cant && d.cant.rule === null && /^Did you mean “We are not able to leave”, “It is not possible for us to leave”, or “We are not allowed to leave”\?/.test(d.cant.why),
-            '"We can\'t leave" asks which "can" is meant (r27.169), with Semantic mode on', J(d.cant));
+        ok(d.cant && d.cant[0].rule === null && d.cant[0].why === 'Did you mean “We are not able to leave”, “It is not possible for us to leave”, or “We are not allowed to leave”?' &&
+            d.cant[1].rule === null && d.cant[1].why === d.hedge.why,
+            '"We can\'t leave" asks which "can" is meant (r27.169), with Semantic mode on, where the step turns on it; against "should", on no reading, it does not (r27.199)', J(d.cant));
         // Since r27.157, "all black things are dark" and "ravens are black" give
         // "ravens are dark" however "ravens" is read: by universal syllogism,
         // the rule on "all" -- never universal modus ponens, of one thing.
@@ -1060,8 +1064,12 @@ function reportCorpus(name, res) {
             '"Poe flies", so "Poe can fly": asked which "can" (said "possible for Poe", it follows by ab esse ad posse: below)', J(c.fly));
         ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is possible for Poe to fly', 'Poe is allowed to fly']),
             'answered in the box: "Poe is able to fly", "It is possible for Poe to fly" or "Poe is allowed to fly"', J(c.fly.rows));
-        ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '? ambiguous',
-            'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens asks too, every time (r27.169; it had asked nothing)', J([c.possible.tag, c.both.tag]));
+        // r27.199 (the user, of which rule every question follows: "(a)", ask
+        // where a step turns on it): "Poe can fly" in both boxes is one
+        // question, answered the same way in both, and modus ponens holds on
+        // every answer -- so nothing is asked.
+        ok(c.possible.tag === '✓ ab esse ad posse' && c.both.tag === '✓ modus ponens' && !c.both.why,
+            'said "possible for", it follows; "Poe can fly" in both boxes of a modus ponens follows however it is meant, and asks nothing (r27.199; r27.169 had asked)', J([c.possible.tag, c.both]));
         ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If it is possible for Poe to fly, then Poe is a bird”, or “If Poe is allowed to fly, then Poe is a bird”?' &&
             c.strict.rows[1] === 'If it is possible for Poe to fly, then Poe is a bird' &&
             '"possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));
@@ -1079,19 +1087,20 @@ function reportCorpus(name, res) {
                 deductiveCache.clear(); ensureCollabFields(state); render();
                 var s = collectDeductiveSteps(state.trees)[0]; return s.why && s.why.text ? String(s.why.text) : '';
             };
-            return { computers: why(['Computers can think.'], 'Al is happy.'), james: why(['James can sing.'], 'Al is happy.'),
-                records: why(["The records in Otto's notebook cannot perform all the functions."], 'Al is happy.'),
-                ravens: why(['Ravens are necessarily black.'], 'Al is happy.'), god: why(['God necessarily exists.'], 'Al is happy.') };`);
+            // Asked where the step turns on it (r27.199): each to one of its readings.
+            return { computers: why(['Computers can think.'], 'It is possible for computers to think.'), james: why(['James can sing.'], 'It is possible for James to sing.'),
+                records: why(["The records in Otto's notebook cannot perform all the functions."], "It is not possible for the records in Otto's notebook to perform all the functions."),
+                ravens: why(['Ravens are necessarily black.'], 'It is metaphysically necessary that ravens are black.'), god: why(['God necessarily exists.'], 'It is metaphysically necessary that God exists.') };`);
         ok(w.computers === 'Did you mean “Computers are able to think”, “It is possible for computers to think”, or “Computers are allowed to think”?' &&
             /^Did you mean “James is able to sing”, “It is possible for James to sing”/.test(w.james) &&
             /^Did you mean “The records in Otto's notebook are not able to perform all the functions”, “It is not possible for the records in Otto's notebook to perform all the functions”/.test(w.records) &&
-            /^Did you mean “It is metaphysically necessary that ravens are black”/.test(w.ravens) && /^Did you mean “It is metaphysically necessary that God exists”/.test(w.god),
+            /^“Ravens are necessarily black\.”: did you mean “It is metaphysically necessary that ravens are black”/.test(w.ravens) && /^Did you mean “It is metaphysically necessary that God exists”/.test(w.god),
             'the readings\' words: "computers are", "for computers"; "James is"; "the records in Otto\'s notebook are"; "that ravens are black", "that God exists" (r27.169; it had been "computers is", "for Computers", "that Ravens")', J(w));
         // r27.169: "can't", each reading denied; and a box of two "can"s, each
         // asked in place -- "it is possible for Mary to sing and Bob cannot
         // dance" is two claims, not "possibly" over the rest.
         const two = T(W, `
-            state.trees = [{ id: 'M', type: 'contention', texts: ['Al is happy.'], collapsed: [], x: 0, y: 0, children: [
+            state.trees = [{ id: 'M', type: 'contention', texts: ['It is possible for Mary to sing and it is not possible for Bob to dance.'], collapsed: [], x: 0, y: 0, children: [
                 { id: 'A', type: 'support', texts: ['Mary can sing and Bob cannot dance.'], collapsed: [], children: [] } ] }];
             deductiveCache.clear(); ensureCollabFields(state); render();
             var s = collectDeductiveSteps(state.trees)[0];
@@ -1121,7 +1130,8 @@ function reportCorpus(name, res) {
                 clausesKey: claimKey(parseClaim('It is possible for me to draw a red card, or it is possible for me to draw a black card.')),
                 bird: step(['It is possible for Poe to fly, and Poe is a bird.'], 'Poe is a bird.'),
                 i: asks('I can fly.'),
-                rows: step(['Poe can fly or swim.'], 'Al is happy.')
+                // To one of its readings, where the step turns on it (r27.199).
+                rows: step(['Poe can fly or swim.'], 'It is possible for Poe to fly or swim.')
             };
             state.logic = { base: 'standard', rules: { semantic: false } };
             r.off = step(['Poe can fly or swim.', 'Poe can\u2019t fly.'], 'Poe can swim.');

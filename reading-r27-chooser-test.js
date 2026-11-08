@@ -184,8 +184,11 @@ const J = JSON.stringify;
         return r;`);
     ok(other.chooser === false && other.list === true && /conjunction elimination/.test(other.tag), 'any other tag still opens the list of steps', J(other));
 
-    // 4b. The ambiguous box may be the one the step supports.
-    const parentBox = T(W, `__c.load(${J(MAP('Bob runs and nobody else runs', 'Only Bob runs'))});
+    // 4b. The ambiguous box may be the one the step supports -- asked where
+    // the step turns on it (r27.199): "everything that runs is Bob" only
+    // repeats one reading, and does not give the other ("Bob runs and nobody
+    // else runs" gives neither, and asks nothing).
+    const parentBox = T(W, `__c.load(${J(MAP('Everything that runs is Bob', 'Only Bob runs'))});
         var tag = __c.tag('S'); if (!tag) return { tag: false };
         tag.click();
         var pop = __c.pop(); if (!pop) return { open: false, tag: tag.textContent };
@@ -331,7 +334,8 @@ const J = JSON.stringify;
     // "it is cold if the street is wet and the sky is grey" had asked what the
     // "if" takes in, and the box had been said to be ambiguous. Grouped by
     // "both ... and" since r27.193, by brackets before.
-    const weather = asked('If the street is wet and the sky is grey, then it is cold.', 'It is cold.');
+    // To one of its readings, where the step turns on it (r27.199).
+    const weather = asked('If the street is wet and the sky is grey, then it is cold.', 'If the street is wet and the sky is grey, then the street is cold.');
     ok(weather.chooser && J(weather.rows) === J(['If the street is wet and the sky is grey, then the street is cold.', 'If the street is wet and the sky is grey, then the sky is cold.',
             'It is cold if both the street is wet and the sky is grey.']),
         'the weather\'s reading written with its conditions grouped by "both ... and": the street, the sky, or the weather, each offered (r27.173, r27.193)', J(weather));
@@ -339,14 +343,16 @@ const J = JSON.stringify;
     ok(pianist.tag === '? ambiguous' && !pianist.chooser && !/A pianist that is good/.test(pianist.title) &&
         /“Poe is a good pianist\.” is ambiguous: a good pianist is a pianist, but need not be good, only good for a pianist\./.test(pianist.title),
         'a lone reading that is no sentence ("A pianist that is good") is not offered: the box is said to be ambiguous', J(pianist));
-    const longer = asked('Ravens fly and crows sing.', 'Some raven flies.');
+    const longer = asked('Ravens fly and crows sing.', 'Some raven flies.'), crows = asked('Ravens fly and crows sing.', 'Some crow sings.');
     // r27.185: "crows" asks too -- "Ravens fly and crows generally sing", its
     // reading in general, now reads back as two claims ("generally" had been
-    // taken for a verb, and the box read as one claim).
+    // taken for a verb, and the box read as one claim). r27.199: each where
+    // the step turns on it -- "ravens" for "some raven flies", "crows" for
+    // "some crow sings".
     ok(longer.tag === '? generic' && longer.chooser && !longer.unfit &&
-        J(longer.rows) === J(['All ravens fly and crows sing.', 'Some ravens fly and crows sing.', 'Most ravens fly and crows sing.', 'Ravens generally fly and crows sing.',
-            'Ravens fly and all crows sing.', 'Ravens fly and some crows sing.', 'Ravens fly and most crows sing.', 'Ravens fly and crows generally sing.']),
-        'a generic inside a longer box: its four readings, each in place -- "in general" too, as "ravens generally fly" -- and each can be chosen; so for "crows", the second (r27.185)', J(longer));
+        J(longer.rows) === J(['All ravens fly and crows sing.', 'Some ravens fly and crows sing.', 'Most ravens fly and crows sing.', 'Ravens generally fly and crows sing.']) &&
+        crows.tag === '? generic' && J(crows.rows) === J(['Ravens fly and all crows sing.', 'Ravens fly and some crows sing.', 'Ravens fly and most crows sing.', 'Ravens fly and crows generally sing.']),
+        'a generic inside a longer box: its four readings, each in place -- "in general" too, as "ravens generally fly" -- and each can be chosen; so for "crows", where the step turns on it (r27.185, r27.199)', J([longer, crows]));
     const general = T(W, `return [['Ravens generally fly.', 'Generally, ravens fly.'], ['A raven generally flies.', 'Generally, a raven flies.']].map(function (p) {
         var a = parseClaimFull(p[0]), b = parseClaimFull(p[1]);
         return claimKey(a.form) === claimKey(b.form) && JSON.stringify(a.notes.map(function (n) { return n.message; })) === JSON.stringify(b.notes.map(function (n) { return n.message; })); });`);
@@ -361,20 +367,20 @@ const J = JSON.stringify;
         __c.tag('S').click(); pop = __c.pop(); rows = [].slice.call(pop.querySelectorAll('.rc-row'));
         pick(1); pop.querySelector('.rc-apply').click();
         return { general: general, some: { box: __c.text('S'), tag: __c.tag('S').textContent } };`);
-    // r27.184: with Semantic mode on, "crows" asks too, every time -- beside
-    // "some ravens fly" as well, since r27.185.
-    ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? generic' &&
-        !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '? generic',
-        'written in: "ravens generally fly" is one claim, and "some ravens fly" is "some"; and "crows" asks, beside either (r27.185)', J(written));
+    // r27.199: "crows", which "some raven flies" does not turn on, asks
+    // nothing beside either (r27.184 had asked it every time).
+    ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? not recognized' &&
+        !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '\u2713 conjunction elimination',
+        'written in: "ravens generally fly" is one claim, and "some ravens fly" is "some", which gives "some raven flies"; "crows" asks nothing beside either (r27.185, r27.199)', J(written));
     const back = T(W, `var t = 'If computer programs are only formal (syntactic), then computers lack semantics.';
         var n = parseClaimFull(t).notes.filter(function (x) { return x.generic; })[0];
         return claimReadingRoundTrips(Object.assign({ text: t }, n), 0, 'If all computer programs are only formal (syntactic), then computers lack semantics.');`);
     ok(back === true, 'a note of one reading that a rewrite raises ("computer program" read as one phrase) asks nothing, and does not stop the rewrite reading back', J(back));
 
-    // 9. Asked every time (r27.167; the user: "Always"): "for Mary" holds
-    // its step back -- here one the words as written give -- until a reading
-    // is chosen and written in.
-    const forMary = T(W, `__c.load(${J(MAP('Bob bought a book for Mary and Al cried.', 'Al cried.'))});
+    // 9. "For Mary" holds its step back until a reading is chosen and written
+    // in -- asked where the step turns on it (r27.199; r27.167 had held even
+    // "so Al cried", which every reading gives).
+    const forMary = T(W, `__c.load(${J(MAP('Bob bought a book for Mary and Al cried.', 'Bob bought Mary a book.'))});
         var before = __c.tag('S').textContent;
         __c.tag('S').click();
         var pop = __c.pop(), rows = [].slice.call(pop.querySelectorAll('.rc-row'));
@@ -385,21 +391,21 @@ const J = JSON.stringify;
     ok(forMary.before === '? ambiguous' && forMary.head === 'Did you mean:' &&
         J(forMary.shown) === J(["Bob bought a book on Mary's behalf and Al cried.", 'Bob bought Mary a book and Al cried.']) &&
         forMary.box === 'Bob bought Mary a book and Al cried.' && forMary.after === '✓ conjunction elimination',
-        '"for Mary" holds back even a step the words give, and asks; "Bob bought Mary a book" chosen, it is written in, and the step follows', J(forMary));
+        '"for Mary" holds back a step one reading gives, and asks; "Bob bought Mary a book" chosen, it is written in, and the step follows', J(forMary));
 
     // r27.179 (the user: "If there are too many, we can give the option
     // 'Other', which would encourage the user to rewrite it to avoid the
     // ambiguity"): a question of five readings or more ends with "Other",
     // which opens the box to be reworded.
     const otherRow = T(W, `state.logic = { base: 'standard', rules: {} };
-        __c.load(${J(MAP('If Poe is a raven, then Poe must be black.', 'Al is happy.'))});
+        __c.load(${J(MAP('If Poe is a raven, then Poe must be black.', 'If Poe is a raven, then Poe is black.'))});
         __c.tag('S').click();
         var pop = __c.pop(), rows = pop ? [].slice.call(pop.querySelectorAll('.rc-row')) : [], last = rows[rows.length - 1];
         var r = { rows: rows.length, other: last ? last.textContent : null, otherClass: last ? last.className : null, italic: last ? getComputedStyle(last).fontStyle === 'italic' : false };
         if (last) { var radio = last.querySelector('input'); radio.checked = true; radio.dispatchEvent(new Event('change')); }
         var host = document.querySelector('.node[data-node-id="S"][data-node-idx="0"]'), ed = host && host.querySelector('.box-editor');
         r.closed = !__c.pop(); r.editing = !!ed && ed.style.display !== 'none' && document.activeElement === ed;
-        __c.load(${J(MAP('Poe can fly.', 'Al is happy.'))});
+        __c.load(${J(MAP('Poe can fly.', 'It is possible for Poe to fly.'))});
         __c.tag('S').click();
         var pop2 = __c.pop(); r.canRows = pop2 ? pop2.querySelectorAll('.rc-row').length : 0; r.canOther = pop2 ? pop2.querySelectorAll('.rc-other').length : -1;
         closeReadingChooser(); state.logic = { base: 'standard', rules: {} };
