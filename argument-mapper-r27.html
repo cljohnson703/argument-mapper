@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.195';
+    const APP_BUILD = '2026-11-08 r27.196';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -16976,12 +16976,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     [fronted(left), 'both ' + each.map(c => 'it is not the case that ' + fronted(c)).join(', and ')].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
             }
             whole = fronted(left);
-            // "Neither A nor B if C": the condition on the whole; not A, and
-            // not the conditional; not A, and if C, then not B (r27.193; the
-            // user: "there's 3 readings, and each of them need to be available
-            // for the user to select between").
+            // "Neither A nor B if C": the condition on both clauses or on the
+            // last alone, and the denial inside it or outside it (r27.196; the
+            // user: "if all 4 readings are possible, we should do all 4") --
+            // "if C, then neither A nor B"; each conditional denied; not A, and
+            // if C, then not B; not A, and not the conditional.
             other = scope[1] === 'neither'
-                ? [claimDeniedClauseWords(a) + ', and it is not the case that ' + fronted(b), claimDeniedClauseWords(a) + ', and ' + fronted(claimDeniedClauseWords(b))]
+                ? ['both it is not the case that ' + fronted(a) + ', and it is not the case that ' + fronted(b),
+                    claimDeniedClauseWords(a) + ', and ' + fronted(claimDeniedClauseWords(b)), claimDeniedClauseWords(a) + ', and it is not the case that ' + fronted(b)]
                 : claimUnnumbered([claimFreeFirstWords([a], fronted(b), w)], claimListWords([a, b + ' ' + marker + ' ' + right], w, true));
         }
         return claimAmbiguous('"' + marker + '" can take in all of what comes before or after it, or only part of it',

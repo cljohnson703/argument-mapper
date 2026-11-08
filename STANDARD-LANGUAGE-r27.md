@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: four readings of "neither ... nor ... if" (r27.196)
+
+The user, of "Neither Poe flies nor Fido sings if it rains": "I guess if all 4 readings are possible, we should do all 4."
+
+* "Neither Poe flies nor Fido sings if it rains" offers four readings. The condition may cover both clauses or Fido's alone, and the denial may sit inside the condition or outside it:
+  * "If it rains, then neither Poe flies nor Fido sings";
+  * "Both it is not the case that if it rains, then Poe flies, and it is not the case that if it rains, then Fido sings";
+  * "Poe does not fly, and if it rains, then Fido does not sing";
+  * "Poe does not fly, and it is not the case that if it rains, then Fido sings".
+* It had offered the first, the fourth and the third. The same holds with "unless".
+* "Neither Poe nor Fido flies if it rains", where the names share one verb phrase, keeps its two readings (r27.195).
+
+Tests:
+* syntax-r27-test.js has 141 checks; 2 of them now expect the four readings, and both fail on r27.195.
+* Take-one-out: the one change is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: no spliced groups; "neither" of names; a conditional is no step in a sequence (r27.195)
 
 The user:

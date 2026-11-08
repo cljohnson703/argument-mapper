@@ -967,9 +967,14 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
     ok(cases.every(([, want], i) => J(got[i]) === J(want)),
         'readings are offered without numbers where English has words for them -- what stands on its own first, then what a condition, a denial or a sequence takes in -- each reading back; the whole of a list of three after "then" stays numbered, and so does a reading that would put a pronoun ahead of what it points back to', J(got));
     const neither = [said('Neither Poe flies nor Fido sings if it rains.'), said('Neither Poe flies nor Fido sings unless it rains.')];
-    ok(J(neither[0].readings) === J(['If it rains, then neither Poe flies nor Fido sings.', 'Poe does not fly, and it is not the case that if it rains, then Fido sings.', 'Poe does not fly, and if it rains, then Fido does not sing.']) &&
-        J(neither[1].readings) === J(['Unless it rains, neither Poe flies nor Fido sings.', 'Poe does not fly, and it is not the case that unless it rains, Fido sings.', 'Poe does not fly, and unless it rains, Fido does not sing.']),
-        '"neither A nor B if C" offers three readings, each reading back: the condition on the whole; not A, and not the conditional; not A, and if C, then not B (it had offered "Neither (A nor B if C)", which did not read back)', J(neither));
+    // Since r27.196 four (the user: "if all 4 readings are possible, we should
+    // do all 4"): the condition on both clauses or on the last alone, the
+    // denial inside it or outside it.
+    ok(J(neither[0].readings) === J(['If it rains, then neither Poe flies nor Fido sings.', 'Both it is not the case that if it rains, then Poe flies, and it is not the case that if it rains, then Fido sings.',
+            'Poe does not fly, and if it rains, then Fido does not sing.', 'Poe does not fly, and it is not the case that if it rains, then Fido sings.']) &&
+        J(neither[1].readings) === J(['Unless it rains, neither Poe flies nor Fido sings.', 'Both it is not the case that unless it rains, Poe flies, and it is not the case that unless it rains, Fido sings.',
+            'Poe does not fly, and unless it rains, Fido does not sing.', 'Poe does not fly, and it is not the case that unless it rains, Fido sings.']),
+        '"neither A nor B if C" offers four readings, each reading back: the condition on both clauses or on the last alone, the denial inside it or outside it (it had offered "Neither (A nor B if C)", which did not read back; r27.193 offered three)', J(neither));
     const numbered = [said('(1) If it rains, then the ground is wet, and (2) the match is off.'), said('If it rains, then (1) the ground is wet, (2) the match is off, and (3) the roads close.')];
     ok(numbered[0].key === 'C[I(P:it|~rain>P:the ground|=wet);P:the match|=off]' && !numbered[0].readings.length &&
         numbered[1].key === 'I(P:it|~rain>C[P:the ground|=wet;P:the match|=off;P:the roads|~close])' && !numbered[1].readings.length,
@@ -1006,7 +1011,7 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
     ok(!bracketed.length, 'no reading puts words in brackets (numbers alone may be)', J(bracketed));
     const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Poe does not fly.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Neither Poe flies nor Fido sings if it rains.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`);
-    ok(step.rule === null && J(step.asked) === J([3]), '"so, Poe does not fly" waits for the answer: two of the three readings give it', J(step));
+    ok(step.rule === null && J(step.asked) === J([4]), '"so, Poe does not fly" waits for the answer: some of its four readings give it, and some do not', J(step));
 }
 
 console.log('\n-- no spliced groups; "neither" of names; a conditional is no step in a sequence (r27.195) --');
