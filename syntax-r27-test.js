@@ -896,7 +896,9 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
     const list = said('Mary knows that Poe flies, Fido sings, and Rex barks.'), then = said('Mary believes that Ann left and then Bob cried.');
     // Since r27.192 (the user: "We should never offer paraphrases with
     // parentheses"), "that" again before each part, and "first ... and then".
-    ok(list.step && J(list.readings) === J(['Rex barks, and Mary knows that Poe flies, Fido sings.', 'Mary knows that Poe flies, that Fido sings, and that Rex barks.']) &&
+    // Since r27.195 the parts after the first go first ("Rex barks, and Mary
+    // knows that Poe flies, Fido sings" had spliced two claims in the clause).
+    ok(list.step && J(list.readings) === J(['Fido sings, Rex barks, and Mary knows that Poe flies.', 'Mary knows that Poe flies, that Fido sings, and that Rex barks.']) &&
         then.step && then.key === 'P:mary|~believe that ann left and then bob cried' &&
         J(then.readings) === J(['First Mary believes that Ann left, and then Bob cried.', 'Mary believes that first Ann left and then Bob cried.']),
         'a list in a that-clause, and an "and then" in one, offer both readings, each reading back -- "that" again before each part, or "that first ... and then", for all of it; "first ..., and then ..." for the sequence; elsewhere all of it is in the that-clause, as before (r27.190, r27.192)', J([list, then]));
@@ -953,10 +955,11 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
         ['Poe flies and Fido sings if it rains.', ['If it rains, then both Poe flies and Fido sings.', 'Poe flies, and if it rains, then Fido sings.']],
         ['Poe flies and sings if it rains.', ['If it rains, then Poe flies and sings.', 'Poe flies, and if it rains, then Poe sings.']],
         ['Either Poe flies or Fido sings if it rains.', ['If it rains, then either Poe flies or Fido sings.', 'Poe flies, or if it rains, then Fido sings.']],
+        // Since r27.195 without the group "the ground is wet, the match is off",
+        // two claims spliced; and "Ann did not leave, and then Bob cried".
         ['If it rains, then the ground is wet, the match is off, and the roads close.', ['If it rains, then (1) the ground is wet, (2) the match is off, and (3) the roads close.',
-            'The match is off, the roads close, and if it rains, then the ground is wet.', 'The roads close, and if it rains, then both the ground is wet and the match is off.']],
-        ['It is not the case that Ann left and then Bob cried.', ['It is not the case that first Ann left and then Bob cried.', 'First it is not the case that Ann left, and then Bob cried.']],
-        ['Poe flies if Ann left and then Bob cried.', ['Poe flies if first Ann left and then Bob cried.', 'First Poe flies if Ann left, and then Bob cried.']],
+            'The match is off, the roads close, and if it rains, then the ground is wet.']],
+        ['It is not the case that Ann left and then Bob cried.', ['It is not the case that first Ann left and then Bob cried.', 'Ann did not leave, and then Bob cried.']],
         ['Mary left and then Bob cried if it rained.', ['If it rained, then Mary left and then Bob cried.', 'Mary left, and then, if it rained, Bob cried.']],
         ['Poe flies and Fido sings or Rex barks and Ann runs.', ['Both Poe flies and Fido sings, or both Rex barks and Ann runs.', 'Poe flies, either Fido sings or Rex barks, and Ann runs.']],
         ['Poe flies, and if it rains, Fido sings, and Rex barks.', ['Poe flies, and if it rains, then both Fido sings and Rex barks.', 'Poe flies, Rex barks, and if it rains, then Fido sings.']]];
@@ -987,7 +990,9 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
     ok(J(jtb.readings) === J(['S knows that it is the case that p iff S believes that p, p is true, and S is justified.',
             '(1) S believes that p, (2) p is true, and (3) S is justified, iff S knows that p.',
             '(1) If S knows that p, then S believes that p, and if S believes that p, then S knows that p, (2) p is true, and (3) S is justified.',
-            '(1) If S knows that p, then both S believes that p and p is true, and if both S believes that p and p is true, then S knows that p, and (2) S is justified.']),
+            // Since r27.195: no group "S believes that p, p is true" (spliced), and
+            // S believing all three, as two conditionals.
+            'If S knows that p, then S believes that p, that p is true, and that S is justified, and if S believes that p, that p is true, and that S is justified, then S knows that p.']),
         '"S knows that p iff (a list)": what "knows that" takes in said last, where it takes in no more, the list numbered; where the "iff" takes in part of the list, its two ways as two conditionals -- each reading back (they had been bracketed, "(S knows that p) iff ...")', J(jtb));
     ok(key('(1) S believes that p, (2) p is true, and (3) S is justified, iff S knows that p.') === 'B[I(C[P:s|~believe that p;A:p;P:s|=justified]>P:s|~know that p);I(P:s|~know that p>C[P:s|~believe that p;A:p;P:s|=justified])]' &&
         key('(1) Poe flies, (2) Fido sings, and (3) Rex barks iff Ann runs.') === 'C[P:poe|~fly;P:fido|~sing;B[I(P:rex|~bark>P:ann|~run);I(P:ann|~run>P:rex|~bark)]]',
@@ -1002,6 +1007,38 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
     const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['Poe does not fly.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Neither Poe flies nor Fido sings if it rains.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`);
     ok(step.rule === null && J(step.asked) === J([3]), '"so, Poe does not fly" waits for the answer: two of the three readings give it', J(step));
+}
+
+console.log('\n-- no spliced groups; "neither" of names; a conditional is no step in a sequence (r27.195) --');
+{
+    const said = t => ev(`var r = parseClaimFull(${J(t)}), n = r.notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return { key: claimKey(r.form).replace(//g, ''), readings: n ? n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
+            return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) : [] };`);
+    // The user: "there should be only two readings of 'Neither Poe nor Fido
+    // flies if it rains', and it's the wide vs narrow scope of the negation".
+    const neither = ['Neither Poe nor Fido flies if it rains.', 'Neither the dogs nor Fido flies if it rains.', 'Neither Poe nor the dogs fly if it rains.'].map(said);
+    ok(J(neither.map(n => n.readings)) === J([
+            ['If it rains, then neither Poe nor Fido flies.', 'Both it is not the case that if it rains, then Poe flies, and it is not the case that if it rains, then Fido flies.'],
+            ['If it rains, then neither the dogs nor Fido flies.', 'Both it is not the case that if it rains, then the dogs fly, and it is not the case that if it rains, then Fido flies.'],
+            ['If it rains, then neither Poe nor the dogs fly.', 'Both it is not the case that if it rains, then Poe flies, and it is not the case that if it rains, then the dogs fly.']]) &&
+        !said('Both Poe and Fido fly if it rains.').readings.length,
+        '"neither Poe nor Fido flies if it rains" offers the denial\'s two scopes, each name with its own verb ("the dogs fly"), each reading back (it had asked nothing); "both Poe and Fido" still asks nothing', J(neither));
+    // The user, of "first Ann laughed if Mary left, and then Bob cried": "I
+    // only see: 'If Mary left and then Bob cried, then Ann laughed'".
+    const seq = [said('Ann laughed if Mary left and then Bob cried.'), said('Ann laughed unless Mary left and then Bob cried.'), said('Mary left and then Bob cried if it rained.')];
+    ok(!seq[0].readings.length && seq[0].key === 'I(T[P:mary|~did left;P:bob|~did cried]>P:ann|~did laughed)' &&
+        !seq[1].readings.length && seq[1].key === 'D[P:ann|~did laughed;T[P:mary|~did left;P:bob|~did cried]]' &&
+        J(seq[2].readings) === J(['If it rained, then Mary left and then Bob cried.', 'Mary left, and then, if it rained, Bob cried.']),
+        '"Ann laughed if Mary left and then Bob cried" asks nothing: the sequence is the condition, for a conditional is no step in a sequence; "Mary left, and then, if it rained, Bob cried" is still offered', J(seq));
+    // The user, of the reading that splices: "If so, then I agree with you".
+    const groups = [said('If it rains, then the ground is wet and the match is off and the roads close.'), said('Poe flies iff Fido sings, Rex barks, and Ann runs.'),
+        said('If it rains, then Mary knows that Poe flies, Fido sings, and Rex barks.')];
+    ok(J(groups[0].readings) === J(['If it rains, then (1) the ground is wet, (2) the match is off, and (3) the roads close.', 'The match is off, the roads close, and if it rains, then the ground is wet.',
+            'The roads close, and if it rains, then both the ground is wet and the match is off.']) &&
+        J(groups[1].readings) === J(['Poe flies iff (1) Fido sings, (2) Rex barks, and (3) Ann runs.', '(1) Poe flies iff Fido sings, (2) Rex barks, and (3) Ann runs.']) &&
+        J(groups[2].readings) === J(['If it rains, then (1) Mary knows that Poe flies, (2) Fido sings, and (3) Rex barks.', 'Fido sings, Rex barks, and if it rains, then Mary knows that Poe flies.',
+            'If it rains, then Mary knows that Poe flies, that Fido sings, and that Rex barks.']),
+        'parts joined by "and" may group ("the ground is wet and the match is off"), parts commas alone join may not; a that-clause first may take in the list, with "that" again before each part (the user: "B")', J(groups));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

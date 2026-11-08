@@ -4,6 +4,43 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: no spliced groups; "neither" of names; a conditional is no step in a sequence (r27.195)
+
+The user:
+* Of "First it is not the case that Ann left, and then Bob cried": "That first one reads strange. I don't know what it means."
+* Of dropping "First Ann laughed if Mary left, and then Bob cried": "I think so? I only see: 'If Mary left and then Bob cried, then Ann laughed.'"
+* Of the reading that splices "the ground is wet, the match is off": "If so, then I agree with you."
+* Of whether a list of three after "then", "iff" or "that" belongs to that word or may be read another way: "B" (both readings count).
+* Of "Neither Poe nor Fido flies if it rains": "there should be only two readings ..., and it's the wide vs narrow scope of the negation."
+
+Changes:
+* "It is not the case that Ann left and then Bob cried" offers "Ann did not leave, and then Bob cried". It had offered "First it is not the case that Ann left, and then Bob cried".
+* "Ann laughed if Mary left and then Bob cried" asks nothing: the sequence is the condition. A conditional is no step in a sequence, so "first Ann laughed if Mary left, and then Bob cried" is no reading. The same holds with "unless".
+* Parts a list joins with commas alone are no group of their own.
+  * "If it rains, then the ground is wet, the match is off, and the roads close" no longer offers "The roads close, and if it rains, then both the ground is wet and the match is off". Its "then" would have taken in "the ground is wet, the match is off", two claims spliced with a comma.
+  * The same holds after "iff". "A and B and C" keeps that reading.
+  * In a that-clause: "Mary knows that Poe flies, Fido sings, and Rex barks" offers "Fido sings, Rex barks, and Mary knows that Poe flies". It had offered "Rex barks, and Mary knows that Poe flies, Fido sings", the same splice inside the that-clause. Where that wording would not read back, the list is numbered.
+* A list after "then" or "iff" whose first part is a that-clause may lie wholly inside that clause:
+  * "If it rains, then Mary knows that Poe flies, that Fido sings, and that Rex barks";
+  * "S knows that p iff S believes that p, p is true, and S is justified" offers S believing all three, said as two conditionals.
+* "Neither Poe nor Fido flies if it rains" offers the denial's two scopes, where it had asked nothing:
+  * "If it rains, then neither Poe nor Fido flies";
+  * "Both it is not the case that if it rains, then Poe flies, and it is not the case that if it rains, then Fido flies".
+  * Each name takes its own verb ("the dogs fly", "Fido flies"). "Both Poe and Fido fly if it rains" still asks nothing.
+
+Tests:
+* syntax-r27-test.js has 141 checks.
+  * The 3 new ones fail on r27.194.
+  * 3 checks in it and 3 in logic-r27-basis-test.js now expect the new readings.
+* Take-one-out: each of the 9 changes is caught.
+* 5 sentences in the corpus read differently:
+  * the two sequences in a condition, which no longer ask;
+  * the denial with "and then", with its new wording;
+  * "If Bob sings, then Mary dances, Ann runs, and Tom walks", without the spliced group;
+  * "Bob believes A, B, and C", whose other reading is now numbered.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 7: a preposition that opens a sentence is no name (r27.194)
 
 The user, of "With his help, Bob won" read as "with With's help, Bob won": "You can just do it here."
