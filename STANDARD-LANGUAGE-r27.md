@@ -4,6 +4,41 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: a helping verb that is a noun too, where only the noun is English (r27.197)
+
+The user:
+* Of "The can hit the wall": "The syntax tree checker should rule out ungrammatical options. After 'the', you need a noun phrase, so, 'The can hit the wall' has only one reading as far as I can tell."
+* Of a release that reads the noun where only the noun is English: "Sure."
+* Of starting with "The can hit the wall" and "Free will and determinism are compatible": "ok."
+
+The words are "can", "will", "might", "must" and "may", and "does" (more than one doe); WordNet has each as a noun. Where only the noun is English, the syntax tree reads the noun and nothing is asked. That is so:
+* just after a determiner that no noun phrase ends on:
+  * "The can hit the wall" had asked "Did you mean 'The is able to hit the wall' ...?";
+  * also "Her will hurt Bob", "The must fermented", "The does eat grass", "Every can is empty";
+* for "does" after a number or a plural determiner: "Two does eat grass";
+* after adjectives with no determiner, which are no subject of their own:
+  * "Free will and determinism are compatible" is one claim of the two together. It had been two claims, "free will" and "determinism is compatible".
+  * "Good will come of it" keeps its modal: "good" may be a noun.
+* within a noun phrase, before what no modal takes: a past that is not also its plain form, an -s word, or another helping verb.
+  * "The tin can rusted" had offered "The tin is able to rusted".
+  * Also "The tin can rolls", "God's will cannot be known", "The divine will commanded it", "The king's might crushed the rebels", "Bob's will left Ann the farm", "His might did hurt them", "Our free will matters".
+* at the end, just after a determiner: "Bob opened the can" had not been read, as a clause cut short.
+
+So "Everything that hit the wall is dented; the can hit the wall; so the can is dented" follows. It had been held for the question above.
+
+Where both readings are English, the box is read as before:
+* "The tin can hit the wall": the can did it, or tin is able to;
+* "His last will cost him the farm".
+
+An emphatic "does" still folds into its verb ("Bob does eat grass"), but not after a determiner or a number ("the does eat grass").
+
+Tests:
+* syntax-r27-test.js has 145 checks; 3 of the 4 new ones fail on r27.196. The fourth, that the modals read as before, holds on both.
+* Take-one-out: each of the 7 changes is caught.
+* No sentence in the corpus reads differently, and neither do 24 others with "can", "will", "may" and "must" as modals.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: four readings of "neither ... nor ... if" (r27.196)
 
 The user, of "Neither Poe flies nor Fido sings if it rains": "I guess if all 4 readings are possible, we should do all 4."

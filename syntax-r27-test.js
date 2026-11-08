@@ -1046,6 +1046,31 @@ console.log('\n-- no spliced groups; "neither" of names; a conditional is no ste
         'parts joined by "and" may group ("the ground is wet and the match is off"), parts commas alone join may not; a that-clause first may take in the list, with "that" again before each part (the user: "B")', J(groups));
 }
 
+console.log('\n-- a helping verb that is a noun too, where only the noun is English (r27.197) --');
+{
+    // The user: "After 'the', you need a noun phrase, so, 'The can hit the
+    // wall' has only one reading as far as I can tell".
+    const read = t => ev(`var r = parseClaimFull(${J(t)}); return { key: claimKey(r.form).replace(/\uE000/g, ''), asks: r.notes.filter(function (n) { return n.kind === 'ambiguous' && (n.readings || []).length; }).length,
+        unread: r.notes.filter(function (n) { return n.kind === 'unread'; }).map(function (n) { return n.message; }) };`);
+    const nouns = ['The can hit the wall.', 'The tin can rusted.', 'The tin can rolls.', 'The tin can did hit the wall.', 'The divine will commanded it.', 'The king\'s might crushed the rebels.',
+        'The must fermented.', 'His might did hurt them.', 'The does eat grass.', 'Two does eat grass.', 'Our free will matters.', 'Every can is empty.'].map(read);
+    ok(J(nouns.map(n => n.key)) === J(['P:the can|~hit the wall', 'P:the tin can|~did rusted', 'P:the tin can|~roll', 'P:the tin can|~did hit the wall', 'P:the divine will|~did commanded it',
+            "P:the king's might|~did crushed the rebels", 'P:the must|~did fermented', 'P:his might|~did hurt them', 'P:the does|~eat grass', 'P:two does|~eat grass', 'P:our free will|~matter', 'U:=can|=empty']) &&
+        nouns.every(n => !n.asks),
+        'just after a determiner, or before what no modal takes (a past that is not its plain form, an -s word, another helping verb), "can", "will", "might", "must" and "does" are nouns, and nothing is asked ("The can hit the wall" had asked "Did you mean \'The is able to hit the wall\'...?")', J(nouns));
+    const more = [read("God's will cannot be known."), read("Bob's will left Ann the farm."), read('Her will hurt Bob.'), read('Bob opened the can.'), read('Free will and determinism are compatible.')];
+    ok(/^N\(P:god's will\|/.test(more[0].key) && /^P:bob's will\|~did left/.test(more[1].key) && /^P:her will\|~hurt bob$/.test(more[2].key) &&
+        more[3].key === 'P:bob|~did opened the can' && !more[3].unread.length && /^A:free will and determinism together are compatible$/.test(more[4].key),
+        '"God\'s will cannot be known", "Bob\'s will left ...", "Her will hurt Bob" have their nouns for subjects; "Bob opened the can" is read (it had been a clause cut short); "Free will and determinism are compatible" is one claim of the two together (it had been two, "free will" and "determinism is compatible")', J(more));
+    const modal = ['The dog can swim.', 'The tin can hit the wall.', 'Good will come of it.', 'The free will win.', 'Bob does eat grass.', 'Mary can\'t swim, but the dog can.'].map(read);
+    ok(modal[0].key === 'P:the dog|~can swim' && modal[1].key === 'P:the tin|~can hit the wall' && /^P:good\|~will come/.test(modal[2].key) && /^P:the free\|~will win/.test(modal[3].key) &&
+        modal[4].key === 'P:bob|~eat grass' && modal[5].key === 'C[N(P:mary|~can swim);P:the dog|~can swim]',
+        'where the modal is English -- "the dog can swim", "good will come of it" ("good" may be a noun), "the free will win", "the tin can hit the wall" (both are; asked later) -- it is read as before; an emphatic "does" still folds ("Bob does eat grass"); "but the dog can" is still the modal, its verb from the clause before', J(modal));
+    const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['The can is dented.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Everything that hit the wall is dented.', 'The can hit the wall.'], collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : (st && st.why ? st.why.text : '');`);
+    ok(step === 'universal modus ponens', '"Everything that hit the wall is dented; the can hit the wall; so the can is dented" follows (it had been held for "Did you mean \'The is able to hit the wall\'...?")', step);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

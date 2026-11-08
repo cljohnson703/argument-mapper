@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.196';
+    const APP_BUILD = '2026-11-08 r27.197';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10995,7 +10995,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // object is the verb "do": "does the dishes", "did well", "do so".
             // "Really", "truly" or "indeed" after it stress it too: "God does
             // really exist" (r27.106).
-            .replace(/(^|[\s,;:(])(do|does|did) (?:(?:really|truly|indeed) )?(?!not\b)([a-z][a-z-]*)(?=$|[\s,.;:!?)])/g, (m, pre, aux, verb) => {
+            .replace(/(^|[\s,;:(])(do|does|did) (?:(?:really|truly|indeed) )?(?!not\b)([a-z][a-z-]*)(?=$|[\s,.;:!?)])/g, (m, pre, aux, verb, at, all) => {
+                // After a determiner or a number, "does" is more than one doe:
+                // "the does eat grass", "two does eat grass" (r27.197).
+                if (aux === 'does' && /(?:^|\s)?(?:the|a|an|every|my|your|our|their|its|her|no|these|those|many|several|few|both|two|three|four|five|six|seven|eight|nine|ten|\d+)\s*$/i.test(all.slice(0, at + pre.length))) return m;
                 if (CLAIM_DO_OBJECT.test(verb) || CLAIM_FUNCTION_WORDS.has(verb) || CLAIM_VERB_MARKERS.has(verb) || /ly$/.test(verb) || claimEndsInS(verb) ||
                     /^(?:so|too|likewise|otherwise|better|best|worse|worst|enough|fine|ok|okay|alright|nothing|little|less|i|we|you|they|he|she|it|there|one|people)$/.test(verb)) return m;
                 const said = aux === 'do' ? verb : aux === 'does' ? claimThirdPerson(verb) : claimPastTense(verb);
@@ -11571,7 +11574,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 !claimEndsInS(bodyTokens[i + 1]) && !CLAIM_FUNCTION_WORDS.has(words[i + 1]))) return true;           // "all ravens fly"
             return !relOpen && /^(?:every|each|no|some|any|a single|one|at least one)\s/.test(body) && bodyTokens.slice(2).some(claimPlainVerb);   // "every raven flies"
         }
-        if (claimMainVerbIndex(tokens) > 0) return true;
+        // Not a helping verb that can only be a noun there: "free will" is no
+        // clause, so "free will and determinism are compatible" is not two
+        // (r27.197).
+        { const k = claimMainVerbIndex(tokens); if (k > 0 && !claimSynAuxNoun(claimSynWords(tokens), k)) return true; }
         if (tokens.length > 1 && CLAIM_SUBJECT_PRONOUNS.has(first)) return true;
         // A sentence letter: "if P, Q".
         if (tokens.length === 1 && /^[a-z]$/.test(first)) return true;
@@ -16283,6 +16289,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "Will" as a noun -- "free will", "the will", "God's will" -- ends no
     // clause cut short (r27.96: "we have free will" had been "we have free
     // ... will").
+    // "Bob opened the can", "with all his might": just after a determiner, the
+    // noun, and no clause cut short (r27.197).
+    const CLAIM_AUX_NOUN_END = /(?:^|\s)(?:the|a|an|every|my|your|our|their|its|her|his|no)\s+(?:can|might|must|may)$/;
     const CLAIM_WILL_NOUN = /(?:^|\s)\uE000?(?:free|good|ill|own|the|a|his|her|their|our|my|your|its|one's|god's|divine|human|general|political|strong|weak|last|rational|individual|collective|popular|whose)\s+will$/;
     // "For any x, if x is a man, then x is mortal": everything that is a man
     // is mortal, said with a variable; "for some x, x is wise", "there is an
@@ -16383,7 +16392,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // no auxiliary (r27.167).
         if (!/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /(?:^|(?:,|\s(?:and|or|but))\s+)(?:so|neither|nor|as)\s+(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)\s+\S+(?:\s+\S+)?$/.test(s) ||
             !/,\s+(?:so(?!\s+long\b)|therefore|thus|hence|consequently)[\s,]/.test(s) && /(?<!\bto)\s(?:is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)(?:\s+not)?(?:\s+(?:too|also|either))?$/.test(s) &&
-            !CLAIM_WILL_NOUN.test(s)) {
+            !CLAIM_WILL_NOUN.test(s) && !CLAIM_AUX_NOUN_END.test(s)) {
             claimUnread('a clause cut short ("so is ...", "... is not", "... does too") is not read');
             return claimAtom(s);
         }
@@ -18055,6 +18064,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'assembly supply reply apply comply imply multiply rely fly only early daily weekly monthly yearly likely unlikely lonely lovely ' +
         'friendly unfriendly ugly holy silly deadly costly elderly orderly worldly heavenly cowardly scholarly timely lively curly hilly ' +
         'oily smelly chilly').split(' '));
+    // Helping verbs that are nouns too (WordNet): "a can", "free will", "his
+    // might", "a must", "the may", "does" (more than one doe) (r27.197).
+    const CLAIM_SYN_AUX_NOUNS = new Set(['can', 'will', 'might', 'must', 'may', 'does']);
+    // Whether the helping verb at j is a noun, where only the noun is English
+    // (r27.197; the user: "After 'the', you need a noun phrase"): just after a
+    // determiner no phrase ends on ("the can", "her will" opening the clause);
+    // "does" after a number or a plural determiner ("two does"); after
+    // adjectives alone that open the clause, which are no subject of their own
+    // ("free will" -- not "good", "black", which may be nouns), with nothing
+    // after it that a modal could take; or within a noun phrase, before what no
+    // modal takes: a past that is not also its plain form, an -s word, another
+    // helping verb ("the tin can rusted", "God's will cannot be known").
+    function claimSynAuxNoun(ws, j) {
+        const x = ws[j], p = ws[j - 1], y = ws[j + 1];
+        if (!x || !p || !CLAIM_SYN_AUX_NOUNS.has(x.w) || p.name) return false;
+        if (/^(?:the|a|an|every|my|your|our|their|its|no)$/.test(p.w) || (p.w === 'her' && j === 1)) return true;
+        if (x.w === 'does') return !!(p.num || /^(?:these|those|many|several|few|both)$/.test(p.w));
+        const strict = !!y && (y.aux || (y.s && !y.closed) || (y.past && !CLAIM_PAST_UNCHANGED.has(y.w)));
+        let b = j;
+        while (b > 0 && ws[b - 1].adj && !ws[b - 1].noun && !ws[b - 1].closed && !ws[b - 1].name) b--;
+        if (b === 0 && j > 0 && (strict || !y || y.conj || y.prep)) return true;
+        return strict && !!(p.det || p.poss || p.adj || p.noun || p.num) && !(p.closed && !p.det && !p.poss && !p.num);
+    }
     // The closed words: nothing else is read into them.
     const claimSynClosed = w => CLAIM_SYN_DETERMINERS.has(w) || CLAIM_SYN_QUANTIFIERS.has(w) || w in CLAIM_SYN_PRONOUNS ||
         CLAIM_SYN_PREPOSITIONS.has(w) || CLAIM_SYN_CONJUNCTIONS.has(w) || CLAIM_SYN_OPENERS.has(w) || CLAIM_RELATIVES.has(w) ||
@@ -18214,6 +18246,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // A letter after a noun is its label, and ends the phrase:
                 // "belief set A", "person B" (r27.115).
                 if (claimSynLetterLabel(ws, j) && j > b) { add(j + 1, numberOf(ws[j - 1], j - 1)); break; }
+                // A helping verb that can only be a noun here is the phrase's
+                // head: "the can", "the tin can rusted", "free will" (r27.197).
+                if (y.closed && claimSynAuxNoun(ws, j)) { add(j + 1, y.w === 'does' ? 'pl' : 'sg'); continue; }
                 if ((y.closed && !CLAIM_SYN_ORDINALS.has(y.w)) || (y.name && !determined) || (y.poss && j > b)) break;
                 if (y.noun || y.adj || proper) add(j + 1, proper ? 'sg' : numberOf(y, j));
                 if (!(y.noun || y.adj || y.num || y.participle || y.ing || proper || CLAIM_SYN_ORDINALS.has(y.w))) break;
@@ -18599,6 +18634,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Not just after "the", "a", "his": a noun's place, not a verb's --
         // "every raven that sings | dries the dishes", not "... the | dishes".
         if (i > 0 && ws[i - 1] && !ws[i - 1].name && /^(?:the|a|an|my|your|his|its|our|their|whose)$/.test(ws[i - 1].w)) return null;
+        // Nor at a helping verb that can only be a noun there (r27.197).
+        if (claimSynAuxNoun(ws, i)) return null;
         if (y.aux) return 'strong';
         // Adverbs joined, one manner: "quickly and quietly left" (r27.187).
         if (y.adv && !y.noun && ws[i + 1] && ws[i + 1].conj && /^(?:and|or)$/.test(ws[i + 1].w) && ws[i + 2] && ws[i + 2].adv && !ws[i + 2].noun)
