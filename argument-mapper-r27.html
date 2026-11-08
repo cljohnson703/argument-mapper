@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.197';
+    const APP_BUILD = '2026-11-08 r27.198';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11473,6 +11473,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function claimPastProp(pastForm, after) {
         const rest = after.length ? ' ' + after.join(' ') : '';
+        // A past spelled as its plain form ("hit", "cost", "read") is read with
+        // no tense, so its "did" adds none: "did hit the wall" keys as "hit the
+        // wall" does (r27.198; the user, of "do" rewordings: "we'll probably
+        // have to add that for semantic mode").
+        if (CLAIM_PAST_UNCHANGED.has(pastForm)) return '~' + pastForm + rest;
         return pastForm === 'had' ? '~had' + rest : '~did ' + pastForm + rest;
     }
     // A verb's past form, from its plain form: the irregular ones listed, the
@@ -14260,7 +14265,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return claimAmbiguous(claimRecase('"' + (denied ? 'can\u2019t' : 'can') + '" may say what ' + who + ' ' + be + ' ' + not + 'able to do, what is ' + not + 'possible for ' +
                 claimShowWords(obj) + ', or what ' + who + ' ' + be + ' ' + not + 'allowed to do', claimBoxRaw || ''),
             [{ label: labels[0], build: () => spread ? one : form }, { label: labels[1], build: () => spread ? Object.assign({}, form, { parts: form.parts.map(p => Object.assign({}, p, { possible: true })), src: subj + ' can ' + vp }) : denied ? negateClaim(possible) : possible },
-             { label: labels[2], build: () => readClaim(labels[2]) }], claimModalAsking(),
+             { label: labels[2], build: () => readClaim(labels[2]) }].concat(
+             // The noun beside them: "The tin can did hit the wall" (r27.198).
+             (() => { const noun = !denied && !spread ? claimAuxNounWords(text, 'can') : null; return noun ? [{ label: noun, build: () => readClaim(noun) }] : []; })()), claimModalAsking(),
             Object.assign({ generic: true, canScope: true, canPlain: true, canDenied: !!denied, subject: 'can ' + claimWord(vp.split(' ')[0]), canFrom: subj, canBe: be },
                 claimModalAsking() ? { ask: true } : {})) ||
             // Unanswered, "able": "Poe can fly or swim" one claim too, so that
@@ -14287,6 +14294,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // be that ...".
     const CLAIM_MUST_PARTICIPLE = /^(?:been|had|done|gone|seen|known|flown|given|taken|made|said|[a-z]+(?:ed|en|wn))$/;
     // A subject's "be": "the records in Otto's notebook are" (r27.169).
+    // "The tin can hit the wall": the helping verb may be a noun too -- the
+    // tin can did it -- where the words before it can end on a noun and its
+    // verb is a past spelled as its plain form ("hit", "cost", "hurt"). Said
+    // with "did" on the verb, which only the noun reading takes: "The tin can
+    // did hit the wall" (r27.198). Its words, where they read back so, or null.
+    function claimAuxNounWords(text, modal) {
+        const m = new RegExp('^(.+?) ' + modal + ' (\\S+)(.*)$').exec(String(text || ''));
+        if (!m || !CLAIM_PAST_UNCHANGED.has(claimWord(m[2]))) return null;
+        // The noun phrase has its determiner ("the tin can", "his might",
+        // "Bob's will"): "Bob can", "students can" are none.
+        const subj = claimTokens(m[1]), first = claimSynWord(subj[0] || ''), last = claimSynWord(subj[subj.length - 1] || '');
+        if (!(first.det || first.poss || first.quant || first.num) || (first.pro && !first.det && !first.poss)) return null;
+        if (!last.w || last.name || (last.pro && !last.det) || !(last.det || last.poss || last.num || ((last.noun || last.adj) && !last.closed))) return null;
+        const words = m[1] + ' ' + modal + ' did ' + m[2] + m[3], f = claimQuietly(() => readClaim(words));
+        return f && f.kind === 'pred' && new RegExp('(?:^|\\s)' + modal + '$').test(String(f.subjectText || '')) ? words : null;
+    }
+    // A verb "going to" may take, as "will" does: "is going to win" -- not a
+    // place one goes to ("going to school", "going to work") (r27.198).
+    function claimGoingVerb(w) {
+        const y = claimSynWord(w);
+        return !!y.w && !y.closed && !y.name && (y.knownVerb || (y.verb && !y.noun)) &&
+            !/^(?:school|work|church|bed|market|town|class|college|court|sea|war|prison|jail|hospital|lunch|dinner|breakfast|mass|press|trial|hell|heaven|pieces|waste|seed|ruin|sleep)$/.test(w);
+    }
     function claimSubjectBe(subj) {
         const words = String(subj).split(' ');
         const at = words.findIndex((x, i) => i > 0 && (CLAIM_PREPOSITIONS.has(claimWord(x)) || CLAIM_MORE_PREPOSITIONS.test(claimWord(x)) || /^(?:that|who|which|whom|whose)$/.test(claimWord(x))));
@@ -14316,7 +14346,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const p = claimMustParts(text);
         if (!p) return null;
         const labels = [p.said].concat(['metaphysically', 'logically', 'physically'].map(k => 'it is ' + k + ' necessary that ' + p.said),
-            ['it has been established that ' + p.said, 'we know that ' + p.said, p.required]);
+            ['it has been established that ' + p.said, 'we know that ' + p.said, p.required], claimAuxNounWords(text, 'must') || []);
         return claimAmbiguous(CLAIM_MUST_WHY, labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(text), { must: true }, claimModalAsking() ? {} : { subject: 'must' }));
     }
@@ -14371,7 +14401,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // a longer box "we do not know that Poe does not fly" -- or, "could
         // not", "we know that Poe does not fly".
         const know = wide ? 'we know that ' + no : whole ? 'for all we know, ' + (denied ? no : yes) : 'we do not know that ' + (denied ? yes : no);
-        const labels = kinds.concat([known, know], extra);
+        const labels = kinds.concat([known, know], extra, !denied && modal !== 'could' && claimAuxNounWords(text, modal) || []);
         return claimAmbiguous(CLAIM_MAYBE_WHY[modal], labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(text), { maybe: true }, claimModalAsking() || modal === 'might' ? {} : { subject: modal }));
     }
@@ -15917,6 +15947,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.maybe))) form = claimMaybeQuestion(String(text || '').trim(), form.prop.slice(1).split(' ')[0]) || form;
         else if (!would && form && form.kind === 'not' && form.inner && form.inner.kind === 'pred' && /^~could /.test(form.inner.prop) &&
             !(claimReadState && claimReadState.notes.slice(noteMark).some(n => n.maybe))) form = claimMaybeQuestion(String(text || '').trim(), 'could') || form;
+        // "His last will cost him the farm": his testament did, or his last one
+        // is going to -- asked where a step turns on it (r27.198; the user, of
+        // "is going to": "ok").
+        if (!would && form && form.kind === 'pred' && /^~will /.test(form.prop) && claimReadState && !claimReadState.notes.slice(noteMark).some(n => n.willNoun)) {
+            const said = String(text || '').trim(), noun = claimAuxNounWords(said, 'will'), m = /^(.+?) will (.+)$/.exec(said);
+            if (noun && m) {
+                const going = m[1] + ' ' + claimSubjectBe(m[1]) + ' going to ' + m[2];
+                form = claimAmbiguous('"will" may be a noun ("' + m[1] + ' will" did it), or say what is going to be', [noun, going].map(label => ({ label, build: () => readClaim(label) })),
+                    true, { willNoun: true, stepDecides: true, part: said }) || form;
+            }
+        }
         if (form && form.src === undefined) form.src = String(text || '').trim();
         if (form && !form.folTree) { const tree=readNaturalFirstOrderTree(String(text || '').trim()); if(tree) form.folTree=tree; }
         return form;
@@ -18079,7 +18120,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimSynAuxNoun(ws, j) {
         const x = ws[j], p = ws[j - 1], y = ws[j + 1];
         if (!x || !p || !CLAIM_SYN_AUX_NOUNS.has(x.w) || p.name) return false;
-        if (/^(?:the|a|an|every|my|your|our|their|its|no)$/.test(p.w) || (p.w === 'her' && j === 1)) return true;
+        if (!p.pad && (/^(?:the|a|an|every|my|your|our|their|its|no)$/.test(p.w) || (p.w === 'her' && j === 1))) return true;
         if (x.w === 'does') return !!(p.num || /^(?:these|those|many|several|few|both)$/.test(p.w));
         const strict = !!y && (y.aux || (y.s && !y.closed) || (y.past && !CLAIM_PAST_UNCHANGED.has(y.w)));
         let b = j;
@@ -18486,7 +18527,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // After its quantifier, as after "the": "raven Mary saw" is no name
         // "Raven Mary", as a sentence's first words could be.
         const first = claimSynWord(tokens[0]), pad = first.det || first.poss ? 0 : 1;
-        const ws = claimSynWords(pad ? ['the'].concat(tokens) : tokens);
+        const ws0 = claimSynWords(pad ? ['the'].concat(tokens) : tokens);
+        // The "the" stood in for the quantifier is marked: "some", "all", "many"
+        // may stand alone, so a modal may follow them ("some may read it",
+        // r27.198).
+        const ws = pad ? [Object.assign({}, ws0[0], { pad: true })].concat(ws0.slice(1)) : ws0;
         const phrases = claimSynNounPhrases(ws, 0).map(o => number ? Object.assign({}, o, { number }) : o);
         const end = claimSynChoose(ws, phrases);
         if (end - pad < 1) return null;
@@ -18896,6 +18941,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const j = claimNamePhraseEnd(tokens);
                 subjectTokens = tokens.slice(0, j); vp = tokens.slice(j);                        // "Clark Kent wears glasses"
             } else return null;
+        }
+        // "Is going to win" says what "will win" says (r27.198; the user: "ok").
+        {
+            const v = vp.map(claimWord), n = v[1] === 'not' ? 1 : 0;
+            if (/^(?:is|are|am)$/.test(v[0]) && v[1 + n] === 'going' && v[2 + n] === 'to' && v[3 + n] && claimGoingVerb(v[3 + n]))
+                vp = ['will'].concat(n ? ['not'] : [], vp.slice(3 + n));
         }
         // "God necessarily exists", "Poe is necessarily black": what
         // "necessarily, God exists" says, asked which kind -- its readings in
@@ -20528,7 +20579,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // (r27.169).
             const ableSaid = t => String(t).replace(/(^|\s)(?:is|are|am)( not)? able to (?=\S)/, '$1can$2 ').replace(/(^|\s)(?:is|are|am) unable to (?=\S)/, '$1can not ');
             const regionalSource = g => {
-                const f = Object.assign({}, g, { src: ableSaid(unbracket(g.src)), vpText: g.vpText && ableSaid(unbracket(g.vpText)) });
+                // "Is going to win" is worded as "will win", and "did hit" as
+                // "hit", as they key (r27.198).
+                const goingSaid = t => String(t).replace(/(^|\s)(?:is|are|am)( not)? going to ([a-z]+)/, (m, pre, not, w) => claimGoingVerb(w) ? pre + 'will' + (not || '') + ' ' + w : m);
+                const didSaid = t => String(t).replace(/(^|\s)did ([a-z]+)/g, (m, pre, w) => CLAIM_PAST_UNCHANGED.has(w) ? pre + w : m);
+                const f = Object.assign({}, g, { src: didSaid(ableSaid(goingSaid(unbracket(g.src)))), vpText: g.vpText && didSaid(ableSaid(goingSaid(unbracket(g.vpText)))) });
                 const src = claimClauseStart(f.src);
                 // The noun "analyses" must stay untouched; only a parsed verb
                 // phrase licenses this spelling equivalence.
@@ -25662,6 +25717,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (choices.reduce((k, c) => k * c.length, 1) > 32) return { all: false, every: null, some: true, readings: 0 };
         let combos = [[]];
         choices.forEach(c => { combos = [].concat(...combos.map(x => c.map(m => x.concat([m])))); });
+        // One clause asked of in two boxes is read the same way in both: "If
+        // the old will cost Ann the farm, then Ann is sad" and "The old will
+        // cost Ann the farm" (r27.198).
+        combos = combos.filter(combo => {
+            const seen = new Map();
+            return combo.every((m, ki) => asked[texts.indexOf(keys[ki])].every(n => {
+                if (!n.part) return true;
+                const tag = n.message + '\u0001' + claimTokens(String(n.part)).map(claimWord).join(' '), r = m[n.site];
+                if (seen.has(tag) && seen.get(tag) !== r) return false;
+                seen.set(tag, r);
+                return true;
+            }));
+        });
         // By the connectives alone, each simple claim a letter, in any number of steps.
         const byConnectives = (P, C) => {
             const atoms = new Map();

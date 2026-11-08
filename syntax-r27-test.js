@@ -1054,8 +1054,9 @@ console.log('\n-- a helping verb that is a noun too, where only the noun is Engl
         unread: r.notes.filter(function (n) { return n.kind === 'unread'; }).map(function (n) { return n.message; }) };`);
     const nouns = ['The can hit the wall.', 'The tin can rusted.', 'The tin can rolls.', 'The tin can did hit the wall.', 'The divine will commanded it.', 'The king\'s might crushed the rebels.',
         'The must fermented.', 'His might did hurt them.', 'The does eat grass.', 'Two does eat grass.', 'Our free will matters.', 'Every can is empty.'].map(read);
-    ok(J(nouns.map(n => n.key)) === J(['P:the can|~hit the wall', 'P:the tin can|~did rusted', 'P:the tin can|~roll', 'P:the tin can|~did hit the wall', 'P:the divine will|~did commanded it',
-            "P:the king's might|~did crushed the rebels", 'P:the must|~did fermented', 'P:his might|~did hurt them', 'P:the does|~eat grass', 'P:two does|~eat grass', 'P:our free will|~matter', 'U:=can|=empty']) &&
+    // Since r27.198 "did hit" keys as "hit".
+    ok(J(nouns.map(n => n.key)) === J(['P:the can|~hit the wall', 'P:the tin can|~did rusted', 'P:the tin can|~roll', 'P:the tin can|~hit the wall', 'P:the divine will|~did commanded it',
+            "P:the king's might|~did crushed the rebels", 'P:the must|~did fermented', 'P:his might|~hurt them', 'P:the does|~eat grass', 'P:two does|~eat grass', 'P:our free will|~matter', 'U:=can|=empty']) &&
         nouns.every(n => !n.asks),
         'just after a determiner, or before what no modal takes (a past that is not its plain form, an -s word, another helping verb), "can", "will", "might", "must" and "does" are nouns, and nothing is asked ("The can hit the wall" had asked "Did you mean \'The is able to hit the wall\'...?")', J(nouns));
     const more = [read("God's will cannot be known."), read("Bob's will left Ann the farm."), read('Her will hurt Bob.'), read('Bob opened the can.'), read('Free will and determinism are compatible.')];
@@ -1069,6 +1070,35 @@ console.log('\n-- a helping verb that is a noun too, where only the noun is Engl
     const step = ev(`var trees = [{ id: 'M', type: 'contention', texts: ['The can is dented.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Everything that hit the wall is dented.', 'The can hit the wall.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : (st && st.why ? st.why.text : '');`);
     ok(step === 'universal modus ponens', '"Everything that hit the wall is dented; the can hit the wall; so the can is dented" follows (it had been held for "Did you mean \'The is able to hit the wall\'...?")', step);
+}
+
+console.log('\n-- a helping verb that may be a noun, where both are English; "is going to" (r27.198) --');
+{
+    // The user, of asking where both are English, under rule (a): "Sure"; of
+    // teaching "is going to" as future "will": "ok".
+    const said = t => ev(`var r = parseClaimFull(${J(t)}), ns = r.notes.filter(function (x) { return x.kind === 'ambiguous' && (x.readings || []).length; });
+        return { key: claimKey(r.form).replace(//g, ''), asks: ns.map(function (n) { return { step: !!n.stepDecides, readings: n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
+            return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) }; }) };`);
+    const tin = said('The tin can hit the wall.'), must = said('The new must cost more.'), bob = said('Bob can hit the wall.'), marys = said("Mary's can hit the wall."), might = said('His might hurt them.');
+    ok(J(tin.asks.map(a => a.readings)) === J([['The tin is able to hit the wall.', 'It is possible for the tin to hit the wall.', 'The tin is allowed to hit the wall.', 'The tin can did hit the wall.']]) &&
+        must.asks.length === 1 && must.asks[0].readings[must.asks[0].readings.length - 1] === 'The new must did cost more.' &&
+        J(bob.asks[0].readings) === J(['Bob is able to hit the wall.', 'It is possible for Bob to hit the wall.', 'Bob is allowed to hit the wall.']) &&
+        marys.asks[0].readings.includes("Mary's can did hit the wall.") && might.asks.some(a => a.readings.includes('His might did hurt them.')),
+        '"the tin can hit the wall" offers the noun beside the helping verb\'s readings, with "did" on its verb ("The tin can did hit the wall"); so "must", "might", "may"; not without a determiner ("Bob can")', J([tin, must, bob, marys]));
+    const will = said('His last will cost him the farm.');
+    ok(will.key === 'P:his last|~will cost him the farm' && J(will.asks.filter(a => a.step).map(a => a.readings)) === J([['His last will did cost him the farm.', 'His last is going to cost him the farm.']]),
+        '"His last will cost him the farm" offers "His last will did cost him the farm" or "His last is going to cost him the farm", asked where a step turns on it', J(will));
+    const keys = ['Bob is going to win.', 'Bob is not going to win.', 'Bob is going to school.', 'Bob did hit the wall.', 'Mary did read the book.', 'Some may read it.'].map(key).map(k => k.replace(//g, ''));
+    const same = (x, y) => ev(`var a = parseClaim(${J(x)}), b = parseClaim(${J(y)}); return !!a && !!b && claimSame(a, b);`);
+    ok(J(keys) === J(['P:bob|~will win', 'N(P:bob|~will win)', 'P:bob|=going to school', 'P:bob|~hit the wall', 'P:mary|~read the book', 'A:some may read it']) &&
+        same('His last is going to cost him the farm.', 'His last will cost him the farm.') && same('Bob did hit the wall.', 'Bob hit the wall.'),
+        '"is going to win" says what "will win" says (not "going to school"); "did hit" what "hit" says, a past spelled as its plain form being read with no tense; "Some may read it" is read as before r27.197', J(keys));
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`);
+    const held = step(['Everything that cost Ann the farm is cursed.', 'The old will cost Ann the farm.'], 'The old will is cursed.'),
+        mp = step(['If the old will cost Ann the farm, then Ann is sad.', 'The old will cost Ann the farm.'], 'Ann is sad.');
+    ok(held.rule === null && J(held.asked) === J([2]) && mp.rule === 'modus ponens',
+        'a step that one reading gives waits for the answer; modus ponens stands, the clause read the same way in both boxes', J([held, mp]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

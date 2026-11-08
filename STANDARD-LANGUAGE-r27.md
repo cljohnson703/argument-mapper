@@ -4,6 +4,35 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: a helping verb that may be a noun, where both are English; "is going to" (r27.198)
+
+The user:
+* Of reading the noun where only the noun is English, and asking where both are, under rule (a): "Sure."
+* Of teaching "is going to" as the same claim as future "will": "ok."
+
+Changes:
+* Where a helping verb that is a noun too may be either, and both are English, the noun reading is offered beside the helping verb's own readings. It is said with "did" on its verb.
+  * "The tin can hit the wall" offers "The tin can did hit the wall", or the tin being able, it being possible for it, or it being allowed.
+  * The same holds for "might", "may" and "must" ("The new must did cost more").
+  * For "will", which had asked nothing, the box offers "His last will did cost him the farm" or "His last is going to cost him the farm". It asks where a step turns on it (rule (a)).
+* The noun reading is offered only where:
+  * the words before the helping verb are a noun phrase with a determiner ("the tin", "his last", "Mary's");
+  * the verb after it is a past spelled as its plain form ("hit", "cost", "hurt", "read").
+  * "Bob can hit the wall" offers no noun. Where the noun is English, though, it is offered however unlikely: "The student can read the book" also offers "The student can did read the book".
+* One clause asked about in two boxes is read the same way in both. So "If the old will cost Ann the farm, then Ann is sad; the old will cost Ann the farm; so Ann is sad" stands, by modus ponens.
+* "Is going to" before a verb says what "will" says: "Bob is going to win" is "Bob will win". "Going to school" and "going to work" are left alone.
+* "Did" before a past spelled as its plain form adds no tense, since that form is read with no tense: "did hit the wall" says what "hit the wall" says. So the noun's reading, "The tin can did hit the wall", is the claim that "the tin can hit the wall" makes on that reading.
+* "Some may read it" is read as it was before r27.197. r27.197 had read "may" as a noun after the "the" that the quantifier reader stands in for "some".
+
+Tests:
+* syntax-r27-test.js has 149 checks.
+  * The 4 new ones fail on r27.197.
+  * 2 checks from r27.197 now expect "hit" for "did hit".
+* Take-one-out: each of the 11 changes is caught.
+* 1 sentence in the corpus reads differently: "Ada did beat" is now keyed as "Ada beat" is. 35 sentences with modals and tenses change only where intended.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: a helping verb that is a noun too, where only the noun is English (r27.197)
 
 The user:
