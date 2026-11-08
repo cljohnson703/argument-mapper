@@ -296,9 +296,11 @@ console.log('\n-- an object that may be shared (r27.64) --');
         var st = collectDeductiveSteps(trees)[0]; return st ? { rule: st.rule ? st.rule.name : null, tag: deductiveStepTagText(st), asked: (st.why && st.why.ambiguous || []).map(function (a) { return a.readings.length; }), why: st.why ? st.why.text : '' } : null;`);
     const yes = tag(['Mary sings and loves Bob.'], 'Mary loves Bob.'), wait = tag(['Mary sings and loves Bob.'], 'Mary sings.');
     const yesOff = asWritten(() => tag(['Mary sings and loves Bob.'], 'Mary loves Bob.')), waitOff = asWritten(() => tag(['Mary sings and loves Bob.'], 'Mary sings.'));
-    ok(yes && !yes.rule && J(yes.asked) === '[2]' && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
+    // r27.200: "so Mary loves Bob" follows on both readings, which are all
+    // one can choose, and asks nothing (the box as written had held it).
+    ok(yes && yes.rule === 'conjunction elimination' && !yes.asked.length && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
         waitOff.why === 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
-        'on the map, with Semantic mode on, "so Mary loves Bob" and "so Mary sings" each offer the two readings, every time (r27.184); as written, "so Mary loves Bob" is certified -- it follows on every reading -- and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
+        'on the map, with Semantic mode on, "so Mary sings" offers the two readings, where the step turns on them; "so Mary loves Bob" follows on both and asks nothing (r27.200); as written, "so Mary loves Bob" is certified and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
 }
 
 console.log('\n-- misreadings found beside it (r27.64) --');
@@ -421,8 +423,8 @@ console.log('\n-- commas, places and times, clauses (r27.65) --');
     const sangOff = asWritten(() => tag(['Mary sang and danced in the hall.'], 'Mary sang.')), ownsOff = asWritten(() => tag(['Mary runs and Bob owns the bakery.'], 'Bob owns the bakery.'));
     ok(sang && !sang.rule && J(sang.asked) === '[2]' && inHall && !inHall.rule && J(inHall.asked) === '[2]' && risky && !risky.rule && J(risky.asked) === '[2]' && sangOff && sangOff.rule === 'conjunction elimination',
         'on the map, with Semantic mode on, "so Mary sang", "so Mary sang in the hall" and the "if" step that needs the hall for "danced" each ask, every time (r27.184); as written, "so Mary sang" passes', J([sang, inHall, risky, sangOff]));
-    ok(owns && !owns.rule && J(owns.asked) === '[2]' && runs && !runs.rule && J(runs.asked) === '[2]' && ownsOff && ownsOff.rule === 'conjunction elimination',
-        '"so Bob owns the bakery" and "so Mary runs" ask, with Semantic mode on; as written, "so Bob owns the bakery" passes on every reading', J([owns, runs, ownsOff]));
+    ok(owns && owns.rule === 'conjunction elimination' && !owns.asked.length && runs && !runs.rule && J(runs.asked) === '[2]' && ownsOff && ownsOff.rule === 'conjunction elimination',
+        '"so Mary runs" asks, with Semantic mode on; "so Bob owns the bakery" follows on every reading, and asks nothing (r27.200); as written, it passes', J([owns, runs, ownsOff]));
     const back = ev(`return ['Mary sang and danced in the hall.', 'Mary runs and Bob owns the bakery.', 'Mary washes and dries the dishes.', 'Mary arrived and left Monday.',
         'Mary washes, and dries the dishes.'].map(function (t) {
         var n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
@@ -1136,6 +1138,29 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
     ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “It is possible for the tin to hit the wall”, “The tin is allowed to hit the wall”, or “The tin can did hit the wall”?' &&
         person === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
         'where the step waits, the question is all it says: what the words as written would give is no hint, nor that a premise is not needed', J([tin, person]));
+}
+
+console.log('\n-- r27.200: the gaps r27.199 turned up --');
+{
+    // The user, of the gaps: "“et's try to fix these"; of "the dog" after "a
+    // dog barks": "'the dog' has to refer back to the premise that generated
+    // it ... What do you suggest?".
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };`);
+    const darii = step(['Every dog that barks is hungry.', 'Some dog barks.'], 'Some dog is hungry.'), plural = step(['All dogs that bark are hungry.', 'Some dogs bark.'], 'Some dogs are hungry.');
+    ok(darii.rule === 'existential syllogism' && plural.rule === 'existential syllogism',
+        '"every dog that barks is hungry" and "some dog barks" give "some dog is hungry", by existential syllogism: the kind is the "some" premise\'s two, together; so with "all dogs that bark"', J([darii, plural]));
+    const the = step(['Every dog that barks is hungry.', 'Some dog barks.'], 'The dog is hungry.'), a = step(['Every dog that barks is hungry.', 'A dog barks.'], 'The dog is hungry.');
+    ok(the.rule === 'universal modus ponens' && a.rule === null && a.why === 'Did you mean “Every dog barks”, “Some dog barks”, or “Generally, a dog barks”?',
+        '"the dog" is the one "some dog" speaks of, as with "a dog": so "a dog barks", answered "some dog barks", gives "the dog is hungry"', J([the, a]));
+    const forMary = [step(['Bob made a cake for Mary to have.'], 'Bob made a cake.'), step(["Bob bought a book on Mary's behalf."], 'Bob bought a book.'),
+        step(['Bob made a cake for Mary.'], 'Bob made a cake.'), step(['Bob made Mary a cake.'], 'Bob made a cake.'), step(['Bob did not make a cake for Mary to have.'], 'Bob did not make a cake.')];
+    ok(forMary[0].rule === 'conjunction elimination' && forMary[1].rule === 'conjunction elimination' && forMary[2].rule === 'conjunction elimination' &&
+        forMary[3].rule === null && forMary[3].why === 'Did you mean “Bob made a cake for Mary to have” or “Bob made Mary into a cake”?' && forMary[4].rule === null,
+        'what is done for someone is done: "for Mary to have" and "on Mary\'s behalf" left out, by conjunction elimination; so "Bob made a cake for Mary" gives "Bob made a cake" on both readings, the box as written keeping it from standing no more, and "Bob made Mary a cake" asks; not under "not"', J(forMary));
+    const hint = step(['Everyone who is able to fly is happy.', 'Poe can fly.'], 'Poe is happy.');
+    ok(hint.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person that is able to fly’.',
+        'the case a rule needs, with its article: "Poe is a person that is able to fly" (it had been "Poe is person that ...")', J(hint));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

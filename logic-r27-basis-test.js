@@ -773,14 +773,18 @@ try {
         ok(!refused(noStep).length, 'what is not given is not assumed: that Bob is not Fido, that Fido is a person', refused(noStep).join(' ‖ '));
         const flags = [
             [['Every raven except Fido is black'], 'Fido is not black'],
-            [['It is not the case that it rains and it snows'], 'It does not rain or it does not snow'],
             [['It is not the case that it rains or it snows'], 'It does not rain and it does not snow'],
             [['It is not the case that the match is off if it rains'], 'It rains and the match is not off'],
             [['Poe does not love each raven', 'Fido is a raven'], 'Poe does not love Fido'],
             [['Bob does not think that it rains'], 'Bob thinks that it does not rain'],
             [['Poe does not love Fido and Bob'], 'Poe does not love Fido'],
             [['Poe does not love a raven', 'Fido is a raven'], 'Poe does not love Fido']];
-        ok(!flagged(flags).length, 'flagged with both readings: von Fintel\'s "except", a denial before "and", "or" or a condition, "not ... each", neg-raising, "not" with "Fido and Bob"', flagged(flags).join(' ‖ '));
+        ok(!flagged(flags).length, 'flagged with both readings: von Fintel\'s "except", a denial before "or" or a condition, "not ... each", neg-raising, "not" with "Fido and Bob"', flagged(flags).join(' ‖ '));
+        // r27.200: before "and", both readings give "it does not rain or it
+        // does not snow" -- De Morgan's laws, or "it does not rain" -- and those
+        // are all one can choose: it follows, asking nothing.
+        ok(rule(['It is not the case that it rains and it snows'], 'It does not rain or it does not snow') === 'De Morgan\u2019s laws',
+            'a denial before "and", where both readings give the step: it follows, by De Morgan\'s laws, and asks nothing (r27.200)');
     }
 
     console.log('\n-- what a denial in a word takes in --');

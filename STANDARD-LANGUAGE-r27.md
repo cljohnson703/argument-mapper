@@ -4,6 +4,37 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 8: the gaps r27.199 turned up (r27.200)
+
+The user:
+* Of the gaps r27.199 turned up: "Let's try to fix these."
+* Of "the dog" after "a dog barks": "It should follow, but 'the dog' has to refer back to the premise that generated it ('A dog barks') ... What do you suggest?"
+
+Changes:
+* "Every dog that barks is hungry; some dog barks; so some dog is hungry" follows, by existential syllogism. The universal's kind may be the "some" premise's two together. So does "All dogs that bark are hungry; some dogs bark; so some dogs are hungry".
+* "The dog" refers back to "some dog" as it does to "a dog" (r27.145). So "Every dog that barks is hungry; some dog barks; so the dog is hungry" follows, by universal modus ponens.
+  * "A dog barks", beside the same premise and conclusion, still asks "Did you mean 'Every dog barks', 'Some dog barks', or 'Generally, a dog barks'?". Answered "Some dog barks", the step now follows.
+* What is done for someone is done, by conjunction elimination, as "Poe is a black raven" gives "Poe is a raven". It does not hold under "not".
+  * "Bob made a cake for Mary to have" gives "Bob made a cake".
+  * "Bob bought a book on Mary's behalf" gives "Bob bought a book".
+  * So "Bob made Mary a cake; so Bob made a cake" asks again: "Did you mean 'Bob made a cake for Mary to have' or 'Bob made Mary into a cake'?"
+  * And "Bob made a cake for Mary; so Bob made a cake" follows on both readings, asking nothing.
+* A box as written helps a step wait, but no longer keeps it from standing, since it is no reading one can choose. Where every reading one can choose gives the step, it stands. r27.199 had held each of these for the answer:
+  * "Mary sings and loves Bob; so Mary loves Bob";
+  * "Mary runs and Bob owns the bakery; so Bob owns the bakery";
+  * "It is not the case that it rains and it snows; so it does not rain or it does not snow", by De Morgan's laws ("it does not rain", the other reading, gives the "or" too).
+* The case a rule needs, where its kind has a "that", has its article: "once it is shown that 'Poe is a person that is able to fly'". It had been "Poe is person that ...".
+
+Tests:
+* syntax-r27-test.js has 159 checks.
+  * The 4 new ones fail on r27.199.
+  * 2 changed: "so Mary loves Bob" and "so Bob owns the bakery" follow.
+* logic-r27-basis-test.js: the denial before "and" follows, by De Morgan's laws; it had been among the steps flagged with both readings.
+* Take-one-out: each of the 6 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: every question asked where a step turns on it (r27.199)
 
 The user:

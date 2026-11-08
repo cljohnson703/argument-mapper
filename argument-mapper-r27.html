@@ -2979,7 +2979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.199';
+    const APP_BUILD = '2026-11-08 r27.200';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -20625,6 +20625,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (claimNearMisses && claimWorded && claimWordingDeep(a, b)) return true;
         return false;
     }
+    // Whether a universal's kind is a "some" premise's two together: "some dog
+    // barks" and "every dog that barks" (r27.200; the user: "Let's try to fix
+    // these").
+    function claimKindOfBoth(some, all) {
+        const parts = p => (claimPropParts(p) || [p]).map(claimPropCanon);
+        const kind = claimPropParts(all.subject) ? parts(all.subject) : [], two = parts(some.subject).concat(parts(some.predicate));
+        return kind.length > 1 && kind.length === two.length && kind.every(x => two.includes(x)) && two.every(x => kind.includes(x));
+    }
     function claimPropMatch(p, q) {
         if (p === q || claimPropCanon(p) === claimPropCanon(q)) return true;
         if (claimNearMisses && claimUnmarked(claimPropCanon(p)) === claimUnmarked(claimPropCanon(q))) { claimNearMisses.push({ props: [p, q] }); return true; }
@@ -20986,7 +20994,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // A plural term ("the ravens") takes "are ravens", "do not fly".
         let plural = false;
         const many = claimPluralPhrase;
-        const noun = w => claimKnownAdjective(w) ? w : plural ? many(w) : /\s/.test(w) ? w : (/^[aeiou]/.test(w) ? 'an ' : 'a ') + w;
+        // A kind with a "that", its first word a noun: "a person that is
+        // able to fly" (r27.200; it had been "person that ...").
+        const headed = w => (y => !!y.w && y.noun && !y.adj && !y.verb && !y.closed)(claimSynWord(w.split(/\s+/)[0])) && /\s(?:that|who|which)\s/.test(w);
+        const noun = w => claimKnownAdjective(w) ? w : plural ? many(w) : /\s/.test(w) && !headed(w) ? w : (/^[aeiou]/.test(w) ? 'an ' : 'a ') + w;
         const vp = q => {
             const denied = q.charAt(0) === '\u00ac', r = denied ? q.slice(1) : q, w = r.slice(1).replace(/\uE000/g, '');
             if (r.charAt(0) === '=') return (plural ? (denied ? 'are not ' : 'are ') : (denied ? 'is not ' : 'is ')) + noun(w);
@@ -23450,10 +23461,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           // A predication read as an "and" is one part of its list, and its
           // halves are parts too: "Bob is tall, but Al is a physical space"
           // gives "Al is physical" (r27.161).
-          test: (P, C) => P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
+          test: (P, C) => (P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
               [P[0].parts, [].concat(...P[0].parts.map(p => p.kind === 'and' && (p.compound || p.eachOf) && !p.iff ? p.parts : [p]))].some(parts =>
                   parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, parts) ||
-                      (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts))))) },
+                      (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts)))))) ||
+              // What is done for someone is done: "Bob made a cake for Mary
+              // to have", "Bob bought a book on Mary's behalf" -- as "a black
+              // raven" is a raven (r27.200).
+              (P.length === 1 && !!P[0] && P[0].kind === 'pred' && !!C && C.kind === 'pred' &&
+                  (m => !!m && claimSame(C, Object.assign({}, P[0], { prop: m[1], vpText: undefined, src: undefined })))(/^(~.+?) (?:for .+ to have|on .+'s behalf)$/.exec(String(P[0].prop || '')))) },
         { id: 'or-intro', name: 'disjunction introduction',
           gloss: 'A gives "A or B", for any B',
           test: (P, C) => P.length === 1 && C.kind === 'or' &&
@@ -23593,10 +23609,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
               P[i].kind === 'all' && P[1 - i].kind === 'all' && claimPropMatch(P[i].subject, C.subject) &&
               claimPropMatch(P[i].predicate, P[1 - i].subject) && claimPropMatch(P[1 - i].predicate, C.predicate))) || claimObjectUniversalSyllogism(P, C) },
         { id: 'existential-syllogism', name: 'existential syllogism',
-          gloss: 'some F is G and every G is H, so some F is H; after a verb too ("hit some poodle", so "hit some dog")',
+          gloss: 'some F is G and every G is H, so some F is H -- every F that is G too ("some dog barks" and "every dog that barks is hungry"); after a verb too ("hit some poodle", so "hit some dog")',
           test: (P, C) => (C.kind === 'some' && P.length === 2 && [0, 1].some(i =>
               P[i].kind === 'some' && P[1 - i].kind === 'all' && claimPropMatch(P[i].subject, C.subject) &&
-              claimPropMatch(P[i].predicate, P[1 - i].subject) && claimPropMatch(P[1 - i].predicate, C.predicate))) || claimObjectSyllogism(P, C) },
+              (claimPropMatch(P[i].predicate, P[1 - i].subject) || claimKindOfBoth(P[i], P[1 - i])) && claimPropMatch(P[1 - i].predicate, C.predicate))) || claimObjectSyllogism(P, C) },
         // Any valid categorical syllogism, named by its mood (Cesare, Baroco, ...);
         // Barbara and Darii are also the syllogisms above.
         { id: 'categorical-syllogism', name: 'categorical syllogism',
@@ -23946,14 +23962,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const words = t => claimUnmarked(String(t || '')).trim().toLowerCase();
         const g = C && (C.kind === 'not' ? C.inner : C), m = g && g.kind === 'pred' ? /^the\s+(.+)$/.exec(words(g.term)) : null;
         if (!m) return premises;
-        const at = premises.map((p, i) => p && p.kind === 'pred' && p.noIndividual && p.vpText && new RegExp('^an?\\s+' + m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$').test(words(p.term)) ? i : -1)
+        // "Some dog barks" too, as "a dog barks" (r27.200; the user: "'the
+        // dog' has to refer back to the premise that generated it").
+        const at = premises.map((p, i) => p && ((p.kind === 'pred' && p.noIndividual && p.vpText && new RegExp('^an?\\s+' + m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$').test(words(p.term))) ||
+            (p.kind === 'some' && p.np && p.vp && !p.pronoun && !p.restrictorVp && words(p.np) === m[1])) ? i : -1)
             .filter(i => i >= 0);
         if (at.length !== 1) return premises;
         // In the premise's own words, capitals and all ("an AI system").
-        const p = premises[at[0]], shown = claimShowWords(String(p.term)), art = /^(an?)\s/i.exec(shown), noun = shown.replace(/^an?\s+/i, '');
-        const said = art && claimQuietly(() => parseClaim('The ' + noun + ' is ' + art[1].toLowerCase() + ' ' + noun + ' that ' + claimShowWords(String(p.vpText)) + '.'));
+        const p = premises[at[0]], some = p.kind === 'some', shown = some ? claimShowWords(String(p.np)) : claimShowWords(String(p.term));
+        const art = some ? [null, /^[aeiou]/i.test(shown) ? 'an' : 'a'] : /^(an?)\s/i.exec(shown), noun = shown.replace(/^an?\s+/i, '');
+        const said = art && claimQuietly(() => parseClaim('The ' + noun + ' is ' + art[1].toLowerCase() + ' ' + noun + ' that ' + claimShowWords(String(some ? p.vp : p.vpText)) + '.'));
         if (!said) return premises;
-        const put = own ? Object.assign({}, said, { subjectText: p.subjectText, vpText: p.vpText, src: p.src }) : said;
+        const put = own ? Object.assign({}, said, { subjectText: some ? 'some ' + p.np : p.subjectText, vpText: some ? p.vp : p.vpText, src: p.src }) : said;
         return premises.map((q, i) => i === at[0] ? put : q);
     }
     function claimDefiniteStep(premises, conclusions, attack) {
@@ -25805,7 +25825,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const forms = texts.map((t, i) => asked[i].length ? parseClaim(t, { sites: sitesOf(i, combo) }) : reads[i].form);
             const g = forms.every(Boolean) ? gives(forms) : null;
             gave.set(combo.join(','), !g ? 'no' : g.idle ? 'idle' : 'yes');
-            if (g && !g.idle) { some = true; rule = rule || g.rule; } else all = false;
+            // A box as written is no reading one can choose: it helps the
+            // step wait ("a dog barks"), and does not keep it from standing
+            // ("Bob made a cake for Mary", so "Bob made a cake", on both
+            // readings) (r27.200).
+            const chosen = combo.every((r, k) => r < slots[k].count - 1);
+            if (g && !g.idle) { some = true; if (chosen) rule = rule || g.rule; } else if (chosen) all = false;
         }
         // It waits where the readings differ in what it comes to (r27.199),
         // asking each question whose answer, the others' held, changes that --
