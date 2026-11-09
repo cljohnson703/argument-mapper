@@ -403,7 +403,8 @@ const MAP = [
         // r27.137: dropping a modifier; r27.141: dropping a "that" clause),
         // double-negation replacement and its "anywhere" partner, the
         // zero-premise shortcuts, and the catch-alls.
-        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'contraries and contradictories', 'factive verbs', 'relations', 'dropping a modifier', 'dropping a \u2018that\u2019 clause', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
+        // r27.202: ability gives possibility, the kinds of possibility, making X into Y.
+        const OPTIONAL = ['meaning of \u2018-able\u2019', 'ab esse ad posse', 'ability gives possibility', 'kinds of possibility', 'contraries and contradictories', 'factive verbs', 'relations', 'dropping a modifier', 'making X into Y', 'dropping a \u2018that\u2019 clause', 'double-negation replacement', 'double-negation elimination, anywhere', 'restatement',
             'tautological consequence', 'equivalence replacement', 'noncontradiction', 'excluded middle',
             'instances up to the replacements'];
         const optionalNames = T(W, `return (DEDUCTIVE_OPTIONAL_RULES || []).map(function (r) { return r.name; });`);

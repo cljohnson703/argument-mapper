@@ -83,8 +83,9 @@ try {
     console.log('\n-- the basis and its extensions --');
     {
         const groups = ev('return DEDUCTIVE_EXTENSIONS.map(function (g) { return g.id + ":" + g.on; });');
-        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'opposites:true', 'factive:true', 'relations:true', 'modifiers:true', 'technical:false', 'negations:false', 'instances:false', 'catchall:false']),
-            'fifteen groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65), contraries and contradictories (r27.103), factive verbs (r27.134), relations (r27.136) and modifiers (r27.137) on by default, the technical steps (r27.142), negations anywhere, extra rule instances and the catch-alls off', J(groups));
+        // r27.202: the kinds of possibility, a group of their own.
+        ok(J(groups) === J(['core:true', 'familiar:true', 'replacement:true', 'structural:true', 'quantifier:true', 'inside:true', 'able:true', 'kinds:true', 'opposites:true', 'factive:true', 'relations:true', 'modifiers:true', 'technical:false', 'negations:false', 'instances:false', 'catchall:false']),
+            'sixteen groups of extensions; the core steps, the familiar ones, the "-able" word meaning (r27.65), the kinds of possibility (r27.202), contraries and contradictories (r27.103), factive verbs (r27.134), relations (r27.136) and modifiers (r27.137) on by default, the technical steps (r27.142), negations anywhere, extra rule instances and the catch-alls off', J(groups));
         const basisSet = ev('return [DEDUCTIVE_BASIS.has("modus-ponens"), DEDUCTIVE_AXIOMS.length, ["and-elim", "hypothetical-syllogism", "exportation", "quantifier-distribution", "null-quantification", "reductio", "universal-elimination", "existential-introduction", "existential-elimination"].every(function (id) { return !DEDUCTIVE_BASIS.has(id) && DEDUCTIVE_CORE.indexOf(id) >= 0; })];');
         const shared = ev('return DEDUCTIVE_EXTENSIONS.some(function (g) { return g.rules.some(function (id) { return DEDUCTIVE_BASIS.has(id); }); });');
         ok(basisSet[0] && basisSet[1] === 13 && basisSet[2] && !shared,
@@ -838,7 +839,8 @@ try {
         // "would" and "could" under it (r27.112), and "Ask which modality is
         // meant" (r27.175).
         // Semantic mode's three choices are no row of switches (r27.201).
-        ok(built.groups === 17 && built.semantic === 3 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+        // Kinds of possibility, a group of its own (r27.202).
+        ok(built.groups === 18 && built.semantic === 3 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
             'at the bottom of the Evaluation Overview: Semantic mode\'s three choices, Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).

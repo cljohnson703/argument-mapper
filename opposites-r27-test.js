@@ -154,9 +154,9 @@ console.log('\n-- 4. the Logic panel; conclusions --');
 {
     const g = ev(`var g = DEDUCTIVE_EXTENSIONS.find(function (x) { return x.id === 'opposites'; });
         var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'opposites'; }), able = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'able'; });
-        return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === able + 1, gloss: LOGIC_GROUP_GLOSSES.opposites || null };`);
+        return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === able + 2 && DEDUCTIVE_EXTENSIONS[able + 1].id === 'kinds', gloss: LOGIC_GROUP_GLOSSES.opposites || null };`);
     ok(g.label === 'Word meaning: contraries and contradictories' && g.on === true && J(g.rules) === J(['opposites']) && g.after,
-        'its own group, "Word meaning: contraries and contradictories", after "-able", on by default', J(g));
+        'its own group, "Word meaning: contraries and contradictories", after "-able" and the kinds of possibility (r27.202), on by default', J(g));
     ok(/^Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse \(contraries\); "lack" and "have" deny each other both ways \(contradictories\)\.$/.test(g.gloss || ''),
         'its note in the panel', g.gloss);
     const derived = ev(`return deriveConclusion(['Mary is unhappy.']);`);

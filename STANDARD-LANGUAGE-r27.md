@@ -4,6 +4,43 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 9: "made into"; ability and the kinds of possibility; the case a rule needs (r27.202)
+
+The user:
+* Of teaching that "made X into Y" gives "made Y": "ok".
+* Of ability giving physical possibility, and the kinds of possibility nesting: "yes, I want both".
+* Of saying the case a rule needs with the reading a box needs for it: "ok".
+* Of "set Semantic mode to ask, in the Logic panel, to choose that reading": "Shouldn't it be 'Set Semantic mode to "Ask" in the Logic panel to choose that reading'? Why the commas?"
+* Of "It does not rain, it snows, or it hails": "Should it be 'Either... or...'?"
+
+Changes:
+* "Making X into Y": "Bob made the clay into a pot" gives "Bob made a pot", and "Bob made Mary into a cake" gives "Bob made a cake". It does not hold under "not". It is a rule of word meaning, under "Word meaning: modifiers".
+  * So "Bob made Mary a cake; so Bob made a cake" follows on both readings, asking nothing. It had asked "Did you mean 'Bob made a cake for Mary to have' or 'Bob made Mary into a cake'?".
+* "Ability gives possibility": "Poe is able to fly" gives "it is physically possible for Poe to fly" and "it is possible for Poe to fly". "Poe is not able to fly" gives neither. It is under "Word meaning: 'can' and '-able'".
+* "Kinds of possibility", a group of its own in the Logic panel, on by default:
+  * what is physically possible is metaphysically possible, and what is metaphysically possible is logically possible;
+  * what is logically necessary is metaphysically necessary, and what is metaphysically necessary is physically necessary;
+  * not the other way. The kinds had been unrelated.
+  * So "Poe is able to fly; so it is logically possible for Poe to fly" takes two steps, and the check says the one between: "It is physically possible for Poe to fly".
+* "It is physically possible for Poe to fly" says what "it is physically possible that Poe flies" says; so with "logically" and "metaphysically", and "necessary" and "impossible". It had been read as said of "it".
+* "Everyone who is able to fly" is a person, and able to fly. So:
+  * "Everyone who is able to fly is happy; Poe is a person; Poe is able to fly; so Poe is happy" follows, by universal modus ponens;
+  * "Everyone who is able to fly is happy; Poe can fly; so Poe is happy" says "'Everyone who is able to fly is happy' would give 'Poe is happy' once it is shown that 'Poe is a person', with 'Poe can fly' read as 'Poe is able to fly'". It had said "once it is shown that 'Poe is a person that is able to fly'".
+* The hint where a box read as written does not give the step, with Semantic mode set never to ask: "set Semantic mode to 'Ask where a step turns on it' in the Logic panel to choose that reading". It had been "set Semantic mode to ask, in the Logic panel, to choose that reading".
+* A list of three or more with "or", its first part alone denied, opens with "either": "Either it does not rain, it snows, or it hails". "It does not rain, it snows" alone can say that it snows instead.
+
+Tests:
+* syntax-r27-test.js has 169 checks.
+  * The 6 new ones fail on r27.201.
+  * Changed: "Bob made Mary a cake; so Bob made a cake" follows; "Either ..."; the article checked on "everyone who is afraid of the dark", which is not split.
+* The Logic panel's groups and rules, in logic-r27-basis-test.js, logic-r27-deductive-test.js, opposites-r27-test.js and rules-r27-ordinary-test.js: the kinds of possibility, a group of its own; ability gives possibility; making X into Y.
+* modal-r27-test.js: logical necessity gives metaphysical necessity, and not the other way; it had been "one kind is not another".
+* The hint's new words in three suites.
+* Take-one-out: each of the 14 changes is caught.
+* No sentence in the corpus reads differently.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 9: three Semantic mode settings; a step stands in one step (r27.201)
 
 The user:

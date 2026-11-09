@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-09 r27.201';
+    const APP_BUILD = '2026-11-09 r27.202';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6940,9 +6940,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         structural: 'Reorder or regroup the parts of an "and" or "or". When off, the order and grouping you wrote count.',
         quantifier: 'Rewrite claims with "every", "some" or "no".',
         inside: 'Rules used inside "every" or "some": "every raven is black and old" gives "every raven is black".',
-        able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse.',
+        able: 'Word meaning, not logic: "we can conceive of zombies" gives "zombies are conceivable", not the reverse; "Poe is able to fly" gives "it is physically possible for Poe to fly".',
+        kinds: 'Word meaning, not logic: what is physically possible is metaphysically possible, and what is metaphysically possible is logically possible; what is logically necessary is metaphysically, and so physically, necessary.',
         opposites: 'Word meaning, not logic: "Mary is unhappy" gives "Mary is not happy", not the reverse (contraries); "lack" and "have" deny each other both ways (contradictories).',
-        modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob is glad that Mary left" gives "Bob is glad". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly"; nor "proud that", since "proud" alone can mean "vain".',
+        modifiers: 'Word meaning, not logic: "Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob is glad that Mary left" gives "Bob is glad"; "Bob made the clay into a pot" gives "Bob made a pot". Not "almost won", "allegedly stole" or "hardly ran", nor "did not run quickly"; nor "proud that", since "proud" alone can mean "vain".',
         relations: 'Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob" and "Al is not taller than Bob"; with "Al is taller than Cy", "Bob is taller than Cy"; "married to" goes both ways. "Shorter" can mean less tall or less long: "shorter in height than" gives "taller than".',
         factive: 'Word meaning, not logic: "Bob knows that Mary left" gives "Mary left"; likewise "realizes", "proves", "regrets", "is aware that". Not "believes" or "says": what is believed can be false.',
         technical: 'Steps from logic textbooks that arguments rarely take: absorption ("if A, then B" gives "if A, then A and B"), predicate congruence, Boolean absorption ("A or (A and B)" is A), the ⊥ laws, the rules of passage, and a vacuous quantifier inside a claim.',
@@ -12353,7 +12354,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 return p.length === k + 1 && /^[a-z][a-z'-]*$/.test(q[k]) && (!CLAIM_FUNCTION_WORDS.has(q[k]) || CLAIM_PREDICATE_FUNCTION_WORDS.has(q[k])) &&
                     !CLAIM_VERB_MARKERS.has(q[k]) && !claimEndsInS(p[k]);
             };
-            if (!pieces.length || !pieces.every(plain) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
+            // "Person that is able to fly": what the thing can do, read as "Poe is
+            // able to fly" is (r27.202).
+            const able = p => { const q = p.map(claimWord); return q[0] === 'able' && q[1] === 'to' && q.length > 2 && q.length <= 6 && q.slice(2).every(w => /^[a-z][a-z'-]*$/.test(w)); };
+            if (!pieces.length || !pieces.every(p => plain(p) || able(p)) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
             const parts = [];
             if (head) {
                 const headParts = claimHeadParts(head);
@@ -15041,8 +15045,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // (physical) necessity, of its own kind -- the axioms are the map's
         // for metaphysical necessity only (r27.168). It had been read as said
         // of "it".
-        if ((m = /^it is (not )?(metaphysically|logically|physically) (necessary|possible|impossible) that (.+)$/.exec(s))) {
-            rest = m[4]; op = m[3] === 'necessary' ? 'nec' : 'poss'; negative = !!m[1] !== (m[3] === 'impossible');
+        // "It is physically possible for Poe to fly" says what "it is
+        // physically possible that Poe flies" says (r27.202).
+        if ((m = /^it is (not )?(metaphysically|logically|physically) (necessary|possible|impossible) (?:that (.+)|for (.+?) to (.+))$/.exec(s))) {
+            const forWhom = m[5] && (CLAIM_PERSON_FOR[m[5]] || m[5]);
+            rest = m[4] || claimMustClause(forWhom, m[6], claimSubjectBe(forWhom), false); op = m[3] === 'necessary' ? 'nec' : 'poss'; negative = !!m[1] !== (m[3] === 'impossible');
             mod = m[2] === 'logically' ? 'logic' : m[2] === 'physically' ? 'phys' : 'meta';
         } else if ((m = /^in (?:every|each|all|any) metaphysically possible worlds?,? (.+)$/.exec(s))) { rest = m[1]; op = 'nec'; }
         else if ((m = /^(?:in (?:some|a|at least one) metaphysically possible world|there (?:is|exists) (?:a|some|at least one) metaphysically possible world (?:in which|where|such that)),? (.+)$/.exec(s))) { rest = m[1]; op = 'poss'; }
@@ -15472,7 +15479,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const no = claimDeniedClauseWords(first);
         if (/^it is not the case that /.test(no)) return null;
         const items = [no].concat(others);
-        return items.length === 2 ? items[0] + ', ' + word + ' ' + items[1] : items.slice(0, -1).join(', ') + ', ' + word + ' ' + items[items.length - 1];
+        // Three or more with "or" open with "either": "it does not rain, it
+        // snows" alone can say that it snows instead (r27.202; the user:
+        // "Should it be 'Either... or...'?").
+        return items.length === 2 ? items[0] + ', ' + word + ' ' + items[1] : (word === 'or' ? 'either ' : '') + items.slice(0, -1).join(', ') + ', ' + word + ' ' + items[items.length - 1];
     }
     // Claims grouped in English: two plain claims as "both A and B" or
     // "either A or B"; else a numbered list.
@@ -21109,7 +21119,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const given = [].concat(...rest.map(r => r.kind === 'and' && !r.iff ? r.parts : [r]));
             const shown = p => given.some(x => claimKeyMatch(p, x) || (p.kind === 'or' && !p.iff && p.parts.some(q => claimKeyMatch(q, x))));
             const missing = parts.filter(p => !shown(p));
-            if (missing.length) return { at: i, missing };
+            if (missing.length) return { at: i, missing, parts };
         }
         return null;
     }
@@ -21426,6 +21436,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (const S of subsets) {
             const from = S.map(i => P[i]), rest = P.map((_, i) => i).filter(i => S.indexOf(i) < 0);
             const sayings = claimConclusionCandidates(from).map(c => c.say)
+                // What one is able to do, said possible: "it is physically
+                // possible for Poe to fly", between "Poe is able to fly" and
+                // a wider kind it gives (r27.202).
+                .concat(from.filter(f => f.kind === 'pred' && !f.possible && /^~can /.test(String(f.prop))).map(f => () => 'it is physically possible for ' + claimShowWords(String(f.term)) + ' to ' + String(f.prop).slice(5)))
                 .concat(from.length === 2 ? [from, from.slice().reverse()].map(two => x => claimSayJunction('and', two.map(f => c => claimSayForm(f, c)), x)) : [])
                 .concat(...from.map(f => f.kind === 'and' && !f.iff ? f.parts.map(p => x => claimSayForm(p, x)) : []));
             for (const say of sayings) {
@@ -22560,6 +22574,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           gloss: 'what is, can be: "we conclude that X" gives "it is possible for us to conclude that X"',
           test: (P, C) => P.length === 1 && C.kind === 'pred' && !!C.possible && P[0].kind === 'pred' && !P[0].possible &&
               P[0].term === C.term && C.prop === '~can ' + String(P[0].prop).slice(1) },
+        // What one is able to do is possible (r27.202; the user: "yes, I want
+        // both"): "Poe is able to fly" gives "it is physically possible for Poe
+        // to fly", and "it is possible for Poe to fly". Not "not able": what
+        // one cannot do may still be possible.
+        { id: 'ability-possibility', name: 'ability gives possibility', optional: true,
+          gloss: '"Poe is able to fly" gives "it is physically possible for Poe to fly" and "it is possible for Poe to fly" -- not "not able"',
+          test: (P, C) => P.length === 1 && !!P[0] && P[0].kind === 'pred' && !P[0].possible && /^~can /.test(String(P[0].prop)) && !!C &&
+              ((C.kind === 'pred' && !!C.possible && C.term === P[0].term && C.prop === P[0].prop) ||
+               (C.kind === 'modal' && C.op === 'poss' && C.mod === 'phys' && claimSame(C.inner, Object.assign({}, P[0], { prop: '~' + String(P[0].prop).slice(5), vpText: undefined, src: undefined })))) },
+        // The kinds nest (r27.202): what is physically possible is
+        // metaphysically possible, and what is metaphysically possible is
+        // logically possible; what is logically necessary is metaphysically
+        // necessary, and so physically necessary.
+        { id: 'possibility-kinds', name: 'kinds of possibility', optional: true,
+          gloss: 'what is physically possible is metaphysically possible, and what is metaphysically possible is logically possible; what is logically necessary is metaphysically necessary, and what is metaphysically necessary is physically necessary',
+          test: (P, C) => { const wide = { phys: 0, meta: 1, logic: 2 }, f = P.length === 1 ? P[0] : null, k = x => x.mod || 'meta';
+              return !!f && !!C && f.kind === 'modal' && C.kind === 'modal' && f.op === C.op && k(f) in wide && k(C) in wide && k(f) !== k(C) &&
+                  (f.op === 'poss' ? wide[k(f)] < wide[k(C)] : wide[k(f)] > wide[k(C)]) && claimSame(f.inner, C.inner); } },
         // Contraries and contradictories, a list of pairs (r27.103): a rule of
         // word meaning, its own step, named by its pair.
         { id: 'opposites', name: 'contraries and contradictories', optional: true,
@@ -22582,6 +22614,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'modifiers', name: 'dropping a modifier', optional: true,
           gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob made a cake for Mary to have" gives "Bob made a cake" -- not "almost", "allegedly" or "hardly", nor under "not"',
           test: (P, C) => claimModifierDropped(P, C) },
+        // What one makes something into, one makes (r27.202; the user: "ok"):
+        // "Bob made the clay into a pot" gives "Bob made a pot".
+        { id: 'made-into', name: 'making X into Y', optional: true,
+          gloss: '"Bob made the clay into a pot" gives "Bob made a pot"; "Bob made Mary into a cake" gives "Bob made a cake" -- not under "not"',
+          test: (P, C) => P.length === 1 && !!P[0] && P[0].kind === 'pred' && !!C && C.kind === 'pred' &&
+              (m => !!m && claimSame(C, Object.assign({}, P[0], { prop: m[1] + ' ' + m[2], vpText: undefined, src: undefined })))(/^(~(?:\S+ )*?ma(?:de|kes?|king)) (?:\S+ )+?into (.+)$/.exec(String(P[0].prop || ''))) },
         // A "that" clause dropped (r27.141): a rule of word meaning.
         { id: 'that-clause', name: 'dropping a ‘that’ clause', optional: true,
           gloss: '"Bob is glad that Mary left" gives "Bob is glad"; likewise pleased, surprised, upset, grateful, worried… -- not "happy", "proud" or "sorry", whose bare word says more, nor under "not"',
@@ -22802,11 +22840,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         { id: 'quantifier', label: 'Quantifier equivalences', on: true, rules: ['bound-variable-change', 'quantifier-negation', 'quantifier-commutation',
             'quantifier-distribution-anywhere'] },
         { id: 'inside', label: 'Rules inside quantifiers', on: true, rules: ['under-quantifier'] },
-        { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse'] },
+        { id: 'able', label: 'Word meaning: “can” and “-able”', on: true, rules: ['able-meaning', 'ab-esse-ad-posse', 'ability-possibility'] },
+        { id: 'kinds', label: 'Word meaning: kinds of possibility', on: true, rules: ['possibility-kinds'] },
         { id: 'opposites', label: 'Word meaning: contraries and contradictories', on: true, rules: ['opposites'] },
         { id: 'factive', label: 'Word meaning: “knows that”', on: true, rules: ['factive'] },
         { id: 'relations', label: 'Word meaning: relations', on: true, rules: ['relations'] },
-        { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers', 'that-clause'] },
+        { id: 'modifiers', label: 'Word meaning: modifiers', on: true, rules: ['modifiers', 'that-clause', 'made-into'] },
         // Steps of textbook systems that arguments rarely take, off (r27.142;
         // the user: "Switch those to on-by-default that you think reflect
         // ordinary reasoning"): absorption's "if A, then A and B" says
@@ -25109,7 +25148,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // it says.
     // Semantic mode off (r27.184): where read another way the step would
     // follow.
-    const CLAIM_SEMANTIC_HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
+    const CLAIM_SEMANTIC_HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
     function diagnoseDeductiveStep(premiseTexts, conclusionText, attack, nearMiss, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
@@ -25306,6 +25345,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (affordable && !nearMiss && !worded && !ordered && !ambiguous.some(x => x.derives.length) && reads.every(r => r.form)) {
             const forms = reads.map(r => r.form);
             short = claimMissingCase(forms.slice(0, -1), forms[forms.length - 1]) || claimMissingWitness(forms.slice(0, -1), forms[forms.length - 1], texts);
+        }
+        // A part of the case a box gives on one of its readings: said so, and
+        // not as missing -- "with 'Poe can fly' read as 'Poe is able to fly'"
+        // (r27.202; the user: "ok").
+        if (short && !short.from && short.parts) {
+            const readAs = [];
+            const supplied = p => {
+                for (let j = 0; j < premiseTexts.length; j++) {
+                    if (j === short.at) continue;
+                    for (const n of reads[j].notes) {
+                        if (n.kind !== 'ambiguous' || (n.readings || []).length < 2) continue;
+                        const k = n.readings.findIndex((_, i) => { const f = claimQuietly(() => parseClaim(texts[j], { site: n.site, reading: i })); return !!f && claimSame(f, p); });
+                        if (k >= 0) return { text: texts[j], words: claimReadingWords(n.readings[k], texts[j]) };
+                    }
+                }
+                return null;
+            };
+            short.parts.forEach(p => {
+                const r = supplied(p);
+                if (!r) return;
+                if (!readAs.some(x => x.text === r.text)) readAs.push(r);
+                short.missing = short.missing.filter(q => q !== p);
+            });
+            if (readAs.length) short = Object.assign({}, short, { readAs });
         }
         // Part of a name an identity gives whole: "Kent" beside "Clark Kent is
         // Superman". It may be another Kent, so this is a question, not a fix.
@@ -25532,7 +25595,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // says so.
             .concat(short ? [short.from
                 ? said(short.from) + ' would give ' + target + ' by ' + short.rule.name + ', but the premises do not show that ' + persons(short.missing) + '.'
-                : said(texts[short.at]) + ' would give ' + target + ' once it is shown that ' + persons(short.missing) + '.'] : [])
+                : said(texts[short.at]) + ' would give ' + target + (short.missing.length ? ' once it is shown that ' + persons(short.missing) : '') +
+                    (short.readAs ? (short.missing.length ? ', with ' : ' with ') + short.readAs.map(r => said(r.text) + ' read as ' + said(r.words)).join(' and ') : '') + '.'] : [])
             .concat(split ? [said(texts[split.at]) + ' holds ' + (['two', 'three', 'four'][split.parts.length - 2] || 'several') + ' claims. As boxes side by side, ' +
                 split.parts.map(p => { const w = claimSayForm(p, { texts, style: 0, then: true }); return said(w.charAt(0).toUpperCase() + w.slice(1)); }).join(' and ') +
                 ' would give ' + target + ' by ' + split.rule.name + '.'] : [])

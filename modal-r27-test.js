@@ -273,8 +273,12 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // do not take them; duality does.
     const kinds = [step(['It is logically necessary that God exists.'], 'God exists.'), step(['It is physically necessary that God exists.'], 'It is physically possible that God exists.'),
         step(['It is not logically possible that God exists.'], 'It is logically necessary that God does not exist.'),
-        step(['It is logically necessary that God exists.'], 'It is metaphysically necessary that God exists.')].map(r => r.rule);
-    ok(J(kinds) === J([null, null, 'modal duality', null]), 'logical and physical necessity: no axiom takes them (T, D), duality does; and one kind is not another', J(kinds));
+        step(['It is logically necessary that God exists.'], 'It is metaphysically necessary that God exists.'),
+        step(['It is metaphysically necessary that God exists.'], 'It is logically necessary that God exists.')].map(r => r.rule);
+    // r27.202 (the user, of the kinds nesting: "yes, I want both"): what is
+    // logically necessary is metaphysically necessary -- not the other way.
+    ok(J(kinds) === J([null, null, 'modal duality', 'kinds of possibility', null]),
+        'logical and physical necessity: no axiom takes them (T, D), duality does; logical necessity gives metaphysical necessity, by the kinds of possibility, and not the other way (r27.202)', J(kinds));
     ok(ev(`return claimKey(parseClaim('It is logically necessary that God exists.'));`) === '□logic(P:god|~exist)' &&
         ev(`return claimKey(parseClaim('It is physically impossible that God exists.'));`) === '□phys(N(P:god|~exist))' &&
         step(['It has been established that God exists.'], 'It has not been established that God exists.', 'objection').tag === '✗ bare denial',
@@ -419,7 +423,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     // where the answer decided the step.
     askModality = true; setModal(null);
     ok(ev(`return typeof claimSemanticMode === 'function' && claimSemanticMode() === true && claimModalAsking() === true;`), 'on unless a map switches it off');
-    const HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
+    const HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
     const cases = {
         mp: [['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'],
         can: [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'],
@@ -529,7 +533,7 @@ console.log('\n-- 9. "must": which is meant --');
     // Semantic mode off (r27.184): as written, "must" a word of its verb
     // (r27.97); where a reading gives the step, said so.
     askModality = false; setModal(null);
-    const HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
+    const HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
     const off = { soc: step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'), mp: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe must be black.'),
         plain: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe is black.') };
     ok(!off.soc.asks && !off.soc.rule && off.soc.why.endsWith(' ' + HINT) && off.mp.rule === 'modus ponens' && !off.plain.asks && !off.plain.rule && off.plain.why.endsWith(' ' + HINT),

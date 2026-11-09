@@ -481,7 +481,8 @@ console.log('\n-- 12. (r27.137) dropping a modifier --');
     const g = ev(`var at = DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'modifiers'; }), g = DEDUCTIVE_EXTENSIONS[at];
         return { label: g && g.label, on: g && g.on, rules: g && g.rules, after: at === DEDUCTIVE_EXTENSIONS.findIndex(function (x) { return x.id === 'relations'; }) + 1, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
     // Since r27.141 with dropping a "that" clause (section 15).
-    ok(g.label === 'Word meaning: modifiers' && g.on === true && J(g.rules) === J(['modifiers', 'that-clause']) && g.after && /^Word meaning, not logic: "Bob ran quickly" gives "Bob ran"/.test(g.gloss || ''),
+    // Since r27.202 with making X into Y.
+    ok(g.label === 'Word meaning: modifiers' && g.on === true && J(g.rules) === J(['modifiers', 'that-clause', 'made-into']) && g.after && /^Word meaning, not logic: "Bob ran quickly" gives "Bob ran"/.test(g.gloss || ''),
         'a group of its own, "Word meaning: modifiers", after relations, on by default, with its note', J(g));
     const off = without('modifiers', () => step(['Bob ran quickly.'], 'Bob ran.'));
     ok(!off.rule && off.why === 'With dropping a modifier switched on in the Logic panel (Word meaning: modifiers), the premises would give “Bob ran”.', 'switched off: the check names the switch', J(off));
@@ -533,7 +534,8 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
     ok(proud.why === 'On its own, \u2018proud\u2019 can mean \u201cvain\u201d, which \u2018proud that \u2026\u2019 need not; so \u201cBob is proud that Mary won\u201d does not give \u201cBob is proud\u201d.' &&
         /^On its own, \u2018sorry\u2019 can mean \u201capologizing\u201d/.test(sorry.why), '"proud" and "sorry": the check says what the bare word can say', J([proud, sorry]));
     const g = ev(`var g = DEDUCTIVE_EXTENSIONS.find(function (x) { return x.id === 'modifiers'; }); return { rules: g.rules, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
-    ok(J(g.rules) === J(['modifiers', 'that-clause']) && /"Bob is glad that Mary left" gives "Bob is glad"/.test(g.gloss), 'a rule of the modifiers group, in its note', J(g));
+    ok(J(g.rules) === J(['modifiers', 'that-clause', 'made-into']) && /"Bob is glad that Mary left" gives "Bob is glad"/.test(g.gloss) && /"Bob made the clay into a pot" gives "Bob made a pot"/.test(g.gloss),
+        'a rule of the modifiers group, in its note -- and making X into Y (r27.202)', J(g));
     const off = without('that-clause', () => step(['Bob is glad that Mary left.'], 'Bob is glad.'));
     ok(!off.rule && off.why === 'With dropping a \u2018that\u2019 clause switched on in the Logic panel (Word meaning: modifiers), the premises would give \u201cBob is glad\u201d.',
         'switched off: the check names the switch', J(off));

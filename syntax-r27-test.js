@@ -299,7 +299,7 @@ console.log('\n-- an object that may be shared (r27.64) --');
     // r27.200: "so Mary loves Bob" follows on both readings, which are all
     // one can choose, and asks nothing (the box as written had held it).
     ok(yes && yes.rule === 'conjunction elimination' && !yes.asked.length && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
-        waitOff.why === 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.',
+        waitOff.why === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
         'on the map, with Semantic mode on, "so Mary sings" offers the two readings, where the step turns on them; "so Mary loves Bob" follows on both and asks nothing (r27.200); as written, "so Mary loves Bob" is certified and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
 }
 
@@ -1160,11 +1160,13 @@ console.log('\n-- r27.200: the gaps r27.199 turned up --');
         step(['Bob made a cake for Mary.'], 'Bob made a cake.'), step(['Bob made Mary a cake.'], 'Bob made a cake.'), step(['Bob did not make a cake for Mary to have.'], 'Bob did not make a cake.')];
     // Named dropping a modifier since r27.201, as "quickly" is.
     ok(forMary[0].rule === 'dropping a modifier' && forMary[1].rule === 'dropping a modifier' && forMary[2].rule === 'dropping a modifier' &&
-        forMary[3].rule === null && forMary[3].why === 'Did you mean “Bob made a cake for Mary to have” or “Bob made Mary into a cake”?' && forMary[4].rule === null,
-        'what is done for someone is done: "for Mary to have" and "on Mary\'s behalf" left out, by dropping a modifier; so "Bob made a cake for Mary" gives "Bob made a cake" on both readings, the box as written keeping it from standing no more, and "Bob made Mary a cake" asks; not under "not"', J(forMary));
-    const hint = step(['Everyone who is able to fly is happy.', 'Poe can fly.'], 'Poe is happy.');
-    ok(hint.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person that is able to fly’.',
-        'the case a rule needs, with its article: "Poe is a person that is able to fly" (it had been "Poe is person that ...")', J(hint));
+        forMary[3].rule === 'dropping a modifier' && !forMary[3].why && forMary[4].rule === null,
+        'what is done for someone is done: "for Mary to have" and "on Mary\'s behalf" left out, by dropping a modifier; so "Bob made a cake for Mary" gives "Bob made a cake" on both readings, the box as written keeping it from standing no more, and "Bob made Mary a cake" follows on both its readings too, since r27.202 ("Bob made Mary into a cake" gives "Bob made a cake"); not under "not"', J(forMary));
+    // "Everyone who is able to fly" splits since r27.202; a kind the reader
+    // does not split keeps its article.
+    const hint = step(['Everyone who is afraid of the dark is careful.'], 'Poe is careful.');
+    ok(hint.why === '\u201cEveryone who is afraid of the dark is careful\u201d would give \u201cPoe is careful\u201d once it is shown that \u2018Poe is a person that is afraid of the dark\u2019.',
+        'the case a rule needs, with its article: "Poe is a person that is afraid of the dark" (it had been "Poe is person that ...")', J(hint));
 }
 
 console.log('\n-- r27.201: three settings; a step in one; a denied part in its own words --');
@@ -1195,10 +1197,44 @@ console.log('\n-- r27.201: three settings; a step in one; a denied part in its o
         'a step stands where every reading gives it in one step: on "it does not rain, and it snows" it takes two, so it asks (r27.200 had let it stand)', J(two));
     const words = ev(`return ['It is not the case that it rains or it snows.', 'It is not the case that it rains and it snows.', 'It is not the case that it rains, it snows, or it hails.'].map(function (t) {
         var n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0]; return n ? claimReadingWords(n.readings[1], t) : null; });`);
-    ok(J(words) === J(['It does not rain, or it snows.', 'It does not rain, and it snows.', 'It does not rain, it snows, or it hails.']),
-        'the first part alone denied, in its own words, and no numbers: "It does not rain, or it snows" (it had been "(1) It is not the case that it rains, or (2) it snows")', J(words));
+    ok(J(words) === J(['It does not rain, or it snows.', 'It does not rain, and it snows.', 'Either it does not rain, it snows, or it hails.']),
+        'the first part alone denied, in its own words, and no numbers: "It does not rain, or it snows" (it had been "(1) It is not the case that it rains, or (2) it snows"); three with "or", "Either ..." (r27.202)', J(words));
     ok(ev(`return DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === 'modifiers'; }).gloss;`).indexOf('"Bob made a cake for Mary to have" gives "Bob made a cake"') > 0,
         'dropping a modifier says so of "for Mary to have" too');
+}
+
+console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; the case a rule needs --');
+{
+    // The user, of "made X into Y" gives "made Y": "ok"; of ability giving
+    // physical possibility, and the kinds nesting: "yes, I want both"; of the
+    // case said with the reading it needs: "ok"; of the hint: "Shouldn't it
+    // be 'Set Semantic mode to "Ask" in the Logic panel ...'? Why the commas?".
+    const step = (ps, c) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };`);
+    const into = [step(['Bob made Mary into a cake.'], 'Bob made a cake.'), step(['Bob made the clay into a pot.'], 'Bob made a pot.'), step(['Bob did not make Mary into a cake.'], 'Bob did not make a cake.')];
+    ok(into[0].rule === 'making X into Y' && into[1].rule === 'making X into Y' && into[2].rule === null,
+        '"Bob made Mary into a cake" gives "Bob made a cake", as "the clay into a pot" gives "a pot"; not under "not"', J(into));
+    const able = [step(['Poe is able to fly.'], 'It is physically possible for Poe to fly.'), step(['Poe is able to fly.'], 'It is possible for Poe to fly.'),
+        step(['Poe is not able to fly.'], 'It is not physically possible for Poe to fly.')];
+    ok(able[0].rule === 'ability gives possibility' && able[1].rule === 'ability gives possibility' && able[2].rule === null &&
+        key('It is physically possible for Poe to fly.').replace(//g, '') === key('It is physically possible that Poe flies.').replace(//g, ''),
+        'what one is able to do is possible -- physically, and "possible for"; not "not able"; "it is physically possible for Poe to fly" says what "... that Poe flies" says', J(able));
+    const kinds = [step(['It is physically possible that Poe flies.'], 'It is logically possible that Poe flies.'), step(['It is physically possible for Poe to fly.'], 'It is metaphysically possible for Poe to fly.'),
+        step(['It is logically necessary that Poe flies.'], 'It is physically necessary that Poe flies.'), step(['It is logically possible that Poe flies.'], 'It is physically possible that Poe flies.'),
+        step(['Poe is able to fly.'], 'It is logically possible for Poe to fly.')];
+    ok(kinds[0].rule === 'kinds of possibility' && kinds[1].rule === 'kinds of possibility' && kinds[2].rule === 'kinds of possibility' && kinds[3].rule === null &&
+        kinds[4].rule === null && /^Getting to “It is logically possible for Poe to fly” takes two steps\. First, “Poe is able to fly” gives “It is physically possible for Poe to fly” by ability gives possibility\. Then /.test(kinds[4].why),
+        'the kinds nest: physically possible gives metaphysically and logically possible, logically necessary gives physically necessary -- not the other way; from "able" to "logically possible", two steps, the one between them said', J(kinds));
+    const short = step(['Everyone who is able to fly is happy.', 'Poe can fly.'], 'Poe is happy.'), shown = step(['Everyone who is able to fly is happy.', 'Poe is a person.', 'Poe is able to fly.'], 'Poe is happy.');
+    ok(short.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person’, with “Poe can fly” read as “Poe is able to fly”.' &&
+        shown.rule === 'universal modus ponens',
+        'the case a rule needs, and the reading a box needs for it: "once it is shown that \'Poe is a person\', with \'Poe can fly\' read as \'Poe is able to fly\'"; "everyone who is able to fly" is a person, and able to fly', J([short, shown]));
+    ok(ev(`return CLAIM_SEMANTIC_HINT;`) === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
+        'the hint names the setting, without commas');
+    const notes = ev(`return [LOGIC_GROUP_GLOSSES.able, LOGIC_GROUP_GLOSSES.kinds, (DEDUCTIVE_EXTENSIONS.find(function (g) { return g.id === 'kinds'; }) || {}).label];`);
+    ok(/"Poe is able to fly" gives "it is physically possible for Poe to fly"/.test(notes[0]) && /^Word meaning, not logic: what is physically possible is metaphysically possible/.test(notes[1] || '') &&
+        notes[2] === 'Word meaning: kinds of possibility',
+        'in the Logic panel: "Word meaning: kinds of possibility", with its note, and the note of "can" and "-able" says what ability gives', J(notes));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
