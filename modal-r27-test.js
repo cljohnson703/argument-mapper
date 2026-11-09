@@ -419,7 +419,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     // where the answer decided the step.
     askModality = true; setModal(null);
     ok(ev(`return typeof claimSemanticMode === 'function' && claimSemanticMode() === true && claimModalAsking() === true;`), 'on unless a map switches it off');
-    const HINT = 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.';
+    const HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
     const cases = {
         mp: [['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'],
         can: [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'],
@@ -481,15 +481,24 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     const offAgain = step(['Poe flies.'], 'Poe can fly.');
     ok(again.asks && !offAgain.asks && offAgain.why === HINT,
         'switched off, the box asks nothing: what it asked before is not kept', J([again, offAgain]));
-    const panel = ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); renderLogicPanel(); var b = document.getElementById('eval-logic-body'), a = b.querySelector('[data-semantic]');
-        if (!a) return null;
-        var r = { checked: a.checked, label: a.nextSibling.textContent, note: a.parentNode.nextSibling.textContent, first: b.firstElementChild === a.parentNode, gone: !b.querySelector('[data-modal="ask"]'),
-            bold: getComputedStyle(a.nextSibling).fontWeight === '600', gap: getComputedStyle(a.parentNode.nextSibling).marginBottom === '10px' };
-        a.click(); r.off = state.logic.rules.semantic === false && !claimSemanticMode() && !b.querySelector('[data-semantic]').checked;
-        a.click(); r.on = state.logic.rules.semantic === true && claimSemanticMode() && b.querySelector('[data-semantic]').checked; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
-    ok(!!panel && panel.checked && panel.label === 'Semantic mode' && panel.first && panel.gone && panel.bold && panel.gap &&
-        panel.note === 'On: whatever can be read more than one way asks which is meant, where a step turns on it. Off: each box is read exactly as written, and nothing is asked.' && panel.on && panel.off,
-        'the Logic panel: "Semantic mode" first, its name in bold, on by default, with what on and off do; it switches off and on; "Ask which modality is meant" is gone', J(panel));
+    // r27.201 (the user: "If you want it to always ask, it does. If you want
+    // it to only ask if a step turns on it, it does. If you want it to never
+    // ask, it never asks"; of the mockup: "A"): three choices, each with what
+    // it does.
+    const panel = ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); renderLogicPanel(); var b = document.getElementById('eval-logic-body'), f = b.querySelector('fieldset.logic-semantic');
+        if (!f) return null;
+        var radios = [].slice.call(f.querySelectorAll('input[data-semantic]')), legend = f.querySelector('legend'), pick = function (v) { return document.querySelector('#eval-logic-body [data-semantic="' + v + '"]'); };
+        var r = { first: b.firstElementChild === f, legend: legend.textContent, bold: getComputedStyle(legend).fontWeight === '600', gap: getComputedStyle(f).marginBottom === '10px', gone: !b.querySelector('[data-modal="ask"]'),
+            choices: radios.map(function (x) { return [x.dataset.semantic, x.nextSibling.textContent, x.parentNode.nextSibling.textContent, x.checked]; }) };
+        pick('always').click(); r.always = state.logic.rules.semantic === 'always' && claimSemanticSetting() === 'always' && pick('always').checked && !pick('turns').checked;
+        pick('never').click(); r.never = state.logic.rules.semantic === false && !claimSemanticMode() && pick('never').checked;
+        pick('turns').click(); r.turns = !('semantic' in state.logic.rules) && claimSemanticSetting() === 'turns' && pick('turns').checked;
+        state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
+    ok(!!panel && panel.first && panel.legend === 'Semantic mode' && panel.bold && panel.gap && panel.gone &&
+        J(panel.choices) === J([['always', 'Always ask', 'Whatever can be read more than one way asks which is meant, every time.', false],
+            ['turns', 'Ask where a step turns on it', 'A box asks which is meant where one reading gives a step and another does not.', true],
+            ['never', 'Never ask', 'Each box is read exactly as written, and nothing is asked.', false]]) && panel.always && panel.never && panel.turns,
+        'the Logic panel: "Semantic mode" first, its name in bold, three choices each with what it does, "Ask where a step turns on it" by default; each chosen says so in the map (r27.201); "Ask which modality is meant" is gone', J(panel));
 }
 
 console.log('\n-- 9. "must": which is meant --');
@@ -520,7 +529,7 @@ console.log('\n-- 9. "must": which is meant --');
     // Semantic mode off (r27.184): as written, "must" a word of its verb
     // (r27.97); where a reading gives the step, said so.
     askModality = false; setModal(null);
-    const HINT = 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.';
+    const HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
     const off = { soc: step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'), mp: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe must be black.'),
         plain: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe is black.') };
     ok(!off.soc.asks && !off.soc.rule && off.soc.why.endsWith(' ' + HINT) && off.mp.rule === 'modus ponens' && !off.plain.asks && !off.plain.rule && off.plain.why.endsWith(' ' + HINT),

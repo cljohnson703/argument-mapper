@@ -4,6 +4,40 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 9: three Semantic mode settings; a step stands in one step (r27.201)
+
+The user:
+* Of Semantic mode: "I'd rather have both options available. If you want it to always ask, it does. If you want it to only ask if a step turns on it, it does. If you want it to never ask, it never asks."
+* Of the mockup of the three choices: "A".
+* Of "It is not the case that it rains and it snows; so it does not rain or it does not snow": "on the disambiguation 'It is not the case that it rains, and it snows', it takes two steps ... It follows, but not in one step, and there's no rule for a single-step version".
+* Of "(1) It is not the case that it rains, or (2) it snows": "The numbering is not necessary."
+
+Changes:
+* Semantic mode has three settings, chosen in the Logic panel. It had been a checkbox, on or off.
+  * "Always ask": whatever can be read more than one way asks which is meant, every time, as r27.184 had it. "Mary runs and Bob owns the bakery; so Bob owns the bakery" asks "Did you mean 'Mary runs, and Bob owns, the bakery' or 'Mary runs, and Bob owns the bakery'?".
+  * "Ask where a step turns on it": the default, as r27.199 has it.
+  * "Never ask": each box is read exactly as written, and nothing is asked.
+  * A map switched off stays "Never ask"; one switched on is "Ask where a step turns on it".
+* A step stands only where every reading gives it in one step. Where a reading gives it only in more, the step asks.
+  * "It is not the case that it rains and it snows; so it does not rain or it does not snow" asks "Did you mean 'It is not the case that both it rains and it snows' or 'It does not rain, and it snows'?". On the second reading it takes two steps. r27.200 had let it stand.
+  * So do modus ponens over "If it rains, then the ground is wet and the match is off" and the one-box reductio over "If physicalism is false, then zombies are possible and zombies are not possible". Each takes more than one step on the other grouping.
+* A list whose first part alone is denied says that part in its own words, with no numbers, where what stands on its own cannot go first: "It does not rain, or it snows". It had been "(1) It is not the case that it rains, or (2) it snows". So "It does not rain, and it snows", and "It does not rain, it snows, or it hails".
+* "For Mary to have" and "on Mary's behalf" are left out by dropping a modifier, as "quickly" is. r27.200 had named it conjunction elimination.
+* Where a step does not follow as written but would on another reading, with Semantic mode set never to ask, the check says "set Semantic mode to ask, in the Logic panel, to choose that reading". It had said "turn on Semantic mode".
+
+Tests:
+* syntax-r27-test.js has 163 checks.
+  * The 4 new ones fail on r27.200.
+  * 3 changed: modus ponens and the one-box reductio over a conditional of two parts ask; the drops are named dropping a modifier.
+* modal-r27-test.js: the Logic panel's three choices.
+* logic-r27-basis-test.js: the denial before "and" is flagged again.
+* The hint's new words in three suites.
+* anaphora-r27-test.js names two boxes read the same way in a modus ponens with nothing to ask; rules-r27-ordinary-test.js: "Bob knows that Mary left and Al cried", so "Mary left and Al cried", asks.
+* Take-one-out: each of the 17 changes is caught.
+* 3 sentences in the corpus read differently, each a list whose first part alone is denied: "It is not the case that it rains and it snows", "It is not the case that it rains or it snows", "It is not the case that Poe flies, and he sings if it rains" ("Poe does not fly, and Poe sings if it rains").
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 8: the gaps r27.199 turned up (r27.200)
 
 The user:

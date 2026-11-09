@@ -773,18 +773,18 @@ try {
         ok(!refused(noStep).length, 'what is not given is not assumed: that Bob is not Fido, that Fido is a person', refused(noStep).join(' ‖ '));
         const flags = [
             [['Every raven except Fido is black'], 'Fido is not black'],
+            [['It is not the case that it rains and it snows'], 'It does not rain or it does not snow'],
             [['It is not the case that it rains or it snows'], 'It does not rain and it does not snow'],
             [['It is not the case that the match is off if it rains'], 'It rains and the match is not off'],
             [['Poe does not love each raven', 'Fido is a raven'], 'Poe does not love Fido'],
             [['Bob does not think that it rains'], 'Bob thinks that it does not rain'],
             [['Poe does not love Fido and Bob'], 'Poe does not love Fido'],
             [['Poe does not love a raven', 'Fido is a raven'], 'Poe does not love Fido']];
-        ok(!flagged(flags).length, 'flagged with both readings: von Fintel\'s "except", a denial before "or" or a condition, "not ... each", neg-raising, "not" with "Fido and Bob"', flagged(flags).join(' ‖ '));
-        // r27.200: before "and", both readings give "it does not rain or it
-        // does not snow" -- De Morgan's laws, or "it does not rain" -- and those
-        // are all one can choose: it follows, asking nothing.
-        ok(rule(['It is not the case that it rains and it snows'], 'It does not rain or it does not snow') === 'De Morgan\u2019s laws',
-            'a denial before "and", where both readings give the step: it follows, by De Morgan\'s laws, and asks nothing (r27.200)');
+        // r27.201 (the user: "It follows, but not in one step"): before "and",
+        // "it does not rain, and it snows" gives "it does not rain or it does
+        // not snow" only in two steps, so the step asks (r27.200 had let it
+        // stand).
+        ok(!flagged(flags).length, 'flagged with both readings: von Fintel\'s "except", a denial before "and", "or" or a condition, "not ... each", neg-raising, "not" with "Fido and Bob"', flagged(flags).join(' ‖ '));
     }
 
     console.log('\n-- what a denial in a word takes in --');
@@ -831,14 +831,15 @@ try {
     {
         ev('toggleEvalOverview(); return 1;');
         const built = ev(`var b = document.getElementById('eval-logic-body');
-            return { groups: b.querySelectorAll('.logic-group-row').length, symbols: [].map.call(b.querySelectorAll('.logic-sym'), function (x) { return x.textContent; }).join(''),
+            return { groups: b.querySelectorAll('.logic-group-row').length, semantic: b.querySelectorAll('fieldset.logic-semantic input[type="radio"]').length, symbols: [].map.call(b.querySelectorAll('.logic-sym'), function (x) { return x.textContent; }).join(''),
                 options: [].map.call(document.querySelectorAll('#eval-logic-base option'), function (o) { return o.textContent + (o.disabled ? '-' : '+'); }),
                 rules: b.querySelectorAll('input[data-rule]').length, lists: b.querySelectorAll('.logic-rules').length };`);
         // Modal logic is a group the map switches on, not a base (r27.101);
         // "would" and "could" under it (r27.112), and "Ask which modality is
         // meant" (r27.175).
-        ok(built.groups === 18 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
-            'at the bottom of the Evaluation Overview: Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, "ask which modality is meant", metaphysical necessity, and "would" and "could"', J(built));
+        // Semantic mode's three choices are no row of switches (r27.201).
+        ok(built.groups === 17 && built.semantic === 3 && built.symbols === 'H1H2H3Q1Q2Q3E1E2' && J(built.options) === J(['Standard+', 'Intuitionistic (later)-']),
+            'at the bottom of the Evaluation Overview: Semantic mode\'s three choices, Standard (intuitionistic later), the eight axiom schemas, fifteen groups of steps, metaphysical necessity, and "would" and "could"', J(built));
         const want = ev('return DEDUCTIVE_EXTENSIONS.reduce(function (n, g) { return n + (g.rules.length > 1 ? g.rules.length : 0); }, 0);');
         // Eight lists: Word meaning has two rules since r27.85 (ab esse ad posse).
         // Nine since r27.141: modifiers has dropping a "that" clause. Ten

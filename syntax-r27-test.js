@@ -299,7 +299,7 @@ console.log('\n-- an object that may be shared (r27.64) --');
     // r27.200: "so Mary loves Bob" follows on both readings, which are all
     // one can choose, and asks nothing (the box as written had held it).
     ok(yes && yes.rule === 'conjunction elimination' && !yes.asked.length && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
-        waitOff.why === 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.',
+        waitOff.why === 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.',
         'on the map, with Semantic mode on, "so Mary sings" offers the two readings, where the step turns on them; "so Mary loves Bob" follows on both and asks nothing (r27.200); as written, "so Mary loves Bob" is certified and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
 }
 
@@ -887,9 +887,12 @@ console.log('\n-- "if ..., then B and C" and "thinks that B and C" without a com
         [['Bob thinks that Poe is black and Fido is white.'], 'Fido is white.'], [['Bob thinks that Poe is black and Fido is white.'], 'Bob thinks that both Poe is black and Fido is white.']]
         .map(([ps, c]) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, asked: st && st.why ? (st.why.ambiguous || []).map(function (a) { return a.readings.length; }) : [] };`));
-    ok(steps[0].rule === null && J(steps[0].asked) === J([2]) && steps[1].rule === 'modus ponens' && steps[2].rule === 'reductio' &&
+    // r27.201 (the user, of a reading that gives the step in two: "It follows,
+    // but not in one step"): modus ponens and the one-box reductio wait too --
+    // on the other grouping each takes more than one step.
+    ok(steps[0].rule === null && J(steps[0].asked) === J([2]) && steps[1].rule === null && J(steps[1].asked) === J([2]) && steps[2].rule === null && steps[2].asked[0] === 2 &&
         steps[3].rule === null && J(steps[3].asked) === J([]) && steps[4].rule === null && J(steps[4].asked) === J([2]),
-        'a step waits for the answer where one reading gives it and another does not ("so the match is off"); it stands where every reading gives it (modus ponens; one-box reductio, a step of two on the other reading), and does not follow, unasked, where none does', J(steps));
+        'a step waits for the answer where one reading gives it and another does not ("so the match is off"), or gives it only in more than one step (modus ponens and the one-box reductio, on the other grouping; r27.201); it does not follow, unasked, where none does', J(steps));
     // r27.199: on the reading that thinks it all, the box only says again what
     // it supports; on the other, it does not give it -- so it asks (it had
     // said "only repeats", as read before the answer).
@@ -1155,12 +1158,47 @@ console.log('\n-- r27.200: the gaps r27.199 turned up --');
         '"the dog" is the one "some dog" speaks of, as with "a dog": so "a dog barks", answered "some dog barks", gives "the dog is hungry"', J([the, a]));
     const forMary = [step(['Bob made a cake for Mary to have.'], 'Bob made a cake.'), step(["Bob bought a book on Mary's behalf."], 'Bob bought a book.'),
         step(['Bob made a cake for Mary.'], 'Bob made a cake.'), step(['Bob made Mary a cake.'], 'Bob made a cake.'), step(['Bob did not make a cake for Mary to have.'], 'Bob did not make a cake.')];
-    ok(forMary[0].rule === 'conjunction elimination' && forMary[1].rule === 'conjunction elimination' && forMary[2].rule === 'conjunction elimination' &&
+    // Named dropping a modifier since r27.201, as "quickly" is.
+    ok(forMary[0].rule === 'dropping a modifier' && forMary[1].rule === 'dropping a modifier' && forMary[2].rule === 'dropping a modifier' &&
         forMary[3].rule === null && forMary[3].why === 'Did you mean “Bob made a cake for Mary to have” or “Bob made Mary into a cake”?' && forMary[4].rule === null,
-        'what is done for someone is done: "for Mary to have" and "on Mary\'s behalf" left out, by conjunction elimination; so "Bob made a cake for Mary" gives "Bob made a cake" on both readings, the box as written keeping it from standing no more, and "Bob made Mary a cake" asks; not under "not"', J(forMary));
+        'what is done for someone is done: "for Mary to have" and "on Mary\'s behalf" left out, by dropping a modifier; so "Bob made a cake for Mary" gives "Bob made a cake" on both readings, the box as written keeping it from standing no more, and "Bob made Mary a cake" asks; not under "not"', J(forMary));
     const hint = step(['Everyone who is able to fly is happy.', 'Poe can fly.'], 'Poe is happy.');
     ok(hint.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person that is able to fly’.',
         'the case a rule needs, with its article: "Poe is a person that is able to fly" (it had been "Poe is person that ...")', J(hint));
+}
+
+console.log('\n-- r27.201: three settings; a step in one; a denied part in its own words --');
+{
+    // The user, of Semantic mode: "If you want it to always ask, it does. If
+    // you want it to only ask if a step turns on it, it does. If you want it
+    // to never ask, it never asks"; of the mockup: "A"; of "it is not the case
+    // that it rains, and it snows", so "it does not rain or it does not
+    // snow": "It follows, but not in one step"; of "(1) It is not the case
+    // that it rains, or (2) it snows": "The numbering is not necessary".
+    const run = (rules, ps, c) => ev(`state.logic = { base: 'standard', rules: ${rules} }; claimRulesCache = null;
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; return out;`);
+    const settings = ev(`var out = [{ semantic: 'always' }, {}, { semantic: true }, { semantic: false }].map(function (r) { state.logic = { base: 'standard', rules: r }; return claimSemanticSetting(); });
+        state.logic = { base: 'standard', rules: {} }; return out;`);
+    const MP = [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'], BAKERY = [['Mary runs and Bob owns the bakery.'], 'Bob owns the bakery.'];
+    // A map switched on before (semantic: true) is checked anew after
+    // "always": its steps are kept by the setting's value.
+    const always = run("{ semantic: 'always' }", ...MP), on = run('{ semantic: true }', ...MP), turns = run('{}', ...MP), never = run('{ semantic: false }', ...MP),
+        bakery = run("{ semantic: 'always' }", ...BAKERY), bakeryTurns = run('{}', ...BAKERY);
+    ok(J(settings) === J(['always', 'turns', 'turns', 'never']) && always.rule === null && /^“If Poe can fly, then Poe is a bird\.”: did you mean /.test(always.why) &&
+        on.rule === 'modus ponens' && turns.rule === 'modus ponens' && never.rule === 'modus ponens' && bakery.rule === null &&
+        bakery.why === 'Did you mean “Mary runs, and Bob owns, the bakery” or “Mary runs, and Bob owns the bakery”?' && bakeryTurns.rule === 'conjunction elimination',
+        'three settings: "always ask", every question held for its answer ("Mary runs, and Bob owns, the bakery"); "ask where a step turns on it", the default, as a map switched on had it; "never ask" -- each step checked anew when the setting changes', J([settings, always, on, turns, never, bakery, bakeryTurns]));
+    const two = run('{}', ['It is not the case that it rains and it snows.'], 'It does not rain or it does not snow.');
+    ok(two.rule === null && two.why === 'Did you mean “It is not the case that both it rains and it snows” or “It does not rain, and it snows”?',
+        'a step stands where every reading gives it in one step: on "it does not rain, and it snows" it takes two, so it asks (r27.200 had let it stand)', J(two));
+    const words = ev(`return ['It is not the case that it rains or it snows.', 'It is not the case that it rains and it snows.', 'It is not the case that it rains, it snows, or it hails.'].map(function (t) {
+        var n = parseClaimFull(t).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0]; return n ? claimReadingWords(n.readings[1], t) : null; });`);
+    ok(J(words) === J(['It does not rain, or it snows.', 'It does not rain, and it snows.', 'It does not rain, it snows, or it hails.']),
+        'the first part alone denied, in its own words, and no numbers: "It does not rain, or it snows" (it had been "(1) It is not the case that it rains, or (2) it snows")', J(words));
+    ok(ev(`return DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === 'modifiers'; }).gloss;`).indexOf('"Bob made a cake for Mary to have" gives "Bob made a cake"') > 0,
+        'dropping a modifier says so of "for Mary to have" too');
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

@@ -483,8 +483,11 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         { id: 'A', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
         var tag = document.querySelector('.derivation-tag[data-step="A"]'); return [tag && tag.textContent.trim(), tag && tag.title];`);
-    const same = tips(['If it rains, then Bob is tall and so is Mary.', 'It rains.'], 'Bob is tall and so is Mary.');
-    ok(same[0] === '✓ modus ponens' && same[1].indexOf('“If it rains, then Bob is tall and so is Mary.” and “Bob is tall and so is Mary.”: read with “so is Mary” as “Mary is tall”, from the clause before it.') > 0 &&
+    // A modus ponens with nothing to ask (r27.201: "if it rains, then Bob is
+    // tall and so is Mary" asks how its "and" groups, where on one grouping
+    // "it rains" gives "Bob is tall and so is Mary" only in more than one step).
+    const same = tips(['If Bob is tall and so is Mary, then Ann is glad.', 'Bob is tall and so is Mary.'], 'Ann is glad.');
+    ok(same[0] === '✓ modus ponens' && same[1].indexOf('“If Bob is tall and so is Mary, then Ann is glad.” and “Bob is tall and so is Mary.”: read with “so is Mary” as “Mary is tall”, from the clause before it.') > 0 &&
         same[1].split('so is Mary” as').length === 2,
         'boxes read the same way are named together, the reading once', J(same));
     const bound = [

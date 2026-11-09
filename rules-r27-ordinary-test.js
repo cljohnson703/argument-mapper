@@ -264,9 +264,16 @@ console.log('\n-- 1. factive verbs --');
         [['It is known that Mary left.'], 'Mary left.'],
         // Whatever is known: a quantifier, a conditional, a denial, a compound.
         [['Mary knows that all men are mortal.'], 'All men are mortal.'], [['Bob knows that if it rains, the game is off.'], 'If it rains, the game is off.'],
-        [['Bob knows that Mary did not leave.'], 'Mary did not leave.'], [['Bob knows that Mary left and Al cried.'], 'Mary left and Al cried.'],
+        [['Bob knows that Mary did not leave.'], 'Mary did not leave.'],
         [['Bob knows that some ravens are white.'], 'Some ravens are white.']];
     ok(!misses(FACTIVE, 'factive verbs').length, 'what is known, realized, discovered, proved, regretted, forgotten, or what one is aware or glad of, is so (' + FACTIVE.length + ' steps)', J(misses(FACTIVE, 'factive verbs')));
+    // r27.201 (the user: "It follows, but not in one step"): "Bob knows that
+    // Mary left and Al cried" may say "Al cried, and Bob knows that Mary left",
+    // which gives "Mary left and Al cried" only in more than one step -- so it
+    // asks; read as written, all of it is known.
+    const known = step(['Bob knows that Mary left and Al cried.'], 'Mary left and Al cried.'), knownOff = asWritten(() => step(['Bob knows that Mary left and Al cried.'], 'Mary left and Al cried.'));
+    ok(!known.rule && known.why === 'Did you mean \u201cAl cried, and Bob knows that Mary left\u201d or \u201cBob knows that both Mary left and Al cried\u201d?' && knownOff.rule === 'factive verbs',
+        'a compound known: asked how much of it is known, where on one reading the step takes more than one; read as written, factive verbs (r27.201)', J([known, knownOff]));
     const NOT = [
         [['Bob believes that Mary left.'], 'Mary left.'], [['Bob thinks that Mary left.'], 'Mary left.'], [['Bob says that Mary left.'], 'Mary left.'],
         [['Bob hopes that Mary left.'], 'Mary left.'], [['Bob is sure that Mary left.'], 'Mary left.'], [['Bob is afraid that Mary left.'], 'Mary left.'],

@@ -1086,8 +1086,12 @@
     .logic-basis-note + .logic-basis-note { margin-top: 4px; }
     body.bg-light .logic-basis-note { color: var(--label-text); }
     .logic-ext-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #ecdecc; margin: 0 0 2px; }
-    .logic-semantic label { font-weight: 600; }
-    .logic-semantic-note { margin: 0 0 10px; }
+    .logic-semantic { margin: 0 0 10px; padding: 0; border: 0; min-width: 0; }
+    .logic-semantic legend { padding: 0; margin-bottom: 2px; font-weight: 600; }
+    .logic-semantic-choice { display: flex; align-items: center; gap: 6px; padding-top: 5px; }
+    .logic-semantic-choice input { margin: 0; }
+    .logic-semantic-choice label { cursor: pointer; }
+    .logic-semantic-note { margin: 1px 0 0 19px; }
     body.bg-light .logic-ext-label { color: var(--label-text); }
     .logic-group-row { display: flex; align-items: center; gap: 7px; padding: 5px 0; border-top: 1px solid #3d4344; }
     body.bg-light .logic-group-row { border-color: #ddd; }
@@ -2979,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-08 r27.200';
+    const APP_BUILD = '2026-11-09 r27.201';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6948,7 +6952,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const LOGIC_SYLLOGISM_NAMES_GLOSS = 'Names the universal and existential syllogisms by their mood: "categorical syllogism (Barbara)", Celarent, Darii, Ferio. The other moods have no other name.';
     const LOGIC_WOULD_GLOSS = 'Reads "would" and "could" said of a choice as opposites, with "not" moved: "everyone would choose to stay" denies "someone could choose not to stay". "Decide", "opt" and "elect" too. Off, "would" after "then" makes a what-if claim.';
     const LOGIC_MODAL_GLOSS = 'Reads "it is metaphysically necessary that …", "it is metaphysically possible that …", □ and ◇, and takes steps by the axioms switched on.';
-    const LOGIC_SEMANTIC_NOTE = 'On: whatever can be read more than one way asks which is meant, where a step turns on it. Off: each box is read exactly as written, and nothing is asked.';
+    const LOGIC_SEMANTIC_SETTINGS = [
+        ['always', 'Always ask', 'Whatever can be read more than one way asks which is meant, every time.'],
+        ['turns', 'Ask where a step turns on it', 'A box asks which is meant where one reading gives a step and another does not.'],
+        ['never', 'Never ask', 'Each box is read exactly as written, and nothing is asked.']];
     const LOGIC_SEMANTIC_GLOSS = 'Whether the check asks what words that can be read more than one way mean — which kind of necessity, which “can”, “all” or “some”, what a word points back to — or reads each box exactly as written.';
     const LOGIC_MODAL_AXIOMS = {
         D: 'D: □A → ◇A. What is necessary is possible.',
@@ -6988,6 +6995,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         render();
         if (!evalOverviewOpen) renderLogicPanel();
     }
+    // Semantic mode's setting chosen in the Logic panel (r27.201): "always" or
+    // "never" said in the map's rules, "turns" (the default) by saying nothing.
+    function switchSemanticSetting(value) {
+        if (collabReadOnly()) { renderLogicPanel(); return; }
+        if (!state.logic) state.logic = { base: 'standard', rules: {} };
+        if (!state.logic.rules) state.logic.rules = {};
+        if (value === 'always' || value === 'never') state.logic.rules.semantic = value === 'always' ? 'always' : false;
+        else delete state.logic.rules.semantic;
+        claimRulesCache = null;
+        state._logicVersion = { ts: Date.now(), by: _clientId };
+        render();
+        if (!evalOverviewOpen) renderLogicPanel();
+    }
     function buildLogicPanel(body) {
         const el = (tag, cls, text) => { const x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; };
         const basis = el('div', 'logic-basis'), head = el('div', 'logic-basis-head');
@@ -7005,16 +7025,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         basis.appendChild(grid);
         basis.appendChild(el('div', 'logic-basis-note', 'Abbreviations: ' + LOGIC_DEFINITIONS + '.'));
         basis.appendChild(el('div', 'logic-basis-note', 'Every universal closure of an axiom is an axiom, and modus ponens is the only rule. Every other rule below is derivable from these, but for the one of word meaning; the steps most people take are on by default.'));
-        // "Semantic mode" (r27.184): first, on unless a map switches it off.
-        const srow = el('div', 'logic-group-row logic-semantic'), sbox = el('input');
-        sbox.type = 'checkbox'; sbox.id = 'logic-semantic'; sbox.dataset.semantic = '1';
-        sbox.addEventListener('change', () => switchLogicRules(['semantic'], sbox.checked));
-        const slabel = el('label', null, 'Semantic mode');
-        slabel.htmlFor = sbox.id;
-        slabel.title = LOGIC_SEMANTIC_GLOSS;
-        srow.appendChild(sbox); srow.appendChild(slabel);
-        body.appendChild(srow);
-        body.appendChild(el('div', 'logic-basis-note logic-semantic-note', LOGIC_SEMANTIC_NOTE));
+        // "Semantic mode" (r27.184): first, its three settings each a choice
+        // with what it does (r27.201; the user, of the mockup: "A").
+        const sset = el('fieldset', 'logic-semantic'), slegend = el('legend', null, 'Semantic mode');
+        slegend.title = LOGIC_SEMANTIC_GLOSS;
+        sset.appendChild(slegend);
+        LOGIC_SEMANTIC_SETTINGS.forEach(([value, label, note]) => {
+            const row = el('div', 'logic-semantic-choice'), radio = el('input'), slabel = el('label', null, label);
+            radio.type = 'radio'; radio.name = 'logic-semantic'; radio.id = 'logic-semantic-' + value; radio.dataset.semantic = value;
+            radio.addEventListener('change', () => { if (radio.checked) switchSemanticSetting(value); });
+            slabel.htmlFor = radio.id;
+            row.appendChild(radio); row.appendChild(slabel);
+            sset.appendChild(row);
+            sset.appendChild(el('div', 'logic-basis-note logic-semantic-note', note));
+        });
+        body.appendChild(sset);
         body.appendChild(basis);
         body.appendChild(el('div', 'logic-ext-label', 'Extensions'));
         DEDUCTIVE_EXTENSIONS.forEach(g => {
@@ -7145,8 +7170,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         const wbox = body.querySelector('[data-modal="would"]');
         if (wbox) { wbox.checked = claimWouldCouldOn(); wbox.disabled = ro; }
-        const sbox = body.querySelector('[data-semantic]');
-        if (sbox) { sbox.checked = claimSemanticMode(); sbox.disabled = ro; }
+        const setting = claimSemanticSetting();
+        body.querySelectorAll('[data-semantic]').forEach(r => { r.checked = r.dataset.semantic === setting; r.disabled = ro; });
     }
     function renderEvalOverview() {
         renderLogicPanel();
@@ -15068,10 +15093,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // switch, on unless the map says off. It takes the place of "Ask which
     // modality is meant" (r27.175), whose on was for modal words and whose
     // off asked only where the answer decided the step.
-    function claimSemanticMode() {
-        const set = claimRuleSettings();
-        return set && Object.prototype.hasOwnProperty.call(set, 'semantic') ? !!set.semantic : true;
+    // Three settings (r27.201; the user: "If you want it to always ask, it
+    // does. If you want it to only ask if a step turns on it, it does. If you
+    // want it to never ask, it never asks"): "always"; "turns", where a step
+    // turns on it, the default (r27.199); "never". A map's rules say "always",
+    // nothing (true, as a map switched on had it) or false.
+    function claimSemanticSetting() {
+        const set = claimRuleSettings(), v = set && Object.prototype.hasOwnProperty.call(set, 'semantic') ? set.semantic : true;
+        return v === 'always' ? 'always' : v ? 'turns' : 'never';
     }
+    function claimSemanticMode() { return claimSemanticSetting() !== 'never'; }
     function claimModalAsking() { return claimSemanticMode(); }
     // A modal question's marks: asked every time, its readings in place in a
     // longer box; or, off, read as written -- and where read another way the
@@ -15431,6 +15462,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (w && claimReadsAs(w, { kind: 'not', inner: f })) return w;
         }
         return 'it is not the case that ' + clause;
+    }
+    // "It does not rain, or it snows": a list whose first part alone is
+    // denied, that part in its own words -- where it has them, no number is
+    // needed (r27.201; the user: "The numbering is not necessary"). After
+    // what stands on its own first (r27.193), where a pronoun keeps that
+    // from going first ("it snows").
+    function claimDeniedFirstWords(first, others, word) {
+        const no = claimDeniedClauseWords(first);
+        if (/^it is not the case that /.test(no)) return null;
+        const items = [no].concat(others);
+        return items.length === 2 ? items[0] + ', ' + word + ' ' + items[1] : items.slice(0, -1).join(', ') + ', ' + word + ' ' + items[items.length - 1];
     }
     // Claims grouped in English: two plain claims as "both A and B" or
     // "either A or B"; else a numbered list.
@@ -16664,7 +16706,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const word = k === 0 ? 'and' : 'or', first = junction[0].text, others = junction.slice(1).map(g => g.text);
                     return claimAmbiguous('"' + prefix + '" can deny all of the "' + word + '", or only its first part', [
                         prefix + ' ' + claimGroupWords(junction.map(g => g.text), word),
-                        claimUnnumbered([claimMovable(others) && claimFreeFirstWords(others, prefix + ' ' + first, word)], claimListWords([prefix + ' ' + first].concat(others), word, true))
+                        claimUnnumbered([claimMovable(others) && claimFreeFirstWords(others, prefix + ' ' + first, word), claimDeniedFirstWords(first, others, word)], claimListWords([prefix + ' ' + first].concat(others), word, true))
                     ].map(label => ({ label, build: () => readClaim(label) })), true) || claimAtom(s);
                 }
                 const inner = claimWithAnyAsSome(() => readClaim(rest));
@@ -22394,8 +22436,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimModifierDropped(P, C) {
         const p = P.length === 1 ? P[0] : null;
         if (!p || p.kind !== 'pred' || !C || C.kind !== 'pred' || p.term !== C.term || !p.vpText || !C.vpText) return false;
-        const a = claimTokens(String(p.vpText).toLowerCase()).map(claimWord), b = claimTokens(String(C.vpText).toLowerCase()).map(claimWord);
-        if (!b.length || b.length >= a.length || a.some(w => CLAIM_MANNER_VERBS.test(w))) return false;
+        // "For Mary to have", "on Mary's behalf": who it was done for, left out
+        // as a word of manner is (r27.201; r27.200 had named it conjunction
+        // elimination).
+        const words = claimTokens(String(p.vpText).toLowerCase()).map(claimWord), b = claimTokens(String(C.vpText).toLowerCase()).map(claimWord);
+        const whom = /^(.+?) (?:for (?:\S+ ){0,3}?\S+ to have|on (?:\S+ ){0,3}?\S+'s behalf)$/.exec(words.join(' ')), a = whom ? whom[1].split(' ') : words;
+        if (!b.length || (whom ? b.length > a.length : b.length >= a.length) || a.some(w => CLAIM_MANNER_VERBS.test(w))) return false;
         const modifier = w => !CLAIM_MODIFIER_KEEP.has(w) && (CLAIM_MODIFIER_DROP.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w)));
         // Adverbs joined by "and" ("quickly and quietly left") each say how
         // it was done: either may be left out, with its "and" (r27.188). Not
@@ -22534,7 +22580,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           test: (P, C) => !!claimRelationStep(P, C) },
         // A modifier dropped (r27.137): a rule of word meaning.
         { id: 'modifiers', name: 'dropping a modifier', optional: true,
-          gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall" -- not "almost", "allegedly" or "hardly", nor under "not"',
+          gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob made a cake for Mary to have" gives "Bob made a cake" -- not "almost", "allegedly" or "hardly", nor under "not"',
           test: (P, C) => claimModifierDropped(P, C) },
         // A "that" clause dropped (r27.141): a rule of word meaning.
         { id: 'that-clause', name: 'dropping a ‘that’ clause', optional: true,
@@ -22843,7 +22889,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Which rules are on, as a string: part of what a cached check depends on.
     function claimRulesSignature() {
         const set = claimRuleSettings() || {};
-        return (claimBasisOnly ? 'B' : '') + Object.keys(set).sort().map(k => k + (set[k] ? '+' : '-')).join(',') + '|' + [...claimOptionalInferences].sort().join(',') +
+        // A setting of more than two values by its value: Semantic mode's
+        // "always" (r27.201).
+        return (claimBasisOnly ? 'B' : '') + Object.keys(set).sort().map(k => k + (typeof set[k] === 'string' ? '=' + set[k] : set[k] ? '+' : '-')).join(',') + '|' + [...claimOptionalInferences].sort().join(',') +
             (claimModalOverride ? '|M' + [...claimModalOverride.axioms].sort().join('') : '');
     }
     // The rules in force, in order, the rule under a quantifier last.
@@ -23461,15 +23509,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           // A predication read as an "and" is one part of its list, and its
           // halves are parts too: "Bob is tall, but Al is a physical space"
           // gives "Al is physical" (r27.161).
-          test: (P, C) => (P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
+          test: (P, C) => P.length === 1 && (P[0].kind === 'and' || P[0].kind === 'then') && !P[0].iff &&
               [P[0].parts, [].concat(...P[0].parts.map(p => p.kind === 'and' && (p.compound || p.eachOf) && !p.iff ? p.parts : [p]))].some(parts =>
                   parts.some(claimIs(C)) || (C.kind === 'and' && !C.iff && (claimsWithinInOrder(C.parts, parts) ||
-                      (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts)))))) ||
-              // What is done for someone is done: "Bob made a cake for Mary
-              // to have", "Bob bought a book on Mary's behalf" -- as "a black
-              // raven" is a raven (r27.200).
-              (P.length === 1 && !!P[0] && P[0].kind === 'pred' && !!C && C.kind === 'pred' &&
-                  (m => !!m && claimSame(C, Object.assign({}, P[0], { prop: m[1], vpText: undefined, src: undefined })))(/^(~.+?) (?:for .+ to have|on .+'s behalf)$/.exec(String(P[0].prop || '')))) },
+                      (P[0].kind === 'then' && claimsSameInOrder(C.parts, parts))))) },
         { id: 'or-intro', name: 'disjunction introduction',
           gloss: 'A gives "A or B", for any B',
           test: (P, C) => P.length === 1 && C.kind === 'or' &&
@@ -25066,7 +25109,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // it says.
     // Semantic mode off (r27.184): where read another way the step would
     // follow.
-    const CLAIM_SEMANTIC_HINT = 'On another reading of its words, the step follows: turn on Semantic mode in the Logic panel to choose that reading.';
+    const CLAIM_SEMANTIC_HINT = 'On another reading of its words, the step follows: set Semantic mode to ask, in the Logic panel, to choose that reading.';
     function diagnoseDeductiveStep(premiseTexts, conclusionText, attack, nearMiss, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
@@ -25101,7 +25144,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!note.always && !derives.length) return;
             // Asked only where the step turns on it (r27.189): where some
             // reading gives it and some does not (claimStepDecidedVerdicts).
-            if (claimTurnsOn(texts[i], note) && !(claimStepTurnsNow && (claimStepTurnsNow === true || claimStepTurnsNow.has(claimQuestionTag(note))))) return;
+            if (claimTurnsOn(texts[i], note) && claimSemanticSetting() !== 'always' && !(claimStepTurnsNow && (claimStepTurnsNow === true || claimStepTurnsNow.has(claimQuestionTag(note))))) return;
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
@@ -25696,12 +25739,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return same(n.message) + '\u0001' + (n.part ? claimTokens(String(n.part)).map(claimWord).join(' ') : (n.readings || []).map(same).join('\u0002'));
     }
     function claimAsksUser(text) {
-        const said = String(text == null ? '' : text), key = (claimModalAsking() ? 'M' : '') + '\u0001' + said;
+        const setting = claimSemanticSetting(), said = String(text == null ? '' : text), key = setting.charAt(0) + '\u0001' + said;
         if (claimAsksCache.has(key)) return claimAsksCache.get(key);
         // A question is asked only where a step turns on it (r27.199; the
         // user: "(a)"), and holds no step by itself; a typo or a slip of
-        // grammar does.
-        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo));
+        // grammar does -- and, set to ask always, every question that can be
+        // put (r27.201).
+        const asks = parseClaimFull(said).notes.some(n => n.kind === 'ambiguous' && (n.grammar || n.typo ||
+            (setting === 'always' && n.ask && (n.readings || []).length >= 2 && claimNoteOffered(said, n))));
         if (claimAsksCache.size > 5000) claimAsksCache.clear();
         claimAsksCache.set(key, asks);
         return asks;
@@ -25824,13 +25869,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (const combo of combos) {
             const forms = texts.map((t, i) => asked[i].length ? parseClaim(t, { sites: sitesOf(i, combo) }) : reads[i].form);
             const g = forms.every(Boolean) ? gives(forms) : null;
-            gave.set(combo.join(','), !g ? 'no' : g.idle ? 'idle' : 'yes');
+            // In one step, by a rule, or only in more (r27.201; the user, of
+            // "it is not the case that it rains, and it snows", so "it does
+            // not rain or it does not snow": "It follows, but not in one
+            // step"): a step stands where every reading gives it in one.
+            gave.set(combo.join(','), !g ? 'no' : g.idle ? 'idle' : g.rule ? 'yes' : 'steps');
             // A box as written is no reading one can choose: it helps the
             // step wait ("a dog barks"), and does not keep it from standing
             // ("Bob made a cake for Mary", so "Bob made a cake", on both
             // readings) (r27.200).
             const chosen = combo.every((r, k) => r < slots[k].count - 1);
-            if (g && !g.idle) { some = true; if (chosen) rule = rule || g.rule; } else if (chosen) all = false;
+            if (g && !g.idle && g.rule) { some = true; if (chosen) rule = rule || g.rule; } else if (chosen) all = false;
         }
         // It waits where the readings differ in what it comes to (r27.199),
         // asking each question whose answer, the others' held, changes that --
