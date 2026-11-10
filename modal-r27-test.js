@@ -335,8 +335,13 @@ console.log('\n-- 5. necessity without its kind: asked --');
     ok(/, “If it has not been established that God does not exist, then evil is unexplained”, or “If we do not know that God does not exist, then evil is unexplained”\?$/.test(ifg),
         'inside an "if", what is known put in place (r27.174; it had been "if, for all we know, God exists", r27.172)', ifg);
     setModal(['T', '5']);
-    ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is possible for Mary to sing”, or “Mary is allowed to sing”?' &&
-        step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'ab esse ad posse', '"can" stays as it is: asked which, and "possible for" follows by ab esse ad posse');
+    // Of each kind (r27.203; the user, of the five readings: "ok"): what is
+    // possible for Mary metaphysically -- by axiom T, the system's -- and
+    // logically and physically, by ab esse ad posse. Each follows, so the
+    // step stands.
+    ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is metaphysically possible for Mary to sing”, “It is logically possible for Mary to sing”, “It is physically possible for Mary to sing”, or “Mary is allowed to sing”?' &&
+        step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'axiom T' && step(['Mary sings.'], 'It is physically possible for Mary to sing.').rule === 'ab esse ad posse',
+        '"can" stays as it is: asked which -- able, possible of each kind, allowed (r27.203) -- and "possible for", of every kind, follows: metaphysically by axiom T, physically and logically by ab esse ad posse');
 }
 
 console.log('\n-- 6. the Logic panel --');
@@ -451,7 +456,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
         J(Object.fromEntries(Object.entries(on).map(([k, r]) => [k, r.tag]))));
     ok(on.cant.why === 'Did you mean “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black” or ' +
             '“If we lack reasons to think that Poe is black, then it is impossible for us to conclude that Poe is black”?' &&
-        on.able.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?' &&
+        on.able.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?' &&
         /^“If it is necessary that God exists, then evil is unexplained\.”: did you mean “If it is metaphysically necessary that God exists, then evil is unexplained”, /.test(on.every.why) &&
         /“Necessarily, God exists\.”: did you mean “It is metaphysically necessary that God exists”, /.test(on.every.why),
         'on: "we can\'t conclude" asks too; each box by name where more than one asks; no reading marked as the one the step follows on', J([on.cant.why, on.able.why, on.every.why]));

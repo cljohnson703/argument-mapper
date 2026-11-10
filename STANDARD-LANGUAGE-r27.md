@@ -4,6 +4,50 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 10: which kind of "possible"; "can" of five; the reductio's two "possible"s (r27.203)
+
+The user:
+* Of a reductio on "both zombies are possible and zombies are not possible" that asks which kind each "possible" is: "ok".
+* Of a bare "possible" asking which kind where a step turns on it: "ok".
+* Of the five readings of "can": "ok".
+* Of the numbers left where words read back: "I'll go with your recommendation".
+
+Changes:
+* Two questions worded alike in one box, each asking of its own words, are two: answering one leaves the other.
+  * So "If physicalism is false, then both zombies are possible and zombies are not possible; so physicalism is true" asks which kind each "possible" is. Each had kept the other from being offered, so the box was read as written and the reductio stood. But "zombies are metaphysically possible and zombies are not physically possible" is no contradiction.
+  * Of one kind, the reductio stands. Of two, the check says the two differ.
+* "Poe can fly" offers five readings: "Poe is able to fly", "It is metaphysically possible for Poe to fly", "It is logically possible for Poe to fly", "It is physically possible for Poe to fly", "Poe is allowed to fly"; with five, "Other" too. It had offered "It is possible for Poe to fly". So with "can't", and with "can" inside a longer box.
+* "It is possible for Poe to fly", "it is impossible for Poe to fly" and "it is not possible for Poe to fly" ask which kind: metaphysically, logically or physically. They ask where a step turns on it; unanswered, each is read as written.
+  * So "Poe is able to fly; so it is possible for Poe to fly" asks: it takes one step only on "physically".
+* "It is not possible that Poe flies" asks which kind, as "it is impossible that Poe flies" does. As written, it denies "it is possible that Poe flies". It had been read as said of "it".
+* What is, can be, of the physical and logical kinds: "Poe flies" gives "it is physically possible for Poe to fly" and "it is logically possible for Poe to fly", by ab esse ad posse. Metaphysically, it gives it by axiom T, where the map's system has it.
+* Said of a kind:
+  * "It is physically possible for Poe to fly or swim" says "it is physically possible for Poe to fly, or it is physically possible for Poe to swim", so disjunctive syllogism takes it, as it took "possible for" alone (r27.176).
+  * "It is not physically possible for Poe to beat any player": for no player. It had been read as every player.
+  * "It is metaphysically possible for Mary to sing and Bob cannot dance" is two claims.
+* A step's readings are weighed one by one up to 64 combinations, not 32. So a "can" beside a "might" asks only what the step turns on.
+* No numbers where words read back as the numbered reading does:
+  * "It is not the case that either it rains, it snows, or it hails". It had been "It is not the case that (1) it rains, (2) it snows, or (3) it hails".
+  * The weather's "it" may go first: "It snows, and if physics is complete, then it rains"; "It is cold, and if it rains, then it snows".
+  * Before a denial in its own words, it still does not: "It does not rain, or it snows".
+* Held for the user: "We are not able to conclude that God exists" is itself read both ways, so it cannot answer the question. "We can't conclude that God exists" still offers "It is impossible for us to conclude that God exists", which asks no kind.
+
+Tests:
+* syntax-r27-test.js has 176 checks.
+  * The 7 new ones fail on r27.202.
+  * Changed: "can" of five readings; where only "can" should ask, the other box says its kind; "Poe is able to fly; so it is possible for Poe to fly" asks.
+* "Can" of five readings in extended-mind-r27-test.js, logic-r27-basis-test.js, logic-r27-english-test.js, modal-r27-test.js, reading-r27-chooser-test.js and rules-r27-ordinary-test.js.
+  * logic-r27-english-test.js: "it is possible for Poe to fly or swim" and its denial ask which kind; said "physically", disjunctive syllogism. "It is possible for me to draw a red card, or ..." asks which kind of each part.
+  * modal-r27-test.js: with T and 5, "Mary sings; so it is possible for Mary to sing" stands, by axiom T.
+  * reading-r27-chooser-test.js: "Other" after the five readings of "can". The box said to be ambiguous is now "Bob can swim, and Mary can too": "Poe cannot beat any player" reads back.
+* Take-one-out: each of the 15 changes is caught.
+* 68 sentences in the corpus read differently, none in what it says:
+  * 63 offer the five readings of "can" or "can't";
+  * 3 "possible for" boxes ask which kind;
+  * 2 lose their numbers: "It snows, and if physics is complete, then it rains"; "It is cold, and if it rains, then it snows".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 9: "made into"; ability and the kinds of possibility; the case a rule needs (r27.202)
 
 The user:

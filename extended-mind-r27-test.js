@@ -109,9 +109,11 @@ console.log('\n-- 1. a clause cut short, inside a condition and after "it\'s not
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.");
     ok(turns.tag === '? ambiguous' && turns.why.indexOf("Did you mean “If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs”, " +
-            "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, or ") === 0 &&
+            "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not metaphysically possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, " +
+            "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not logically possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, " +
+            "“If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then it is not physically possible for the records in Otto's notebook to perform all the relevant functions of non-occurrent beliefs”, or ") === 0 &&
             !/is able to automatically influence|possible for non-occurrent/.test(turns.why),
-        'where the step turns on it ("are not able to perform"), "cannot perform" asks which is meant: not able, not possible, or not allowed (r27.169); not the "can"s it does not turn on (r27.199)', turns.why);
+        'where the step turns on it ("are not able to perform"), "cannot perform" asks which is meant: not able; not possible, metaphysically, logically or physically; or not allowed (r27.169, r27.203); not the "can"s it does not turn on (r27.199)', turns.why);
     const off = asWritten(() => step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs."));

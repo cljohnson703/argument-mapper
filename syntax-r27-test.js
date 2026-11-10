@@ -584,7 +584,7 @@ console.log('\n-- "-able" words (r27.65) --');
     // "we can conceive" asks which "can" is meant; answered "are able to" or
     // "it is possible for", the rule takes it.
     const asked = [tag(['We can conceive of zombies.'], 'Zombies are conceivable.'), tag(['Zombies can be conceived.'], 'Zombies are conceivable.')];
-    ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cIt is possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
+    ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cIt is metaphysically possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
         '"we can conceive of zombies", "zombies can be conceived": which "can" is asked (r27.169)', J(asked));
     // As written (r27.184): "zombies are able to be conceived", a generic,
     // asks with Semantic mode on.
@@ -1089,9 +1089,10 @@ console.log('\n-- a helping verb that may be a noun, where both are English; "is
         return { key: claimKey(r.form).replace(//g, ''), asks: ns.map(function (n) { return { step: !!n.stepDecides, readings: n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
             return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) }; }) };`);
     const tin = said('The tin can hit the wall.'), must = said('The new must cost more.'), bob = said('Bob can hit the wall.'), marys = said("Mary's can hit the wall."), might = said('His might hurt them.');
-    ok(J(tin.asks.map(a => a.readings)) === J([['The tin is able to hit the wall.', 'It is possible for the tin to hit the wall.', 'The tin is allowed to hit the wall.', 'The tin can did hit the wall.']]) &&
+    const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
+    ok(J(tin.asks.map(a => a.readings)) === J([['The tin is able to hit the wall.'].concat(kinds('It is ', ' possible for the tin to hit the wall.'), ['The tin is allowed to hit the wall.', 'The tin can did hit the wall.'])]) &&
         must.asks.length === 1 && must.asks[0].readings[must.asks[0].readings.length - 1] === 'The new must did cost more.' &&
-        J(bob.asks[0].readings) === J(['Bob is able to hit the wall.', 'It is possible for Bob to hit the wall.', 'Bob is allowed to hit the wall.']) &&
+        J(bob.asks[0].readings) === J(['Bob is able to hit the wall.'].concat(kinds('It is ', ' possible for Bob to hit the wall.'), ['Bob is allowed to hit the wall.'])) &&
         marys.asks[0].readings.includes("Mary's can did hit the wall.") && might.asks.some(a => a.readings.includes('His might did hurt them.')),
         '"the tin can hit the wall" offers the noun beside the helping verb\'s readings, with "did" on its verb ("The tin can did hit the wall"); so "must", "might", "may"; not without a determiner ("Bob can")', J([tin, must, bob, marys]));
     const will = said('His last will cost him the farm.');
@@ -1118,18 +1119,19 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
         var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '',
             asked: st && st.why ? (st.why.ambiguous || []).filter(function (a) { return a.readings.length; }).map(function (a) { return a.readings.length; }) : [] };`);
     const mp = step(['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'), flies = step(['Poe flies.'], 'Poe can fly.'), none = step(['Bob might win.'], 'Bob wins.');
-    ok(mp.rule === 'modus ponens' && !mp.why && flies.rule === null && J(flies.asked) === J([3]) && none.rule === null && !none.why,
+    ok(mp.rule === 'modus ponens' && !mp.why && flies.rule === null && J(flies.asked) === J([5]) && none.rule === null && !none.why,
         'a step stands where every reading gives it ("if Poe can fly, ..." and "Poe can fly": one question, whether or not a name opens the box), waits where some do ("Poe flies", so "Poe can fly"), and does not follow, unasked, where none does ("Bob might win", so "Bob wins")', J([mp, flies, none]));
     const dog = step(['Every dog that barks is hungry.', 'A dog barks.'], 'The dog is hungry.');
     ok(dog.rule === null && dog.why === 'Did you mean “Every dog barks”, “Some dog barks”, or “Generally, a dog barks”?',
         'each box is read as written too: "a dog barks" gives "the dog is hungry" as written, where none of "every dog", "some dog" and "generally, a dog" does -- so the step waits for the answer, as it did', J(dog));
-    const only = step(['Poe can fly.', 'Bob might win.'], 'It is possible for Poe to fly.');
-    ok(only.why === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
+    // Said of a kind (r27.203): "possible for" alone asks which.
+    const only = step(['Poe can fly.', 'Bob might win.'], 'It is physically possible for Poe to fly.');
+    ok(only.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?',
         'a step that waits asks what it turns on, and nothing else: not "might", which no answer of it changes', J(only));
     const lone = step(['We cannot conclude that God exists.'], 'God exists.', 'weak-objection'),
         lack = step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable.", 'We lack reasons to think that the tests are reliable.'], 'The tests are reliable.', 'weak-objection'),
         repeats = step(['Poe can fly.'], 'Poe can fly.'), denied = step(["Poe can't fly."], 'Poe can fly.', 'objection');
-    ok(J(lone.asked) === J([2]) && J(lack.asked) === J([2]) && /only repeats/.test(repeats.why) && !repeats.asked.length && J(denied.asked) === J([3, 3]),
+    ok(J(lone.asked) === J([2]) && J(lack.asked) === J([2]) && /only repeats/.test(repeats.why) && !repeats.asked.length && J(denied.asked) === J([5, 5]),
         'a reading on which the box only says again what it is for, or a premise is idle, is valid but no argument: where another reading does not give the step, it asks ("we cannot conclude that God exists", a bare challenge on one reading; "we lack reasons ..." beside "if ..., then it is impossible for us to conclude ...", its conditional idle); where every reading is so, it does not ("only repeats")', J([lone, lack, repeats, denied]));
     const raised = step(['Bob does not think that it rains.'], 'Bob thinks that it does not rain.');
     ok(raised.why === 'Did you mean “It is not the case that Bob thinks that it rains” or “Bob thinks that it does not rain”?',
@@ -1138,8 +1140,8 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
     // And, said as where a step waits, not that a premise is not needed.
     const person = ev(`claimStepTurnsNow = true;
         try { var w = diagnoseDeductiveStep(['All ravens are black.', 'Poe is a raven.', 'Poe can fly.'], 'Poe is black.', false, null, false); return w ? w.text : ''; } finally { claimStepTurnsNow = false; }`);
-    ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “It is possible for the tin to hit the wall”, “The tin is allowed to hit the wall”, or “The tin can did hit the wall”?' &&
-        person === 'Did you mean “Poe is able to fly”, “It is possible for Poe to fly”, or “Poe is allowed to fly”?',
+    ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “It is metaphysically possible for the tin to hit the wall”, “It is logically possible for the tin to hit the wall”, “It is physically possible for the tin to hit the wall”, “The tin is allowed to hit the wall”, or “The tin can did hit the wall”?' &&
+        person === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?',
         'where the step waits, the question is all it says: what the words as written would give is no hint, nor that a premise is not needed', J([tin, person]));
 }
 
@@ -1216,9 +1218,10 @@ console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; th
         '"Bob made Mary into a cake" gives "Bob made a cake", as "the clay into a pot" gives "a pot"; not under "not"', J(into));
     const able = [step(['Poe is able to fly.'], 'It is physically possible for Poe to fly.'), step(['Poe is able to fly.'], 'It is possible for Poe to fly.'),
         step(['Poe is not able to fly.'], 'It is not physically possible for Poe to fly.')];
-    ok(able[0].rule === 'ability gives possibility' && able[1].rule === 'ability gives possibility' && able[2].rule === null &&
+    ok(able[0].rule === 'ability gives possibility' && able[1].rule === null &&
+        able[1].why === 'Did you mean “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, or “It is physically possible for Poe to fly”?' && able[2].rule === null &&
         key('It is physically possible for Poe to fly.').replace(//g, '') === key('It is physically possible that Poe flies.').replace(//g, ''),
-        'what one is able to do is possible -- physically, and "possible for"; not "not able"; "it is physically possible for Poe to fly" says what "... that Poe flies" says', J(able));
+        'what one is able to do is possible -- physically; "possible for" alone asks which kind, in one step only physically (r27.203); not "not able"; "it is physically possible for Poe to fly" says what "... that Poe flies" says', J(able));
     const kinds = [step(['It is physically possible that Poe flies.'], 'It is logically possible that Poe flies.'), step(['It is physically possible for Poe to fly.'], 'It is metaphysically possible for Poe to fly.'),
         step(['It is logically necessary that Poe flies.'], 'It is physically necessary that Poe flies.'), step(['It is logically possible that Poe flies.'], 'It is physically possible that Poe flies.'),
         step(['Poe is able to fly.'], 'It is logically possible for Poe to fly.')];
@@ -1235,6 +1238,58 @@ console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; th
     ok(/"Poe is able to fly" gives "it is physically possible for Poe to fly"/.test(notes[0]) && /^Word meaning, not logic: what is physically possible is metaphysically possible/.test(notes[1] || '') &&
         notes[2] === 'Word meaning: kinds of possibility',
         'in the Logic panel: "Word meaning: kinds of possibility", with its note, and the note of "can" and "-able" says what ability gives', J(notes));
+}
+
+console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio\'s two "possible"s --');
+{
+    // The user, of a reductio on "both zombies are possible and zombies are
+    // not possible", that asks which kind each is: "ok"; of a bare "possible"
+    // asking which kind where a step turns on it: "ok"; of the five readings
+    // of "can": "ok"; of the numbers left: "I'll go with your recommendation".
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+    const readings = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }); });`);
+    const both = 'If physicalism is false, then both zombies are possible and zombies are not possible.';
+    const z = [step([both], 'Physicalism is true.'),
+        step(['If physicalism is false, then both zombies are metaphysically possible and zombies are not possible.'], 'Physicalism is true.'),
+        step(['If physicalism is false, then both zombies are metaphysically possible and zombies are not metaphysically possible.'], 'Physicalism is true.'),
+        step(['If physicalism is false, then both zombies are metaphysically possible and zombies are not physically possible.'], 'Physicalism is true.'),
+        step([both], 'Physicalism is true.', { semantic: false })];
+    ok(z[0].rule === null && z[0].why.indexOf('“' + both + '”: did you mean “If physicalism is false, then both zombies are metaphysically possible and zombies are not possible”') === 0 &&
+        z[0].why.indexOf('did you mean “If physicalism is false, then both zombies are possible and zombies are not metaphysically possible”') > 0 &&
+        z[1].rule === null && z[1].why.indexOf('Did you mean “If physicalism is false, then both zombies are metaphysically possible and zombies are not metaphysically possible”') === 0 &&
+        z[2].rule === 'reductio' && z[3].rule === null && /differ: “physically” in one where the other has “metaphysically”/.test(z[3].why) && z[4].rule === 'reductio',
+        'a reductio on "both zombies are possible and zombies are not possible" asks which kind each "possible" is -- two questions, answering one leaves the other (each had kept the other from being offered, and the reductio stood); of one kind, it stands; of two, they differ; never asking, as written, it stands', J(z));
+    const mt = [step(['If it rains, then it is possible that Poe flies.', 'It is not possible that Poe flies.'], 'It does not rain.'),
+        step(['If it rains, then it is possible that Poe flies.', 'It is not possible that Poe flies.'], 'It does not rain.', { semantic: false })];
+    ok(J(readings('It is not possible that Poe flies.')) === J([['It is metaphysically impossible that Poe flies.', 'It is logically impossible that Poe flies.', 'It is physically impossible that Poe flies.',
+            'It has been established that Poe does not fly.', 'We know that Poe does not fly.']]) &&
+        mt[0].rule === null && /“It is not possible that Poe flies[.]”: did you mean “It is metaphysically impossible that Poe flies”/.test(mt[0].why) && mt[1].rule === 'modus tollens' &&
+        key('It is not possible that Poe flies.') === 'N(A:possible, poe flies)' && key('It is not possible that Poe flies.') === key('It is not the case that it is possible that Poe flies.'),
+        '"it is not possible that Poe flies" asks which kind, as "it is impossible that" does; as written, it denies "it is possible that Poe flies": modus tollens (it had been read as said of "it")', J(mt));
+    const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
+    ok(J(readings('It is possible for Poe to fly.')) === J([kinds('It is ', ' possible for Poe to fly.')]) &&
+        J(readings('It is impossible for Poe to fly.')) === J([kinds('It is ', ' impossible for Poe to fly.')]) &&
+        J(readings('It is not possible for Poe to fly.')) === J([kinds('It is not ', ' possible for Poe to fly.')]) &&
+        J(readings('Poe can fly.')) === J([['Poe is able to fly.'].concat(kinds('It is ', ' possible for Poe to fly.'), ['Poe is allowed to fly.'])]),
+        '"it is possible for Poe to fly", "impossible", "not possible": which kind, metaphysically, logically or physically; "Poe can fly": able, possible of each kind, or allowed', '');
+    const esse = [step(['Poe flies.'], 'It is physically possible for Poe to fly.'), step(['Poe flies.'], 'It is logically possible that Poe flies.'), step(['Poe flies.'], 'It is metaphysically possible for Poe to fly.')];
+    ok(esse[0].rule === 'ab esse ad posse' && esse[1].rule === 'ab esse ad posse' && esse[2].rule === null && /by axiom T/.test(esse[2].why),
+        'what is, is physically and logically possible (ab esse ad posse); metaphysically, by the map\'s axiom T, where its system has it', J(esse));
+    const keys = ['It is physically possible for Poe to fly or swim.', 'It is not physically possible for Poe to beat any player.', 'It is metaphysically possible for Mary to sing and Bob cannot dance.'].map(key);
+    ok(J(keys) === J(['D[◇phys(P:poe|~fly);◇phys(P:poe|~swim)]', '□phys(N(P:poe|~beat player))', 'C[◇meta(P:mary|~sing);N(P:bob|~can dance)]']) &&
+        step(['It is physically possible for Poe to fly or swim.', 'It is not physically possible for Poe to fly.'], 'It is physically possible for Poe to swim.').rule === 'disjunctive syllogism',
+        'of a kind: "to fly or swim", possible to fly or possible to swim (so disjunctive syllogism); "not ... to beat any player", no player; "to sing and Bob cannot dance", two claims', J(keys));
+    ok(J(readings('It is not the case that it rains, it snows, or it hails.')) === J([['It is not the case that either it rains, it snows, or it hails.', 'Either it does not rain, it snows, or it hails.']]) &&
+        J(readings('If physics is complete, then it rains and it snows.')) === J([['If physics is complete, then both it rains and it snows.', 'It snows, and if physics is complete, then it rains.']]) &&
+        J(readings('It snows if it rains and it is cold.')) === J([['It snows if both it rains and it is cold.', 'It is cold, and if it rains, then it snows.']]) &&
+        J(readings('It is not the case that it rains or it snows.')) === J([['It is not the case that either it rains or it snows.', 'It does not rain, or it snows.']]),
+        'no numbers where words read back as they do: "it is not the case that either it rains, it snows, or it hails"; the weather\'s "it" may go first ("It snows, and if physics is complete, then it rains"); a denial in its own words still comes first ("It does not rain, or it snows")', '');
+    const notes = ev(`return [LOGIC_GROUP_GLOSSES.able, (DEDUCTIVE_OPTIONAL_RULES.find(function (g) { return g.id === 'ab-esse-ad-posse'; }) || {}).gloss];`);
+    ok(/"Poe flies" gives "it is physically possible for Poe to fly" and "it is logically possible for Poe to fly"/.test(notes[0]) && /"Poe flies" gives "it is physically possible for Poe to fly"/.test(notes[1] || ''),
+        'the Logic panel says what "what is, can be" gives', J(notes));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

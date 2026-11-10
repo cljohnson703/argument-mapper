@@ -323,13 +323,17 @@ const J = JSON.stringify;
         t.unfit = pop ? pop.querySelectorAll('.rc-unfit').length : 0;
         closeReadingChooser();
         return t;`);
-    // "It is not possible for Poe to beat any player" asks of "any" in turn
-    // -- with Semantic mode on, the default (r27.184).
+    // "Bob can swim, and Mary can too": "Mary can too" is read as "Mary can
+    // swim", and no reading of either "can" reads back in the box's words --
+    // with Semantic mode on, the default (r27.184). It had been "Poe cannot
+    // beat any player", whose "it is not possible for Poe to beat any player"
+    // asked of "any" in turn; each kind of possibility now reads back, "any"
+    // under the denial as "some" (r27.203).
     T(W, `state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-    const beat = asked('Poe cannot beat any player.', 'Poe is weak.');
+    const beat = asked('Bob can swim, and Mary can too.', 'Bob is weak.');
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
-        beat.title.indexOf('“Poe cannot beat any player.” is ambiguous: "can’t" may say what Poe is not able to do, what is not possible for Poe, or what Poe is not allowed to do.') >= 0,
-        'a question one of whose readings does not read back is not asked -- "it is not possible for Poe to beat any player" asks of "any" in turn -- the box is said to be ambiguous, and the tag opens the list', J(beat));
+        beat.title.indexOf('“Bob can swim, and Mary can too.” is ambiguous: "can" may say what Bob is able to do, what is possible for Bob (metaphysically, logically or physically), or what Bob is allowed to do.') >= 0,
+        'a question one of whose readings does not read back is not asked -- "Bob can swim, and Mary can too" -- the box is said to be ambiguous, and the tag opens the list', J(beat));
     // r27.173: the weather's reading, its two conditions grouped, is offered:
     // "it is cold if the street is wet and the sky is grey" had asked what the
     // "if" takes in, and the box had been said to be ambiguous. Grouped by
@@ -411,8 +415,8 @@ const J = JSON.stringify;
         closeReadingChooser(); state.logic = { base: 'standard', rules: {} };
         return r;`);
     ok(otherRow.rows === 7 && otherRow.other === 'Other: none of these. I will reword the box myself.' && /rc-other/.test(otherRow.otherClass) && otherRow.italic && otherRow.closed && otherRow.editing &&
-        otherRow.canRows === 3 && otherRow.canOther === 0,
-        'six readings of "must", then "Other: none of these. I will reword the box myself.", which closes the list and opens the box; not after three readings of "can" (r27.179)', J(otherRow));
+        otherRow.canRows === 9 && otherRow.canOther === 1,
+        'six readings of "must", then "Other: none of these. I will reword the box myself.", which closes the list and opens the box; so after the five readings of "can" (r27.203), and not after the three kinds of "possible for" (r27.179)', J(otherRow));
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);

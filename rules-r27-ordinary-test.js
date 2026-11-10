@@ -1181,7 +1181,7 @@ console.log('\n-- 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": e
     ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
     const p1 = step(['P1 can explain the data.'], 'It is possible for P1 to explain the data.');
     ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
-    ok(/“It is possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1")', p1.why);
+    ok(/“It is metaphysically possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1"), of each kind (r27.203)', p1.why);
 }
 
 console.log('\n-- 42. (r27.178) "Bob called Mary a taxi": a taxi called for Mary, or what Mary was called -- asked every time --');
