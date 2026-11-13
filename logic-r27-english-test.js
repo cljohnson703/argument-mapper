@@ -1114,9 +1114,10 @@ function reportCorpus(name, res) {
             return { offers: (s.why.ambiguous || []).map(function (a) { return (a.offers || []).map(function (o) { return o.words; }); }),
                 key: claimKey(parseClaim('It is possible for Mary to sing and Bob cannot dance.')).replace(/\\uE000/g, '') };`);
         const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
-        ok(J(two.offers) === J([['Mary is able to sing and Bob cannot dance.'].concat(kinds('It is ', ' possible for Mary to sing and Bob cannot dance.'), ['Mary is allowed to sing and Bob cannot dance.']),
-                ['Mary can sing and Bob is not able to dance.'].concat(kinds('Mary can sing and it is not ', ' possible for Bob to dance.'), ['Mary can sing and Bob is not allowed to dance.']),
-                kinds('It is ', ' possible for Mary to sing and it is not possible for Bob to dance.'), kinds('It is possible for Mary to sing and it is not ', ' possible for Bob to dance.')]) &&
+        // A comma between the two clauses (r27.206).
+        ok(J(two.offers) === J([['Mary is able to sing, and Bob cannot dance.'].concat(kinds('It is ', ' possible for Mary to sing, and Bob cannot dance.'), ['Mary is allowed to sing, and Bob cannot dance.']),
+                ['Mary can sing, and Bob is not able to dance.'].concat(kinds('Mary can sing, and it is not ', ' possible for Bob to dance.'), ['Mary can sing, and Bob is not allowed to dance.']),
+                kinds('It is ', ' possible for Mary to sing, and it is not possible for Bob to dance.'), kinds('It is possible for Mary to sing, and it is not ', ' possible for Bob to dance.')]) &&
             /^C\[/.test(two.key),
             'two "can"s in one box, each asked and answered in place; "it is possible for Mary to sing and ..." is two claims (r27.169), each asking which kind (r27.203)', J(two));
         // r27.176 (the user, of Kenny's cards: "I read this as, 'Is there a

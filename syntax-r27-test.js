@@ -1333,12 +1333,52 @@ console.log('\n-- r27.205: a pronoun after the one name asks too --');
     const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; }).map(function (n) { return n.message; });`);
     const s = [step(['Bob left and then she cried.'], 'Bob cried.'), step(['Bob left and then she cried.'], 'Bob left.'), step(['Bob left and then she cried.'], 'Bob cried.', { semantic: false }),
         step(['When Mary exits the room and sees a ripe red tomato, she learns a new fact.', 'If, when Mary exits the room and sees a ripe red tomato, she learns a new fact, then physicalism is false.'], 'Physicalism is false.')];
-    ok(s[0].rule === null && s[0].why === 'Did you mean “Bob left and then Bob cried”, or is “she” someone else?' && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' &&
+    // With a comma between the clauses since r27.206.
+    ok(s[0].rule === null && s[0].why === 'Did you mean “Bob left, and then Bob cried”, or is “she” someone else?' && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' &&
         s[3].rule === 'modus ponens',
         'after the name too: "Bob left and then she cried", so "Bob cried", asks -- it had been read with Bob, the box\'s one name, and followed; "Bob left" follows whoever she is; never asking, it is read with the name, as before; the same clause in two boxes is one question, so modus ponens stands', J(s));
     const more = ['Mary said that the dog bit her.', 'Bob is sad about learning that someone never loved him.', 'Mary believes that she is late.'].map(asked);
     ok(more.every(m => m.length === 1 && /may be “(?:Mary|Bob)”, or someone the box does not name$/.test(m[0])),
         'so across "that" ("said that the dog bit her", "believes that she is late") and in "learning that someone never loved him"', J(more));
+}
+
+console.log('\n-- r27.206: a comma between independent clauses in the app\'s own wordings; "yet" without one --');
+{
+    // The user: "I just don't want the app to recommend sentences without
+    // commas for independent clauses. Others can omit them when it doesn't
+    // force an ambiguity, however, and the app should be able to parse them
+    // appropriately."
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+    const commas = ts => ev(`return typeof claimClauseCommas === 'function' ? ${J(ts)}.map(function (t) { return claimClauseCommas(t); }) : null;`);
+    const put = ['Bob left and then Bob cried', 'Bob left, Mary cried and Ann laughed', 'Bob sings and either Mary dances or Ann runs', 'Bob is happy and so is Mary',
+        'Poe must fly or Poe swims', 'There is a god and God is good', 'Bob left and if Mary cried, then Ann laughed'];
+    ok(J(commas(put)) === J(['Bob left, and then Bob cried', 'Bob left, Mary cried, and Ann laughed', 'Bob sings, and either Mary dances or Ann runs', 'Bob is happy, and so is Mary',
+            'Poe must fly, or Poe swims', 'There is a god, and God is good', 'Bob left, and if Mary cried, then Ann laughed']),
+        'a comma between two clauses an "and", "but", "or" or "yet" joins at the top of the sentence: "Bob left, and then Bob cried"; a series takes its last one; one "and" at the top before "either ... or"', J(commas(put)));
+    const kept = ['It is not the case that it rains and it snows', 'If it rains, then it is wet and it is cold', 'Necessarily, Bob left and Mary cried', 'Possibly Bob left and Mary cried',
+        'Either it is raining or it is cold, and it is snowing', 'Bob sings and Mary dances, or Ann runs', 'Bob is tall and kind', 'Bob loves Mary and Ann', 'O and R together make an attack',
+        '"All ravens fly" and "some ravens fly" have one subject', 'No save is asked for -- and a declined save writes nothing'];
+    ok(J(commas(kept)) === J(kept),
+        'not where the clauses are under something before them ("that", "if", a phrase or an adverb in front), inside "either ... or", where two kinds of joining word would leave it unclear which joins what, nor between words, letters or quotations', J(commas(kept)));
+    const s = [step(['Bob bought a book for Mary and Al cried.'], 'Bob bought Mary a book.'), step(['If it is cold and the street is wet, then Bob stays in.', 'It is cold, and the street is wet.'], 'Bob stays in.')];
+    ok(s[0].why === 'Did you mean “Bob bought a book on Mary\'s behalf, and Al cried” or “Bob bought Mary a book, and Al cried”?' && s[1].rule === 'modus ponens',
+        'the readings offered say it, and written in so, the box reads as the reading: modus ponens', J(s));
+    const typo = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['Mary cried.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'A', type: 'support', texts: ['Bob left and  Mary cried.'], collapsed: [], children: [] } ] }];
+        ensureCollabFields(state); selectedIds = []; render(); deductiveChecked.add('A'); refreshDerivationTags();
+        var tag = document.querySelector('.derivation-tag[data-step="A"]'); deductiveChecked.clear(); refreshDerivationTags();
+        return tag ? tag.title : null;`);
+    ok(/has a typo: two spaces after “and” — “Bob left, and Mary cried\.”\. Read as “Bob left, and Mary cried\.”, the step follows by conjunction elimination/.test(typo || ''),
+        'so a typo\'s fix: "Bob left, and Mary cried"', J(typo));
+    const yet = [step(['Bob left yet Mary stayed.'], 'Mary stayed.'), step(['Zombies are conceivable yet physicalism is true.'], 'Physicalism is true.'),
+        step(['Bob is tall yet kind.'], 'Bob is kind.')];
+    const time = ev(`return ['Bob may yet win.', 'Bob has not yet left.', 'Bob is yet to leave.'].map(function (t) { var f = parseClaim(t); return f ? f.kind : null; });`);
+    ok(yet[0].rule === 'conjunction elimination' && yet[1].rule === 'conjunction elimination' && yet[2].rule === 'conjunction elimination' &&
+        J(time) === J(['pred', 'not', 'pred']),
+        '"yet" between two clauses without a comma joins them, as with one ("Bob left yet Mary stayed", so "Mary stayed"; it had been read as one claim), and between two adjectives, as "but" does; not the "yet" of time ("Bob may yet win", "has not yet left", "is yet to leave", "has yet to be shown")', J([yet, time]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

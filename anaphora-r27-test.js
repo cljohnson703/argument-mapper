@@ -467,7 +467,7 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
     const house = read('In the old house, it is cold.').notes;
     ok(house.length && !house.some(n => /^ambiguous/.test(n)), '"In the old house, it is cold": the weather there -- not "it" with nothing to refer to', J(house));
     const mp = step(['If it is cold and the street is wet, then Bob stays in.', 'The street is wet and it is cold.'], 'Bob stays in.');
-    ok(mp.tag === '? ambiguous' && mp.rows.length === 2 && mp.rows[1] === 'It is cold and the street is wet.' && !mp.rows.some(r => /follows/.test(r)),
+    ok(mp.tag === '? ambiguous' && mp.rows.length === 2 && mp.rows[1] === 'It is cold, and the street is wet.' && !mp.rows.some(r => /follows/.test(r)),
         'a step that needs the weather asks, the weather a reading -- not said to be the one that gives it (r27.166)', J(mp));
     const chosen = step(['If it is cold and the street is wet, then Bob stays in.', 'It is cold and the street is wet.'], 'Bob stays in.');
     ok(chosen.tag === '✓ modus ponens', 'and with it written in, follows', J(chosen));

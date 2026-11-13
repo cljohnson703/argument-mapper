@@ -4,6 +4,42 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 13: commas between clauses in the app's own wordings; "yet" without one (r27.206)
+
+The user:
+* "I just don't want the app to recommend sentences without commas for independent clauses. Others can omit them when it doesn't force an ambiguity, however, and the app should be able to parse them appropriately."
+
+Changes:
+* The readings the app offers, in "Did you mean ...?" and in the list of readings, put a comma between two clauses that an "and", "but", "or" or "yet" joins at the top of the sentence.
+  * "Did you mean 'Bob left, and then Bob cried', or is 'she' someone else?". It had been "Bob left and then Bob cried".
+  * So a typo's fix: "Bob left, and Mary cried".
+  * A series takes its last comma: "Bob left, Mary cried, and Ann laughed".
+  * Chosen, the reading is written in with its comma, and the box reads as the reading.
+  * Only where the sentence reads the same with the comma.
+* Not where the clauses are not independent, or share what comes first:
+  * after "that", "if", "because" and the like: "It is not the case that it rains and it snows"; "If it rains, then it is wet and it is cold";
+  * after a phrase or an adverb in front: "Necessarily, Bob left and Mary cried"; "Possibly Bob left and Mary cried";
+  * inside "either ... or", "both ... and" or "neither ... nor": "Bob sings, and either Mary dances or Ann runs"; "Either it is raining or it is cold, and it is snowing";
+  * where an "and" and an "or" both join clauses, so commas would not show which joins what: "Bob sings and Mary dances, or Ann runs";
+  * between words, letters or quotations: "Bob is tall and kind"; "O and R together make an attack".
+* "Yet" between two clauses without a comma joins them, as it does with one, and as "but" does.
+  * "Bob left yet Mary stayed; so Mary stayed" follows by conjunction elimination. It had read the box as one claim.
+  * So between two adjectives: "Bob is tall yet kind; so Bob is kind".
+  * Not the "yet" of time: "Bob may yet win", "Bob has not yet left", "Bob is yet to leave", "It has yet to be shown that Fido is wise".
+
+Tests:
+* syntax-r27-test.js has 186 checks.
+  * The 5 new ones fail on r27.205.
+  * Changed: the r27.205 question has its comma.
+* The offered wordings, with their commas:
+  * reading-r27-chooser-test.js: "All ravens fly, and crows sing"; "Bob bought Mary a book, and Al cried", written in.
+  * anaphora-r27-test.js: "It is cold, and the street is wet".
+  * logic-r27-english-test.js: "Mary can sing, and Bob is not able to dance".
+* Take-one-out: each of the 4 changes is caught.
+* 0 sentences in the corpus read differently. In 36, the readings offered differ, and only by commas (76 wordings).
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 13: a pronoun after the one name asks too (r27.205)
 
 The user:

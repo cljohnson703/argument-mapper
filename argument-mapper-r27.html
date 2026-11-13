@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-13 r27.205';
+    const APP_BUILD = '2026-11-13 r27.206';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11147,6 +11147,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // part ("Poe flies, but he sings if it rains": the user's commas).
             .replace(/(,?)\s+(?:and yet|and also|but also|but|whereas)\s+/g, (m, comma) => comma + ' and ')
             .replace(/,\s+yet\s+/g, ', and ')
+            // So without the comma, between two clauses: "Bob left yet Mary
+            // stayed" (r27.206; the user: "Others can omit them when it doesn't
+            // force an ambiguity, however, and the app should be able to parse
+            // them appropriately"). It had been read as one claim. So between
+            // two adjectives, as "but" is: "Bob is tall yet kind". Not the
+            // "yet" of time: "Bob may yet win", "Bob has not yet left", "Bob
+            // is yet to leave".
+            .replace(/([^\s,;:])\s+yet\s+(?=\S)/g, (m, c, at, str) => {
+                const before = str.slice(0, at + 1).split(/[,;:]\s*|\s(?:and|or|but|then|that|if|because|since|when|while|although|though|unless)\s+/i).pop();
+                const after = str.slice(at + m.length).split(/[,;:.!?]|\s(?:and|or|but|because|since|when|while|although|though|unless|if)\s/i)[0];
+                const last = before.trim().split(/\s+/).pop(), next = after.trim().split(/\s+/)[0];
+                if (!last || !next) return m;
+                // The first clause ends in no helping verb or "not" ("it has yet
+                // to be shown that ...", "it has not yet been established that
+                // ..."); the second opens with its subject.
+                const l = claimSynWord(last), n = claimSynWord(next);
+                const clauses = !l.aux && !l.prep && !/^(?:not|never|been|be|being)$/.test(l.w) && !n.aux && !n.prep &&
+                    ((n.pro && n.pro !== 'obj') || n.det || n.quant || n.name || (n.noun && !n.participle)) &&
+                    claimLooksLikeClause(before.trim()) && claimLooksLikeClause(after.trim());
+                return clauses || (claimKnownAdjective(last) && claimKnownAdjective(next)) ? c + ' and ' : m;
+            })
             .replace(/(\S+)\s+(even though|although|though)\s+/g, (m, before, word) =>
                 before === 'as' || before === 'even' ? m : before + ' and ')
             .replace(/\s+/g, ' ')
@@ -35297,6 +35318,73 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return s;
     }
+    // A comma between two clauses that an "and", "but", "or" or "yet" joins
+    // at the top of the sentence, in the app's own wordings (r27.206; the
+    // user: "I just don't want the app to recommend sentences without
+    // commas for independent clauses"): "Bob left, and then Bob cried";
+    // "Bob left, Mary cried, and Ann laughed". Not where the clauses are under
+    // something before them -- "that", "if", "because" and the like, a
+    // phrase set off by a comma, an adverb in front ("It is not the case that
+    // it rains and it snows", "If it rains, then it is wet and it is cold",
+    // "Necessarily, Bob left and Mary cried", "Possibly Bob left and Mary
+    // cried") -- where they are not independent, or share what comes first;
+    // nor after "both", "either" or "neither", which group what follows them
+    // ("Either it is raining or it is cold, and it is snowing"). The callers
+    // keep it only where the sentence reads the same with it
+    // (claimCommaWords).
+    const CLAIM_COMMA_UNDER = /\b(?:that|if|iff|unless|whether|when|whenever|while|whilst|because|since|although|though|before|after|until|till|once|as|than|who|whom|whose|which|where|wherever|whereas|both|either|neither|nor|between|provided|providing|assuming|supposing|given|lest)\b/i;
+    function claimClauseCommas(text) {
+        const s = String(text == null ? '' : text);
+        if (!/\s(?:and|but|or|yet)\s/i.test(s)) return s;
+        const mask = claimTopLevelMask(s), re = /([^\s,;:–—-])(\s+)(and|but|or|yet)(\s+)/gi;
+        // A clause of more than one word, not a quotation or a group alone:
+        // not the "O" of "O and R together make an attack", nor "'A' and 'B'".
+        const grouped = x => /^["“'(][\s\S]*["”')]$/.test(x) && claimTopLevelMask(x, true);
+        const clause = t => { const x = t.trim(); return /\s/.test(x) && !grouped(x) && claimLooksLikeClause(normalizeClaimText(x)); };
+        // One kind of joining word at the top -- "and" (so "but" and "yet") or
+        // "or" -- or the commas would not show which joins what: "Bob sings
+        // and Mary dances, or Ann runs" keeps its one comma; "Bob sings and
+        // either Mary dances or Ann runs" has one "and" at the top.
+        const kinds = new Set();
+        for (const j of mask.matchAll(/\s(and|but|or|yet)\s/gi)) if (!CLAIM_COMMA_UNDER.test(mask.slice(0, j.index))) kinds.add(/^or$/i.test(j[1]) ? 'or' : 'and');
+        if (kinds.size > 1) return s;
+        let out = '', from = 0, cut = 0, m;
+        while ((m = re.exec(mask))) {
+            const at = m.index + 1, upTo = mask.slice(0, at);
+            if (CLAIM_COMMA_UNDER.test(upTo)) continue;
+            // From the last place two clauses part, ", and" or one put in.
+            const parted = /^[\s\S]*,\s+(?:and|but|or|yet)\s+/i.exec(upTo), lead = s.slice(Math.max(cut, parted ? parted[0].length : 0), at);
+            // A series of clauses ("Bob left, Mary cried and Ann laughed") takes
+            // its comma; a phrase set off in front shares what follows.
+            const pieces = claimSplitTop(lead, /\s*,\s+/);
+            if (pieces.length > 1 ? !pieces.every(clause) : !clause(lead)) continue;
+            // An adverb in front of the first clause is said of both: "Possibly
+            // Bob left and Mary cried" (not "Emily left and Bob cried").
+            const first = claimTokens(normalizeClaimText(lead.trim()))[0], w0 = first ? claimSynWord(first) : null;
+            if (!w0 || (w0.adv && !w0.noun && !w0.name && !/^(?:not|either|there)$/.test(w0.w) && clause(lead.trim().replace(/^\S+\s+/, '')))) continue;
+            // What follows the joining word is a clause: "and then Bob cried",
+            // "and so is Mary".
+            const rest = s.slice(at + m[2].length + m[3].length + m[4].length);
+            if (!clause(rest.replace(/^(?:then|also|so|else|still)\s+/i, '')) &&
+                !/^(?:so|neither|nor)\s+(?:is|are|was|were|am|do|does|did|has|have|had|can|could|will|would|shall|should|may|might|must)\s+\S/i.test(rest)) continue;
+            out += s.slice(from, at) + ',';
+            from = at; cut = at + m[2].length + m[3].length + m[4].length;
+        }
+        return from ? out + s.slice(from) : s;
+    }
+    // A wording with those commas where it reads the same with them:
+    // `readsBack`, the caller's test, or the same claim with the same
+    // questions (r27.206).
+    function claimCommaWords(words, readsBack) {
+        const said = String(words == null ? '' : words), c = claimClauseCommas(said);
+        if (c === said) return words;
+        const same = readsBack || (w => claimQuietly(() => {
+            const a = parseClaimFull(said), b = parseClaimFull(w);
+            const asks = x => x.notes.filter(n => n.kind === 'ambiguous').map(n => n.message).sort().join('\n');
+            return !!a.form && !!b.form && claimSame(a.form, b.form) && asks(a) === asks(b);
+        }));
+        return same(c) ? c : words;
+    }
     function claimReadingWords(label, original) {
         let w = claimNumberBack(claimRecase(claimLabel(label), original).trim());
         w = w.replace(/^((?:\(|\(?(?:\d{1,2}|[ivx]{1,4}|[a-z])\)\s+)*)([a-z])/, (m, lead, c) => lead + c.toUpperCase());
@@ -35346,12 +35434,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimReadingOffers(entry, denials) {
         const step = { denials: denials || [] }, out = [];
         (entry.readings || []).forEach((label, r) => {
-            if (entry.typo) { out.push({ reading: r, label, words: label }); return; }
+            if (entry.typo) { out.push({ reading: r, label, words: claimCommaWords(label) }); return; }
             const words = claimReadingWords(label, entry.text);
-            if (claimAsStepReads(step, () => entry.object ? !!parseClaim(words) : claimReadingRoundTrips(entry, r, words))) { out.push({ reading: r, label, words }); return; }
+            const back = w => claimAsStepReads(step, () => entry.object ? !!parseClaim(w) : claimReadingRoundTrips(entry, r, w));
+            if (back(words)) { out.push({ reading: r, label, words: claimCommaWords(words, entry.object ? null : back) }); return; }
             const inPlace = claimAsStepReads(step, () => claimAnyWords(entry, label) || claimCanWords(entry, label) || claimSomeWords(entry, label) ||
                 claimGenericWords(entry, label) || claimPartWords(entry, label));
-            if (inPlace && claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, inPlace))) out.push({ reading: r, label, words: inPlace });
+            const backInPlace = w => claimAsStepReads(step, () => claimReadingRoundTrips(entry, r, w));
+            if (inPlace && backInPlace(inPlace)) out.push({ reading: r, label, words: claimCommaWords(inPlace, backInPlace) });
         });
         return out;
     }
@@ -35377,8 +35467,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             ? (questions > 1 ? quote(a.text) + ': did you mean ' : 'Did you mean ') + (a.other ? a.offers.map(o => said(o.words)).join(', ') + ', or ' + (/ and /.test(a.other) ? 'are ' : 'is ') + a.other + ' someone else'
                 : claimListWords(a.offers.map(o => said(o.words)), 'or')) + '?'
             : quote(a.text) + (a.typo ? ' has a typo: ' : a.missing || a.single ? ': ' : a.grammar ? ' has a grammar slip: ' : ' is ambiguous: ') + a.message +
-                (a.readings.length ? ' \u2014 ' + a.readings.map(r => quote(claimRecase(claimLabel(r), a.text))).join(' or ') + '.' : '.') +
-                (a.typo ? a.derives.map(d => ' Read as ' + quote(claimRecase(claimLabel(d.label), a.text)) + (d.bare ? ', it only denies the box it objects to: a denial is not an argument.'
+                (a.readings.length ? ' \u2014 ' + a.readings.map(r => quote(claimCommaWords(claimRecase(claimLabel(r), a.text)))).join(' or ') + '.' : '.') +
+                (a.typo ? a.derives.map(d => ' Read as ' + quote(claimCommaWords(claimRecase(claimLabel(d.label), a.text))) + (d.bare ? ', it only denies the box it objects to: a denial is not an argument.'
                     : d.bareChallenge ? ', it only says that the box it objects to has not been established: a challenge needs reasons too.'
                     : ', the step follows by ' + d.rule.name + '.')).join('') : ''));
     }

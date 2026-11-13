@@ -354,8 +354,9 @@ const J = JSON.stringify;
     // the step turns on it -- "ravens" for "some raven flies", "crows" for
     // "some crow sings".
     ok(longer.tag === '? generic' && longer.chooser && !longer.unfit &&
-        J(longer.rows) === J(['All ravens fly and crows sing.', 'Some ravens fly and crows sing.', 'Most ravens fly and crows sing.', 'Ravens generally fly and crows sing.']) &&
-        crows.tag === '? generic' && J(crows.rows) === J(['Ravens fly and all crows sing.', 'Ravens fly and some crows sing.', 'Ravens fly and most crows sing.', 'Ravens fly and crows generally sing.']),
+        // A comma between the two clauses (r27.206).
+        J(longer.rows) === J(['All ravens fly, and crows sing.', 'Some ravens fly, and crows sing.', 'Most ravens fly, and crows sing.', 'Ravens generally fly, and crows sing.']) &&
+        crows.tag === '? generic' && J(crows.rows) === J(['Ravens fly, and all crows sing.', 'Ravens fly, and some crows sing.', 'Ravens fly, and most crows sing.', 'Ravens fly, and crows generally sing.']),
         'a generic inside a longer box: its four readings, each in place -- "in general" too, as "ravens generally fly" -- and each can be chosen; so for "crows", where the step turns on it (r27.185, r27.199)', J([longer, crows]));
     const general = T(W, `return [['Ravens generally fly.', 'Generally, ravens fly.'], ['A raven generally flies.', 'Generally, a raven flies.']].map(function (p) {
         var a = parseClaimFull(p[0]), b = parseClaimFull(p[1]);
@@ -373,8 +374,8 @@ const J = JSON.stringify;
         return { general: general, some: { box: __c.text('S'), tag: __c.tag('S').textContent } };`);
     // r27.199: "crows", which "some raven flies" does not turn on, asks
     // nothing beside either (r27.184 had asked it every time).
-    ok(!!written.general && written.general.box === 'Ravens generally fly and crows sing.' && written.general.tag === '? not recognized' &&
-        !!written.some && written.some.box === 'Some ravens fly and crows sing.' && written.some.tag === '\u2713 conjunction elimination',
+    ok(!!written.general && written.general.box === 'Ravens generally fly, and crows sing.' && written.general.tag === '? not recognized' &&
+        !!written.some && written.some.box === 'Some ravens fly, and crows sing.' && written.some.tag === '\u2713 conjunction elimination',
         'written in: "ravens generally fly" is one claim, and "some ravens fly" is "some", which gives "some raven flies"; "crows" asks nothing beside either (r27.185, r27.199)', J(written));
     const back = T(W, `var t = 'If computer programs are only formal (syntactic), then computers lack semantics.';
         var n = parseClaimFull(t).notes.filter(function (x) { return x.generic; })[0];
@@ -393,8 +394,8 @@ const J = JSON.stringify;
         pop.querySelector('.rc-apply').click();
         return { before: before, head: head, shown: shown, box: __c.text('S'), after: __c.tag('S').textContent };`);
     ok(forMary.before === '? ambiguous' && forMary.head === 'Did you mean:' &&
-        J(forMary.shown) === J(["Bob bought a book on Mary's behalf and Al cried.", 'Bob bought Mary a book and Al cried.']) &&
-        forMary.box === 'Bob bought Mary a book and Al cried.' && forMary.after === '✓ conjunction elimination',
+        J(forMary.shown) === J(["Bob bought a book on Mary's behalf, and Al cried.", 'Bob bought Mary a book, and Al cried.']) &&
+        forMary.box === 'Bob bought Mary a book, and Al cried.' && forMary.after === '✓ conjunction elimination',
         '"for Mary" holds back a step one reading gives, and asks; "Bob bought Mary a book" chosen, it is written in, and the step follows', J(forMary));
 
     // r27.179 (the user: "If there are too many, we can give the option
