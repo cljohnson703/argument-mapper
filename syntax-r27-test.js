@@ -1317,8 +1317,28 @@ console.log('\n-- r27.204: a pronoun before the one name it may be: the name, or
         step(['If Bob wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.'), step(['His dog loves Bob.'], 'Something loves Bob.')];
     ok(s[0].rule === null && s[0].why === 'Did you mean “If Bob wins, then Bob is happy”, or is “he” someone else?' &&
         s[1].rule === 'conjunction elimination' && s[2].rule === null && s[2].why === 'Did you mean “Although Mary was tired, Mary agreed”, or is “she” someone else?' &&
-        s[3].rule === null && /set Semantic mode/.test(s[3].why) && s[4].rule === 'modus ponens' && s[5].rule === 'existential introduction',
-        'where a step turns on it, it asks "Did you mean ..., or is "he" someone else?"; where it holds whoever the pronoun is, it stands ("Although she was tired, Mary agreed", so "Mary agreed"); never asking, the pronoun as written gives no step, and the hint says so; with the name, modus ponens', J(s));
+        s[3].rule === 'modus ponens' && s[4].rule === 'modus ponens' && s[5].rule === 'existential introduction',
+        'where a step turns on it, it asks "Did you mean ..., or is "he" someone else?"; where it holds whoever the pronoun is, it stands ("Although she was tired, Mary agreed", so "Mary agreed"); never asking, the pronoun is read as the name, as before r27.204 (r27.205); with the name, modus ponens', J(s));
+}
+
+console.log('\n-- r27.205: a pronoun after the one name asks too --');
+{
+    // The user, of asking after the name too -- the name, or someone else,
+    // where a step turns on it, reversing "the only available referent is the
+    // referent" (2026-09-28): "ok".
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+    const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; }).map(function (n) { return n.message; });`);
+    const s = [step(['Bob left and then she cried.'], 'Bob cried.'), step(['Bob left and then she cried.'], 'Bob left.'), step(['Bob left and then she cried.'], 'Bob cried.', { semantic: false }),
+        step(['When Mary exits the room and sees a ripe red tomato, she learns a new fact.', 'If, when Mary exits the room and sees a ripe red tomato, she learns a new fact, then physicalism is false.'], 'Physicalism is false.')];
+    ok(s[0].rule === null && s[0].why === 'Did you mean “Bob left and then Bob cried”, or is “she” someone else?' && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' &&
+        s[3].rule === 'modus ponens',
+        'after the name too: "Bob left and then she cried", so "Bob cried", asks -- it had been read with Bob, the box\'s one name, and followed; "Bob left" follows whoever she is; never asking, it is read with the name, as before; the same clause in two boxes is one question, so modus ponens stands', J(s));
+    const more = ['Mary said that the dog bit her.', 'Bob is sad about learning that someone never loved him.', 'Mary believes that she is late.'].map(asked);
+    ok(more.every(m => m.length === 1 && /may be “(?:Mary|Bob)”, or someone the box does not name$/.test(m[0])),
+        'so across "that" ("said that the dog bit her", "believes that she is late") and in "learning that someone never loved him"', J(more));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

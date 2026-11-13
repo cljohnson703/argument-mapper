@@ -285,13 +285,19 @@ try {
     }
     for (const [sentence, explicit] of [
         ['If Poe is a raven, then it is black', 'If Poe is a raven, then Poe is black'],
-        ['Ada is tall and she is kind', 'Ada is tall and Ada is kind'],
         ['The geese are noisy and they are hungry', 'The geese are noisy and the geese are hungry'],
         ['If something is a raven, then it is black', 'Every raven is black']
     ]) {
         const result = call(`input => { const r = parseClaimFull(input.sentence); return {same: claimKey(r.form) === claimKey(parseClaim(input.explicit)),
             flagged: r.notes.some(n => n.kind === 'ambiguous' && n.always)}; }`, {sentence,explicit});
         check(result.same && !result.flagged, 'unique same-premise referent: ' + sentence + ' ' + JSON.stringify(result));
+    }
+    // r27.205: "she" after the box's one name is read as it, and asked about:
+    // she may be Ada or someone the box does not name.
+    {
+        const result = call(`input => { const r = parseClaimFull(input.sentence); return {same: claimKey(r.form) === claimKey(parseClaim(input.explicit)),
+            asked: r.notes.some(n => n.kind === 'ambiguous' && n.pronoun && /or someone the box does not name/.test(n.message))}; }`, {sentence: 'Ada is tall and she is kind', explicit: 'Ada is tall and Ada is kind'});
+        check(result.same && result.asked, 'a "she" after the one name: read as it, and asked (r27.205): Ada is tall and she is kind ' + JSON.stringify(result));
     }
     for (const sentence of ['She is kind', 'Ada is tall and Bea is kind and she is happy',
         'If Ada is a friend of Bea, then she is kind', 'If something is a stove, then it is hot', 'If Poe is a stove, then it is hot',

@@ -212,7 +212,7 @@ const J = JSON.stringify;
     // window"). Step 4's three questions made the window taller than a laptop
     // screen, with no way to scroll to the last one; and each question's own
     // button wrote its one box and closed the window.
-    const P1 = "The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.";
+    const P1 = "The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.";
     const P2 = "Non-occurrent beliefs within a subject's brain are mental states of that subject.";
     const C = "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.";
     const several = T(W, `__c.load(${J([N('M', 'contention', [C], [N('S', 'support', [P1, P2])], { x: 30000, y: 30000 })])});
@@ -236,7 +236,7 @@ const J = JSON.stringify;
     ok(J(several.buttons) === J([{ text: 'Rewrite the boxes this way', foot: true, off: true }]),
         'three questions: one button, kept in view at the window\'s foot, for every box a reading is chosen for', J(several.buttons));
     ok(several.marked === 0 && several.picked === 3 && several.enabled && !several.after.open && /existential syllogism/.test(several.after.tag || '') &&
-        several.after.box[0] === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain." &&
+        several.after.box[0] === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain." &&
         several.after.box[1] === "All non-occurrent beliefs within a subject's brain are mental states of that subject." &&
         several.after.parent === "The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.",
         'no reading marked (r27.166); the three that give the step chosen and the button pressed once: the three boxes rewritten, and the step follows', J(several.after));
@@ -267,7 +267,7 @@ const J = JSON.stringify;
         var rows = [].slice.call(pop.querySelectorAll('.rc-row')).map(function (r) { return { shown: r.querySelector('span').firstChild.textContent, whole: r.title }; });
         var notes = [].slice.call(pop.querySelectorAll('.rc-note')).map(function (n) { return [n.previousElementSibling.title, n.textContent]; });
         return { rows: rows, notes: notes };`);
-    ok(first.rows[0] && first.rows[0].shown === '…as some non-occurrent beliefs within his brain.' && first.rows[0].whole === P1.replace('as non-occurrent', 'as some non-occurrent') &&
+    ok(first.rows[0] && first.rows[0].shown === '…as some non-occurrent beliefs within Otto\'s brain.' && first.rows[0].whole === P1.replace('as non-occurrent', 'as some non-occurrent') &&
         first.rows[3] && first.rows[3].shown === 'All non-occurrent beliefs within a subject\'s brain …',
         'a row shows what its reading changes, the box whole on hover', J(first.rows.slice(0, 4)));
     ok(!first.notes.length, 'no notes, before a reading is chosen, of what it would set off in other steps', J(first.notes));

@@ -171,7 +171,7 @@ console.log('\n-- 4. "a subject ... that subject": any subject, said of the one 
     // step?"): the rule and its case, one universal modus ponens, as "every
     // raven that sings is black" and its case are. r27.117 had made it two.
     const U = "Anything that is a mental state of a subject is a part of that subject's mind.", I = "Anything that is a mental state of Otto is a part of Otto's mind.";
-    const CASE = "The records in Otto's notebook are mental states of Otto.", C = "The records in Otto's notebook are a part of his mind.";
+    const CASE = "The records in Otto's notebook are mental states of Otto.", C = "The records in Otto's notebook are a part of Otto's mind.";
     const s = step([U, CASE], C);
     ok(s.rule === 'universal modus ponens', 'the rule and its case: one step', J(s));
     ok(J(s.colors) === J([['ic-k0: Anything that is a mental state of a subject', "ic-c: is a part of that subject's mind", 'ic-rest: .'],
@@ -180,8 +180,8 @@ console.log('\n-- 4. "a subject ... that subject": any subject, said of the one 
     ok(also.every(x => x.rule === 'universal modus ponens'), 'with "Otto is a subject" beside them, used; the rule said of Otto alone; and that rule with the case', J(also.map(x => x.rule)));
     const more = [
         step(["Every mental state of a subject is a part of that subject's mind.", 'The belief is a mental state of Otto.'], "The belief is a part of Otto's mind."),
-        step([U, "The records in Otto's notebook are not a part of his mind."], "The records in Otto's notebook are not mental states of Otto."),
-        step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
+        step([U, "The records in Otto's notebook are not a part of Otto's mind."], "The records in Otto's notebook are not mental states of Otto."),
+        step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
             "Anything that plays the same causal/explanatory role as non-occurrent beliefs within a subject's brain plays the same causal/explanatory role as mental states of that subject."],
             "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto."),
         step(['Anything that is a child of a person is loved by that person.', 'Bob is a child of Mary.', 'Mary is a person.'], 'Bob is loved by Mary.'),
@@ -199,7 +199,7 @@ console.log('\n-- 4. "a subject ... that subject": any subject, said of the one 
         step([U, 'The records are not mental states of Otto.'], "The records are not a part of Otto's mind."),
         step([U, 'Mary is a subject.'], I)];
     ok(not.every(x => !x.rule), 'not of another subject, not under "some", not the converse, the other way round, or the antecedent denied', J(not.map(x => x.rule)));
-    const extra = asWritten(() => step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
+    const extra = asWritten(() => step(["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
         "Non-occurrent beliefs within a subject's brain are mental states of that subject.",
         "Anything that plays the same causal/explanatory role as non-occurrent beliefs within a subject's brain plays the same causal/explanatory role as mental states of that subject."],
         "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto."));
@@ -224,11 +224,11 @@ console.log('\n-- 6. what the check says --');
         'All non-occurrent beliefs have to have the capacity to influence reasoning without being consciously recalled.'], 'Influencing reasoning is not a necessary function of non-occurrent beliefs.', 'rebuttal');
     ok(/‘influencing reasoning is a necessary function of non-occurrent beliefs’ differ: “fucntion” in one where the other has “function”\.$/.test(typo.why),
         'what a denial denies, in its own words: "is a necessary function" (it had been "influencing reasoning necessary function"), and the one word that differs', typo.why);
-    const mind = asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."],
+    const mind = asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of Otto's mind."],
         "Minds don't extend into the world.", 'objection'));
     ok(mind.tag === '✗ spelled differently' && /^Worded the same way each time, the premises would give the denial of “Minds don't extend into the world” by modus ponens, but ‘the mind extends into the world’ and ‘minds extend into the world’ are worded differently\./.test(mind.why),
         '"the mind" and "minds": "Worded", not "Spelled", the same way', mind.why);
-    ok(asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of his mind."], "Minds don't extend into the world.", 'objection').rule) === 'modus ponens',
+    ok(asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of Otto's mind."], "Minds don't extend into the world.", 'objection').rule) === 'modus ponens',
         'so worded, the objection follows');
     // With "is able to" for "can", which asks which is meant (r27.169).
     const ob = step(['If the notebook is able to perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook do not have to perform all the relevant functions of non-occurrent beliefs.',
@@ -258,9 +258,15 @@ console.log('\n-- 6. what the check says --');
     ok(/‘syntactics is not sufficient for semantics’ and ‘syntax is not sufficient for semantics’ differ: “syntactics” in one where the other has “syntax”\.$/.test(syn.why),
         'a copula\'s number is no difference in words ("syntactics are" and "syntax is" differ in "syntactics" alone)', syn.why);
     const verdict = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ["Minds don't extend into the world."], collapsed: [], x: 0, y: 0, children: [
-        { id: 'A', type: 'objection', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."], collapsed: [], children: [] } ] }];
+        { id: 'A', type: 'objection', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of Otto's mind."], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render(); var steps = collectDeductiveSteps(state.trees), v = claimMapVerdict(state.trees, steps); return claimVerdictWhy(v, v('M', 0));`);
-    ok(!/\.\./.test(verdict) && /gives\. Nothing on the map supports it\.$/.test(verdict), 'the verdict\'s reason ends once ("gives.", not "gives..")', verdict);
+    ok(!/\.\./.test(verdict) && /[a-z]\. Nothing on the map supports it\.$/.test(verdict), 'the verdict\'s reason ends once (one full stop, not two)', verdict);
+    // r27.205: as the map has it, "a part of his mind": "his" may be Otto or
+    // someone else, and the step asks.
+    const hisMind = ev(`var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: ["The mind extends into the world."], collapsed: [], children: [
+        { id: 'A', type: 'support', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."], collapsed: [], children: [] } ] }])[0];
+        return st.why && st.why.text;`);
+    ok(hisMind === "Did you mean “The records in Otto's notebook are a part of Otto's mind”, or is “his” someone else?", '"a part of his mind": asked whether "his" is Otto (r27.205)', hisMind);
 }
 
 console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (r27.119) --');
@@ -332,14 +338,14 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
         [['Bob almost hit a poodle.', 'Every poodle is a dog.'], 'Bob almost hit a dog.']]
         .filter(([p, c]) => rule(p, c));
     ok(!none.length, 'but not from a dog to a poodle, after "fears" or "must", with "large" kept (a large mouse is no large animal), after "not", to another kind, nor after "almost"', J(none));
-    const otto = ["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.",
+    const otto = ["The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
         "Non-occurrent beliefs within a subject's brain are mental states of that subject."];
     const asked = step(otto, "The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.");
     // r27.166: each box's question, its readings in the box's words; not
     // which the step follows on (answered, it does: the next check).
-    ok(asked.tag === '? generic' && asked.why.indexOf("“The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.”: did you mean " +
-            "“The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain”, “The records in Otto's notebook play the same causal/explanatory role as all non-occurrent beliefs within his brain”, " +
-            "or “The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain in general”?") === 0 &&
+    ok(asked.tag === '? generic' && asked.why.indexOf("“The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.”: did you mean " +
+            "“The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain”, “The records in Otto's notebook play the same causal/explanatory role as all non-occurrent beliefs within Otto's brain”, " +
+            "or “The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain in general”?") === 0 &&
        asked.why.indexOf("“Non-occurrent beliefs within a subject's brain are mental states of that subject.”: did you mean “All non-occurrent beliefs within a subject's brain are mental states of that subject”, " +
             "“Some non-occurrent beliefs within a subject's brain are mental states of that subject”, “Most non-occurrent beliefs within a subject's brain are mental states of that subject”, " +
             "or “Generally, non-occurrent beliefs within a subject's brain are mental states of that subject”?") > 0 &&
@@ -347,10 +353,10 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
             "“The records in Otto's notebook play the same causal/explanatory role as all mental states of Otto”, or “The records in Otto's notebook play the same causal/explanatory role as mental states of Otto in general”?") > 0 &&
        !/follows by/.test(asked.why),
        'step 4 as written asks: the bare plurals after the verb (some, all, or in general) and the rule\'s (all, some, most, or in general), each box by name -- and not which readings give it', asked.why);
-    const answered = step(["The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.",
+    const answered = step(["The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain.",
         "All non-occurrent beliefs within a subject's brain are mental states of that subject."], "The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.");
     ok(answered.rule === 'existential syllogism' && J(answered.colors) === J([
-        ["ic-c: The records in Otto's notebook play the same causal/explanatory role as some", 'ic-k0: non-occurrent beliefs within his brain', 'ic-rest: .'],
+        ["ic-c: The records in Otto's notebook play the same causal/explanatory role as some", 'ic-k0: non-occurrent beliefs within Otto\'s brain', 'ic-rest: .'],
         ["ic-k0: All non-occurrent beliefs within a subject's brain", 'ic-c: are mental states of that subject', 'ic-rest: .']]),
         'answered, it follows; the verb\'s words go on, the object meets the rule\'s kind, and the rule\'s predicate goes on as the object', J(answered));
     const chosen = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ["The records in Otto's notebook play the same causal/explanatory role as mental states of Otto."], collapsed: [], x: 0, y: 0, children: [
@@ -364,11 +370,11 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
         var radio = rows[0].querySelector('input'); radio.checked = true; radio.dispatchEvent(new window.Event('change'));
         pop.querySelector('.rc-apply').click();
         return { heads: heads, marked: marked, fits: fits, box: state.trees[0].children[0].texts[0] };`);
-    ok(J(chosen.heads) === J(["“The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within his brain.” — did you mean:",
+    ok(J(chosen.heads) === J(["“The records in Otto's notebook play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.” — did you mean:",
             "“Non-occurrent beliefs within a subject's brain are mental states of that subject.” — did you mean:",
             "“The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.” — did you mean:"]) &&
        chosen.fits && !chosen.marked.length &&
-       chosen.box === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.",
+       chosen.box === "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain.",
        'its chooser: three questions, box by box, "did you mean:", no reading marked as the one the step follows on (r27.166); choosing one writes "some" into the box', J(chosen));
     const step3 = step(["The records in Otto's notebook play the same causal/explanatory role as some mental states of Otto.",
         'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.");
@@ -381,11 +387,11 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
             'Anything that plays the same causal/explanatory role as mental states of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.") === 'universal modus ponens',
        'step 3, once its premise says "some": its rule asks for "some" too; as written, both alike, it follows as it did', step3.why);
     const rebut = step(["If the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as non-occurrent beliefs within Otto's brain.",
-        "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs."], "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal');
+        "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs."], "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain.", 'rebuttal');
     const ANY = "If the records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs, then the records in Otto's notebook do not play the same causal/explanatory role as any non-occurrent beliefs within Otto's brain.";
     ok(rebut.tag === '? generic' && rebut.why.indexOf('Did you mean “' + ANY.replace(/\.$/, '') + '”, ') === 0 && !/follows by/.test(rebut.why) &&
        rule([ANY, "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs."],
-            "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within his brain.", 'rebuttal') === 'modus ponens' &&
+            "The records in Otto's notebook play the same causal/explanatory role as some non-occurrent beliefs within Otto's brain.", 'rebuttal') === 'modus ponens' &&
        !/Worded the same way/.test(rebut.why),
        'the rebuttal of "... as some ...": its "not ... non-occurrent beliefs" asks, "any" offered -- not the hint to write "not ... some", which says something else', rebut.why);
     const comp = step(['Bob is taller than a poodle.', 'Every poodle is a dog.'], 'Bob is taller than a dog.');
@@ -402,10 +408,10 @@ console.log('\n-- 8. the kinds after a verb: existential syllogism, and the ques
         ['"non-occurrent beliefs within a subject\'s brain" may mean all of them, some, most, or what holds in general']]),
         'a plural with a phrase or a clause after it is a generic, as "ravens are black" is (it had been read as one thing\'s name)', J(heads));
     const same = ev(`var a = parseClaim("All non-occurrent beliefs within a subject's brain are mental states of that subject."), b = parseClaim("Every non-occurrent belief within a subject's brain is a mental state of that subject.");
-        var c = parseClaim("The records play the same role as some non-occurrent beliefs within his brain."), d = parseClaim("The records play the same role as some non-occurrent belief within his brain.");
+        var c = parseClaim("The records play the same role as some non-occurrent beliefs within Otto's brain."), d = parseClaim("The records play the same role as some non-occurrent belief within Otto's brain.");
         return [claimSame(a, b), claimSame(c, d), normalizeClaimTerm("non-occurrent beliefs within a subject's brain"), normalizeClaimTerm('dogs within cities')];`);
     ok(same[0] && same[1] && same[2] === "non-occurrent belief within a subject's brain" && same[3] === 'dog within cities',
-        '"beliefs within his brain" is the kind "belief within his brain", as "beliefs in his brain" is, and "cities" in "dogs within cities" keeps its number; "some beliefs within" is "some belief within"', J(same));
+        '"beliefs within Otto\'s brain" is the kind "belief within Otto\'s brain", as "beliefs in Otto\'s brain" is, and "cities" in "dogs within cities" keeps its number; "some beliefs within" is "some belief within"', J(same));
     ok(rule(['If Bob is kind, then Bob does not own any poodles.', 'Bob is kind.'], 'Bob owns some poodles.', 'rebuttal') === 'modus ponens',
        '"does not own any poodles" denies "owns some poodles" (the plural had been kept)');
 }

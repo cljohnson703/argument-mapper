@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-13 r27.204';
+    const APP_BUILD = '2026-11-13 r27.205';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9928,22 +9928,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimPronounReadingsUncached(t) {
         const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
         if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said) && !CLAIM_POINTING_BACK.test(said)) return none;
-        // A pronoun before the box's one name: the name, or someone the box
-        // does not name (r27.204; the user, of the two sentences: "they should
-        // behave the same, however obvious one reading is"; of the name and
-        // "Other": "ok").
-        const cataphora = /\b(?:it|its|they|them|their)\b/i.test(said) || CLAIM_POINTING_BACK.test(said) ? null : claimPronounSites(t, true);
-        if (cataphora) {
-            // "Other" read with a name the box does not use, so that a step
-            // that holds whoever it is stands ("Although she was tired, Mary
-            // agreed", so "Mary agreed"): the pronoun as written gives none.
-            const fresh = ['Zed', 'Quill', 'Vesper', 'Wren'].find(x => !new RegExp('\\b' + x + '\\b', 'i').test(t)) || 'Zed';
-            let named = '', other = '', upTo = 0;
-            cataphora.sites.forEach(x => { const gap = t.slice(upTo, x.at); named += gap + x.becomes; other += gap + claimPronounReplacement(x.word, fresh, t.slice(x.at + x.word.length)); upTo = x.at + x.word.length; });
-            const words = cataphora.taken.map(p => '“' + p + '”').join(' and ');
-            return { texts: [named + t.slice(upTo)], otherText: other + t.slice(upTo), other: words, message: words + ' may be “' + cataphora.name + '”, or someone the box does not name', missing: null, itAsks: true };
-        }
-        const nameSites = (claimPronounSites(t) || {}).sites || [];
+        const nameFound = claimPronounSites(t), nameSites = (nameFound || {}).sites || [];
         const read = new Set(nameSites.map(x => x.at));
         const toks = [];
         said.replace(/[A-Za-z][A-Za-z'\u2019-]*|[,;:.!?()]/g, (w, i) => { toks.push({ w, l: w.toLowerCase().replace(/\u2019/g, "'"), at: i }); return w; });
@@ -10914,8 +10899,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 CLAIM_HE_OR_SHE_ANIMALS.has(x.l.replace(/'s$/, '')))) rivals.push(t.at);
         });
         const ahead = i2 => i2 < at && ((lead > 0 && i2 < lead && at > lead) ||
-            /^(?:his|her)\b/i.test(text.slice(i2)) && !(/^her\b/i.test(text.slice(i2)) && CLAIM_PRONOUN_TAIL.test(text.slice(i2 + 3))));
-        const candidate = i2 => before ? ahead(i2) : i2 > at;
+            /^(?:his|her)\b/i.test(text.slice(i2)) && !(/^her\b/i.test(text.slice(i2)) && CLAIM_PRONOUN_TAIL.test(text.slice(i2 + 3))) &&
+            // Not before a helping verb that may be a noun: "Her will hurt Bob"
+            // is read with its noun, which "Bob's will" would not be (r27.205).
+            !/^\S+\s+(?:will|can|might|must|may|does)\b/i.test(text.slice(i2)));
+        const candidate = i2 => ahead(i2) || i2 > at;
         // Two genders of pronoun are two people, and the claim gives one
         // name: which of them it names cannot be told from the words, so
         // neither is read. "Mary said he loves her" is left as written.
@@ -10945,12 +10933,46 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         sites.sort((x, y) => x.at - y.at);
         // Before the name, every pronoun one it may be: "Before she met her,
         // Mary left" has two people and one name.
-        if (before && sites.length !== (said.slice(0, at).match(/\b(?:he|she|him|his|her)\b/gi) || []).length) return null;
-        // Two of them in one clause, one its object, are two people: "Before
-        // she met her, Mary left" (English says "herself" for one).
+        // Before the name, every pronoun one it may be, and not two in one
+        // clause, one its object -- "Before she met her, Mary left" has two
+        // people and one name (English says "herself" for one): else none of
+        // those before it is read as the name, and those after it still are
+        // ("He left and Mary arrived and she smiled").
+        const pre = sites.filter(x => x.at < at);
         const objectAt = y => /^him$/i.test(y.word) || (/^her$/i.test(y.word) && CLAIM_PRONOUN_TAIL.test(text.slice(y.at + 3)));
-        if (before && sites.some((x, k) => sites.some((y, j) => j > k && (objectAt(x) || objectAt(y)) && !CLAIM_CLAUSE_BREAK.test(text.slice(x.at + x.word.length, y.at))))) return null;
+        if (pre.length !== (said.slice(0, at).match(/\b(?:he|she|him|his|her)\b/gi) || []).length ||
+            pre.some((x, k) => pre.some((y, j) => j > k && (objectAt(x) || objectAt(y)) && !CLAIM_CLAUSE_BREAK.test(text.slice(x.at + x.word.length, y.at)))))
+            sites.splice(0, pre.length);
         return sites.length ? { name, at, sites, taken: [...new Set(sites.map(x => x.word.toLowerCase()))] } : null;
+    }
+    // A "he", "she", "him", "his" or "her" the box's one name may be, before
+    // it or after it, may be someone the box does not name (r27.204; the
+    // user, of asking after the name too, reversing "the only available
+    // referent is the referent": "ok"; r27.205): asked, the name offered and
+    // "Other" -- read with a name the box does not use, so that a step that
+    // holds whoever it is stands ("Although she was tired, Mary agreed", so
+    // "Mary agreed"). Whether it asked.
+    const claimFreshName = t => ['Zed', 'Quill', 'Vesper', 'Wren'].find(x => !new RegExp('\\b' + x + '\\b', 'i').test(t)) || 'Zed';
+    function claimPronounNameQuestion(text) {
+        const t = String(text == null ? '' : text), found = claimPronounSites(t);
+        if (!found) return false;
+        // Not yet with an "it", a "they" or a "that road" to be read too,
+        // which the pronoun reader reads in together: there the name is read
+        // in, and the box says so.
+        if (!claimPronounReadings(t).none) return false;
+        const fresh = claimFreshName(t);
+        let named = '', other = '', upTo = 0;
+        found.sites.forEach(x => { const gap = t.slice(upTo, x.at); named += gap + x.becomes; other += gap + claimPronounReplacement(x.word, fresh, t.slice(x.at + x.word.length)); upTo = x.at + x.word.length; });
+        const words = found.taken.map(p => '“' + p + '”').join(' and ');
+        // The same pronoun's clause with the same name, in two boxes, is one
+        // question, read the same way in both (r27.199): "When Mary exits the
+        // room ..., she learns a new fact" and the "if" that holds it.
+        const clauseOf = x => { const rest = t.slice(x.at + x.word.length), b = CLAIM_CLAUSE_BREAK.exec(rest); return x.word + (b ? rest.slice(0, b.index) : rest); };
+        const part = found.name + ': ' + found.sites.map(clauseOf).join('; ');
+        claimAmbiguous(words + ' may be “' + found.name + '”, or someone the box does not name',
+            [{ label: named + t.slice(upTo), build: () => null }, { label: CLAIM_SOMEONE_ELSE, build: () => null }], true,
+            { pronoun: true, texts: [named + t.slice(upTo), other + t.slice(upTo)], other: words, part });
+        return true;
     }
     function claimResolvePronouns(text) {
         const found = claimPronounSites(text);
@@ -13735,7 +13757,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const cut = !symbolic ? claimEllipsisReading(text) : null;
             if (cut) { text = cut.text; claimReadState.notes.push({ kind: 'unread', message: cut.message, ellipsis: true }); }
             const raw = normalizeClaimText(text);
-            if (!symbolic) { const note = claimPronounNote(text); if (note) claimUnread(note, true); }
+            // The one name a pronoun may be, asked about where a step turns on
+            // it (r27.204, r27.205); never asking, read so and said so.
+            if (!symbolic && !(claimSemanticMode() && claimPronounNameQuestion(text))) { const note = claimPronounNote(text); if (note) claimUnread(note, true); }
             if (!symbolic) claimShorthands(markClaimSpelling(String(text == null ? '' : text).replace(/\s+/g, ' ').trim())).forEach(h => {
                 const phrase = (h.prev ? h.prev + ' ' : '') + h.word;
                 claimUnread('"' + phrase + ' ' + h.letter + '": the letter is read as a shorthand for "' + phrase + '", so this is about ' + phrase +

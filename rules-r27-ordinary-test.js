@@ -258,7 +258,7 @@ console.log('\n-- 1. factive verbs --');
         [['Bob has known that Mary left.'], 'Mary left.'], [['Bob realizes that the door is locked.'], 'The door is locked.'],
         [['Bob discovered that the dog bit Mary.'], 'The dog bit Mary.'], [['Bob noticed that it was raining.'], 'It was raining.'],
         [['Bob remembers that Mary left.'], 'Mary left.'], [['Bob learned that Mary left.'], 'Mary left.'],
-        [['Bob regrets that he lied.'], 'Bob lied.'], [['Bob forgot that Mary left.'], 'Mary left.'],
+        [['Bob regrets that Bob lied.'], 'Bob lied.'], [['Bob forgot that Mary left.'], 'Mary left.'],
         [['Bob proved that the theorem is true.'], 'The theorem is true.'], [['The study showed that smoking causes cancer.'], 'Smoking causes cancer.'],
         [['Bob is aware that Mary left.'], 'Mary left.'], [['Bob is glad that Mary left.'], 'Mary left.'], [['Bob is sorry that Mary left.'], 'Mary left.'],
         [['It is known that Mary left.'], 'Mary left.'],
@@ -807,17 +807,21 @@ console.log('\n-- 22. (r27.148) "Switch on" in Review mode; the switch as the pa
 
 console.log('\n-- 23. (r27.149) a quantifier binds a pronoun in its own verb phrase --');
 {
-    const BOUND = [[['Everyone who cheats thinks they will win.', 'Bob is a person who cheats.'], 'Bob thinks he will win.'],
-        [['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that he is smart.'],
-        [['Everyone thinks they are right.', 'Bob is a person.'], 'Bob thinks he is right.'],
-        [['Every student loves their mother.', 'Bob is a student.'], 'Bob loves his mother.'],
-        [['Every student thinks that their teacher is wise.', 'Bob is a student.'], 'Bob thinks that his teacher is wise.'],
-        [['Every student thinks Mary loves them.', 'Bob is a student.'], 'Bob thinks Mary loves him.'],
-        [['Every man thinks he is right.', 'Bob is a man.'], 'Bob thinks he is right.']];
-    ok(!misses(BOUND, 'universal modus ponens').length, 'a pronoun its quantifier binds, in a claim its verb takes or as "their": said of Bob, "he", "his", "him" -- ' +
-        'universal modus ponens (it had said "they" points back to nothing, or kept it and said nothing)', J(misses(BOUND, 'universal modus ponens')));
-    const some = step(['Bob thinks he will win.', 'Bob is a person.'], 'Someone thinks they will win.');
-    ok(some.rule === 'expository syllogism', '"Bob thinks he will win" and "Bob is a person", so "someone thinks they will win"', J(some));
+    // Said of Bob by name (r27.205: a "he" after "Bob" may be Bob or someone
+    // else, and asks where a step turns on it -- "Bob thinks he will win").
+    const BOUND = [[['Everyone who cheats thinks they will win.', 'Bob is a person who cheats.'], 'Bob thinks Bob will win.'],
+        [['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that Bob is smart.'],
+        [['Everyone thinks they are right.', 'Bob is a person.'], 'Bob thinks Bob is right.'],
+        [['Every student loves their mother.', 'Bob is a student.'], "Bob loves Bob's mother."],
+        [['Every student thinks that their teacher is wise.', 'Bob is a student.'], "Bob thinks that Bob's teacher is wise."],
+        [['Every student thinks Mary loves them.', 'Bob is a student.'], 'Bob thinks Mary loves Bob.'],
+        [['Every man thinks he is right.', 'Bob is a man.'], 'Bob thinks Bob is right.']];
+    const heAsks = step(['Everyone who cheats thinks they will win.', 'Bob is a person who cheats.'], 'Bob thinks he will win.');
+    ok(!misses(BOUND, 'universal modus ponens').length && heAsks.why === 'Did you mean “Bob thinks Bob will win”, or is “he” someone else?',
+        'a pronoun its quantifier binds, in a claim its verb takes or as "their": said of Bob -- ' +
+        'universal modus ponens (it had said "they" points back to nothing, or kept it and said nothing); said "he", it asks whether he is Bob (r27.205)', J([misses(BOUND, 'universal modus ponens'), heAsks]));
+    const some = step(['Bob thinks Bob will win.', 'Bob is a person.'], 'Someone thinks they will win.');
+    ok(some.rule === 'expository syllogism', '"Bob thinks Bob will win" and "Bob is a person", so "someone thinks they will win"', J(some));
     const same = step(['Some student thinks they will win.'], 'Some student thinks that they will win.');
     ok(!same.rule && /only repeats/.test(same.why), '"some student thinks they will win" and "... that they will win", one claim (the "that" had made them two)', J(same));
     const mary = step(['Every student who loves Mary thinks she is smart.', 'Bob is a student who loves Mary.'], 'Bob thinks Mary is smart.');
@@ -960,9 +964,9 @@ console.log('\n-- 30. (r27.156) the four gaps --');
         state.logic = null; claimRulesCache = null; return r;`);
     ok(off.every(w => /^The two differ only in the order or grouping of their parts/.test(String(w))),
         'with commutation switched off, the spelled-out swap says why it is refused (it had said nothing; "nothing" had been called quantifier negation)', J(off));
-    const BOUND = [[['Every student who loves their mother is kind.', 'Bob is a student who loves his mother.'], 'Bob is kind.'],
-        [['Every student who loves her mother is kind.', 'Mary is a student who loves her mother.'], 'Mary is kind.'],
-        [['Everyone who thinks they will win cheats.', 'Bob is a person who thinks he will win.'], 'Bob cheats.']];
+    const BOUND = [[['Every student who loves their mother is kind.', "Bob is a student who loves Bob's mother."], 'Bob is kind.'],
+        [['Every student who loves her mother is kind.', "Mary is a student who loves Mary's mother."], 'Mary is kind.'],
+        [['Everyone who thinks they will win cheats.', 'Bob is a person who thinks Bob will win.'], 'Bob cheats.']];
     ok(!misses(BOUND, 'universal modus ponens').length, 'a pronoun in the "who" clause, bound by its quantifier: of Bob, "his mother" -- universal modus ponens (it had said "their" points to nothing)',
         J(misses(BOUND, 'universal modus ponens')));
     const other = step(['Every student who loves their mother is kind.', 'Bob is a student who loves Al\'s mother.'], 'Bob is kind.');

@@ -4,6 +4,34 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 13: a pronoun after the one name asks too (r27.205)
+
+The user:
+* Of asking after the name too, the name or someone else, only where a step turns on it, reversing the rule of 2026-09-28 that "the only available referent is the referent": "ok".
+
+Changes:
+* A "he", "she", "him", "his" or "her" after the box's one name may be that name, or someone the box does not name, as one before it may (r27.204). It asks where a step turns on it: "Bob left and then she cried; so Bob cried" asks "Did you mean 'Bob left and then Bob cried', or is 'she' someone else?". It had read "she" as Bob, and the step had followed.
+  * A step that holds whoever it is stands: "Bob left and then she cried; so Bob left".
+  * So across "that" ("Mary said that the dog bit her", "Mary believes that she is late") and in "learning that someone never loved him".
+* The box is read with the name until it is answered, as before r27.204, and before the name too ("Before Mary left, Mary called"). So "Never ask" reads it with the name, and says so, as before r27.204.
+* The same pronoun's clause with the same name in two boxes is one question, read the same way in both. So the Mary's room modus ponens, "When Mary exits the room ..., she learns a new fact" and the "if" that holds it, stands.
+* Where a pronoun before the name cannot be it, those after it are still read as it: "He left and Mary arrived and she smiled".
+* Not before a helping verb that may be a noun: "Her will hurt Bob" is read with its noun, as before.
+* Not yet where the box has an "it" or a "they" to read too ("Mary bought a car and she loves it"): there the name is read in unasked, as before, and the box says so.
+
+Tests:
+* syntax-r27-test.js has 181 checks.
+  * The 2 new ones fail on r27.204.
+  * Changed: never asking, "If he wins, then Bob is happy; Bob wins; so Bob is happy" follows, as before r27.204.
+* Steps through a pronoun after a name, now asking, written with the name where the check is of something else: logic-r27-basis-test.js (Mary's room, "we conclude that ... she"), rules-r27-ordinary-test.js ("Bob thinks Bob will win", "Bob regrets that Bob lied"), locutions-r27-test.js and hints-r27-test.js ("Socrates ... he"), extended-mind-r27-test.js and reading-r27-chooser-test.js ("within Otto's brain", "a part of Otto's mind").
+  * Each also checks that the pronoun asks: "Bob thinks he will win", "a part of his mind", "Assuming Socrates is a man, he is mortal".
+* anaphora-r27-test.js: "Brown left and he cried" asks of Brown; the "Valid by" note is checked never asking.
+* warrant-r27-test.js: "Ada is tall and she is kind" is read with Ada, and asks.
+* Take-one-out: each of the 6 changes is caught.
+* 78 sentences in the corpus read differently: 76 ask of the name where the box had said it read the pronoun as it; the 2 of r27.204 ("Before she left, Mary called"; "When she exits the room, Mary learns a new fact") are read with the name again.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 13: a pronoun before the one name it may be (r27.204)
 
 The user:

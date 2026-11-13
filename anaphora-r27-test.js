@@ -408,8 +408,12 @@ console.log('\n-- 17. a plural after its verb, with no determiner --');
     ok(/sells cakes$/.test(apposed.said), '"Bob, a baker, makes cakes": "a baker, makes" is no phrase, its words adjectives', J(apposed));
     // As they were.
     const kept = ['Ravens eat worms and they fly.', 'Brown left and he cried.', 'Young sings and he dances.'].map(read);
-    ok(/ravens fly$/i.test(kept[0].said) && /brown cried$/i.test(kept[1].said) && /young dances$/i.test(kept[2].said) && !kept.some(r => r.notes.some(n => /may be/.test(n))),
-        'as before: "Ravens eat worms and they fly" is the ravens, the worms not asked about; "Brown left", "Young sings": names', J(kept));
+    // r27.205: "he" after a name may be someone else, and is asked about --
+    // which shows "Brown" and "Young" are read as names.
+    ok(/ravens fly$/i.test(kept[0].said) && /brown cried$/i.test(kept[1].said) && /young dances$/i.test(kept[2].said) &&
+        !kept.some(r => r.notes.some(n => /may be/.test(n) && !/or someone the box does not name/.test(n))) &&
+        kept[1].notes.includes('ambiguous: “he” may be “Brown”, or someone the box does not name') && kept[2].notes.includes('ambiguous: “he” may be “Young”, or someone the box does not name'),
+        'as before: "Ravens eat worms and they fly" is the ravens, the worms not asked about; "Brown left", "Young sings": names, "he" asked about (r27.205)', J(kept));
     ok(read('Bob makes cakes and they sell well.').notes.includes('ambiguous: “they” may be “Bob” or “cakes”'), '"... and they sell well": Bob or the cakes, asked');
 }
 
@@ -470,11 +474,15 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
     const as = [asks('The soup is hot and it is spicy.'), asks('Bob thinks that the street is wet and it is cold.')];
     ok(as[0] && as[0][0] === '“it” may be “the soup” or what “The soup is hot” says' && as[1] && !/weather/.test(as[1][0]),
         'not "it is spicy", no weather; nor where the clause cannot be moved in front ("Bob thinks that ..."): asked as before', J(as));
-    const tip = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['Otto remembers the address.'], collapsed: [], x: 0, y: 0, children: [
+    // Never asking (r27.205: asking, "his" and "he" may be Otto or someone
+    // else, and the step asks).
+    const tip = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null;
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Otto remembers the address.'], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ['If Otto reads his notebook, then he remembers the address.', 'Otto reads his notebook.'], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
         var tag = document.querySelector('.derivation-tag[data-step="A"]'); openDeductiveCheck('A');
         var row = document.querySelector('#logic-modal-body .logic-step[data-step="A"]'); document.getElementById('logic-modal-backdrop').classList.remove('open');
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; deductiveCache.clear();
         return [tag && tag.title, row && row.title];`);
     ok(tip.every(t => (t || '').indexOf('“If Otto reads his notebook, then he remembers the address.”: "his" and "he" are read as "Otto", the one name this claim gives. ' +
             '“Otto reads his notebook.”: "his" is read as "Otto", the one name this claim gives.') > 0) && /^Valid by modus ponens/.test(tip[0]),
@@ -570,10 +578,10 @@ console.log('\n-- a preposition that opens a sentence is no name (r27.194) --');
     // r27.204 (the user, of these two: "they should behave the same, however
     // obvious one reading is"; of the name and "Other": "ok"): each asks, the
     // name or someone the box does not name, its pronoun read as written.
-    ok(got[0].key === 'A:with his help, bob won' && got[0].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
-        got[1].key === 'A:despite her doubts, mary agreed' && got[1].notes.includes('“her” may be “Mary”, or someone the box does not name') &&
-        got[2].key === 'A:in spite of his fear, bob jumped' && got[2].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
-        got[3].key === 'A:without her, bob left' && !got.some(g => g.notes.some(m => /With|Despite|Without/.test(m.replace(/\("[^"]*"\)/g, '')))),
+    ok(got[0].key === "A:with bob's help, bob won" && got[0].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
+        got[1].key === "A:despite mary's doubts, mary agreed" && got[1].notes.includes('“her” may be “Mary”, or someone the box does not name') &&
+        got[2].key === "A:in spite of bob's fear, bob jumped" && got[2].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
+        got[3].key === 'A:without bob, bob left' && !got.some(g => g.notes.some(m => /With|Despite|Without/.test(m.replace(/\("[^"]*"\)/g, '')))),
         'a preposition that opens a sentence is no name ("his" had been read as "With"); after "despite" and after "with" alike, the pronoun may be the one name the claim gives or someone it does not name, and asks (r27.204)', J(got));
 }
 

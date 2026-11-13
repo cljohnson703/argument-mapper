@@ -329,7 +329,10 @@ try {
         // Asked where the step turns on it (r27.199; the user: "(a)"): "Mary
         // told Alice that she was late" gives "Alice was late" on neither
         // reading -- telling is no proof -- and asks nothing there.
-        ok(rule(['Mary sings and she dances'], 'Mary dances') === 'conjunction elimination' &&
+        // r27.205 (the user, of asking after the name too: "ok"): "she" may be
+        // Mary or someone else -- "Mary sings" follows whoever she is, "Mary
+        // dances" asks.
+        ok(rule(['Mary sings and she dances'], 'Mary sings') === 'conjunction elimination' && step(['Mary sings and she dances'], 'Mary dances').ambiguous &&
             step(['Mary told Alice she was late'], 'Mary told Alice Alice was late').ambiguous && !step(['Mary told Alice she was late'], 'Alice was late').ambiguous,
             'so a step through a pronoun goes through, and two names stay ambiguous, asked where the step turns on them (r27.199)');
         // A denial may be written with or without a pair of negations while
@@ -401,12 +404,13 @@ try {
         ok(normed('Mary left and then she hurt her') === 'mary left and then mary hurt her' &&
             normed('Mary is a doctor and her patients trust her') === "mary is a doctor and mary's patients trust mary",
             'an object pronoun is measured from the last reading of the name, and a possessive is no such reading');
-        // r27.204: one before the name is asked about, the name or someone
-        // else, and not put in for it.
-        ok(normed('Before she left, Mary called') === 'before she left, mary called' &&
-            normed('When she exits the room, Mary learns a new fact') === 'when she exits the room, mary learns a new fact' &&
+        // r27.204, r27.205: one before the name, where it may be the name, is
+        // read as it too -- and asked about, the name or someone else, where a
+        // step turns on it.
+        ok(normed('Before she left, Mary called') === 'before mary left, mary called' &&
+            normed('When she exits the room, Mary learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
             normed('She met Mary') === 'she met mary',
-            'a pronoun before the name is not read as it here: the box asks (r27.204)');
+            'a pronoun before the name is read as it where it may be it, and asked about (r27.204, r27.205); "She met Mary" is not Mary');
         // Inside what somebody believes, says or knows, a pronoun reads as any
         // other (the user, 2026-09-28: "In 'Mary believes that she is late', if
         // that's all the content we have, then 'she' refers to 'Mary'").
@@ -415,7 +419,7 @@ try {
             normed('Mary knows that she is in the room') === 'mary knows that mary is in the room' &&
             ev('return claimSame(parseClaim("Mary believes that she is late"), parseClaim("Mary believes that Mary is late"));'),
             'a pronoun inside what somebody believes or says is the box\'s one name, as anywhere else, and the two claims are one');
-        ok(ev('return claimNotes("Bob believes that it rains").length === 0 && claimNotes("Mary believes that she is late").some(function (n) { return /"she" is read as "Mary"/.test(n.message); });') &&
+        ok(ev('return claimNotes("Bob believes that it rains").length === 0 && claimNotes("Mary believes that she is late").some(function (n) { return /“she” may be “Mary”, or someone the box does not name/.test(n.message); });') &&
             normed('When Mary exits the room, she learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
             normed('Mary knows her brother') === "mary knows mary's brother",
             'and the box says so, as it does outside one; an "it" of the weather there asks nothing');
@@ -678,8 +682,8 @@ try {
         ok(!rule(['P ↔ Q', 'Bob believes that P'], 'Bob believes that Q') &&
             !rule(['Ada is Bea', 'Ada might be tall'], 'Bea might be tall'),
             'but not inside what somebody believes, nor what is merely possible of a thing');
-        ok(ev('return claimNotes("If Mary runs, then she wins and her time is good")[0].message;').indexOf('are read as') > 0,
-            'and the note says "are" of two pronouns');
+        ok(ev('return claimNotes("If Mary runs, then she wins and her time is good")[0].message;').indexOf('“she” and “her” may be “Mary”') === 0,
+            'and the question names both pronouns (r27.205)');
 
         defaults();
 
@@ -972,10 +976,15 @@ try {
         // The user's Mary steps, in their words.
         const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
         const S6 = 'When Mary exits the room and sees a ripe red tomato, she learns a new fact about the sensation of seeing red, namely its subjective character.';
+        // r27.205: each "she" may be Mary or someone else, and the step turns
+        // on it, so it asks; the same clause in two boxes is one question
+        // ("she learns a new fact ...", below), so that step stands.
         ok(tagOf(['If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then she would not be surprised when she leaves the room.',
-                'Mary is surprised when she leaves the room.'], S5, 'objection')[0] === '✓ modus tollens' &&
+                'Mary is surprised when she leaves the room.'], S5, 'objection')[0] === '? ambiguous' &&
+            tagOf(['If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then Mary would not be surprised when Mary leaves the room.',
+                'Mary is surprised when Mary leaves the room.'], S5, 'objection')[0] === '✓ modus tollens' &&
             tagOf(['If Mary acquires knowledge-how when she exits the room and sees a ripe red tomato, then she does not learn a new fact about the sensation of seeing red, namely its subjective character.',
-                'Mary acquires knowledge-how when she exits the room and sees a ripe red tomato.'], S6, 'objection')[0] === '✓ modus ponens' &&
+                'Mary acquires knowledge-how when she exits the room and sees a ripe red tomato.'], S6, 'objection')[0] === '? ambiguous' &&
             rule([S5, S6, 'If, while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, and when Mary exits the room and sees a ripe red tomato, she learns a new fact about the sensation of seeing red, namely its subjective character, then there are non-physical facts about color sensations.'],
                 'There are non-physical facts about color sensations.') === 'modus ponens, conditions together',
             'the Mary\'s Room steps pass in their own words: "would" with "when", a time frame, "and sees ..." in the when-clause, and "its" with its noun before it');
@@ -1134,7 +1143,7 @@ try {
         // concludes. With no name in the box, "she" is asked about.
         const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
         const O1 = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would not conclude that she is surprised when she leaves the room.';
-        ok(tagOf([O1, 'We conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' &&
+        ok(tagOf([O1, 'We conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '? ambiguous' &&
             tagOf([O1, 'We conclude that she is surprised when she leaves the room.'], S5, 'objection') === '\u2717 no referent' &&
             normed('We conclude that Mary is surprised when she leaves the room') === 'we conclude that mary is surprised when mary leaves the room',
             'a pronoun in what "we" conclude is the box\'s one name ("she" is Mary); with no name in the box it has no referent (said, not asked: the user, 2026-09-28), so a lone "she" is never matched with another box\'s');
@@ -1145,8 +1154,8 @@ try {
         ok(asks('We conclude that she is surprised when she leaves the room.') && asks('I think that she is late.') && asks('She is surprised when she leaves the room.') &&
             asks('In the story, she is surprised.') && asks('Apparently, she is late.') &&
             !asks('When the teacher arrives, she opens the door.') && !asks('If a student cheats, he fails.') && !asks('We believe that every mother loves her child.') &&
-            !asks('Mary believes that she is late.') && !asks('When Mary exits the room, she learns a new fact.'),
-            'a "he" or "she" with nothing before it to go back to is asked about, in a claim kept whole too; a noun phrase before it, a quantifier, or a believer who may be its referent keeps it as written');
+            asks('Mary believes that she is late.') && asks('When Mary exits the room, she learns a new fact.'),
+            'a "he" or "she" with nothing before it to go back to is asked about, in a claim kept whole too; a noun phrase before it, a quantifier, or a believer who may be its referent keeps it as written; one that may be the box\'s one name is asked about too, the name or someone else (r27.205)');
         ok(normed('Apparently, she is late') === 'apparently, she is late' && normed('Usually, he is early') === 'usually, he is early',
             'a hedge or frame word in front ("Apparently", "Usually") is no name for "she"');
         // The user: "The nodes are supposed to be standalone, intelligible
@@ -1164,7 +1173,7 @@ try {
         ok(normed("In 'Hamlet', Ophelia is mad, and she drowns") === "in 'hamlet', ophelia is mad, and ophelia drowns" &&
             normed('In "Hamlet", Ophelia is mad, and she drowns') === 'in "hamlet", ophelia is mad, and ophelia drowns' &&
             normed('In \u2018Hamlet\u2019, Ophelia is mad, and she drowns') === "in 'hamlet', ophelia is mad, and ophelia drowns" &&
-            !asks("In 'Hamlet', Ophelia is mad, and she drowns.") && asks('In Hamlet, Ophelia is mad, and she drowns.') &&
+            asks("In 'Hamlet', Ophelia is mad, and she drowns.") && asks('In Hamlet, Ophelia is mad, and she drowns.') &&
             /put it in quotation marks/.test(titleNote) &&
             normed("Byron wrote 'She Walks in Beauty'") === "byron wrote 'she walks in beauty'" && !asks("Byron wrote 'She Walks in Beauty'."),
             'a name in quotation marks is mentioned, not used: "she" can only be Ophelia; unquoted, "Hamlet" is asked about, with a note to quote the title; a quoted "She" is no pronoun', titleNote);
@@ -1190,7 +1199,8 @@ try {
         // not hide the one who concludes.
         const S5 = 'While in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red.';
         const O1 = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would not conclude that she is at all surprised when she leaves the room.';
-        ok(tagOf([O1, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' &&
+        ok(tagOf([O1, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '? ambiguous' &&
+            tagOf([O1.replace(/\bshe\b/g, 'Mary'), 'We do conclude that Mary is surprised when Mary leaves the room.'], S5, 'objection') === '\u2713 modus tollens' &&
             normed('Then we would no longer conclude that Mary is late and that she is tired') === 'then we would no longer conclude that mary is late and that mary is tired',
             'the user\'s modus tollens passes with "do" and "at all"; "no longer" stands between "we" and "conclude", as "not" does');
         // The light theme's Unwarranted pill (the dark theme's pale amber was
@@ -1201,7 +1211,9 @@ try {
         // "Would no longer" in a would-conditional: "would not". The user's step, as written.
         const O1b = 'If while in the room, Mary has acquired all the physical facts there are about color sensations, including the sensation of seeing red, then we would no longer conclude that she is at all surprised when she leaves the room.';
         const longer = ev('return parseClaimFull(' + J(O1b) + ').notes.filter(function (n) { return /no longer/.test(n.message); }).length;');
-        ok(tagOf([O1b, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '\u2713 modus tollens' && longer === 1 &&
+        // r27.205: "she" may be Mary or someone else, and the step turns on it.
+        ok(tagOf([O1b, 'We do conclude that Mary is surprised when she leaves the room.'], S5, 'objection') === '? ambiguous' &&
+            tagOf([O1b.replace(/\bshe\b/g, 'Mary'), 'We do conclude that Mary is surprised when Mary leaves the room.'], S5, 'objection') === '\u2713 modus tollens' && longer === 1 &&
             ev('return !claimSame(parseClaim("We no longer conclude that Poe is white"), parseClaim("We do not conclude that Poe is white"));'),
             'the user\'s step as written: "we would no longer conclude" is "we would not conclude" in what the conditional says would follow, noted once -- and "we no longer conclude" alone is not "we do not conclude"');
         // The user's pronoun rule: what the box calls "it" is not its "she".
@@ -1323,7 +1335,7 @@ try {
             'an "it" after a whole clause may be the thing or what the clause says, and is asked about (the user\'s choice, 2026-09-28) -- but not where no clause could be its predicate\'s subject ("is black", "bit her again", "is heavy", "dropped it"): there it is the thing', J([vase, cat, poe]));
         ok(kind('It is clear that it is raining.') === null && kind("It is clear that it's raining.") === null && kind('It seems that it rained.') === null &&
             kind('The cat chased its tail.') !== 'ambiguous' && kind('The teacher left and she cried.') !== 'ambiguous' && kind('If a raven sings, then it is black.') === null &&
-            kind('Mary believes that she is late.') === null &&
+            kind('Mary believes that she is late.') === 'ambiguous' &&
             kind('If it rains, and if it is cold, then it snows.') === null && kind('It is not the case that it rains.') === null &&
             kind('If it rains, then it is not warranted to conclude that everything is a philosopher.') === null && kind('The box is so heavy that Bob cannot lift it.') !== 'ambiguous',
             'no question: an "it" that stands for nothing ("it is clear that it\'s raining", "it is cold", "it is not the case that"), "its" with its noun, a pronoun a quantifier binds, and an object whose clause has another subject');
@@ -1478,7 +1490,7 @@ try {
         // reading"; "Verbs alone, plural nouns"): said of each, unasked, with a note.
         const sister = said('Mary and her sister left.');
         ok(sister.notes.includes('unread: "left" is said of each of them: with nothing after the verb, there is nothing for them to share') &&
-            !sister.notes.some(n => /^ambiguous/.test(n)) &&
+            !sister.notes.some(n => /^ambiguous/.test(n) && !/may be “Mary”, or someone the box does not name/.test(n)) &&
             plain('Poe and Fido are ravens.') === 'C[P:poe|=raven;P:fido|=raven]' &&
             said('Poe and Fido are ravens.').notes.includes('unread: "are ravens" is said of each of them: a plural noun is said of each one') &&
             plain('Alice and Bob did not leave.') === 'C[N(P:alice|~did left);N(P:bob|~did left)]' &&

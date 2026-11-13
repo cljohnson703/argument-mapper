@@ -162,7 +162,7 @@ console.log('\n-- 5. "must" read as written --');
             '“It is physically necessary that Socrates is mortal”, “It has been established that Socrates is mortal”, “We know that Socrates is mortal”, or “Socrates is required to be mortal”?',
         'in a conclusion: asked which "must" is meant (r27.179)', J(c));
     ok(/^Did you mean “If Socrates is a man, then Socrates is mortal”, “It is logically necessary that if Socrates is a man, then Socrates is mortal”, /.test(
-            step(['If Socrates is a man, then he must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why) &&
+            step(['If Socrates is a man, then Socrates must be mortal.', 'Socrates is a man.'], 'Socrates is mortal.').why) &&
         /^The premises give “Some Greeks are mortal” by existential syllogism, but not “Some Greeks must be mortal”/.test(step(['All men are mortal.', 'Some Greeks are men.'], 'Some Greeks must be mortal.').why),
         'in a premise\'s consequent, asked of the whole "if" (r27.179); after "some Greeks", "are", not asked, and said as before');
     const what = step(['Socrates is mortal.'], 'Socrates must be mortal.');
