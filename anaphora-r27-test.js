@@ -567,10 +567,14 @@ console.log('\n-- a preposition that opens a sentence is no name (r27.194) --');
     // "With his help, Bob won" had read "his" as "With" ("with With's help").
     const read = t => ev(`var r = parseClaimFull(${J(t)}); return { key: claimKey(r.form).replace(//g, ''), notes: r.notes.map(function (n) { return n.message; }) };`);
     const got = ['With his help, Bob won.', 'Despite her doubts, Mary agreed.', 'In spite of his fear, Bob jumped.', 'Without her, Bob left.'].map(read);
-    ok(got[0].key === 'A:with his help, bob won' && got[0].notes.some(m => /“his” has nothing in this box to refer to/.test(m)) &&
-        got[1].key === "A:despite mary's doubts, mary agreed" && got[2].key === "A:in spite of bob's fear, bob jumped" &&
+    // r27.204 (the user, of these two: "they should behave the same, however
+    // obvious one reading is"; of the name and "Other": "ok"): each asks, the
+    // name or someone the box does not name, its pronoun read as written.
+    ok(got[0].key === 'A:with his help, bob won' && got[0].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
+        got[1].key === 'A:despite her doubts, mary agreed' && got[1].notes.includes('“her” may be “Mary”, or someone the box does not name') &&
+        got[2].key === 'A:in spite of his fear, bob jumped' && got[2].notes.includes('“his” may be “Bob”, or someone the box does not name') &&
         got[3].key === 'A:without her, bob left' && !got.some(g => g.notes.some(m => /With|Despite|Without/.test(m.replace(/\("[^"]*"\)/g, '')))),
-        'a preposition that opens a sentence is no name ("his" had been read as "With"); after "despite", as after "although", the pronoun is the one name the claim gives; after "with" it asks who it is, as one before a name does', J(got));
+        'a preposition that opens a sentence is no name ("his" had been read as "With"); after "despite" and after "with" alike, the pronoun may be the one name the claim gives or someone it does not name, and asks (r27.204)', J(got));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

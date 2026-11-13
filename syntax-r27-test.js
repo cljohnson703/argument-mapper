@@ -1292,6 +1292,35 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
         'the Logic panel says what "what is, can be" gives', J(notes));
 }
 
+console.log('\n-- r27.204: a pronoun before the one name it may be: the name, or someone else --');
+{
+    // The user, of "Despite her doubts, Mary agreed" and "With his help, Bob
+    // won": "they should behave the same, however obvious one reading is"; of
+    // asking, the name offered with "Other": "ok".
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+    const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; })
+        .map(function (n) { return [n.message, n.readings.length, (n.texts || [])[0] || null]; });`);
+    const asks = ['Before she left, Mary called.', 'Despite her doubts, Mary agreed.', 'With his help, Bob won.', 'His dog loves Bob.', 'If he wins, then Bob is happy.', 'In his view, Bob is right.',
+        'According to her, Mary is right.'].map(asked);
+    ok(J(asks.map(a => a.length === 1 ? a[0][2] : null)) === J(['Before Mary left, Mary called.', "Despite Mary's doubts, Mary agreed.", "With Bob's help, Bob won.", "Bob's dog loves Bob.",
+            'If Bob wins, then Bob is happy.', "In Bob's view, Bob is right.", 'According to Mary, Mary is right.']) &&
+        asks.every(a => a[0][1] === 2 && /may be “(?:Mary|Bob)”, or someone the box does not name$/.test(a[0][0])),
+        'a pronoun before the box\'s one name -- after a clause or a phrase in front, or "his" before a noun -- may be that name or someone the box does not name: asked, the name offered, and "Other" (it had been the name after a clause, and no one after a phrase or in "His dog loves Bob")', J(asks));
+    const none = ['She met Mary.', 'He said that Bob left.', 'Before she met her, Mary left.'].map(asked);
+    ok(none.every(a => a.length === 1 && a[0][1] === 0 && /has nothing in this box to refer to/.test(a[0][0])),
+        'not where it cannot be the name -- the subject of a clause the name is in, or two in one clause, one the other\'s object: it has nothing in this box to refer to, as before', J(none));
+    const s = [step(['If he wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.'), step(['Although she was tired, Mary agreed.'], 'Mary agreed.'),
+        step(['Although she was tired, Mary agreed.'], 'Mary was tired.'), step(['If he wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.', { semantic: false }),
+        step(['If Bob wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.'), step(['His dog loves Bob.'], 'Something loves Bob.')];
+    ok(s[0].rule === null && s[0].why === 'Did you mean “If Bob wins, then Bob is happy”, or is “he” someone else?' &&
+        s[1].rule === 'conjunction elimination' && s[2].rule === null && s[2].why === 'Did you mean “Although Mary was tired, Mary agreed”, or is “she” someone else?' &&
+        s[3].rule === null && /set Semantic mode/.test(s[3].why) && s[4].rule === 'modus ponens' && s[5].rule === 'existential introduction',
+        'where a step turns on it, it asks "Did you mean ..., or is "he" someone else?"; where it holds whoever the pronoun is, it stands ("Although she was tired, Mary agreed", so "Mary agreed"); never asking, the pronoun as written gives no step, and the hint says so; with the name, modus ponens', J(s));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

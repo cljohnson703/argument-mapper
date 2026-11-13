@@ -401,10 +401,12 @@ try {
         ok(normed('Mary left and then she hurt her') === 'mary left and then mary hurt her' &&
             normed('Mary is a doctor and her patients trust her') === "mary is a doctor and mary's patients trust mary",
             'an object pronoun is measured from the last reading of the name, and a possessive is no such reading');
-        ok(normed('Before she left, Mary called') === 'before mary left, mary called' &&
-            normed('When she exits the room, Mary learns a new fact') === 'when mary exits the room, mary learns a new fact' &&
+        // r27.204: one before the name is asked about, the name or someone
+        // else, and not put in for it.
+        ok(normed('Before she left, Mary called') === 'before she left, mary called' &&
+            normed('When she exits the room, Mary learns a new fact') === 'when she exits the room, mary learns a new fact' &&
             normed('She met Mary') === 'she met mary',
-            'a pronoun may come first in a clause that waits for its main one, and nowhere else');
+            'a pronoun before the name is not read as it here: the box asks (r27.204)');
         // Inside what somebody believes, says or knows, a pronoun reads as any
         // other (the user, 2026-09-28: "In 'Mary believes that she is late', if
         // that's all the content we have, then 'she' refers to 'Mary'").

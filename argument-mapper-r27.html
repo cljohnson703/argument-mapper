@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-10 r27.203';
+    const APP_BUILD = '2026-11-13 r27.204';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9928,6 +9928,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimPronounReadingsUncached(t) {
         const said = claimMaskQuoted(t), none = { texts: [], message: null, missing: null, itAsks: false, none: true };
         if (!/\b(?:he|she|him|his|her|it|its|they|them|their)\b/i.test(said) && !CLAIM_POINTING_BACK.test(said)) return none;
+        // A pronoun before the box's one name: the name, or someone the box
+        // does not name (r27.204; the user, of the two sentences: "they should
+        // behave the same, however obvious one reading is"; of the name and
+        // "Other": "ok").
+        const cataphora = /\b(?:it|its|they|them|their)\b/i.test(said) || CLAIM_POINTING_BACK.test(said) ? null : claimPronounSites(t, true);
+        if (cataphora) {
+            // "Other" read with a name the box does not use, so that a step
+            // that holds whoever it is stands ("Although she was tired, Mary
+            // agreed", so "Mary agreed"): the pronoun as written gives none.
+            const fresh = ['Zed', 'Quill', 'Vesper', 'Wren'].find(x => !new RegExp('\\b' + x + '\\b', 'i').test(t)) || 'Zed';
+            let named = '', other = '', upTo = 0;
+            cataphora.sites.forEach(x => { const gap = t.slice(upTo, x.at); named += gap + x.becomes; other += gap + claimPronounReplacement(x.word, fresh, t.slice(x.at + x.word.length)); upTo = x.at + x.word.length; });
+            const words = cataphora.taken.map(p => '“' + p + '”').join(' and ');
+            return { texts: [named + t.slice(upTo)], otherText: other + t.slice(upTo), other: words, message: words + ' may be “' + cataphora.name + '”, or someone the box does not name', missing: null, itAsks: true };
+        }
         const nameSites = (claimPronounSites(t) || {}).sites || [];
         const read = new Set(nameSites.map(x => x.at));
         const toks = [];
@@ -10727,7 +10742,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const r = claimPronounReadings(claimBoxRaw || '');
         if (r.auto) { if (!claimReadState.quiet) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true, auto: r.auto.text, whole: !!r.auto.whole }); return; }
         if (!r.texts.length) claimAmbiguous(r.missing || 'a pronoun here has nothing in this box to refer to; name who or what it is', [], true, { pronoun: true, missing: true, texts: [] });
-        else claimAmbiguous(r.message, r.texts.map(label => ({ label, build: () => null })), true, { pronoun: true, texts: r.texts });
+        else claimAmbiguous(r.message, r.texts.map(label => ({ label, build: () => null })).concat(r.other ? [{ label: CLAIM_SOMEONE_ELSE, build: () => null }] : []), true,
+            Object.assign({ pronoun: true, texts: r.texts.concat(r.otherText ? [r.otherText] : []) }, r.other ? { other: r.other } : {}));
     }
     // Whether words before a "he" or "she" in its clause give it exactly one
     // someone to go back to: "everyone", "someone", "no one", or a noun phrase
@@ -10771,6 +10787,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "Despite her doubts, Mary agreed" waits for its main clause as "although
     // she doubted it" does: Mary's doubts (r27.194).
     const CLAIM_LEADING_CLAUSE = /^\s*(?:before|after|when|while|since|if|although|though|unless|until|because|whenever|once|as|despite|in spite of)\b/i;
+    // A phrase in front, set off by a comma: "With his help, ...", "In his
+    // view, ..." (as the pronoun reader's frame has it).
+    const CLAIM_FRONT_PHRASE = /^\s*(?:according to|in|on|at|by|from|under|within|among|amongst|for|to|during|without|unlike|with|throughout|upon|regarding|concerning|apart from|aside from|contrary to|thanks to|due to|owing to|in light of|in view of|with respect to|with regard to|as for)\s[^,]*,/i;
+    // The reading of a pronoun before the name as someone the box does not
+    // name: never offered ("Other"), read with the pronoun as written
+    // (r27.204).
+    const CLAIM_SOMEONE_ELSE = 'someone the box does not name';
     // What somebody believes, thinks, says or knows. A pronoun there reads as
     // any other (the user, 2026-09-28: "In 'Mary believes that she is late',
     // if that's all the content we have, then 'she' refers to 'Mary'"). Where
@@ -10834,7 +10857,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // left as written. Across a clause boundary the two may be one ("Mary said
     // that the dog bit her"), and a possessive may either way ("Poe wrote a
     // poem and his raven is black").
-    function claimPronounSites(text) {
+    function claimPronounSites(text, before) {
         // Words in quotation marks are mentioned, not used: no name for a
         // pronoun ("In 'Hamlet', Ophelia is mad, and she drowns"), and no
         // pronoun ("'She Walks in Beauty'").
@@ -10864,9 +10887,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (names.size !== 1) return null;
         const name = [...names.keys()][0], after = names.get(name), at = after - 1, sites = [];
         // A pronoun may come first where the claim opens with a clause that
-        // waits for its main one: "Before she left, Mary called" is about
-        // Mary, while "She met Mary" leaves "she" to somebody else.
-        const lead = CLAIM_LEADING_CLAUSE.test(text) ? text.indexOf(',') : -1;
+        // waits for its main one, or with a phrase set off by a comma: "Before
+        // she left, Mary called", "With his help, Bob won" -- or as "his" or
+        // "her" before a noun, "His dog loves Bob" -- while "She met Mary"
+        // leaves "she" to somebody else. Such a one may be the name or someone
+        // the box does not name, and is asked (`before`; r27.204): it had been
+        // read as the name after a clause in front, and as no one after a
+        // phrase.
+        const lead = CLAIM_LEADING_CLAUSE.test(text) ? text.indexOf(',') : (m = CLAIM_FRONT_PHRASE.exec(said)) ? m[0].length - 1 : -1;
         // Someone else the pronoun may be, before it -- "the teacher", "Mary's
         // mother", "Mary's dog" -- makes it ambiguous: it is not read as the
         // name. A noun after "is" says what someone is ("Mary is a teacher").
@@ -10885,7 +10913,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (toks.slice(k + 1, k + 4).some(x => CLAIM_HE_OR_SHE_NOUNS.has(x.l.replace(/'s$/, '')) ||
                 CLAIM_HE_OR_SHE_ANIMALS.has(x.l.replace(/'s$/, '')))) rivals.push(t.at);
         });
-        const candidate = i2 => i2 > at || (lead > 0 && i2 < lead && at > lead);
+        const ahead = i2 => i2 < at && ((lead > 0 && i2 < lead && at > lead) ||
+            /^(?:his|her)\b/i.test(text.slice(i2)) && !(/^her\b/i.test(text.slice(i2)) && CLAIM_PRONOUN_TAIL.test(text.slice(i2 + 3))));
+        const candidate = i2 => before ? ahead(i2) : i2 > at;
         // Two genders of pronoun are two people, and the claim gives one
         // name: which of them it names cannot be told from the words, so
         // neither is read. "Mary said he loves her" is left as written.
@@ -10913,6 +10943,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return m;
         });
         sites.sort((x, y) => x.at - y.at);
+        // Before the name, every pronoun one it may be: "Before she met her,
+        // Mary left" has two people and one name.
+        if (before && sites.length !== (said.slice(0, at).match(/\b(?:he|she|him|his|her)\b/gi) || []).length) return null;
+        // Two of them in one clause, one its object, are two people: "Before
+        // she met her, Mary left" (English says "herself" for one).
+        const objectAt = y => /^him$/i.test(y.word) || (/^her$/i.test(y.word) && CLAIM_PRONOUN_TAIL.test(text.slice(y.at + 3)));
+        if (before && sites.some((x, k) => sites.some((y, j) => j > k && (objectAt(x) || objectAt(y)) && !CLAIM_CLAUSE_BREAK.test(text.slice(x.at + x.word.length, y.at))))) return null;
         return sites.length ? { name, at, sites, taken: [...new Set(sites.map(x => x.word.toLowerCase()))] } : null;
     }
     function claimResolvePronouns(text) {
@@ -25247,7 +25284,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
-                typo: !!note.typo, missing: !!note.missing, single: !!note.single };
+                typo: !!note.typo, missing: !!note.missing, single: !!note.single, other: note.other || null };
             // A question offers its readings in words the check reads back,
             // and asks only where there are two or more, each of them so
             // written (r27.166): a question without one of its readings would
@@ -25255,7 +25292,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // box is said to be ambiguous, and nothing is offered. A typo's fix
             // and a slip's fixes are offered where they read back.
             const offers = claimReadingOffers(entry, claimStepDenials ? [...claimStepDenials] : null);
-            const asks = entry.typo || entry.grammar ? offers.length > 0 : offers.length >= 2 && offers.length === note.readings.length;
+            const asks = entry.typo || entry.grammar ? offers.length > 0 : note.other ? offers.length === note.readings.length - 1 : offers.length >= 2 && offers.length === note.readings.length;
             ambiguous.push(Object.assign(entry, asks ? { readings: offers.map(o => o.label), offers } : { readings: [], offers: [] }));
         }));
         // A modal step the map's system does not take (r27.101): with every
@@ -25845,8 +25882,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimNoteOffered(text, n) {
         const entry = { text, message: n.message, readings: n.readings, site: n.site, generic: !!n.generic, grouping: !!n.grouping, anyScope: !!n.anyScope, canScope: !!n.canScope,
             someScope: !!n.someScope, canDenied: !!n.canDenied, grammar: !!n.grammar, subject: n.subject || null, part: n.part || null, canPlain: !!n.canPlain, canFrom: n.canFrom || null,
-            canBe: n.canBe || null, modal: !!n.modal, typo: !!n.typo, missing: !!n.missing, single: !!n.single, object: !!n.object };
-        return claimReadingOffers(entry, null).length === n.readings.length;
+            canBe: n.canBe || null, modal: !!n.modal, typo: !!n.typo, missing: !!n.missing, single: !!n.single, object: !!n.object, other: n.other || null };
+        return claimReadingOffers(entry, null).length === n.readings.length - (n.other ? 1 : 0);
     }
     // A question a step waits on where it turns on it (r27.189, r27.199):
     // every one but a typo's fix or a slip's, which is asked every time --
@@ -35296,7 +35333,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // A question to choose among readings: two or more offered, and no typo
     // or slip of grammar, which are fixed, not chosen among (r27.166).
-    const claimAskedChoice = a => !a.typo && !a.grammar && (a.offers || []).length >= 2;
+    const claimAskedChoice = a => !a.typo && !a.grammar && (a.offers || []).length >= (a.other ? 1 : 2);
     // From so many readings, "Other" too (r27.179; the user: "If there are too
     // many, we can give the option 'Other', which would encourage the user to
     // rewrite it to avoid the ambiguity").
@@ -35313,7 +35350,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const quote = t => '\u201c' + stripClaimMarkup(t) + '\u201d', said = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
         const questions = asked.filter(claimAskedChoice).length;
         return asked.map(a => claimAskedChoice(a)
-            ? (questions > 1 ? quote(a.text) + ': did you mean ' : 'Did you mean ') + claimListWords(a.offers.map(o => said(o.words)), 'or') + '?'
+            ? (questions > 1 ? quote(a.text) + ': did you mean ' : 'Did you mean ') + (a.other ? a.offers.map(o => said(o.words)).join(', ') + ', or ' + (/ and /.test(a.other) ? 'are ' : 'is ') + a.other + ' someone else'
+                : claimListWords(a.offers.map(o => said(o.words)), 'or')) + '?'
             : quote(a.text) + (a.typo ? ' has a typo: ' : a.missing || a.single ? ': ' : a.grammar ? ' has a grammar slip: ' : ' is ambiguous: ') + a.message +
                 (a.readings.length ? ' \u2014 ' + a.readings.map(r => quote(claimRecase(claimLabel(r), a.text))).join(' or ') + '.' : '.') +
                 (a.typo ? a.derives.map(d => ' Read as ' + quote(claimRecase(claimLabel(d.label), a.text)) + (d.bare ? ', it only denies the box it objects to: a denial is not an argument.'
@@ -35671,14 +35709,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 pop.appendChild(row);
             });
             // "Other": none of these -- the box opened, to be reworded (r27.179).
-            if (claimAskedChoice(entry) && entry.offers.length >= CLAIM_OTHER_FROM) {
+            if (claimAskedChoice(entry) && (entry.other || entry.offers.length >= CLAIM_OTHER_FROM)) {
                 const row = document.createElement('label'), radio = document.createElement('input'), text = document.createElement('span');
                 row.className = 'rc-row rc-other' + (where && !readOnly ? '' : ' rc-unfit');
                 radio.type = 'radio';
                 radio.name = 'rc-' + n;
                 radio.disabled = !where || readOnly;
                 radio.addEventListener('change', () => { closeReadingChooser(); editNodeText(where.id, where.idx); });
-                text.textContent = 'Other: none of these. I will reword the box myself.';
+                text.textContent = entry.other ? 'Other: someone else. I will say who.' : 'Other: none of these. I will reword the box myself.';
                 row.appendChild(radio);
                 row.appendChild(text);
                 pop.appendChild(row);

@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 13: a pronoun before the one name it may be (r27.204)
+
+The user:
+* Of "Despite her doubts, Mary agreed" and "With his help, Bob won": "the two sentences have the same structure, so they should behave the same, however obvious one reading is".
+* Of asking, with the name offered and "Other": "ok".
+
+Changes:
+* A pronoun before the box's one name may be that name, or someone the box does not name. It asks, where a step turns on it: "Did you mean 'If Bob wins, then Bob is happy', or is 'he' someone else?"
+  * In the list of readings, the name's reading, then "Other: someone else. I will say who.", which opens the box.
+  * So after a clause in front ("Before she left, Mary called", "If he wins, then Bob is happy", "Although she was tired, Mary agreed"), after a phrase in front ("Despite her doubts, Mary agreed", "With his help, Bob won", "In his view, Bob is right"), and with "his" or "her" before a noun ("His dog loves Bob").
+  * It had been read as the name after a clause in front and after "despite", and said to have nothing to refer to after "with", "in" and the like and in "His dog loves Bob".
+* Only where it may be the name. Not the subject of a clause that holds the name ("She met Mary", "He said that Bob left"), and not two in one clause, one the other's object ("Before she met her, Mary left"). Each of those has nothing in the box to refer to, as before.
+* "Someone else" is read as someone the box does not name: a step that holds whoever it is stands ("Although she was tired, Mary agreed; so Mary agreed", by conjunction elimination). Never asking, the pronoun is read as written: it gives no step, and the check says another reading would.
+* The r27.203 entry said "It is not physically possible for Poe to beat any player" had been read as "every player". It had kept "any player" unread; it is now read as "Poe cannot beat any player" is, "a player".
+
+Tests:
+* syntax-r27-test.js has 179 checks.
+  * The 3 new ones fail on r27.203.
+* reading-r27-chooser-test.js: the readings of "His dog loves Bob", then "Other: someone else. I will say who."; it fails on r27.203.
+* anaphora-r27-test.js: after "despite" and "with" alike, the pronoun asks.
+* logic-r27-basis-test.js: "Before she left, Mary called" keeps its pronoun when read; the box asks.
+* Take-one-out: each of the 14 changes is caught.
+* 2 sentences in the corpus read differently, each a pronoun before the name, now asked: "Before she left, Mary called"; "When she exits the room, Mary learns a new fact".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 10: which kind of "possible"; "can" of five; the reductio's two "possible"s (r27.203)
 
 The user:
@@ -23,7 +49,7 @@ Changes:
 * What is, can be, of the physical and logical kinds: "Poe flies" gives "it is physically possible for Poe to fly" and "it is logically possible for Poe to fly", by ab esse ad posse. Metaphysically, it gives it by axiom T, where the map's system has it.
 * Said of a kind:
   * "It is physically possible for Poe to fly or swim" says "it is physically possible for Poe to fly, or it is physically possible for Poe to swim", so disjunctive syllogism takes it, as it took "possible for" alone (r27.176).
-  * "It is not physically possible for Poe to beat any player": for no player. It had been read as every player.
+  * "It is not physically possible for Poe to beat any player": for no player, as "Poe cannot beat any player" says. It had kept "any player" unread. (Corrected in r27.204: this line had said it had been read as every player.)
   * "It is metaphysically possible for Mary to sing and Bob cannot dance" is two claims.
 * A step's readings are weighed one by one up to 64 combinations, not 32. So a "can" beside a "might" asks only what the step turns on.
 * No numbers where words read back as the numbered reading does:

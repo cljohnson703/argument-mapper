@@ -417,6 +417,17 @@ const J = JSON.stringify;
     ok(otherRow.rows === 7 && otherRow.other === 'Other: none of these. I will reword the box myself.' && /rc-other/.test(otherRow.otherClass) && otherRow.italic && otherRow.closed && otherRow.editing &&
         otherRow.canRows === 9 && otherRow.canOther === 1,
         'six readings of "must", then "Other: none of these. I will reword the box myself.", which closes the list and opens the box; so after the five readings of "can" (r27.203), and not after the three kinds of "possible for" (r27.179)', J(otherRow));
+    // r27.204 (the user, of a pronoun before the one name it may be: the name
+    // offered, and "Other"): "his" in "His dog loves Bob".
+    const cata = T(W, `state.logic = { base: 'standard', rules: {} };
+        __c.load(${J(MAP('His dog loves Bob.', "Bob's dog loves Bob."))});
+        __c.tag('S').click();
+        var pop = __c.pop(), rows = pop ? [].slice.call(pop.querySelectorAll('.rc-row')) : [], head = pop && pop.querySelector('.rc-head');
+        var r = { rows: rows.map(function (x) { return x.textContent; }), other: pop ? pop.querySelectorAll('.rc-other').length : -1, head: head ? head.textContent : null };
+        closeReadingChooser(); state.logic = { base: 'standard', rules: {} };
+        return r;`);
+    ok(cata.rows.length === 2 && /Bob's dog/.test(cata.rows[0]) && cata.rows[1] === 'Other: someone else. I will say who.' && cata.other === 1 && cata.head === 'Did you mean:',
+        'a pronoun before the name: its reading with the name, then "Other: someone else. I will say who." (r27.204)', J(cata));
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));
     console.log(`\n${pass} passed, ${fail} failed`);
