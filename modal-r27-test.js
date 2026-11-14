@@ -459,8 +459,10 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
         on.mp.tag === '\u2713 modus ponens' && on.can.tag === '\u2713 modus ponens' && !on.mp.asks && !on.can.asks && !on.ravens.asks && !on.ravens.rule,
         'on: a box that may be read more than one way asks where the step turns on it -- not where every reading gives the step ("if zombies are possible, ..." and "zombies are possible"; "if Poe can fly, ..." and "Poe can fly"), nor where none does (r27.199)',
         J(Object.fromEntries(Object.entries(on).map(([k, r]) => [k, r.tag]))));
-    ok(on.cant.why === 'Did you mean “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black” or ' +
-            '“If we lack reasons to think that Poe is black, then it is impossible for us to conclude that Poe is black”?' &&
+    // Every reading of "can't conclude", the most obvious first (r27.208).
+    const lack = r => '“If we lack reasons to think that Poe is black, then ' + r + ' that Poe is black”';
+    ok(on.cant.why === 'Did you mean ' + [lack('we are not entitled to conclude'), lack('we are incapable of concluding'), lack('it is physically impossible for us to conclude'),
+            lack('it is metaphysically impossible for us to conclude')].join(', ') + ', or ' + lack('it is logically impossible for us to conclude') + '?' &&
         on.able.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?' &&
         /^“If it is necessary that God exists, then evil is unexplained\.”: did you mean “If it is metaphysically necessary that God exists, then evil is unexplained”, /.test(on.every.why) &&
         /“Necessarily, God exists\.”: did you mean “It is metaphysically necessary that God exists”, /.test(on.every.why),

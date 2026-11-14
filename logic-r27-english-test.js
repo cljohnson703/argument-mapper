@@ -971,7 +971,9 @@ function reportCorpus(name, res) {
             var map = function (C, MID, P3) { return [{ id: 'C', type: 'contention', texts: [C], collapsed: [], x: 0, y: 0, children: [
                 { id: 'S', type: 'support', texts: [MID, P3], collapsed: [], children: [
                     { id: 'U', type: 'support', targetIndex: 1, texts: ['We do conclude that others think'], collapsed: [], children: [] } ] } ] }]; };
-            var cant = "we can't conclude", imp = 'it is impossible for us to conclude';
+            // Every reading of "can't", the most obvious first; "impossible for
+            // us" said of its kind (r27.208).
+            var cant = "we can't conclude", imp = 'it is physically impossible for us to conclude';
             var mid = function (h1, h2, any) { return 'If ' + h1 + ' that ' + any + ' machine that passes the Turing test can think, then ' + h2 + ' that others think'; };
             // With Semantic mode on, the default; and off, read as written (r27.184).
             var all = function () { return {
@@ -981,9 +983,9 @@ function reportCorpus(name, res) {
                 knowDS: step(["Either we don't know that the bridge is safe, or we are able to cross the river", 'We know that the bridge is safe'], 'We are able to cross the river'),
                 marker: step(['If it has not been shown that P, then Q', 'It has not been shown that P'], 'We can conclude that Q'),
                 written: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'We can conclude that others think')),
-                answered: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'It is possible for us to conclude that others think')),
-                plain: tag(map('It is possible for us to conclude that every machine that passes the Turing test can think', mid(imp, imp, 'every'), 'It is possible for us to conclude that others think')),
-                doDirect: step([mid(imp, imp, 'every'), 'We do conclude that others think'], 'It is possible for us to conclude that every machine that passes the Turing test can think'),
+                answered: tag(map('We can conclude that every machine that passes the Turing test can think', mid(cant, cant, 'every'), 'It is physically possible for us to conclude that others think')),
+                plain: tag(map('It is physically possible for us to conclude that every machine that passes the Turing test can think', mid(imp, imp, 'every'), 'It is physically possible for us to conclude that others think')),
+                doDirect: step([mid(imp, imp, 'every'), 'We do conclude that others think'], 'It is physically possible for us to conclude that every machine that passes the Turing test can think'),
                 lone: step(['We do conclude that others think'], 'We can conclude that others think'),
                 fly: step(['Poe flies'], 'Poe can fly'),
                 challenge: step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable", 'We lack reasons to think that the tests are reliable'], 'The tests are reliable', 'weak-objection'),
@@ -1001,16 +1003,18 @@ function reportCorpus(name, res) {
         ok(/✓ modus tollens/.test(h.shown) && /✓ disjunctive syllogism/.test(h.knowDS), 'so for "it has been shown that" and "we know that": one rule for every phrasing', J([h.shown, h.knowDS]));
         ok(/in a box/.test(h.marker), '"We can conclude that Q" beside a different denial ("it has not been shown that P") is still an inference word', h.marker);
         ok(h.off.written[0] === 'S ✓ modus tollens' && /^S \? ambiguous \| “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think”: did you mean /.test(h.written[0]) &&
-            h.written[1].indexOf('U ? ambiguous | “We can conclude that others think”: did you mean “We are entitled to conclude that others think” or “It is possible for us to conclude that others think”?') === 0,
+            h.written[1].indexOf('U ? ambiguous | “We can conclude that others think”: did you mean “We are entitled to conclude that others think”, “We are capable of concluding that others think”, ' +
+                '“It is physically possible for us to conclude that others think”, “It is metaphysically possible for us to conclude that others think”, or “It is logically possible for us to conclude that others think”?') === 0,
             '"We do conclude that others think" under "We can conclude that others think": the box\'s denial is in the step beside, so it is a claim; asked which "can" (worded "possible for us", it follows by ab esse ad posse: below); the step above it follows as written, and with Semantic mode on asks of its "can\'t" (r27.184)', J([h.written, h.off.written]));
+        const tail = ' that every machine that passes the Turing test can think, then we can\'t conclude that others think”';
         ok(h.answered[0].indexOf("S ? ambiguous | “If we can't conclude that every machine that passes the Turing test can think, then we can't conclude that others think”: did you mean " +
-                "“If we are not entitled to conclude that every machine that passes the Turing test can think, then we can't conclude that others think” or " +
-                "“If it is impossible for us to conclude that every machine that passes the Turing test can think, then we can't conclude that others think”?") === 0 &&
-            /^U ✓ ab esse ad posse$/.test(h.answered[1]), 'answered "possible for us", the step above asks the same of its "can\'t" (worded "impossible for us", modus tollens: below)', J(h.answered));
-        ok(J(h.plain) === J(['S ✓ modus tollens', 'U ✓ ab esse ad posse']), 'worded "impossible/possible for us", modus tollens and ab esse ad posse, nothing asked', J(h.plain));
-        ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
+                "“If we are not entitled to conclude" + tail + ", “If we are incapable of concluding" + tail + ", “If it is physically impossible for us to conclude" + tail +
+                ", “If it is metaphysically impossible for us to conclude" + tail + ", or “If it is logically impossible for us to conclude" + tail + "?") === 0 &&
+            /^U ✓ ab esse ad posse$/.test(h.answered[1]), 'answered "physically possible for us", the step above asks the same of its "can\'t", every reading (r27.208; worded "physically impossible for us", modus tollens: below)', J(h.answered));
+        ok(J(h.plain) === J(['S ✓ modus tollens', 'U ✓ ab esse ad posse']), 'worded "physically impossible/possible for us", modus tollens and ab esse ad posse, nothing asked (r27.208: "impossible for us" alone asks which kind)', J(h.plain));
+        ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is physically impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
         ok(/in a box/.test(h.lone), 'alone, "We can conclude that ..." is still an inference word', h.lone);
-        ok(/^A \? ambiguous \| Did you mean “If we lack reasons to think that the tests are reliable, then we are not entitled to conclude that the tests are reliable” or /.test(h.challenge) &&
+        ok(/^A \? ambiguous \| Did you mean “If we lack reasons to think that the tests are reliable, then we are not entitled to conclude that the tests are reliable”, “If we lack reasons to think that the tests are reliable, then we are incapable of concluding that the tests are reliable”, /.test(h.challenge) &&
             h.off.challenge === 'A ? not recognized | On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
             'a weak objection\'s "we can\'t conclude that ..." asks which is meant, with Semantic mode on; off, as written, it is not "not established": the challenge does not follow, and it says that read another way it would (r27.184)', J([h.challenge, h.off.challenge]));
         ok(h.object.indexOf("A ? ambiguous | “If we can't conclude that Mary loves any raven, then we can't conclude that others think”: did you mean “If we can't conclude that Mary loves every raven, then we can't conclude that others think” or “If we can't conclude that Mary loves some raven, then we can't conclude that others think”?") === 0 &&

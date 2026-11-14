@@ -1134,7 +1134,8 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
     const lone = step(['We cannot conclude that God exists.'], 'God exists.', 'weak-objection'),
         lack = step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable.", 'We lack reasons to think that the tests are reliable.'], 'The tests are reliable.', 'weak-objection'),
         repeats = step(['Poe can fly.'], 'Poe can fly.'), denied = step(["Poe can't fly."], 'Poe can fly.', 'objection');
-    ok(J(lone.asked) === J([2]) && J(lack.asked) === J([2]) && /only repeats/.test(repeats.why) && !repeats.asked.length && J(denied.asked) === J([5, 5]),
+    // Five readings of "can't conclude" since r27.208.
+    ok(J(lone.asked) === J([5]) && J(lack.asked) === J([5]) && /only repeats/.test(repeats.why) && !repeats.asked.length && J(denied.asked) === J([5, 5]),
         'a reading on which the box only says again what it is for, or a premise is idle, is valid but no argument: where another reading does not give the step, it asks ("we cannot conclude that God exists", a bare challenge on one reading; "we lack reasons ..." beside "if ..., then it is impossible for us to conclude ...", its conditional idle); where every reading is so, it does not ("only repeats")', J([lone, lack, repeats, denied]));
     const raised = step(['Bob does not think that it rains.'], 'Bob thinks that it does not rain.');
     ok(raised.why === 'Did you mean “It is not the case that Bob thinks that it rains” or “Bob thinks that it does not rain”?',
@@ -1407,6 +1408,33 @@ console.log('\n-- r27.207: "Never ask" is the default --');
         r.on.rule === null && r.on.why === 'Did you mean “Bob left, and then Bob cried”, or is “she” someone else?' &&
         J(r.turns) === J([true, 'turns']) && J(r.always) === J(['always', 'always']) && J(r.never) === J([false, 'never']),
         'a map that says nothing reads each box as written and asks nothing: "Bob left and then she cried", so "Bob cried", with "she" read as Bob, and "Poe can fly" gives no "able"; switched to "Ask where a step turns on it", the map says so, and it asks; "Never ask" says nothing', J(r));
+}
+
+console.log('\n-- r27.208: every reading of "can\'t conclude", the most obvious first --');
+{
+    // The user: "We need all of the readings, since someone can, however
+    // seldom, mean 'It is physically impossible for us to conclude that...',
+    // perhaps due to something in our brains that prevents it. You can put the
+    // most obvious suggestions at the top, going down by obviousness."
+    const step = (ps, c, type) => ev(`state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: ${J(type || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };`);
+    const five = ['We are not entitled to conclude', 'We are incapable of concluding', 'It is physically impossible for us to conclude', 'It is metaphysically impossible for us to conclude',
+        'It is logically impossible for us to conclude'].map(h => '“' + h + ' that God exists”');
+    const s = [step(['We conclude that God exists.'], "We can't conclude that God exists.", 'objection'),
+        step(['We conclude that God exists.'], 'It is physically impossible for us to conclude that God exists.', 'objection'),
+        step(['We conclude that God exists.'], 'We are incapable of concluding that God exists.', 'objection')];
+    ok(s[0].rule === null && s[0].why === 'Did you mean ' + five.slice(0, 4).join(', ') + ', or ' + five[4] + '?' && s[1].rule === 'ab esse ad posse' && s[2].rule === null,
+        '"we can\'t conclude that God exists": not entitled, incapable, physically, metaphysically or logically impossible for us, in that order; "we conclude that God exists" refutes the third by ab esse ad posse, not the second (one act shows no ability)', J(s));
+    const r = ev(`state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;
+        var t = "We can't conclude that God exists.", n = parseClaimFull(t).notes.filter(function (x) { return x.canScope; })[0];
+        var kind = parseClaimFull('It is impossible for us to conclude that God exists.').notes.filter(function (x) { return x.kind === 'ambiguous'; }).map(function (x) { return x.message; });
+        var a = parseClaim('Poe is capable of flying.'), b = parseClaim('Poe is incapable of flying.');
+        return { incapable: claimSame(parseClaim('We are incapable of concluding that God exists.'), parseClaim(t, { site: n.site, reading: 1 })),
+            capable: claimSame(parseClaim('We are capable of concluding that God exists.'), parseClaim(t, { site: n.site, reading: 1 }).inner),
+            kind: kind, poe: claimSame(negateClaim(a), b) };`);
+    ok(r.incapable && r.capable && J(r.kind) === J(['"impossible" does not say which kind of possibility is meant: metaphysical, logical or physical']) && r.poe,
+        '"we are incapable of concluding that God exists" reads as that reading ("capable" as its denial); "it is impossible for us to conclude that God exists" asks which kind, as "impossible for" does elsewhere; "Poe is incapable of flying" denies "Poe is capable of flying", as before', J(r));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

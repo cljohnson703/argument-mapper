@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.207';
+    const APP_BUILD = '2026-11-14 r27.208';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -14551,19 +14551,45 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // conclude that P"), so it is one claim.
         return fit(f) ? Object.assign(f, { possible: true, src: text }) : null;
     }
-    // The question, both readings in the words the box can be given: "we are
-    // not entitled to conclude that P" or "it is impossible for us to
-    // conclude that P" ("entitled" or "possible" for an affirmation).
-    // Asked only where a step follows on the second reading and not the
-    // first (claimGenericRole); the first is read otherwise.
+    // The question, every reading in the words the box can be given, the
+    // most obvious first (r27.208; the user: "We need all of the readings,
+    // since someone can, however seldom, mean 'It is physically impossible
+    // for us to conclude that...' ... You can put the most obvious
+    // suggestions at the top, going down by obviousness"): "we are not
+    // entitled to conclude that P", read as "it has not been established
+    // that P"; "we are incapable of concluding that P", what we are able to
+    // do; "it is physically / metaphysically / logically impossible for us to
+    // conclude that P" ("entitled", "capable" and "possible" for an
+    // affirmation). It had offered "it is impossible for us to conclude that
+    // P" for the last four. Unasked, the first is read.
+    const CLAIM_CAN_GERUND = Object.assign(Object.create(null), { conclude: 'concluding', infer: 'inferring', determine: 'determining', establish: 'establishing',
+        ascertain: 'ascertaining', show: 'showing', prove: 'proving', demonstrate: 'demonstrating', know: 'knowing', 'be sure': 'being sure', 'be certain': 'being certain',
+        say: 'saying', assume: 'assuming', tell: 'telling' });
+    // That reading in its words: "we are (in)capable of concluding that P",
+    // the claim "we can conclude that P" (denied), so said wherever it is
+    // read, from the box's "can't" or from those words.
+    function claimCapableWords(f, subj, be, gerund, rest, denied) {
+        f.src = subj + ' ' + be + ' capable of ' + gerund + ' ' + rest;
+        return denied ? Object.assign(negateClaim(f), { src: subj + ' ' + be + ' incapable of ' + gerund + ' ' + rest }) : f;
+    }
     function claimCanAsked(can, conj, said, denied, established) {
         const obj = CLAIM_FOR_PERSON[can.subj], be = { we: 'are', i: 'am', you: 'are', they: 'are', one: 'is' }[can.subj];
         const entitled = /^(?:conclude|infer|assume)$/.test(can.verb) ? 'entitled to ' : 'in a position to ';
+        const kinds = ['physically', 'metaphysically', 'logically'];
         const labels = [can.subj + ' ' + be + (denied ? ' not ' : ' ') + entitled + can.verb + ' ' + conj + ' ' + said,
-            'it is ' + (denied ? 'impossible' : 'possible') + ' for ' + obj + ' to ' + can.verb + ' ' + conj + ' ' + said];
-        const possible = () => { const f = claimPossibleCan(can.subj + ' can ' + can.verb + ' ' + conj + ' ' + said); return f && (denied ? negateClaim(f) : f); };
-        return claimAmbiguous('"' + (denied ? 'can\u2019t ' : 'can ') + can.verb + '" may mean ' + (denied ? 'it has not been established, or that it is impossible for ' : 'it has been established, or that it is possible for ') + obj,
-            [{ label: labels[0], build: established }, { label: labels[1], build: possible }], claimModalAsking(),
+            can.subj + ' ' + be + ' ' + (denied ? 'incapable' : 'capable') + ' of ' + (CLAIM_CAN_GERUND[can.verb] || can.verb + 'ing') + ' ' + conj + ' ' + said]
+            .concat(kinds.map(k => 'it is ' + k + ' ' + (denied ? 'impossible' : 'possible') + ' for ' + obj + ' to ' + can.verb + ' ' + conj + ' ' + said));
+        // What we are able to do: "we can conclude that P", the "can" as it is
+        // read when nothing else is said of it -- not as the affirmation of a
+        // "we can't conclude" in the step beside.
+        // Said in its own words, "capable of", as the box so worded is
+        // (readAffirmedClaim).
+        const able = () => { const f = claimAsStepReads(null, () => claimWithout('established', can.subj + ' can ' + can.verb + ' ' + conj + ' ' + said));
+            return f && f.kind === 'pred' && /^~can /.test(f.prop) ? claimCapableWords(f, can.subj, be, CLAIM_CAN_GERUND[can.verb] || can.verb + 'ing', conj + ' ' + said, denied) : null; };
+        const who = can.subj === 'i' ? 'I' : can.subj;
+        return claimAmbiguous('"' + (denied ? 'can\u2019t ' : 'can ') + can.verb + '" may mean ' + (denied ? 'it has not been established, that ' + who + ' ' + be + ' incapable of it, or that it is impossible for '
+                : 'it has been established, that ' + who + ' ' + be + ' capable of it, or that it is possible for ') + obj + ' (physically, metaphysically or logically)',
+            [{ label: labels[0], build: established }, { label: labels[1], build: able }].concat(labels.slice(2).map(label => ({ label, build: () => readClaim(label) }))), claimModalAsking(),
             Object.assign({ generic: true, canScope: true, canDenied: denied, subject: 'can ' + can.verb }, claimModalAsking() ? { ask: true } : {})) ||
             // Semantic mode off (r27.184), as written: not "it has not been
             // established" -- one claim, its "can't" its denial (the user:
@@ -14580,6 +14606,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function readAffirmedClaim(s) {
         if (claimSkips('established', s)) return null;
         let m;
+        // "We are incapable of concluding that P", a reading of "we can't
+        // conclude that P": what we are able to do, without the other reading
+        // "not able to conclude" has (r27.208). It had been a claim of its
+        // own, "capable of concluding" its words. Only the verbs that reading
+        // is of: "Poe is capable of flying" is as it was.
+        if ((m = s.match(/^(.+?) (is|are|am) (in)?capable of (being (?:sure|certain)|[a-z]{2,}ing) (.+)$/))) {
+            const v = m[4], base = Object.keys(CLAIM_CAN_GERUND).find(k => CLAIM_CAN_GERUND[k] === v);
+            const f = base ? claimQuietly(() => claimAsStepReads(null, () => claimWithout('established', m[1] + ' can ' + base + ' ' + m[5]))) : null;
+            if (f && f.kind === 'pred' && /^~can /.test(f.prop) && !f.possible) return claimCapableWords(f, m[1], m[2], v, m[5], !!m[3]);
+        }
         if ((m = s.match(/^it is (impossible|not possible|possible) for (.+?) to (.+)$/))) {
             const subj = CLAIM_PERSON_FOR[m[2]] || m[2], denied = m[1] !== 'possible';
             const f = claimPossibleCan(subj + ' can ' + claimAnyAfterThat(m[3], denied || claimReadState.anyIsSome > 0));
@@ -14587,11 +14623,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // allow bare possibility and necessity to be offered"; of asking
             // which kind where a step turns on it: "ok"): metaphysically,
             // logically or physically -- what is possible for one to do, not
-            // what is known. Unanswered, read as written. Not yet "it is
-            // impossible for us to conclude that P", one reading of "we can't
-            // conclude that P" (claimCanAsked), whose words wait on the user.
-            const conclude = claimCanHead('we can not ' + String(m[3]).split(/ (?:that|whether) /)[0]) && /^(?:us|me|you|them|one)$/.test(m[2]);
-            if (f && !conclude) {
+            // what is known. Unanswered, read as written. So "it is impossible
+            // for us to conclude that P" (r27.208; it had been held, a reading
+            // of "we can't conclude that P", whose words waited on the user).
+            if (f) {
                 const word = m[1] === 'impossible' ? k => k + ' impossible' : m[1] === 'not possible' ? k => 'not ' + k + ' possible' : k => k + ' possible';
                 const asked = claimAmbiguous('"' + m[1] + '" does not say which kind of possibility is meant: metaphysical, logical or physical',
                     ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' for ' + m[2] + ' to ' + m[3]).map(label => ({ label, build: () => readClaim(label) })),

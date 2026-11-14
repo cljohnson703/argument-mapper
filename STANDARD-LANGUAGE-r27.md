@@ -4,6 +4,37 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: every reading of "we can't conclude", the most obvious first (r27.208)
+
+The user:
+* Of the words for the second reading of "we can't conclude that P": "I actually don't like any of these options. The option you recommend is the typical reading. But it's not the only reading. We need all of the readings, since someone can, however seldom, mean 'It is physically impossible for us to conclude that...', perhaps due to something in our brains that prevents it. You can put the most obvious suggestions at the top, going down by obviousness."
+
+Changes:
+* Where Semantic mode asks, "We can't conclude that God exists" offers every reading, the most obvious first:
+  * "We are not entitled to conclude that God exists", read as "it has not been established that God exists";
+  * "We are incapable of concluding that God exists";
+  * "It is physically impossible for us to conclude that God exists";
+  * "It is metaphysically impossible for us to conclude that God exists";
+  * "It is logically impossible for us to conclude that God exists".
+* It had offered the first and "It is impossible for us to conclude that God exists". With five, "Other" too.
+  * So "can conclude" beside its denial: "entitled", "capable", and "possible" of each kind. So "can't infer", "can't say" and the rest.
+  * Unasked, the first is read, as before.
+* "We conclude that God exists" refutes "It is physically impossible for us to conclude that God exists", and the logical kind, by ab esse ad posse. It does not refute "We are incapable of concluding that God exists": one act shows no ability.
+* "We are incapable of concluding that God exists" is read as the second reading, and "We are capable of concluding that God exists" as its denial. Each had been a claim of its own. Not other verbs: "Poe is capable of flying" is as it was.
+* "It is impossible for us to conclude that P" asks which kind, as "impossible for" does elsewhere (r27.203). It had been held for this.
+
+Tests:
+* syntax-r27-test.js has 189 checks.
+  * The 2 new ones fail on r27.207.
+  * Changed: "we cannot conclude that God exists" and the "we lack reasons" step ask with five readings.
+* The five readings: logic-r27-english-test.js (the Turing-test map, and the challenge; its "impossible for us" now says "physically"), modal-r27-test.js and language-r27-qualifier-test.js.
+* Take-one-out: each of the 3 changes is caught.
+* 26 sentences in the corpus read differently, none in what it says:
+  * 24 "can't conclude" boxes offer the five readings;
+  * 2 "it is possible for us to conclude that ..." boxes ask which kind.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: "Never ask" is the default (r27.207)
 
 The user:

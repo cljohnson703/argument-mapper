@@ -390,7 +390,8 @@ try {
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
         ok(!asked.rule && /did you mean “If we don't possess .+, then we can't conclude that a mere series of flashing lights is not able to produce consciousness”, /.test(asked.why) &&
-            /did you mean “If we don't possess .+, then we are not entitled to conclude that a mere series of flashing lights can't produce consciousness” or /.test(asked.why),
+            // Every reading of "can't conclude", the most obvious first (r27.208).
+            /did you mean “If we don't possess .+, then we are not entitled to conclude that a mere series of flashing lights can't produce consciousness”, “If we don't possess .+, then we are incapable of concluding that a mere series of flashing lights can't produce consciousness”, /.test(asked.why),
             '"can\'t produce", read inside "we can\'t conclude that ...", asks which is meant (r27.169), with Semantic mode on -- and "we can\'t conclude" with it (r27.184)', asked.why);
         // Read as written (r27.184: Semantic mode off), where "we can't
         // conclude" is not "not established" (the user: "Correct"): so worded
