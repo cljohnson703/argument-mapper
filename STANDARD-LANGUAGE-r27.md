@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: the readings of a plain "can", the most obvious first (r27.213)
+
+The user:
+* Of offering a plain "can" in the order able, allowed, physically, metaphysically, logically: "a".
+
+Changes:
+* "Poe can fly" offers its readings in that order:
+  * "Poe is able to fly";
+  * "Poe is allowed to fly";
+  * "It is physically possible for Poe to fly";
+  * "It is metaphysically possible for Poe to fly";
+  * "It is logically possible for Poe to fly".
+* It had offered able, metaphysically, logically, physically, allowed.
+* So "can't" ("We are not able to leave", "We are not allowed to leave", "It is not physically possible for us to leave", ...), and a reading in place in a longer box ("Mary can sing, and it is not physically possible for Bob to dance").
+* What the box says of it follows the same order: '"can" may say what Poe is able to do, what Poe is allowed to do, or what is possible for Poe (physically, metaphysically or logically)'.
+* Not changed: the kinds of "possible for", "possibly", "must", "might", "may" and "could", offered as before (metaphysically, logically, physically). "We can't conclude" had been in this order since r27.208.
+
+Tests:
+* Checks that give the order, changed, each failing on r27.212:
+  * syntax-r27-test.js: "Poe can fly", "the tin can hit the wall", "we can conceive of zombies", and two steps that wait on "can";
+  * logic-r27-english-test.js: "We can't leave", "Poe flies; so Poe can fly" (its rows too), "the ravens", "computers", "James", Otto's notebook, and two "can"s in one box;
+  * logic-r27-basis-test.js ("a mere series of lights can"), extended-mind-r27-test.js ("cannot perform"), modal-r27-test.js and reading-r27-chooser-test.js (what the box says).
+* Take-one-out: each of the 3 changes is caught.
+* 62 sentences in the corpus read differently by default, and 63 with Semantic mode on, none in what it says: each "can" and "can't" offers the same readings, the most obvious first, and names them in that order.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: a pronoun's one possible referent is its referent (r27.212)
 
 The user:

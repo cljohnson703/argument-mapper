@@ -702,7 +702,7 @@ function reportCorpus(name, res) {
         ok(d.hedge && d.hedge.rule === null && d.hedge.ambiguous === true &&
             d.hedge.why === '“We should be able to leave” is ambiguous: "should" can hedge a claim ("presumably") or say what ought to be.',
             '"We are not able to leave" against "We should be able to leave" is flagged, and says why -- no reading that is no sentence offered', J(d.hedge));
-        ok(d.cant && d.cant[0].rule === null && d.cant[0].why === 'Did you mean “We are not able to leave”, “It is not metaphysically possible for us to leave”, “It is not logically possible for us to leave”, “It is not physically possible for us to leave”, or “We are not allowed to leave”?' &&
+        ok(d.cant && d.cant[0].rule === null && d.cant[0].why === 'Did you mean “We are not able to leave”, “We are not allowed to leave”, “It is not physically possible for us to leave”, “It is not metaphysically possible for us to leave”, or “It is not logically possible for us to leave”?' &&
             d.cant[1].rule === null && d.cant[1].why === d.hedge.why,
             '"We can\'t leave" asks which "can" is meant (r27.169; each kind of possibility, r27.203), with Semantic mode on, where the step turns on it; against "should", on no reading, it does not (r27.199)', J(d.cant));
         // Since r27.157, "all black things are dark" and "ravens are black" give
@@ -1073,9 +1073,9 @@ function reportCorpus(name, res) {
         // r27.203 (the user, of a bare "possible": "We can't allow bare
         // possibility and necessity to be offered"; of the five readings:
         // "ok"): what is possible for Poe, of each kind.
-        ok(c.fly.tag === '? ambiguous' && c.fly.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?',
+        ok(c.fly.tag === '? ambiguous' && c.fly.why === 'Did you mean “Poe is able to fly”, “Poe is allowed to fly”, “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?',
             '"Poe flies", so "Poe can fly": asked which "can" (said "physically possible for Poe", it follows by ab esse ad posse: below)', J(c.fly));
-        ok(J(c.fly.rows) === J(['Poe is able to fly', 'It is metaphysically possible for Poe to fly', 'It is logically possible for Poe to fly', 'It is physically possible for Poe to fly', 'Poe is allowed to fly',
+        ok(J(c.fly.rows) === J(['Poe is able to fly', 'Poe is allowed to fly', 'It is physically possible for Poe to fly', 'It is metaphysically possible for Poe to fly', 'It is logically possible for Poe to fly',
                 'Other: none of these. I will reword the box myself.']),
             'answered in the box: "Poe is able to fly"; "It is metaphysically (logically, physically) possible for Poe to fly"; "Poe is allowed to fly"; or, of five, "Other" (r27.179, r27.203)', J(c.fly.rows));
         // r27.199 (the user, of which rule every question follows: "(a)", ask
@@ -1086,11 +1086,11 @@ function reportCorpus(name, res) {
             c.bare.why === 'Did you mean “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, or “It is physically possible for Poe to fly”?' &&
             c.both.tag === '✓ modus ponens' && !c.both.why,
             'said "physically possible for", it follows; said "possible for", it asks which kind -- metaphysically it is the map\'s axiom T (r27.203); "Poe can fly" in both boxes of a modus ponens follows however it is meant, and asks nothing (r27.199; r27.169 had asked)', J([c.possible.tag, c.bare, c.both]));
-        ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If it is metaphysically possible for Poe to fly, then Poe is a bird”, “If it is logically possible for Poe to fly, then Poe is a bird”, “If it is physically possible for Poe to fly, then Poe is a bird”, or “If Poe is allowed to fly, then Poe is a bird”?' &&
-            c.strict.rows[3] === 'If it is physically possible for Poe to fly, then Poe is a bird',
+        ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If Poe is allowed to fly, then Poe is a bird”, “If it is physically possible for Poe to fly, then Poe is a bird”, “If it is metaphysically possible for Poe to fly, then Poe is a bird”, or “If it is logically possible for Poe to fly, then Poe is a bird”?' &&
+            c.strict.rows[2] === 'If it is physically possible for Poe to fly, then Poe is a bird',
             '"physically possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));
         ok(c.able.tag === '✓ modus ponens' && c.sameAble === true, '"Poe is able to fly" is "Poe can fly" read as ability: one claim', J(c.able));
-        ok(/^Did you mean “The ravens are able to fly”, “It is metaphysically possible for the ravens to fly”, “It is logically possible for the ravens to fly”, “It is physically possible for the ravens to fly”, or “The ravens are allowed to fly”\?/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
+        ok(/^Did you mean “The ravens are able to fly”, “The ravens are allowed to fly”, “It is physically possible for the ravens to fly”, “It is metaphysically possible for the ravens to fly”, or “It is logically possible for the ravens to fly”\?/.test(c.ravens.why) && J(c.ravens.rows.slice(0, 1)) === J(['The ravens are able to fly']), 'with a plural, "are"', J(c.ravens));
         // r27.169: the readings' words. A plural of one word is "are", and
         // written small inside the reading ("for computers"); a name keeps
         // its capital ("James", "Socrates"); the head of the subject says its
@@ -1107,9 +1107,9 @@ function reportCorpus(name, res) {
             return { computers: why(['Computers can think.'], 'It is physically possible for computers to think.'), james: why(['James can sing.'], 'It is physically possible for James to sing.'),
                 records: why(["The records in Otto's notebook cannot perform all the functions."], "It is not physically possible for the records in Otto's notebook to perform all the functions."),
                 ravens: why(['Ravens are necessarily black.'], 'It is metaphysically necessary that ravens are black.'), god: why(['God necessarily exists.'], 'It is metaphysically necessary that God exists.') };`);
-        ok(w.computers.indexOf('Did you mean “Computers are able to think”, “It is metaphysically possible for computers to think”, “It is logically possible for computers to think”, “It is physically possible for computers to think”, or “Computers are allowed to think”?') === 0 &&
-            /^Did you mean “James is able to sing”, “It is metaphysically possible for James to sing”/.test(w.james) &&
-            /^Did you mean “The records in Otto's notebook are not able to perform all the functions”, “It is not metaphysically possible for the records in Otto's notebook to perform all the functions”/.test(w.records) &&
+        ok(w.computers.indexOf('Did you mean “Computers are able to think”, “Computers are allowed to think”, “It is physically possible for computers to think”, “It is metaphysically possible for computers to think”, or “It is logically possible for computers to think”?') === 0 &&
+            /^Did you mean “James is able to sing”, “James is allowed to sing”/.test(w.james) &&
+            /^Did you mean “The records in Otto's notebook are not able to perform all the functions”, “The records in Otto's notebook are not allowed to perform all the functions”/.test(w.records) &&
             /^“Ravens are necessarily black\.”: did you mean “It is metaphysically necessary that ravens are black”/.test(w.ravens) && /^Did you mean “It is metaphysically necessary that God exists”/.test(w.god),
             'the readings\' words: "computers are", "for computers"; "James is"; "the records in Otto\'s notebook are"; "that ravens are black", "that God exists" (r27.169; it had been "computers is", "for Computers", "that Ravens")', J(w));
         // r27.169: "can't", each reading denied; and a box of two "can"s, each
@@ -1124,8 +1124,10 @@ function reportCorpus(name, res) {
                 key: claimKey(parseClaim('It is possible for Mary to sing and Bob cannot dance.')).replace(/\\uE000/g, '') };`);
         const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
         // A comma between the two clauses (r27.206).
-        ok(J(two.offers) === J([['Mary is able to sing, and Bob cannot dance.'].concat(kinds('It is ', ' possible for Mary to sing, and Bob cannot dance.'), ['Mary is allowed to sing, and Bob cannot dance.']),
-                ['Mary can sing, and Bob is not able to dance.'].concat(kinds('Mary can sing, and it is not ', ' possible for Bob to dance.'), ['Mary can sing, and Bob is not allowed to dance.']),
+        // "Can": able, allowed, then the kinds, physically first (r27.213).
+        const canKinds = (pre, post) => ['physically', 'metaphysically', 'logically'].map(k => pre + k + post);
+        ok(J(two.offers) === J([['Mary is able to sing, and Bob cannot dance.', 'Mary is allowed to sing, and Bob cannot dance.'].concat(canKinds('It is ', ' possible for Mary to sing, and Bob cannot dance.')),
+                ['Mary can sing, and Bob is not able to dance.', 'Mary can sing, and Bob is not allowed to dance.'].concat(canKinds('Mary can sing, and it is not ', ' possible for Bob to dance.')),
                 kinds('It is ', ' possible for Mary to sing, and it is not possible for Bob to dance.'), kinds('It is possible for Mary to sing, and it is not ', ' possible for Bob to dance.')]) &&
             /^C\[/.test(two.key),
             'two "can"s in one box, each asked and answered in place; "it is possible for Mary to sing and ..." is two claims (r27.169), each asking which kind (r27.203)', J(two));
@@ -1163,7 +1165,7 @@ function reportCorpus(name, res) {
         ok(J(either.clauses) === J(['"possible" does not say which kind of possibility is meant: metaphysical, logical or physical', '"possible" does not say which kind of possibility is meant: metaphysical, logical or physical']) &&
             /^D\[/.test(either.clausesKey) && either.bird === '✓ conjunction elimination',
             '"it is possible for me to draw a red card, or it is possible for me to draw a black card": an "or", each part asking only which kind (r27.203); "it is possible for Poe to fly, and Poe is a bird", the same (r27.176; the first had been one garbled claim, and each asked which "can" was meant)', J(either));
-        ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “It is metaphysically possible for Poe to fly or swim”, “It is logically possible for Poe to fly or swim”, “It is physically possible for Poe to fly or swim”, or “Poe is allowed to fly or swim”?',
+        ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “Poe is allowed to fly or swim”, “It is physically possible for Poe to fly or swim”, “It is metaphysically possible for Poe to fly or swim”, or “It is logically possible for Poe to fly or swim”?',
             '"I", not "i", in what "can" may say; "Poe can fly or swim" still offers each reading (r27.176)', J([either.i, either.rows]));
         ok(either.off === '? not recognized | On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
             'with Semantic mode off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" does not follow as written; read as "possible" it would, and it says so (r27.184)', either.off);

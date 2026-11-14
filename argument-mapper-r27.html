@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.212';
+    const APP_BUILD = '2026-11-14 r27.213';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -14386,17 +14386,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // What is possible for Poe, of its kind (r27.203; the user, of a bare
         // "possible": "We can't allow bare possibility and necessity to be
         // offered"; of the five readings: "ok"): metaphysically, logically or
-        // physically. It had been "it is possible for Poe to fly".
-        const kinds = ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + not + k + ' possible for ' + obj + ' to ' + vp);
-        const labels = [subj + ' ' + be + ' ' + not + 'able to ' + vp].concat(kinds, [subj + ' ' + be + ' ' + not + 'allowed to ' + vp]);
+        // physically. It had been "it is possible for Poe to fly". The most
+        // obvious first (r27.213; the user, of able, allowed, physically,
+        // metaphysically, logically: "a"): it had been able, the three kinds,
+        // allowed.
+        const kinds = ['physically', 'metaphysically', 'logically'].map(k => 'it is ' + not + k + ' possible for ' + obj + ' to ' + vp);
+        const labels = [subj + ' ' + be + ' ' + not + 'able to ' + vp, subj + ' ' + be + ' ' + not + 'allowed to ' + vp].concat(kinds);
         // "Poe can fly or swim", read as "Poe can fly, or Poe can swim": read
         // as "able", one claim, "Poe is able to fly or swim" -- what one is
         // able to do one or the other of, one need not be able to do either
         // of (Kenny's cards), so the "can" is not spread over the "or"; as
         // "possible", spread (r27.176).
         const spread = form.kind === 'or', one = spread ? claimCanOne(form, subj, vp) : null;
-        return claimAmbiguous(claimRecase('"' + (denied ? 'can\u2019t' : 'can') + '" may say what ' + who + ' ' + be + ' ' + not + 'able to do, what is ' + not + 'possible for ' +
-                claimShowWords(obj) + ' (metaphysically, logically or physically), or what ' + who + ' ' + be + ' ' + not + 'allowed to do', claimBoxRaw || ''),
+        return claimAmbiguous(claimRecase('"' + (denied ? 'can\u2019t' : 'can') + '" may say what ' + who + ' ' + be + ' ' + not + 'able to do, what ' + who + ' ' + be + ' ' + not +
+                'allowed to do, or what is ' + not + 'possible for ' + claimShowWords(obj) + ' (physically, metaphysically or logically)', claimBoxRaw || ''),
             [{ label: labels[0], build: () => spread ? one : form }].concat(labels.slice(1).map(label => ({ label, build: () => readClaim(label) }))).concat(
              // The noun beside them: "The tin can did hit the wall" (r27.198).
              (() => { const noun = !denied && !spread ? claimAuxNounWords(text, 'can') : null; return noun ? [{ label: noun, build: () => readClaim(noun) }] : []; })()), claimModalAsking(),
@@ -35598,9 +35601,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // "It is possible for computers to think": no capital from the box's start.
                 const first = said.split(/\s+/)[0].toLowerCase();
                 const who = CLAIM_FOR_PERSON[said.toLowerCase()] || (start && (CLAIM_FUNCTION_WORDS.has(first) || claimOpeningPlural(first)) ? said.charAt(0).toLowerCase() + said.slice(1) : said);
-                // Its five: able; possible, metaphysically, logically or
-                // physically; allowed (r27.203).
-                const kind = ['metaphysically', 'logically', 'physically'][r - 1];
+                // Its five: able; allowed; possible, physically,
+                // metaphysically or logically (r27.203; in this order,
+                // r27.213).
+                const kind = [null, null, 'physically', 'metaphysically', 'logically'][r];
                 if (r > 4) return null;
                 const word = kind ? (start ? 'It' : 'it') + ' is ' + not + kind + ' possible for ' + who + ' to '
                     : said + ' ' + (entry.canBe || 'is') + ' ' + not + (r === 0 ? 'able to ' : 'allowed to ');

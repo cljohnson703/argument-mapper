@@ -333,11 +333,12 @@ const J = JSON.stringify;
     // with Semantic mode on, the default (r27.184). It had been "Poe cannot
     // beat any player", whose "it is not possible for Poe to beat any player"
     // asked of "any" in turn; each kind of possibility now reads back, "any"
-    // under the denial as "some" (r27.203).
+    // under the denial as "some" (r27.203). Its readings the most obvious
+    // first (r27.213).
     T(W, `state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
     const beat = asked('Bob can swim, and Mary can too.', 'Bob is weak.');
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
-        beat.title.indexOf('“Bob can swim, and Mary can too.” is ambiguous: "can" may say what Bob is able to do, what is possible for Bob (metaphysically, logically or physically), or what Bob is allowed to do.') >= 0,
+        beat.title.indexOf('“Bob can swim, and Mary can too.” is ambiguous: "can" may say what Bob is able to do, what Bob is allowed to do, or what is possible for Bob (physically, metaphysically or logically).') >= 0,
         'a question one of whose readings does not read back is not asked -- "Bob can swim, and Mary can too" -- the box is said to be ambiguous, and the tag opens the list', J(beat));
     // r27.173: the weather's reading, its two conditions grouped, is offered:
     // "it is cold if the street is wet and the sky is grey" had asked what the

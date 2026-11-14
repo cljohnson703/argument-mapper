@@ -344,7 +344,7 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // possible for Mary metaphysically -- by axiom T, the system's -- and
     // logically and physically, by ab esse ad posse. Each follows, so the
     // step stands.
-    ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “It is metaphysically possible for Mary to sing”, “It is logically possible for Mary to sing”, “It is physically possible for Mary to sing”, or “Mary is allowed to sing”?' &&
+    ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “Mary is allowed to sing”, “It is physically possible for Mary to sing”, “It is metaphysically possible for Mary to sing”, or “It is logically possible for Mary to sing”?' &&
         step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'axiom T' && step(['Mary sings.'], 'It is physically possible for Mary to sing.').rule === 'ab esse ad posse',
         '"can" stays as it is: asked which -- able, possible of each kind, allowed (r27.203) -- and "possible for", of every kind, follows: metaphysically by axiom T, physically and logically by ab esse ad posse');
 }
@@ -463,7 +463,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     const lack = r => '“If we lack reasons to think that Poe is black, then ' + r + ' that Poe is black”';
     ok(on.cant.why === 'Did you mean ' + [lack('we are not entitled to conclude'), lack('we are incapable of concluding'), lack('it is physically impossible for us to conclude'),
             lack('it is metaphysically impossible for us to conclude')].join(', ') + ', or ' + lack('it is logically impossible for us to conclude') + '?' &&
-        on.able.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?' &&
+        on.able.why === 'Did you mean “Poe is able to fly”, “Poe is allowed to fly”, “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?' &&
         /^“If it is necessary that God exists, then evil is unexplained\.”: did you mean “If it is metaphysically necessary that God exists, then evil is unexplained”, /.test(on.every.why) &&
         /“Necessarily, God exists\.”: did you mean “It is metaphysically necessary that God exists”, /.test(on.every.why),
         'on: "we can\'t conclude" asks too; each box by name where more than one asks; no reading marked as the one the step follows on', J([on.cant.why, on.able.why, on.every.why]));

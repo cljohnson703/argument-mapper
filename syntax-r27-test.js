@@ -587,7 +587,7 @@ console.log('\n-- "-able" words (r27.65) --');
     // "we can conceive" asks which "can" is meant; answered "are able to" or
     // "it is possible for", the rule takes it.
     const asked = [tag(['We can conceive of zombies.'], 'Zombies are conceivable.'), tag(['Zombies can be conceived.'], 'Zombies are conceivable.')];
-    ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cIt is metaphysically possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
+    ok(asked.every(r => r && !r.rule && /^Did you mean \u201cWe are able to conceive of zombies\u201d, \u201cWe are allowed to conceive of zombies\u201d, \u201cIt is physically possible for us to conceive of zombies\u201d|^Did you mean \u201cZombies are able to be conceived\u201d/.test(r.why)),
         '"we can conceive of zombies", "zombies can be conceived": which "can" is asked (r27.169)', J(asked));
     // As written (r27.184): "zombies are able to be conceived", a generic,
     // asks with Semantic mode on.
@@ -1093,10 +1093,11 @@ console.log('\n-- a helping verb that may be a noun, where both are English; "is
         return { key: claimKey(r.form).replace(//g, ''), asks: ns.map(function (n) { return { step: !!n.stepDecides, readings: n.readings.map(function (l, i) { var w = claimReadingWords(l, ${J(t)});
             return (claimReadingRoundTrips({ text: ${J(t)}, site: n.site, message: n.message }, i, w) ? '' : 'NOT BACK: ') + w; }) }; }) };`);
     const tin = said('The tin can hit the wall.'), must = said('The new must cost more.'), bob = said('Bob can hit the wall.'), marys = said("Mary's can hit the wall."), might = said('His might hurt them.');
-    const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
-    ok(J(tin.asks.map(a => a.readings)) === J([['The tin is able to hit the wall.'].concat(kinds('It is ', ' possible for the tin to hit the wall.'), ['The tin is allowed to hit the wall.', 'The tin can did hit the wall.'])]) &&
+    // "Can": able, allowed, then the kinds of possibility (r27.213).
+    const kinds = (pre, post) => ['physically', 'metaphysically', 'logically'].map(k => pre + k + post);
+    ok(J(tin.asks.map(a => a.readings)) === J([['The tin is able to hit the wall.', 'The tin is allowed to hit the wall.'].concat(kinds('It is ', ' possible for the tin to hit the wall.'), ['The tin can did hit the wall.'])]) &&
         must.asks.length === 1 && must.asks[0].readings[must.asks[0].readings.length - 1] === 'The new must did cost more.' &&
-        J(bob.asks[0].readings) === J(['Bob is able to hit the wall.'].concat(kinds('It is ', ' possible for Bob to hit the wall.'), ['Bob is allowed to hit the wall.'])) &&
+        J(bob.asks[0].readings) === J(['Bob is able to hit the wall.', 'Bob is allowed to hit the wall.'].concat(kinds('It is ', ' possible for Bob to hit the wall.'))) &&
         marys.asks[0].readings.includes("Mary's can did hit the wall.") && might.asks.some(a => a.readings.includes('His might did hurt them.')),
         '"the tin can hit the wall" offers the noun beside the helping verb\'s readings, with "did" on its verb ("The tin can did hit the wall"); so "must", "might", "may"; not without a determiner ("Bob can")', J([tin, must, bob, marys]));
     const will = said('His last will cost him the farm.');
@@ -1130,7 +1131,7 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
         'each box is read as written too: "a dog barks" gives "the dog is hungry" as written, where none of "every dog", "some dog" and "generally, a dog" does -- so the step waits for the answer, as it did', J(dog));
     // Said of a kind (r27.203): "possible for" alone asks which.
     const only = step(['Poe can fly.', 'Bob might win.'], 'It is physically possible for Poe to fly.');
-    ok(only.why === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?',
+    ok(only.why === 'Did you mean “Poe is able to fly”, “Poe is allowed to fly”, “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?',
         'a step that waits asks what it turns on, and nothing else: not "might", which no answer of it changes', J(only));
     const lone = step(['We cannot conclude that God exists.'], 'God exists.', 'weak-objection'),
         lack = step(["If we lack reasons to think that the tests are reliable, then we can't conclude that the tests are reliable.", 'We lack reasons to think that the tests are reliable.'], 'The tests are reliable.', 'weak-objection'),
@@ -1145,8 +1146,8 @@ console.log('\n-- r27.199: every question asked where a step turns on it --');
     // And, said as where a step waits, not that a premise is not needed.
     const person = ev(`claimStepTurnsNow = true;
         try { var w = diagnoseDeductiveStep(['All ravens are black.', 'Poe is a raven.', 'Poe can fly.'], 'Poe is black.', false, null, false); return w ? w.text : ''; } finally { claimStepTurnsNow = false; }`);
-    ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “It is metaphysically possible for the tin to hit the wall”, “It is logically possible for the tin to hit the wall”, “It is physically possible for the tin to hit the wall”, “The tin is allowed to hit the wall”, or “The tin can did hit the wall”?' &&
-        person === 'Did you mean “Poe is able to fly”, “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, “It is physically possible for Poe to fly”, or “Poe is allowed to fly”?',
+    ok(tin.why === 'Did you mean “The tin is able to hit the wall”, “The tin is allowed to hit the wall”, “It is physically possible for the tin to hit the wall”, “It is metaphysically possible for the tin to hit the wall”, “It is logically possible for the tin to hit the wall”, or “The tin can did hit the wall”?' &&
+        person === 'Did you mean “Poe is able to fly”, “Poe is allowed to fly”, “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?',
         'where the step waits, the question is all it says: what the words as written would give is no hint, nor that a premise is not needed', J([tin, person]));
 }
 
@@ -1279,8 +1280,8 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
     ok(J(readings('It is possible for Poe to fly.')) === J([kinds('It is ', ' possible for Poe to fly.')]) &&
         J(readings('It is impossible for Poe to fly.')) === J([kinds('It is ', ' impossible for Poe to fly.')]) &&
         J(readings('It is not possible for Poe to fly.')) === J([kinds('It is not ', ' possible for Poe to fly.')]) &&
-        J(readings('Poe can fly.')) === J([['Poe is able to fly.'].concat(kinds('It is ', ' possible for Poe to fly.'), ['Poe is allowed to fly.'])]),
-        '"it is possible for Poe to fly", "impossible", "not possible": which kind, metaphysically, logically or physically; "Poe can fly": able, possible of each kind, or allowed', '');
+        J(readings('Poe can fly.')) === J([['Poe is able to fly.', 'Poe is allowed to fly.'].concat(['physically', 'metaphysically', 'logically'].map(k => 'It is ' + k + ' possible for Poe to fly.'))]),
+        '"it is possible for Poe to fly", "impossible", "not possible": which kind, metaphysically, logically or physically; "Poe can fly": able, allowed, or possible of each kind, physically first (r27.213)', '');
     const esse = [step(['Poe flies.'], 'It is physically possible for Poe to fly.'), step(['Poe flies.'], 'It is logically possible that Poe flies.'), step(['Poe flies.'], 'It is metaphysically possible for Poe to fly.')];
     ok(esse[0].rule === 'ab esse ad posse' && esse[1].rule === 'ab esse ad posse' && esse[2].rule === null && /by axiom T/.test(esse[2].why),
         'what is, is physically and logically possible (ab esse ad posse); metaphysically, by the map\'s axiom T, where its system has it', J(esse));
