@@ -47,6 +47,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -414,7 +419,7 @@ console.log('\n-- 7. "would" and "could" --');
     const panel = ev(`renderLogicPanel(); var b = document.getElementById('eval-logic-body'), w = b.querySelector('[data-modal="would"]');
         var r = { checked: w.checked, label: w.nextSibling.textContent }; w.click();
         r.off = state.logic.rules['modal-would'] === false && !b.querySelector('[data-modal="would"]').checked; w.click();
-        r.on = b.querySelector('[data-modal="would"]').checked; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
+        r.on = b.querySelector('[data-modal="would"]').checked; state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return r;`);
     ok(panel.checked && panel.label === '“Would” and “could”' && panel.off && panel.on,
         'the Logic panel: "“Would” and “could”" under Modal logic, on by default; it switches off and back on', J(panel));
 }
@@ -494,20 +499,21 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     // it to only ask if a step turns on it, it does. If you want it to never
     // ask, it never asks"; of the mockup: "A"): three choices, each with what
     // it does.
-    const panel = ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); renderLogicPanel(); var b = document.getElementById('eval-logic-body'), f = b.querySelector('fieldset.logic-semantic');
+    // On a map that says nothing, "Never ask" (r27.207): the app's own default.
+    const panel = ev(`window.__realSemanticDefault = true; state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); renderLogicPanel(); var b = document.getElementById('eval-logic-body'), f = b.querySelector('fieldset.logic-semantic');
         if (!f) return null;
         var radios = [].slice.call(f.querySelectorAll('input[data-semantic]')), legend = f.querySelector('legend'), pick = function (v) { return document.querySelector('#eval-logic-body [data-semantic="' + v + '"]'); };
         var r = { first: b.firstElementChild === f, legend: legend.textContent, bold: getComputedStyle(legend).fontWeight === '600', gap: getComputedStyle(f).marginBottom === '10px', gone: !b.querySelector('[data-modal="ask"]'),
             choices: radios.map(function (x) { return [x.dataset.semantic, x.nextSibling.textContent, x.parentNode.nextSibling.textContent, x.checked]; }) };
         pick('always').click(); r.always = state.logic.rules.semantic === 'always' && claimSemanticSetting() === 'always' && pick('always').checked && !pick('turns').checked;
-        pick('never').click(); r.never = state.logic.rules.semantic === false && !claimSemanticMode() && pick('never').checked;
-        pick('turns').click(); r.turns = !('semantic' in state.logic.rules) && claimSemanticSetting() === 'turns' && pick('turns').checked;
-        state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return r;`);
+        pick('never').click(); r.never = !('semantic' in state.logic.rules) && !claimSemanticMode() && pick('never').checked;
+        pick('turns').click(); r.turns = state.logic.rules.semantic === true && claimSemanticSetting() === 'turns' && pick('turns').checked;
+        delete window.__realSemanticDefault; state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return r;`);
     ok(!!panel && panel.first && panel.legend === 'Semantic mode' && panel.bold && panel.gap && panel.gone &&
         J(panel.choices) === J([['always', 'Always ask', 'Whatever can be read more than one way asks which is meant, every time.', false],
-            ['turns', 'Ask where a step turns on it', 'A box asks which is meant where one reading gives a step and another does not.', true],
-            ['never', 'Never ask', 'Each box is read exactly as written, and nothing is asked.', false]]) && panel.always && panel.never && panel.turns,
-        'the Logic panel: "Semantic mode" first, its name in bold, three choices each with what it does, "Ask where a step turns on it" by default; each chosen says so in the map (r27.201); "Ask which modality is meant" is gone', J(panel));
+            ['turns', 'Ask where a step turns on it', 'A box asks which is meant where one reading gives a step and another does not.', false],
+            ['never', 'Never ask', 'Each box is read exactly as written, and nothing is asked.', true]]) && panel.always && panel.never && panel.turns,
+        'the Logic panel: "Semantic mode" first, its name in bold, three choices each with what it does, "Never ask" by default (r27.207; "Ask where a step turns on it" before); "always" and "turns" said in the map, "never" by saying nothing (r27.201, r27.207); "Ask which modality is meant" is gone', J(panel));
 }
 
 console.log('\n-- 9. "must": which is meant --');

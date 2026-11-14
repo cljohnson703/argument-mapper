@@ -40,6 +40,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 // One step as the map checks it: kind 'support' | 'objection' | 'weak-objection'.
 const step = (ps, c, kind) => ev(`var n = 0; var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
     { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
@@ -380,7 +385,7 @@ try {
         // r27.169: "can't produce" asks which is meant; with an answer, the
         // words that differ are said as before -- with "Ask which modality is
         // meant" on (r27.175).
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
         const asked = step(["If we don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness, then we can't conclude that a mere series of flashing lights can't produce consciousness.",
             "We don't possess mutually acceptable, or independently motivated, premises that a mere series of flashing lights and control circuitry can't produce consciousness."],
             "A mere series of flashing lights and control circuitry can't produce consciousness.", 'weak-objection');
@@ -396,7 +401,7 @@ try {
             "It is not possible for a mere series of flashing lights and control circuitry to produce consciousness.", 'weak-objection');
         ok(!s.rule && /Worded the same way each time, the premises would give .+ by modus ponens/.test(s.why) && /“and control circuitry” is in one and not the other/.test(s.why),
             'a step that would follow if two claims were worded alike says which words differ', s.why);
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
         ok(ev('var f = parseClaim("The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” is unsound."); return f.kind === "unsound" && f.from.length === 2;'),
             '"the argument with premises “A” and “B” is unsound" is about that argument');
         ok(step(['Zombies are not metaphysically possible.'], 'The argument with premises “Zombies are metaphysically possible” and “If zombies are metaphysically possible, then consciousness is non-physical” to the conclusion that consciousness is non-physical is unsound.').rule === 'a false premise',

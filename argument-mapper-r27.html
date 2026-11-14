@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-13 r27.206';
+    const APP_BUILD = '2026-11-14 r27.207';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6997,12 +6997,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!evalOverviewOpen) renderLogicPanel();
     }
     // Semantic mode's setting chosen in the Logic panel (r27.201): "always" or
-    // "never" said in the map's rules, "turns" (the default) by saying nothing.
+    // "turns" said in the map's rules, "never" (the default since r27.207) by
+    // saying nothing.
     function switchSemanticSetting(value) {
         if (collabReadOnly()) { renderLogicPanel(); return; }
         if (!state.logic) state.logic = { base: 'standard', rules: {} };
         if (!state.logic.rules) state.logic.rules = {};
-        if (value === 'always' || value === 'never') state.logic.rules.semantic = value === 'always' ? 'always' : false;
+        if (value === 'always' || value === 'turns') state.logic.rules.semantic = value === 'always' ? 'always' : true;
         else delete state.logic.rules.semantic;
         claimRulesCache = null;
         state._logicVersion = { ts: Date.now(), by: _clientId };
@@ -15213,10 +15214,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Three settings (r27.201; the user: "If you want it to always ask, it
     // does. If you want it to only ask if a step turns on it, it does. If you
     // want it to never ask, it never asks"): "always"; "turns", where a step
-    // turns on it, the default (r27.199); "never". A map's rules say "always",
-    // nothing (true, as a map switched on had it) or false.
+    // turns on it (r27.199); "never", the default since r27.207 (the user, of
+    // making it the default: "Since logic students will be using it, they'll
+    // be better with it off"; it had been "turns"). A map's rules say
+    // "always", true or false, or nothing.
     function claimSemanticSetting() {
-        const set = claimRuleSettings(), v = set && Object.prototype.hasOwnProperty.call(set, 'semantic') ? set.semantic : true;
+        const set = claimRuleSettings(), v = set && Object.prototype.hasOwnProperty.call(set, 'semantic') ? set.semantic : false;
         return v === 'always' ? 'always' : v ? 'turns' : 'never';
     }
     function claimSemanticMode() { return claimSemanticSetting() !== 'never'; }

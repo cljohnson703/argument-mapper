@@ -58,7 +58,7 @@ function ok(cond, label, detail) {
 // checks of what the words give, where a box may be read more than one way.
 const asWritten = f => {
     ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
-    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`); }
 };
 const step = (premises, conclusion, type) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
@@ -94,7 +94,7 @@ console.log('\n-- 1. a clause cut short, inside a condition and after "it\'s not
     // etc., they need to specify the modality, and the checker should ask"):
     // "cannot perform" asks which is meant; the step, with its answer -- with
     // Semantic mode on, the default (r27.184); off, it follows as written.
-    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
     const asked = step(["If non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't, then the records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.",
         "Non-occurrent beliefs can automatically influence reasoning while Otto's notebook can't."],
         "The records in Otto's notebook cannot perform all the relevant functions of non-occurrent beliefs.");

@@ -88,6 +88,11 @@ function makeWin(label) {
         win.alert = () => {}; win.confirm = () => true; win.prompt = () => null; win.open = () => null;
     }
     const dom = new JSDOM(HTML, { runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc, url: `https://localhost/${label}.html`, beforeParse: stubs });
+    // These checks were written for Semantic mode asking where a step turns on it,
+    // the default until r27.207, when "Never ask" became the default: a map that
+    // says nothing of it is read so here, as they had it; one that says is read as
+    // it says. A check of the default itself sets window.__realSemanticDefault.
+    dom.window.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
     return { dom, errors, get win() { return dom.window; } };
 }
 const T = (W, body) => {
@@ -673,15 +678,15 @@ function reportCorpus(name, res) {
                 hedge: step(["We are not able to leave"], 'We should be able to leave', 'objection'),
                 // r27.199 (the user: "(a)"): asked where the step turns on it --
                 // against "should", which is not read, on no reading.
-                cant: (function () { state.logic = { base: 'standard', rules: {} };
+                cant: (function () { state.logic = { base: 'standard', rules: { semantic: true } };
                     try { return [step(["We can't leave"], 'It is not physically possible for us to leave'), step(["We can't leave"], 'We should be able to leave', 'objection')]; }
-                    finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
+                    finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); } })(),
                 // Read as written (r27.184: Semantic mode off): "ravens", a
                 // generic, asks with it on.
                 generic: (function () { state.logic = { base: 'standard', rules: { semantic: false } };
                     try { return [step(['Ravens are black'], 'Something is black').rule, step(['All black things are dark', 'Ravens are black'], 'Ravens are dark').rule,
                         step(['A raven is black'], 'Something is black').rule, step(['It rains'], 'Something rains').rule]; }
-                    finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); } })(),
+                    finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); } })(),
                 individual: step(['All black things are dark', 'Poe is black'], 'Poe is dark').rule,
                 forms: { hoped: denies('Poe hoped', 'Poe did not hop'), hopped: denies('Poe hopped', 'Poe did not hop'),
                     learnt: denies('Poe learnt Latin', 'Poe did not learn Latin'), men: step(['All men are mortal', 'Socrates is a man'], 'Socrates is mortal').rule,
@@ -902,7 +907,7 @@ function reportCorpus(name, res) {
                 beliefEvery: step(['If Mary believes that every raven is black, then Mary is wrong', 'Mary believes that any raven is black'], 'Mary is wrong')
             };
             out.on = on;
-            state.logic = { base: 'standard', rules: {} };
+            state.logic = { base: 'standard', rules: { semantic: true } };
             // The question, answered in the box: "any" rewritten as "every".
             state.trees = [{ id: 'M', type: 'contention', texts: [C], collapsed: [], x: 0, y: 0, children: [
                 { id: 'A', type: 'support', texts: [MID, 'We can conclude that others think'], collapsed: [], children: [] } ] }];
@@ -990,7 +995,7 @@ function reportCorpus(name, res) {
             var on = all();
             state.logic = { base: 'standard', rules: { semantic: false } };
             var off = all();
-            state.logic = { base: 'standard', rules: {} }; deductiveCache.clear();
+            state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear();
             return Object.assign(on, { off: off });`);
         ok(/✓ modus tollens/.test(h.skeptic), 'the skeptic\'s modus tollens: "I know that I am not a brain in a vat" beside "I don\'t know that ..." denies it', h.skeptic);
         ok(/✓ modus tollens/.test(h.shown) && /✓ disjunctive syllogism/.test(h.knowDS), 'so for "it has been shown that" and "we know that": one rule for every phrasing', J([h.shown, h.knowDS]));
@@ -1035,7 +1040,7 @@ function reportCorpus(name, res) {
             deductiveCache.clear(); ensureCollabFields(state); var s = collectDeductiveSteps(state.trees)[0];
             state.trees[0].children[0].texts = ['Poe flies']; state.trees[0].texts = ['Poe can fly']; deductiveCache.clear();
             var f = collectDeductiveSteps(state.trees)[0];
-            state.logic = { base: 'standard', rules: {} };
+            state.logic = { base: 'standard', rules: { semantic: true } };
             return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f), flyWhy: f.why ? String(f.why.text) : '' };`);
         ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
             'off: "Poe can fly" in both boxes of a modus ponens follows as written; "Poe flies", so "Poe can fly" does not -- "can" is not "possible" as written -- and it says that read another way it would (r27.184)', J(offBoth));
@@ -1146,7 +1151,7 @@ function reportCorpus(name, res) {
             };
             state.logic = { base: 'standard', rules: { semantic: false } };
             r.off = step(['Poe can fly or swim.', 'Poe can\u2019t fly.'], 'Poe can swim.');
-            state.logic = { base: 'standard', rules: {} };
+            state.logic = { base: 'standard', rules: { semantic: true } };
             return r;`);
         // Said of a kind, each the same (r27.203): the bare words ask which.
         ok(/^✓ disjunctive syllogism/.test(either.ds) && !/^✓/.test(either.able) && /^\? ambiguous \| “It is possible for Poe to fly or swim\.”: did you mean “It is metaphysically possible for Poe to fly or swim”/.test(either.dsBare),
@@ -1180,7 +1185,7 @@ function reportCorpus(name, res) {
                 return !!n && claimSame(parseClaim('Otto cannot perform all the functions.', { site: n.site, reading: 0 }), parseClaim('Otto is not able to perform all the functions.'));`) === true,
             '"is not able to perform all the functions" is "cannot perform all the functions" read as ability (r27.169; "all the functions" had been kept as written)');
     } catch (e) { ok(false, 'the section ran to the end', e.message); }
-    T(W, `state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    T(W, `state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
 
     /* ---------------- 3. diagnosis on a map ---------------- */
     console.log('\n-- ambiguous steps --');

@@ -41,6 +41,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -55,7 +60,7 @@ const read = t => ev(`var r = parseClaimFull(${J(t)});
 // checks of what the words give, where a box may be read more than one way.
 const asWritten = f => {
     ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
-    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`); }
 };
 const step = (premises, conclusion) => ev(`
     state.trees = [{ id: 'M', type: 'contention', texts: [${J(conclusion)}], collapsed: [], x: 0, y: 0, children: [
@@ -242,7 +247,7 @@ console.log('\n-- 9. a clause cut short --');
     // etc., they need to specify the modality, and the checker should ask"):
     // "can" asks which is meant, "Mary can too" with it -- with Semantic mode
     // on, the default (r27.184); off, as written, it follows.
-    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
     const tooOn = step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag;
     const tooOff = asWritten(() => step(['Bob can swim, and Mary can too.'], 'Mary can swim.').tag);
     ok(tooOn === '? ambiguous' && tooOff === '✓ conjunction elimination', '"can too": "can" asks which is meant (r27.169), with Semantic mode on; off, as written, conjunction elimination (r27.184)', J([tooOn, tooOff]));
@@ -482,7 +487,7 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
         var tag = document.querySelector('.derivation-tag[data-step="A"]'); openDeductiveCheck('A');
         var row = document.querySelector('#logic-modal-body .logic-step[data-step="A"]'); document.getElementById('logic-modal-backdrop').classList.remove('open');
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; deductiveCache.clear();
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
         return [tag && tag.title, row && row.title];`);
     ok(tip.every(t => (t || '').indexOf('“If Otto reads his notebook, then he remembers the address.”: "his" and "he" are read as "Otto", the one name this claim gives. ' +
             '“Otto reads his notebook.”: "his" is read as "Otto", the one name this claim gives.') > 0) && /^Valid by modus ponens/.test(tip[0]),

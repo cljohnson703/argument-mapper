@@ -39,6 +39,8 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// Semantic mode asks where a step turns on it, as these checks were written for ("Never ask" is the default since r27.207).
+W.eval("state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;");
 const step = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
     { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
     var s = collectDeductiveSteps(trees)[0]; return { rule: s.rule ? s.rule.name : s.restates ? 'restates its box' : null, ambiguous: !!s.ambiguous, why: s.why ? s.why.text : '' };`);

@@ -12,6 +12,8 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
         w.alert = () => {}; w.confirm = () => true; w.prompt = () => null;
     }
 });
+// Semantic mode asks where a step turns on it, as these checks were written for ("Never ask" is the default since r27.207).
+dom.window.eval("state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;");
 const call = (fn,input) => {dom.window.__input = input; return dom.window.eval(`(${fn})(window.__input)`);};
 let count = 0; const failures = [];
 function check(ok,label) {count++; if (!ok) failures.push(label);}

@@ -59,6 +59,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -68,7 +73,7 @@ function ok(cond, label, detail) {
 // checks of what the words give, where a box may be read more than one way.
 const asWritten = f => {
     ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
-    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`); }
 };
 // A step's tag, its rule, and what the check says of it.
 const step = (premises, conclusion) => ev(`

@@ -39,6 +39,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 const step = (ps, c, kind) => ev(`var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [
     { id: 'S', type: ${J(kind || 'support')}, texts: ${J(ps)}, collapsed: [], children: [] }] }];
     var s = collectDeductiveSteps(trees)[0]; return { rule: s.rule ? s.rule.name : null, ambiguous: !!s.ambiguous, why: s.why ? s.why.text : '', restates: !!s.restates };`);
@@ -931,7 +936,7 @@ try {
         // written: the same words in both boxes.
         const offLights = asWritten(() => tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true'));
         const offZp = asWritten(() => tagOf(['If zombies are possible, then physicalism is false', 'Zombies are possible'], 'Physicalism is false'));
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
         const lights = tagOf(['If functionalism is true, then a mere series of lights can produce consciousness', 'A mere series of lights can not produce consciousness'], 'Functionalism is not true');
         // r27.172: "zombies are possible" asks which kind; said, it follows.
         // r27.199 (the user: "(a)", ask where a step turns on it): the same
@@ -1059,7 +1064,7 @@ try {
         const bcOff = tagOf(['It has not been shown that Poe is black'], 'Poe is black', 'weak-objection'), offerOff = offered(bcOff[1]);
         const gen = tagOf(['It has not been shown that ravens are black'], 'Ravens are black', 'weak-objection'), offerGen = offered(gen[1]);
         const passOff = offerOff ? tagOf(offerOff, 'Poe is black', 'weak-objection')[0] : null, passGen = offerGen ? tagOf(offerGen, 'Ravens are black', 'weak-objection')[0] : null;
-        ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+        ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
         ok(bcOff[0] === '✗ bare challenge' && J(offerOff) === J(offer) && passOff === '✓ modus ponens' &&
             gen[0] === '✗ bare challenge' && !!offerGen && offerGen[0] === 'If we lack reasons to think that ravens are black, then we are not entitled to conclude that ravens are black' && passGen === '✓ modus ponens',
             'with Semantic mode off, the same premises are offered, and pass as written; so for "ravens are black" (r27.186; nothing had been offered)', J([bcOff, gen, passOff, passGen]));

@@ -1220,6 +1220,11 @@ function makeWin() {
         win.scrollTo = () => {}; win.alert = () => {}; win.confirm = () => true; win.prompt = () => null; win.open = () => null;
     }
     const dom = new JSDOM(HTML, { runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc, url: 'https://localhost/stress.html', beforeParse: stubs });
+    // These checks were written for Semantic mode asking where a step turns on it,
+    // the default until r27.207, when "Never ask" became the default: a map that
+    // says nothing of it is read so here, as they had it; one that says is read as
+    // it says. A check of the default itself sets window.__realSemanticDefault.
+    dom.window.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
     return { dom, errors };
 }
 const PAGE = `

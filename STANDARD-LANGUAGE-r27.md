@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: "Never ask" is the default (r27.207)
+
+The user:
+* Of making "Never ask" Semantic mode's default: "Do this. Since logic students will be using it, they'll be better with it off."
+
+Changes:
+* A map that says nothing of Semantic mode reads each box exactly as written and asks nothing. It had asked where a step turns on it.
+  * So in a new map, "Bob left and then she cried; so Bob cried" follows, with "she" read as Bob, and the box says so.
+  * "Poe can fly" gives no "Poe is able to fly".
+  * "If we lack reasons to think that God exists, then we cannot conclude that God exists" gives no challenge, and the check says that on another reading of its words the step follows, and where to set Semantic mode.
+* "Ask where a step turns on it" is now said in the map's rules, as "Always ask" is. "Never ask" is said by saying nothing.
+* A map saved before this release that left the setting alone now reads as written: it had been on "Ask where a step turns on it" by default. One switched to "Always ask" or "Never ask" keeps its setting.
+
+Tests:
+* syntax-r27-test.js has 187 checks.
+  * The new one fails on r27.206.
+  * Changed: of the three settings, "never ask" is the default.
+* modal-r27-test.js: the Logic panel shows "Never ask" chosen on a map that says nothing.
+* 16 suites were written for asking where a step turns on it by default. They now say so:
+  * extended-mind, language-r27-adjective, language-r27-audit, nesting, warrant and syntax set it in their rules;
+  * anaphora, hints, language-r27-qualifier, locutions, logic-r27-basis, logic-r27-english, logic-r27-stress, modal, reading-r27-chooser and rules-r27-ordinary read a map that says nothing as asking, as they had it; a check of the default itself reads it as the app does.
+* Take-one-out: each of the 2 changes is caught.
+* With Semantic mode set, on or off, 0 sentences in the corpus read differently. By default, 163 do: each is read as written, and asks nothing.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 13: commas between clauses in the app's own wordings; "yet" without one (r27.206)
 
 The user:

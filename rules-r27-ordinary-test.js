@@ -220,6 +220,11 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// These checks were written for Semantic mode asking where a step turns on it,
+// the default until r27.207, when "Never ask" became the default: a map that
+// says nothing of it is read so here, as they had it; one that says is read as
+// it says. A check of the default itself sets window.__realSemanticDefault.
+W.eval(`(function () { var setting = claimSemanticSetting; claimSemanticSetting = function () { var s = claimRuleSettings(); return window.__realSemanticDefault || (s && Object.prototype.hasOwnProperty.call(s, 'semantic')) ? setting() : 'turns'; }; })();`);
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -882,7 +887,7 @@ console.log('\n-- 26. (r27.152) "something is a dog and a pet" is "some dog is a
         'the swap is commutation where both boxes spell out the "and", conversion where one or neither does', J(named));
     const off = ev(`var one = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : null; };
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
         var r = [one(['Something is a dog and a pet.'], 'Something is a pet and a dog.'), one(['Something is a dog and a pet.'], 'Some pet is a dog.'),
             one(['Some dog is a pet.'], 'Something is a pet and a dog.')];
         state.logic = null; claimRulesCache = null; return r;`);
@@ -917,7 +922,7 @@ console.log('\n-- 27. (r27.153) active and passive; the indirect object --');
     ok(!certified(NOT).length, 'not "fits" or "married", whose passives say other things', J(certified(NOT)));
     const off = ev(`var st = function (ps, c) { return collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; };
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['active-passive'], false);
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; setDeductiveRule(['active-passive'], false);
         var s = st(['Bob wrote the book.'], 'The book was written by Bob.'), r = { rule: s.rule && s.rule.name, why: s.why && s.why.text };
         state.logic = null; claimRulesCache = null;
         r.panel = DEDUCTIVE_EXTENSIONS.find(function (g) { return g.id === 'replacement'; }).rules.filter(function (id) { return id === 'active-passive' || id === 'indirect-object'; });
@@ -946,7 +951,7 @@ console.log('\n-- 29. (r27.155) "nothing is a dog and a cat" is "no dog is a cat
         'the swap is commutation where both boxes spell out the "and", conversion where one or neither does', J(named));
     const off = ev(`var one = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : null; };
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; setDeductiveRule(['conversion'], false);
         var r = [one(['Nothing is a dog and a cat.'], 'Nothing is a cat and a dog.'), one(['Nothing is a dog and a cat.'], 'No cat is a dog.')];
         state.logic = null; claimRulesCache = null; return r;`);
     ok(J(off) === J(['commutation', null]), 'with conversion switched off, the spelled-out swap still passes, and the other does not', J(off));
@@ -959,7 +964,7 @@ console.log('\n-- 30. (r27.156) the four gaps --');
 {
     const off = ev(`var why = function (ps, c) { var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [
             { id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }])[0]; return st.rule ? st.rule.name : st.why && st.why.text; };
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; setDeductiveRule(['commutation'], false);
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; setDeductiveRule(['commutation'], false);
         var r = [why(['Something is black and old.'], 'Something is old and black.'), why(['Nothing is a dog and a cat.'], 'Nothing is a cat and a dog.')];
         state.logic = null; claimRulesCache = null; return r;`);
     ok(off.every(w => /^The two differ only in the order or grouping of their parts/.test(String(w))),
@@ -1184,7 +1189,7 @@ console.log('\n-- 41. (r27.171) "Bob and Mary lifted the piano, and Al cried": e
     // this step, and nothing is asked.
     ev(`state.logic = { base: 'standard', rules: { 'modal-ask': true } }; deductiveCache.clear(); return 1;`);
     const p1 = step(['P1 can explain the data.'], 'It is possible for P1 to explain the data.');
-    ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`);
+    ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
     ok(/“It is metaphysically possible for P1 to explain the data”/.test(p1.why), 'and with its digits: "for P1" (it had been "for p1"), of each kind (r27.203)', p1.why);
 }
 

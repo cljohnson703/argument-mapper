@@ -32,6 +32,9 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || 'argument-mapper-r27.ht
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// Semantic mode asks where a step turns on it, as these checks were written for
+// ("Never ask" is the default since r27.207; the checks of the setting say which).
+W.eval("state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;");
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
@@ -44,7 +47,7 @@ const key = t => ev('var f = parseClaim(' + J(t) + '); return f ? claimKey(f).re
 // checks of what the words give, where a box may be read more than one way.
 const asWritten = f => {
     ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); return 1;`);
-    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); return 1;`); }
+    try { return f(); } finally { ev(`state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`); }
 };
 const clause = t => ev('return claimLooksLikeClause(normalizeClaimText(' + J(t) + '));');
 
@@ -600,7 +603,7 @@ console.log('\n-- "-able" words (r27.65) --');
     const direct = tag(['If zombies are conceivable, then zombies are metaphysically possible.', 'We are able to conceive of zombies.'], 'Zombies are metaphysically possible.');
     ok(direct && !direct.rule && /\u201cWe are able to conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are metaphysically possible\u201d by modus ponens\./.test(direct.why),
         'the direct route is not one step: its explanation names the box that is missing', J(direct));
-    const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: {} }; setDeductiveRule('able-meaning', false);
+    const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: { semantic: true } }; setDeductiveRule('able-meaning', false);
         var trees = [{ id: 'M', type: 'contention', texts: ['Zombies are conceivable.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['We are able to conceive of zombies.'], collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0], r = st && st.rule ? st.rule.name : null; state.logic = was; claimRulesCache = null; return r;`);
     ok(off === null, 'switched off in the Logic panel, the step is not taken', J(off));
@@ -1182,19 +1185,20 @@ console.log('\n-- r27.201: three settings; a step in one; a denied part in its o
     const run = (rules, ps, c) => ev(`state.logic = { base: 'standard', rules: ${rules} }; claimRulesCache = null;
         var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
         var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
-        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; return out;`);
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return out;`);
     const settings = ev(`var out = [{ semantic: 'always' }, {}, { semantic: true }, { semantic: false }].map(function (r) { state.logic = { base: 'standard', rules: r }; return claimSemanticSetting(); });
-        state.logic = { base: 'standard', rules: {} }; return out;`);
+        state.logic = { base: 'standard', rules: { semantic: true } }; return out;`);
     const MP = [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'], BAKERY = [['Mary runs and Bob owns the bakery.'], 'Bob owns the bakery.'];
     // A map switched on before (semantic: true) is checked anew after
     // "always": its steps are kept by the setting's value.
-    const always = run("{ semantic: 'always' }", ...MP), on = run('{ semantic: true }', ...MP), turns = run('{}', ...MP), never = run('{ semantic: false }', ...MP),
-        bakery = run("{ semantic: 'always' }", ...BAKERY), bakeryTurns = run('{}', ...BAKERY);
-    ok(J(settings) === J(['always', 'turns', 'turns', 'never']) && always.rule === null && /^“If Poe can fly, then Poe is a bird\.”: did you mean /.test(always.why) &&
+    // A map that says nothing is "never" since r27.207 ("turns" before).
+    const always = run("{ semantic: 'always' }", ...MP), on = run('{ semantic: true }', ...MP), turns = run('{ semantic: true }', ...MP), never = run('{ semantic: false }', ...MP),
+        bakery = run("{ semantic: 'always' }", ...BAKERY), bakeryTurns = run('{ semantic: true }', ...BAKERY);
+    ok(J(settings) === J(['always', 'never', 'turns', 'never']) && always.rule === null && /^“If Poe can fly, then Poe is a bird\.”: did you mean /.test(always.why) &&
         on.rule === 'modus ponens' && turns.rule === 'modus ponens' && never.rule === 'modus ponens' && bakery.rule === null &&
         bakery.why === 'Did you mean “Mary runs, and Bob owns, the bakery” or “Mary runs, and Bob owns the bakery”?' && bakeryTurns.rule === 'conjunction elimination',
-        'three settings: "always ask", every question held for its answer ("Mary runs, and Bob owns, the bakery"); "ask where a step turns on it", the default, as a map switched on had it; "never ask" -- each step checked anew when the setting changes', J([settings, always, on, turns, never, bakery, bakeryTurns]));
-    const two = run('{}', ['It is not the case that it rains and it snows.'], 'It does not rain or it does not snow.');
+        'three settings: "always ask", every question held for its answer ("Mary runs, and Bob owns, the bakery"); "ask where a step turns on it", as a map switched on had it; "never ask", the default since r27.207 -- each step checked anew when the setting changes', J([settings, always, on, turns, never, bakery, bakeryTurns]));
+    const two = run('{ semantic: true }', ['It is not the case that it rains and it snows.'], 'It does not rain or it does not snow.');
     ok(two.rule === null && two.why === 'Did you mean “It is not the case that both it rains and it snows” or “It does not rain, and it snows”?',
         'a step stands where every reading gives it in one step: on "it does not rain, and it snows" it takes two, so it asks (r27.200 had let it stand)', J(two));
     const words = ev(`return ['It is not the case that it rains or it snows.', 'It is not the case that it rains and it snows.', 'It is not the case that it rains, it snows, or it hails.'].map(function (t) {
@@ -1246,10 +1250,10 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
     // not possible", that asks which kind each is: "ok"; of a bare "possible"
     // asking which kind where a step turns on it: "ok"; of the five readings
     // of "can": "ok"; of the numbers left: "I'll go with your recommendation".
-    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign({ semantic: true }, rules || {}))} }; deductiveCache.clear();
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
-        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); }`);
     const readings = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }); });`);
     const both = 'If physicalism is false, then both zombies are possible and zombies are not possible.';
     const z = [step([both], 'Physicalism is true.'),
@@ -1297,10 +1301,10 @@ console.log('\n-- r27.204: a pronoun before the one name it may be: the name, or
     // The user, of "Despite her doubts, Mary agreed" and "With his help, Bob
     // won": "they should behave the same, however obvious one reading is"; of
     // asking, the name offered with "Other": "ok".
-    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign({ semantic: true }, rules || {}))} }; deductiveCache.clear();
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
-        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); }`);
     const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; })
         .map(function (n) { return [n.message, n.readings.length, (n.texts || [])[0] || null]; });`);
     const asks = ['Before she left, Mary called.', 'Despite her doubts, Mary agreed.', 'With his help, Bob won.', 'His dog loves Bob.', 'If he wins, then Bob is happy.', 'In his view, Bob is right.',
@@ -1326,10 +1330,10 @@ console.log('\n-- r27.205: a pronoun after the one name asks too --');
     // The user, of asking after the name too -- the name, or someone else,
     // where a step turns on it, reversing "the only available referent is the
     // referent" (2026-09-28): "ok".
-    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign({ semantic: true }, rules || {}))} }; deductiveCache.clear();
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
-        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); }`);
     const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; }).map(function (n) { return n.message; });`);
     const s = [step(['Bob left and then she cried.'], 'Bob cried.'), step(['Bob left and then she cried.'], 'Bob left.'), step(['Bob left and then she cried.'], 'Bob cried.', { semantic: false }),
         step(['When Mary exits the room and sees a ripe red tomato, she learns a new fact.', 'If, when Mary exits the room and sees a ripe red tomato, she learns a new fact, then physicalism is false.'], 'Physicalism is false.')];
@@ -1348,10 +1352,10 @@ console.log('\n-- r27.206: a comma between independent clauses in the app\'s own
     // commas for independent clauses. Others can omit them when it doesn't
     // force an ambiguity, however, and the app should be able to parse them
     // appropriately."
-    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || {})} }; deductiveCache.clear();
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign({ semantic: true }, rules || {}))} }; deductiveCache.clear();
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
-        finally { state.logic = { base: 'standard', rules: {} }; deductiveCache.clear(); }`);
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); }`);
     const commas = ts => ev(`return typeof claimClauseCommas === 'function' ? ${J(ts)}.map(function (t) { return claimClauseCommas(t); }) : null;`);
     const put = ['Bob left and then Bob cried', 'Bob left, Mary cried and Ann laughed', 'Bob sings and either Mary dances or Ann runs', 'Bob is happy and so is Mary',
         'Poe must fly or Poe swims', 'There is a god and God is good', 'Bob left and if Mary cried, then Ann laughed'];
@@ -1379,6 +1383,30 @@ console.log('\n-- r27.206: a comma between independent clauses in the app\'s own
     ok(yet[0].rule === 'conjunction elimination' && yet[1].rule === 'conjunction elimination' && yet[2].rule === 'conjunction elimination' &&
         J(time) === J(['pred', 'not', 'pred']),
         '"yet" between two clauses without a comma joins them, as with one ("Bob left yet Mary stayed", so "Mary stayed"; it had been read as one claim), and between two adjectives, as "but" does; not the "yet" of time ("Bob may yet win", "has not yet left", "is yet to leave", "has yet to be shown")', J([yet, time]));
+}
+
+console.log('\n-- r27.207: "Never ask" is the default --');
+{
+    // The user, of making it the default: "Do this. Since logic students will
+    // be using it, they'll be better with it off."
+    const r = ev(`var keep = state.logic, out = {};
+        var step = function (rules, ps, c) { state.logic = rules === null ? null : { base: 'standard', rules: rules }; claimRulesCache = null; deductiveCache.clear();
+            var trees = [{ id: 'M', type: 'contention', texts: [c], collapsed: [], children: [{ id: 'S', type: 'support', texts: ps, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; };
+        state.logic = null; claimRulesCache = null; out.none = claimSemanticSetting();
+        state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; out.empty = claimSemanticSetting();
+        out.she = step(null, ['Bob left and then she cried.'], 'Bob cried.');
+        out.can = step({}, ['Poe can fly.'], 'Poe is able to fly.');
+        out.on = step({ semantic: true }, ['Bob left and then she cried.'], 'Bob cried.');
+        state.logic = { base: 'standard', rules: {} };
+        switchSemanticSetting('turns'); out.turns = [state.logic.rules.semantic, claimSemanticSetting()];
+        switchSemanticSetting('always'); out.always = [state.logic.rules.semantic, claimSemanticSetting()];
+        switchSemanticSetting('never'); out.never = ['semantic' in state.logic.rules, claimSemanticSetting()];
+        state.logic = keep; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    ok(r.none === 'never' && r.empty === 'never' && r.she.rule === 'conjunction elimination' && r.can.rule === null &&
+        r.on.rule === null && r.on.why === 'Did you mean “Bob left, and then Bob cried”, or is “she” someone else?' &&
+        J(r.turns) === J([true, 'turns']) && J(r.always) === J(['always', 'always']) && J(r.never) === J([false, 'never']),
+        'a map that says nothing reads each box as written and asks nothing: "Bob left and then she cried", so "Bob cried", with "she" read as Bob, and "Poe can fly" gives no "able"; switched to "Ask where a step turns on it", the map says so, and it asks; "Never ask" says nothing', J(r));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

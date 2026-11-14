@@ -55,6 +55,8 @@ const dom = new JSDOM(fs.readFileSync(process.argv[2] || __dirname + '/argument-
 });
 const W = dom.window, J = JSON.stringify;
 const ev = src => JSON.parse(W.eval('JSON.stringify((function(){' + src + '})())'));
+// Semantic mode asks where a step turns on it, as these checks were written for ("Never ask" is the default since r27.207).
+W.eval("state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;");
 let passed = 0, failed = 0;
 function ok(cond, label, detail) {
     if (cond) { passed++; console.log('  ✓ ' + label); }
