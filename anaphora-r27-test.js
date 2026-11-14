@@ -494,9 +494,9 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         var row = document.querySelector('#logic-modal-body .logic-step[data-step="A"]'); document.getElementById('logic-modal-backdrop').classList.remove('open');
         state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
         return [tag && tag.title, row && row.title];`);
-    ok(tip.every(t => (t || '').indexOf('“If Otto reads his notebook, then he remembers the address.”: "his" and "he" are read as "Otto", the one name this claim gives. ' +
-            '“Otto reads his notebook.”: "his" is read as "Otto", the one name this claim gives.') > 0) && /^Valid by modus ponens/.test(tip[0]),
-        'a certified step says how its boxes were read, after "Valid by" -- its tag\'s tip and the list of steps (it had, only where a step did not follow)', J(tip));
+    ok(tip.every(t => (t || '').indexOf('“If Otto reads his notebook, then he remembers the address.”: “his” and “he” are read as “Otto”, the one name this claim gives. ' +
+            '“Otto reads his notebook.”: “his” is read as “Otto”, the one name this claim gives.') > 0) && /^Valid by modus ponens/.test(tip[0]),
+        'a certified step says how its boxes were read, after "Valid by" -- its tag\'s tip and the list of steps (it had, only where a step did not follow), in curly quotes (r27.217)', J(tip));
     const tips = (ps, c) => ev(`state.trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
@@ -509,10 +509,10 @@ console.log('\n-- 19. "it is cold" after a thing: the weather among the readings
         same[1].split('so is Mary” as').length === 2,
         'boxes read the same way are named together, the reading once', J(same));
     const bound = [
-        [['Everything is black if it is a raven.', 'Poe is a raven.'], 'Poe is black.', '"it" is read as what the quantifier speaks of: this says what "everything that is a raven is black" says'],
-        [['If someone is a man, then he is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', '"he" is read as the "someone" in the condition, so the box says what "everyone who is a man is mortal" says'],
-        [['If any man is wise, then he is happy.', 'Socrates is a man.', 'Socrates is wise.'], 'Socrates is happy.', '"he" is read as what the condition speaks of, so the box says what "every man that is wise is happy" says'],
-        [['Bob and Mary love each other.'], 'Bob loves Mary.', '"each other" is read as each of the two to the other'],
+        [['Everything is black if it is a raven.', 'Poe is a raven.'], 'Poe is black.', '“it” is read as what the quantifier speaks of: this says what “everything that is a raven is black” says'],
+        [['If someone is a man, then he is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', '“he” is read as the “someone” in the condition, so the box says what “everyone who is a man is mortal” says'],
+        [['If any man is wise, then he is happy.', 'Socrates is a man.', 'Socrates is wise.'], 'Socrates is happy.', '“he” is read as what the condition speaks of, so the box says what “every man that is wise is happy” says'],
+        [['Bob and Mary love each other.'], 'Bob loves Mary.', '“each other” is read as each of the two to the other'],
     ].map(([ps, c, note]) => { const t = tips(ps, c); return [/^✓/.test(t[0]), t[1].indexOf('“' + ps[0] + '”: ' + note + '.') > 0, t]; });
     ok(bound.every(b => b[0] && b[1]), 'so too a pronoun bound by a quantifier or a condition, and "each other"', J(bound.filter(b => !(b[0] && b[1]))));
     const kept = tips(['If Bob is happy while Mary is sad, then Ann is glad.', 'Bob is happy while Mary is sad.'], 'Ann is glad.');

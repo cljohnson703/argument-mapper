@@ -1598,6 +1598,109 @@ console.log('\n-- r27.215: what "possibly" covers, asked before which kind; "and
     ok(J(always) === J([true, true]), 'set to ask always, the box asks what "possibly" covers, as it asks which kind', J(always));
 }
 
+console.log('\n-- r27.217: the quotation marks of what is shown, consistent --');
+{
+    // The user: "American spelling everywhere, with commas and periods kept
+    // outside quoted claims and words. The quotation marks themselves become
+    // consistent: curly double quotes, with single ones only inside double".
+    const typed = ev(`return [
+        claimTypeQuotes('"she" is read as "Mary", the one name this claim gives'),
+        claimTypeQuotes('\u2018zombies are possible\u2019 and \u2018zombies are metaphysically possible\u2019 differ: \u201cmetaphysically\u201d is in one and not the other.'),
+        claimTypeQuotes('\u201cByron wrote "She Walks in Beauty".\u201d is read as one claim.'),
+        claimTypeQuotes('\u201cOtto\u2019s notebook is Otto\u2019s.\u201d: so \u201ccan\u2019t fly\u201d.'),
+        claimTypeQuotes('the students\u2019 books, and \u2018the dog\u2019.'),
+        claimTypeQuotes('Did you mean \u201cA\u201d or \u201cB\u201d?')];`);
+    ok(J(typed) === J(['\u201cshe\u201d is read as \u201cMary\u201d, the one name this claim gives',
+            '\u201czombies are possible\u201d and \u201czombies are metaphysically possible\u201d differ: \u201cmetaphysically\u201d is in one and not the other.',
+            '\u201cByron wrote \u2018She Walks in Beauty\u2019.\u201d is read as one claim.',
+            '\u201cOtto\u2019s notebook is Otto\u2019s.\u201d: so \u201ccan\u2019t fly\u201d.',
+            'the students\u2019 books, and \u201cthe dog\u201d.',
+            'Did you mean \u201cA\u201d or \u201cB\u201d?']),
+        'straight double quotes made curly by where they stand; a single-quoted quotation at the top double; one inside another single; apostrophes, commas and periods left where they are (r27.217)', J(typed));
+    // A box's quotation mark left unclosed, or closed with none opened, is
+    // left as typed: it takes none of the app's marks.
+    const unclosed = ev(`return [
+        claimTypeQuotes('“Bob said "hi.”: words in quotation marks are read as words. “he” is read as “Bob”.'),
+        claimTypeQuotes('“Bob said hi".” is read as one claim; “Mary left.” is not.'),
+        claimTypeQuotes('“Bob said ‘hi.”: “he” is read as “Bob”.')];`);
+    ok(J(unclosed) === J(['“Bob said "hi.”: words in quotation marks are read as words. “he” is read as “Bob”.',
+            '“Bob said hi".” is read as one claim; “Mary left.” is not.',
+            '“Bob said ‘hi.”: “he” is read as “Bob”.']),
+        'a box\'s unclosed quotation mark is left as typed, and the app\'s own marks are kept, double', J(unclosed));
+    const shown = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Bob cried.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'S', type: 'support', texts: ['Bob left and then he cried.'], collapsed: [], children: [] } ] }];
+        deductiveCache.clear(); ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="S"]'), title = tag ? tag.title : '';
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return title;`);
+    ok(/\u201che\u201d is read as \u201cBob\u201d/.test(shown) && !/"/.test(shown),
+        'a step\'s tag shows its reasons with curly quotes ("he" had shown straight)', shown);
+    // The Logic panel's descriptions: each rule's, each group's, each axiom's.
+    const panel = ev(`toggleEvalOverview(); renderLogicPanel();
+        var ts = [].slice.call(document.querySelectorAll('#eval-logic-body [title]')).map(function (e) { return e.title; });
+        toggleEvalOverview();
+        return { n: ts.length, curly: ts.filter(function (t) { return /“/.test(t); }).length,
+            straight: ts.filter(function (t) { return /"/.test(t); }), single: ts.filter(function (t) { return /(^|[\s(])‘/.test(t); }) };`);
+    ok(panel.n > 50 && panel.curly > 50 && !panel.straight.length && !panel.single.length,
+        'the Logic panel\'s descriptions in curly double quotes (98 had been straight, and two single at the top)', J(panel));
+    // A rule instance's tag, and the toast a click on it shows.
+    const theorem = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'T', type: 'contention', texts: ['P -> (P v P)'], collapsed: [], x: 0, y: 0, children: [] }];
+        ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.logical-theorem-tag'), r = { title: tag ? tag.title : '' };
+        if (tag) tag.click(); r.toast = (document.getElementById('onetime-hint') || {}).textContent || ''; hideOneTimeHint();
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    const instance = 'Rule instance — disjunction introduction: A gives “A or B”, for any B.';
+    ok(theorem.title.indexOf(instance) === 0 && theorem.toast.indexOf(instance) === 0,
+        'a rule instance\'s tag says its rule in curly quotes, and so does the toast a click on it shows', J(theorem));
+    // A rule named with its words: on a step's tag, in the list of every
+    // step, and in what a switched-off rule would give -- in the window the
+    // tag opens, and in that list.
+    const named = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear(); setDeductiveRule(['opposites'], false);
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Mary is not happy.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'S', type: 'support', texts: ['Mary is unhappy.'], collapsed: [], children: [] } ] }];
+        ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="S"]'); if (tag) tag.click();
+        var pop = document.getElementById('reading-chooser'), r = { said: pop && pop.querySelector('.rc-said') ? pop.querySelector('.rc-said').textContent : '' };
+        closeReadingChooser(); openDeductiveCheck('S');
+        var row = document.querySelector('#logic-modal-body .logic-step[data-step="S"]'); r.why = row ? (row.querySelector('.logic-why') || {}).textContent || '' : '';
+        closeDeductiveCheck(); setDeductiveRule(['opposites'], true); deductiveCache.clear(); render();
+        tag = document.querySelector('.derivation-tag[data-step="S"]'); r.tag = tag ? tag.textContent : '';
+        openDeductiveCheck('S'); row = document.querySelector('#logic-modal-body .logic-step[data-step="S"]'); r.rule = row ? row.querySelector('.logic-rule').textContent : ''; closeDeductiveCheck();
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    const would = 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give “Mary is not happy” by contraries “unhappy” and “happy”.';
+    ok(named.said === would && named.why.indexOf(would) === 0 && named.tag === '✓ contraries “unhappy” and “happy”' && named.rule === '✓contraries “unhappy” and “happy”',
+        'a rule named with its words names them in double quotes, on its tag, in the list of every step, and where a step says it would follow by it (single quotes, until r27.217)', J(named));
+    // A step about a quoted argument, in the list of every step.
+    const quoted = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'M', type: 'contention', texts: ["We cannot conclude that Mary is not happy from 'Mary is unhappy'."], collapsed: [], x: 0, y: 0,
+            children: [{ id: 'O', type: 'objection', texts: ['Mary is unhappy.'], collapsed: [], children: [] }] }];
+        ensureCollabFields(state); deductiveLive = true; render(); openDeductiveCheck('O');
+        var row = document.querySelector('#logic-modal-body .logic-step[data-step="O"]'), why = row && row.querySelector('.logic-why'), r = [why ? why.textContent : '', row ? row.title : ''];
+        closeDeductiveCheck(); state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    ok(quoted.every(t => t.indexOf('This step is about the quoted argument that concludes “Mary is not happy”. It follows by contraries “unhappy” and “happy”.') === 0),
+        'a step about a quoted argument says so in double quotes, in the list of every step', J(quoted));
+    // The window a typo opens: the box as typed, its title inside single.
+    const head = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Byron is a poet.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'S', type: 'support', texts: ['If Byron wrote "She Walks in Beauty", then Byron is a poet.', 'Byron  wrote "She Walks in Beauty".'], collapsed: [], children: [] } ] }];
+        ensureCollabFields(state); deductiveLive = true; render();
+        var tag = document.querySelector('.derivation-tag[data-step="S"]'); if (tag) tag.click();
+        var pop = document.getElementById('reading-chooser'), h = pop && pop.querySelector('.rc-head'), r = h ? h.textContent : '';
+        closeReadingChooser(); state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    ok(head === '“Byron  wrote ‘She Walks in Beauty’.” — two spaces after “Byron”',
+        'the window a typo opens quotes the box as typed, its spaces kept, a title inside it in single quotes (straight double until r27.217)', head);
+    // The app's one quotation in straight single quotes.
+    const hamlet = ev(`return claimTypeQuotes(claimPronounNote('In Hamlet, Ophelia is mad, and she drowns.'));`);
+    ok(hamlet === 'if “Hamlet” is a title, put it in quotation marks (“In ‘Hamlet’, ...”): then it is mentioned, not a name the pronoun may stand for',
+        'a title in quotation marks, its example single inside double, curly (straight single until r27.217)', hamlet);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

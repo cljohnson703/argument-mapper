@@ -1222,8 +1222,8 @@ function reportCorpus(name, res) {
         ok(A && A.title === 'Did you mean “No ravens are white” or “Not all ravens are white”? Click to choose a reading.',
             'its tooltip asks which reading is meant -- not which the step would follow on', A && A.title);
         ok(B && B.text === '? not recognized' && !/ambiguous/.test(B.title), 'an unrecognized step is not silently declared invalid', J(B));
-        ok(C && C.text === '? not recognized' && /“Most ravens are not white”: the checker reads "every", "some" and "no", not "most"/.test(C.title),
-            'an unread sentence ("most") is named in the tooltip of a step that does not derive', C && C.title);
+        ok(C && C.text === '? not recognized' && /“Most ravens are not white”: the checker reads “every”, “some” and “no”, not “most”/.test(C.title),
+            'an unread sentence ("most") is named in the tooltip of a step that does not derive, in curly quotes (r27.217)', C && C.title);
         const rowA = (d.rows || []).find(r => r.step === 'A');
         ok(rowA && /\bambiguous\b/.test(rowA.cls) && rowA.mark === '?' && /ambiguous/.test(rowA.rule) && rowA.why === 'Did you mean “No ravens are white” or “Not all ravens are white”?',
             'in the list its row is marked "?", with the explanation under it', J(rowA));
@@ -1333,8 +1333,8 @@ function reportCorpus(name, res) {
             toggleDeductiveLive();
             return { tags: tags, list: list, summary: summary };`);
         const A = map.tags && map.tags.A, B = map.tags && map.tags.B;
-        ok(A && A.text === '✗ spelled differently' && /\buncertified\b/.test(A.cls) && /Spelled the same way each time, the premises would give “Caesar won” by modus ponens, but ‘republic’ and ‘Republic’ differ in capital letters/.test(A.title),
-            'on the map its tag says "✗ spelled differently", and hovering it says what differs', J(A));
+        ok(A && A.text === '✗ spelled differently' && /\buncertified\b/.test(A.cls) && /Spelled the same way each time, the premises would give “Caesar won” by modus ponens, but “republic” and “Republic” differ in capital letters/.test(A.title),
+            'on the map its tag says "✗ spelled differently", and hovering it says what differs, the words in double quotes (r27.217: single at the top until then)', J(A));
         ok(B && B.text === '✓ modus ponens', 'spelled alike, the same step is certified', J(B));
         ok(map.list && /near-miss/.test(map.list.cls) && map.list.mark === '≠' && /spelled differently/.test(map.list.rule) && /differ in capital letters/.test(map.list.why || '') &&
            /1 of 2 steps certified · 1 spelled differently/.test(map.summary || ''),
@@ -1722,8 +1722,8 @@ function reportCorpus(name, res) {
         ok(v.list && v.list.open === true && /^Main contention: unwarranted · /.test(v.list.summary || ''),
             'clicking the pill opens the list of steps, whose summary starts with the verdict', J(v.list));
         ok(one(v.stands).text === '✗ Unwarranted' && /weak rebuttal/.test(one(v.stands).title || '') &&
-           one(v.unestablished).text === '✗ Unwarranted' && /we can’t conclude that ‘God exists’ from/.test(one(v.unestablished).title || ''),
-            'an undefeated weak rebuttal leaves it Open; a weak objection to a premise of its support leaves it not established, and says we can’t conclude it from those premises', J([v.stands, v.unestablished]));
+           one(v.unestablished).text === '✗ Unwarranted' && /we can’t conclude that “God exists” from/.test(one(v.unestablished).title || ''),
+            'an undefeated weak rebuttal leaves it Open; a weak objection to a premise of its support leaves it not established, and says we can’t conclude it from those premises, the claim in double quotes (r27.217)', J([v.stands, v.unestablished]));
         ok(one(v.none).text === '✗ Unwarranted', 'a bare contention is Open', J(v.none));
         ok(one(v.focusOn).hl === true && one(v.focusOff).hl === false && one(v.focusRedrawn).hl === false,
             'in focus mode the pill is lit with its box selected, and dims when another box is', J([v.focusOn, v.focusOff, v.focusRedrawn]));

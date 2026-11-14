@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.216';
+    const APP_BUILD = '2026-11-14 r27.217';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5979,7 +5979,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // variants remain possible, but they are the weaker attack:
                 // a different avatar color, and no rights over the real
                 // name's notes.
-                alert('The name "' + name + '" is in use by someone else right now. Pick another (add an initial, say).' +
+                alert('The name \u201c' + name + '\u201d is in use by someone else right now. Pick another (add an initial, say).' +
                     String.fromCharCode(10) + String.fromCharCode(10) +
                     'If that is you on another device, sign out there, or wait ' + Math.ceil(NAME_LEASE_MS / 60000) + ' minutes.');
                 return;
@@ -5990,7 +5990,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // or different client) still get a one-time soft confirm --
             // except when a verified Google identity vouches for the name.
             if (!authUid && !myNames.includes(name) && nameLooksForeign(name)) {
-                const go = confirm('The name "' + name + '" was used here before, from another browser. If that is not you, pick another (add an initial, say).' +
+                const go = confirm('The name \u201c' + name + '\u201d was used here before, from another browser. If that is not you, pick another (add an initial, say).' +
                     String.fromCharCode(10) + String.fromCharCode(10) + 'Sign in as "' + name + '" anyway?');
                 if (!go) return;
             }
@@ -6969,6 +6969,48 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const logicOpenGroups = new Set();
     function logicRule(id) { return DEDUCTIVE_RULES.find(r => r.id === id) || DEDUCTIVE_OPTIONAL_RULES.find(r => r.id === id) || null; }
     function logicRuleTitle(id) { const r = logicRule(id); return r ? r.name + ': ' + r.gloss : id; }
+    // The quotation marks of what is shown (r27.217; the user: "curly double
+    // quotes, with single ones only inside double"). A straight double quote
+    // opens at the start, after a space, a bracket, a dash or an opening
+    // mark, and closes elsewhere; a curly one says which it is. Each closing
+    // mark takes the nearest opening one of its own sort, straight or curly,
+    // so a box's unclosed quotation mark is left as typed and takes none of
+    // the app's. An opening single quote takes the next closing one not
+    // followed by a letter (an apostrophe is: "Otto's", "can't"), inside the
+    // quotation it stands in. Then a quotation at the top is double, and one
+    // inside another single; commas and periods stay where they are.
+    function claimTypeQuotes(text) {
+        const s = String(text == null ? '' : text);
+        if (!/["\u201c\u201d\u2018]/.test(s)) return s;
+        const pair = new Map(), open = [];
+        for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c !== '"' && c !== '\u201c' && c !== '\u201d') continue;
+            const straight = c === '"';
+            if (straight ? i === 0 || /[\s(\[{—–\u2018\u201c-]/.test(s[i - 1]) : c === '\u201c') { open.push({ i, straight }); continue; }
+            let k = open.length - 1;
+            while (k >= 0 && open[k].straight !== straight) k--;
+            if (k < 0 || (straight && k < open.length - 1)) continue;
+            pair.set(open[k].i, i); pair.set(i, open[k].i); open.length = k;
+        }
+        const ends = [];
+        for (let i = 0; i < s.length; i++) {
+            if (pair.has(i)) { if (pair.get(i) > i) ends.push(pair.get(i)); else ends.pop(); continue; }
+            if (s[i] !== '\u2018') continue;
+            const end = ends.length ? ends[ends.length - 1] : s.length;
+            for (let j = i + 1; j < end; j++)
+                if (s[j] === '\u2019' && !/[A-Za-z]/.test(s[j + 1] || '')) { pair.set(i, j); pair.set(j, i); ends.push(j); break; }
+        }
+        let out = '', depth = 0;
+        const single = new Set();
+        for (let i = 0; i < s.length; i++) {
+            if (!pair.has(i)) { out += s[i]; continue; }
+            const j = pair.get(i);
+            if (j > i) { if (depth) single.add(i); out += depth ? '\u2018' : '\u201c'; depth++; }
+            else { depth--; out += single.has(j) ? '\u2019' : '\u201d'; }
+        }
+        return out;
+    }
     // A rule's setting in this map: its own switch, or its group's default.
     function logicSettingOn(id) {
         const set = claimRuleSettings();
@@ -7021,7 +7063,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const ax = DEDUCTIVE_AXIOMS.find(a => a.name === name || a.name.indexOf(name) === 0);
             const label = el('span', 'logic-sym', name);
             const body = el('span', null, schema);
-            if (ax) { label.title = ax.gloss; body.title = ax.gloss; }
+            if (ax) { label.title = claimTypeQuotes(ax.gloss); body.title = claimTypeQuotes(ax.gloss); }
             grid.appendChild(label); grid.appendChild(body);
         });
         basis.appendChild(grid);
@@ -7050,12 +7092,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             box.addEventListener('change', () => switchLogicRules(g.rules, box.checked));
             const label = el('label', null, g.label);
             label.htmlFor = box.id;
-            label.title = LOGIC_GROUP_GLOSSES[g.id] || '';
+            label.title = claimTypeQuotes(LOGIC_GROUP_GLOSSES[g.id] || '');
             row.appendChild(box); row.appendChild(label);
             const count = el('span', 'logic-count'); count.dataset.count = g.id;
             row.appendChild(count);
             body.appendChild(row);
-            if (g.rules.length < 2) { label.title = (label.title ? label.title + '\n' : '') + logicRuleTitle(g.rules[0]); return; }
+            if (g.rules.length < 2) { label.title = (label.title ? label.title + '\n' : '') + claimTypeQuotes(logicRuleTitle(g.rules[0])); return; }
             const chev = el('button', 'logic-chev');
             chev.type = 'button'; chev.dataset.chev = g.id;
             chev.setAttribute('aria-controls', 'logic-rules-' + g.id);
@@ -7067,7 +7109,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const item = el('label'), cb = el('input');
                 cb.type = 'checkbox'; cb.dataset.rule = id;
                 cb.addEventListener('change', () => switchLogicRules([id], cb.checked));
-                item.title = logicRuleTitle(id);
+                item.title = claimTypeQuotes(logicRuleTitle(id));
                 item.appendChild(cb);
                 item.appendChild(document.createTextNode(LOGIC_RULE_LABELS[id] || (logicRule(id) || { name: id }).name));
                 list.appendChild(item);
@@ -7078,7 +7120,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const item = el('label', 'logic-names'), cb = el('input');
                 cb.type = 'checkbox'; cb.dataset.setting = 'syllogism-names';
                 cb.addEventListener('change', () => switchLogicRules(['syllogism-names'], cb.checked));
-                item.title = LOGIC_SYLLOGISM_NAMES_GLOSS;
+                item.title = claimTypeQuotes(LOGIC_SYLLOGISM_NAMES_GLOSS);
                 item.appendChild(cb);
                 item.appendChild(document.createTextNode('Syllogism names'));
                 list.appendChild(item);
@@ -7093,7 +7135,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         mbox.addEventListener('change', () => switchLogicRules(['modal-meta'], mbox.checked));
         const mlabel = el('label', null, 'Metaphysical necessity');
         mlabel.htmlFor = mbox.id;
-        mlabel.title = LOGIC_MODAL_GLOSS;
+        mlabel.title = claimTypeQuotes(LOGIC_MODAL_GLOSS);
         mrow.appendChild(mbox); mrow.appendChild(mlabel);
         body.appendChild(mrow);
         // "Would" and "could" (r27.112): on unless a map switches it off.
@@ -7102,7 +7144,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         wbox.addEventListener('change', () => switchLogicRules(['modal-would'], wbox.checked));
         const wlabel = el('label', null, '\u201cWould\u201d and \u201ccould\u201d');
         wlabel.htmlFor = wbox.id;
-        wlabel.title = LOGIC_WOULD_GLOSS;
+        wlabel.title = claimTypeQuotes(LOGIC_WOULD_GLOSS);
         wrow.appendChild(wbox); wrow.appendChild(wlabel);
         const mbody = el('div', 'logic-modal'), axioms = el('div', 'logic-modal-row'), system = el('div', 'logic-modal-row');
         mbody.id = 'logic-modal-meta-body';
@@ -10968,7 +11010,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // name a pronoun may stand for -- and not a place Ophelia is inside.
         const title = !found && /^\s*In\s+([A-Z][A-Za-z'\u2019-]*(?:\s+[A-Z][A-Za-z'\u2019-]*)*)\s*,\s*\S/.exec(String(text || ''));
         if (title && /\b(?:he|she|him|his|her)\b/i.test(String(text).slice(title[0].length - 1)))
-            return 'if "' + title[1] + '" is a title, put it in quotation marks ("In \'' + title[1] + '\', ..."): then it is mentioned, not a name the pronoun may stand for';
+            return 'if "' + title[1] + '" is a title, put it in quotation marks ("In \u2018' + title[1] + '\u2019, ..."): then it is mentioned, not a name the pronoun may stand for';
         if (!found) return null;
         return found.taken.map(p => '"' + p + '"').join(' and ') + (found.taken.length > 1 ? ' are' : ' is') +
             ' read as "' + found.name + '", the one name this claim gives';
@@ -35352,7 +35394,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             tag.className = 'logical-theorem-tag';
             tag.textContent = theorem.axiom ? (theorem.closure ? '✓ CLOSURE OF AN AXIOM' : '✓ AXIOM')
                 : theorem.closure ? '✓ CLOSURE OF AN INSTANCE' : '✓ RULE INSTANCE';
-            tag.title = theorem.explanation;
+            tag.title = claimTypeQuotes(theorem.explanation);
             ['pointerdown','mousedown','touchstart'].forEach(type => tag.addEventListener(type, e => e.stopPropagation()));
             tag.addEventListener('click', e => { e.stopPropagation(); showHintToast(theorem.explanation, true); });
             tag.dataset.theoremIdx = box.dataset.nodeIdx;
@@ -35376,7 +35418,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             tag.dataset.step = step.childId;
             tag.dataset.sig = claimStepSignature(step);
             if (focusedStepIds && focusedStepIds.has(step.childId)) tag.classList.add('tag-hl');
-            tag.textContent = deductiveStepTagText(step);
+            tag.textContent = claimTypeQuotes(deductiveStepTagText(step));
             tag.title = (step.rule
                 ? (step.rule.id === 'argued-below' && step.why ? step.why.text : 'Valid by ' + step.rule.name + ': ' + step.rule.gloss + '.' + (n => n ? ' ' + n : '')(claimStepReadNotes(step)))
                 : step.moot || step.nearMiss || step.ambiguous || step.inference || step.bare || step.bareChallenge || step.restates ? step.why.text
@@ -35397,6 +35439,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // a map opened with a view-only link (r27.148).
             const sw = !step.ambiguous && !collabReadOnly() ? claimStepSwitch(step) : null;
             if (sw) tag.title = tag.title.replace(/ Click for every step\.$/, ' Click to switch on ' + sw.name + '.');
+            tag.title = claimTypeQuotes(tag.title);
             tag.addEventListener('click', e => {
                 e.stopPropagation();
                 if (step.ambiguous && !step.rule && openReadingChooser(step, tag)) return;
@@ -35420,7 +35463,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     tag.dataset.verdictIdx = String(idx);
                     if (focusedStepIds && selectedIds.includes(tree.id + '-' + idx)) tag.classList.add('tag-hl');
                     tag.textContent = VERDICT_LABEL[v.status];
-                    tag.title = claimVerdictWhy(verdict, v) + ' Click for every step.';
+                    tag.title = claimTypeQuotes(claimVerdictWhy(verdict, v) + ' Click for every step.');
                     ['pointerdown', 'mousedown', 'touchstart'].forEach(type => tag.addEventListener(type, e => e.stopPropagation()));
                     tag.addEventListener('click', e => { e.stopPropagation(); openDeductiveCheck(); });
                     group.appendChild(tag);
@@ -35852,7 +35895,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         ['pointerdown', 'mousedown', 'touchstart', 'wheel'].forEach(type => pop.addEventListener(type, e => e.stopPropagation()));
         const text = document.createElement('div');
         text.className = 'rc-said';
-        text.textContent = step.why.text;
+        text.textContent = claimTypeQuotes(step.why.text);
         pop.appendChild(text);
         const on = document.createElement('button');
         on.type = 'button';
@@ -35979,6 +36022,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // one question; a typo or a slip says what it is.
             head.textContent = entry.typo || entry.grammar ? '\u201c' + (entry.typo ? entry.text : stripClaimMarkup(entry.text)) + '\u201d \u2014 ' + claimRecase(entry.message, entry.text)
                 : several ? '\u201c' + stripClaimMarkup(entry.text) + '\u201d \u2014 did you mean:' : 'Did you mean:';
+            head.textContent = claimTypeQuotes(head.textContent);
             if (entry.typo) head.style.whiteSpace = 'pre-wrap';
             pop.appendChild(head);
             const apply = several ? null : document.createElement('button');
@@ -36127,13 +36171,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             mark.textContent = step.rule ? '✓' : step.moot || step.inference || step.bare || step.bareChallenge || step.restates ? '✗' : step.nearMiss ? '≠'
                 : step.ambiguous ? (/^(?:typo|no referent)$/.test(claimAskedKind(step)) ? '✗' : '?') : claimStepInvalid(step) ? '✗' : '·';
             rule.appendChild(mark);
-            rule.appendChild(document.createTextNode(step.rule ? step.rule.name
+            rule.appendChild(document.createTextNode(claimTypeQuotes(step.rule ? step.rule.name
                 : step.moot ? (step.moot === 'object' ? 'nothing to object to' : 'nothing to rebut')
                 : step.inference ? '“' + step.inference.word + '” in a box'
                 : step.bare ? 'bare denial' : step.bareChallenge ? 'bare challenge' : step.restates ? 'restates its box'
                 : step.nearMiss ? (step.spacingOnly ? 'typo?' : 'spelled differently')
                 : step.ambiguous ? (claimAskedKind(step) === 'typo' ? 'typo?' : claimAskedKind(step)) : step.counterexample ? 'invalid (counterexample)'
-                : step.why && step.why.fallacy ? step.why.fallacy.tag : 'not recognized'));
+                : step.why && step.why.fallacy ? step.why.fallacy.tag : 'not recognized')));
             row.title = step.rule
                 ? (step.rule.id === 'argued-below' && step.why ? step.why.text : 'Valid by ' + step.rule.name + ' — ' + step.rule.gloss + (n => n ? '. ' + n : '')(claimStepReadNotes(step)))
                 : step.inference ? step.inference.message
@@ -36141,6 +36185,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 : step.counterexample ? counterexampleExplanation(step)
                 : step.why && step.why.fallacy ? step.why.text
                 : 'This check knows no rule that takes these premises to this conclusion. Clarification or intermediate steps are needed; invalidity has not been established.';
+            row.title = claimTypeQuotes(row.title);
             const claims = document.createElement('div');
             claims.className = 'logic-claims';
             if(step.referenceArgument){
@@ -36169,14 +36214,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (step.warrantTarget) {
                 const assessment = document.createElement('span');
                 assessment.className = 'logic-why';
-                assessment.textContent = warrantStepExplanation(step, verdict);
+                assessment.textContent = claimTypeQuotes(warrantStepExplanation(step, verdict));
                 claims.appendChild(assessment);
                 row.title = assessment.textContent;
             }
             if (step.why) {
                 const why = document.createElement('span');
                 why.className = 'logic-why';
-                why.textContent = step.why.text;
+                why.textContent = claimTypeQuotes(step.why.text);
                 claims.appendChild(why);
                 // The switch it names, switched on from here (r27.144), in
                 // Review mode too (r27.148).
@@ -37127,7 +37172,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             el.addEventListener('click', hideOneTimeHint);
             document.body.appendChild(el);
         }
-        el.textContent = text;
+        el.textContent = claimTypeQuotes(text);
         requestAnimationFrame(() => el.classList.add('show'));
         if (hintTimer) clearTimeout(hintTimer);
         hintTimer = setTimeout(hideOneTimeHint, 6000);

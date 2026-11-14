@@ -338,8 +338,8 @@ const J = JSON.stringify;
     T(W, `state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); return 1;`);
     const beat = asked('Bob can swim, and Mary can too.', 'Bob is weak.');
     ok(beat.tag === '? ambiguous' && !beat.chooser && beat.list &&
-        beat.title.indexOf('“Bob can swim, and Mary can too.” is ambiguous: "can" may say what Bob is able to do, what Bob is allowed to do, or what is possible for Bob (physically, metaphysically or logically).') >= 0,
-        'a question one of whose readings does not read back is not asked -- "Bob can swim, and Mary can too" -- the box is said to be ambiguous, and the tag opens the list', J(beat));
+        beat.title.indexOf('“Bob can swim, and Mary can too.” is ambiguous: “can” may say what Bob is able to do, what Bob is allowed to do, or what is possible for Bob (physically, metaphysically or logically).') >= 0,
+        'a question one of whose readings does not read back is not asked -- "Bob can swim, and Mary can too" -- the box is said to be ambiguous, and the tag opens the list (its quotes curly, r27.217)', J(beat));
     // r27.173: the weather's reading, its two conditions grouped, is offered:
     // "it is cold if the street is wet and the sky is grey" had asked what the
     // "if" takes in, and the box had been said to be ambiguous. Grouped by

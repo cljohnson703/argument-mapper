@@ -4,6 +4,55 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: the app's quotation marks, consistent (r27.217)
+
+The user:
+* Of the app's spelling and punctuation: "It should use American English spellings and punctuation at every point."
+* Of a reader's own British spelling, "Quote boxes as written; only the app's own words are American": "this". The app's own words already were.
+* Of the punctuation, "American spelling everywhere, with commas and periods kept outside quoted claims and words. The quotation marks themselves become consistent: curly double quotes, with single ones only inside double": "ok".
+
+Changes:
+* What the app shows has its quotation marks made consistent where it is shown:
+  * straight double quotes are made curly, by where they stand: '"she" is read as "Mary"' shows as '“she” is read as “Mary”';
+  * a single-quoted quotation at the top level becomes double: "‘republic’ and ‘Republic’ differ in capital letters" shows with double quotes;
+  * a quotation inside another becomes single: a box "Byron wrote "She Walks in Beauty"." quoted shows its title in single quotes.
+* This covers:
+  * a step's tag, its tip, and the window it opens;
+  * the list of every step, a step about a quoted argument included;
+  * the reading chooser's head;
+  * a verdict's reasons;
+  * a rule instance's tag;
+  * the toast a tag or Derive shows;
+  * the Logic panel's descriptions;
+  * the two dialogs about a reader's name.
+* A rule named with its words names them in double quotes, on its tag and in the list of every step: "✓ contraries “unhappy” and “happy”". It had been single quotes, while its tip said double.
+* The app's one quotation in straight single quotes, the example in "if "Hamlet" is a title, put it in quotation marks ("In 'Hamlet', ...")", is curly where it is written: it shows as “In ‘Hamlet’, ...”.
+* Not changed:
+  * apostrophes ("Otto's", "can't") and a reader's own straight single quotes;
+  * a box's quotation mark left unclosed, or closed with none opened: it is shown as typed, and the app's own marks around it stay double. Each closing mark pairs only with an opening one of its own sort, straight or curly;
+  * the boxes, and the readings the chooser offers, which are written as they would be in a box;
+  * commas and periods, which stay outside a quoted claim or word.
+
+Tests:
+* Checks changed, each failing on r27.216:
+  * anaphora-r27-test.js: how a step's boxes were read, in its tag's tip and the list of every step, a pronoun bound by a quantifier or a condition, and "each other";
+  * logic-r27-english-test.js: an unread sentence ("most") in a step's tip, a misspelling ("republic" and "Republic") in a tag's tip, and a weak objection's verdict;
+  * reading-r27-chooser-test.js: an ambiguous box's tip;
+  * collab-r27-name-lease-test.js: the two dialogs about a reader's name.
+* New in syntax-r27-test.js, which has 211 checks:
+  * the function's own cases, and a box's unclosed quotation mark;
+  * a step's tag;
+  * the Logic panel's descriptions;
+  * a rule instance's tag and its toast;
+  * a rule named with its words, on its tag, in the list of every step, and in the window a switched-off rule's step opens;
+  * a step about a quoted argument;
+  * the window a typo opens;
+  * the title example.
+* Take-one-out: each of the 22 changes is caught, 18 of them by syntax-r27-test.js. The reading chooser's head at first was not: a slip's or a typo's own message is already curly, so its check is a typo in a box with a title in quotation marks.
+* 1 sentence of 4542 in the corpus reads differently, by default and with Semantic mode on: "In Hamlet, Ophelia is mad, and she drowns.", whose note now writes its example's title in curly single quotes. What any sentence says is unchanged.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: each family of modal words, the most obvious reading first (r27.216)
 
 The user:

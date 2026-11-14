@@ -300,8 +300,8 @@ async function annAmongOthers(tag, uid) {
             ok(before && before.by === clientIdOf(ann) && !before.released && !!wireClaimOf(store, 'Bob'),
                 'setup: Ann holds her name, and "Bob" is in use on another browser', JSON.stringify({ before, bob: wireClaimOf(store, 'Bob') }));
             ann.win.applySignIn('Bob');
-            ok(userOf(ann) === 'Ann' && ann.alerts.length === 1 && ann.alerts[0].includes(BLOCK),
-                'switching to a name in use is refused', seen(ann));
+            ok(userOf(ann) === 'Ann' && ann.alerts.length === 1 && ann.alerts[0].includes(BLOCK) && ann.alerts[0].indexOf('The name “Bob” is in use') === 0,
+                'switching to a name in use is refused, the name in curly quotes (r27.217)', seen(ann));
             ok(sameClaim(claimOf(ann, 'Ann'), before),
                 'and the name she keeps is still hers: its lease untouched', JSON.stringify(claimOf(ann, 'Ann')));
             await ann.win.__argmap.engine.pushNow();
@@ -320,8 +320,8 @@ async function annAmongOthers(tag, uid) {
             const asked = [];
             ann.win.confirm = msg => { asked.push(String(msg)); return false; };
             ann.win.applySignIn('Cat');
-            ok(userOf(ann) === 'Ann' && asked.length === 1 && asked[0].includes('used here before'),
-                'switching to a name used before from another browser asks first; declined, she stays Ann',
+            ok(userOf(ann) === 'Ann' && asked.length === 1 && asked[0].indexOf('The name “Cat” was used here before') === 0,
+                'switching to a name used before from another browser asks first, the name in curly quotes (r27.217); declined, she stays Ann',
                 JSON.stringify({ user: userOf(ann), asked }));
             ok(sameClaim(claimOf(ann, 'Ann'), before),
                 'and her name is still hers: its lease untouched', JSON.stringify(claimOf(ann, 'Ann')));
