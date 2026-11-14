@@ -185,7 +185,10 @@ console.log('\n-- 6. with a pronoun; the inference colors --');
             .map(function (e) { return e.textContent; }).join('|');
         inferenceColorsOn = false; render(); return on;`);
     const road = painted(LONG + ', and that road is dangerous.', 'The long, dark, windy road is dangerous.');
+    // Never asking, "she" is read as the teacher (asking, it asks: r27.211).
+    ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; return 1;`);
     const she = painted('The teacher is tired and she cried.', 'The teacher cried.');
+    ev(`state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return 1;`);
     ok(road === 'that road is dangerous' && she === 'she cried',
         'the colors find the part read with its referent in the words the box has: "that road is dangerous", "she cried" (they had found none)', J([road, she]));
 }

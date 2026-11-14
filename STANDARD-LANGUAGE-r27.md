@@ -4,6 +4,35 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: a pronoun whose only candidate is a phrase asks too (r27.211)
+
+The user:
+* Of asking where a pronoun goes back to a phrase, not a name ("The teacher left, and then she cried"): "ok".
+* Of asking in a box with an "it" or a "they" too ("Mary bought a car, and she loves it"): "ok".
+
+Changes:
+* Where Semantic mode asks, a "he", "she", "him", "his" or "her" whose only candidate is a phrase asks as one whose candidate is a name does (r27.205).
+  * "The teacher left, and then she cried; so the teacher cried" asks "Did you mean 'The teacher left, and then the teacher cried', or is 'she' someone else?". It had been read as the teacher, and said so.
+  * A step that holds whoever it is stands: "so the teacher left".
+  * The box is read with "the teacher" until it is answered; never asking, so, and said so, as before.
+* Only where every pronoun goes back to that one: not "Mary praised Ann, and then she praised her again" ("she" Mary, "her" Ann), read as before.
+* So the one name a pronoun can be, where the box has two ("Mary is kind, and she is loyal to Bob"), or a quantifier the pronoun is not ("Every student who knows Mary loves her"): Mary, or someone else.
+* Not where the box is read as one claim: "A teacher left, and then she cried", as before. ("A teacher left and she cried", read as "A teacher left and cried", asks.)
+* Not yet in a box with an "it" or a "they" too. "Mary bought a car, and she loves it" is read as one claim, its "it" tied to "a car", so neither reading can be written back for the box: asked, it could offer nothing. It is read with Mary, and says so, as before.
+
+Tests:
+* syntax-r27-test.js has 195 checks.
+  * The new one on the phrase fails on r27.210; the one on what is kept passes on both.
+* The two-pronoun case was found by the corpus check: the first build asked whether "she" and "her" were both Mary.
+* Checks of the one-candidate reading, now asked:
+  * logic-r27-basis-test.js: "The teacher left and she cried" is read as the teacher, and asks; "so the teacher left" follows; "A teacher left and she cried" asks; "The teacher loves her job" asks.
+  * rules-r27-ordinary-test.js: "Every student who knows Mary loves her" asks; with Mary written in, universal modus ponens. So "Every student who loves Mary thinks she is smart".
+  * anaphora-r27-test.js: the colors of "she cried", checked never asking.
+* Take-one-out: each of the 2 changes is caught.
+* 15 sentences in the corpus read differently, each a pronoun whose only candidate is one phrase or name, now asked about: "The teacher left and she cried", "The teacher loves her job", "When the dog barks, he wags his tail", "John talked the boss into hiring him".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: an opening clause with no comma after it is a slip (r27.210)
 
 The user:

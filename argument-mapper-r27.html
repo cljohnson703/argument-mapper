@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.210';
+    const APP_BUILD = '2026-11-14 r27.211';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10975,6 +10975,37 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             { pronoun: true, texts: [named + t.slice(upTo), other + t.slice(upTo)], other: words, part });
         return true;
     }
+    // A "he", "she", "him", "his" or "her" whose only candidate is a phrase,
+    // not a name: "The teacher left, and then she cried" -- the teacher, or
+    // someone the box does not name, asked as for a name (r27.211; the user:
+    // "ok"). The words the box is read with until it is answered, or null.
+    // Only where every pronoun the box has is one of these, read as that one
+    // phrase, and the phrase says which ("the teacher", not "a teacher": that
+    // box is one claim).
+    function claimPronounPhraseQuestion(text) {
+        const t = String(text == null ? '' : text);
+        if (claimPronounSites(t) || /\b(?:it|its|they|them|their)\b/i.test(t)) return null;
+        const r = claimPronounReadings(t), m = /^“(?:he|she|him|his|her)” can only be “([^”]+)”/.exec(r.message || '');
+        if (r.none || r.itAsks || !r.auto || r.auto.whole || (r.texts || []).length !== 1 || !m) return null;
+        // Every pronoun the one phrase: not "Mary praised Ann, and then she
+        // praised her again", "she" Mary and "her" Ann.
+        if ((String(r.auto.message || '').match(/ as “/g) || []).length !== 1) return null;
+        const fresh = claimFreshName(t), re = /\b(?:he|she|him|his|her)\b/gi, taken = [], clauses = [];
+        let other = '', upTo = 0, x;
+        while ((x = re.exec(t))) {
+            const word = x[0], rest = t.slice(x.index + word.length), b = CLAIM_CLAUSE_BREAK.exec(rest);
+            if (!taken.includes(word.toLowerCase())) taken.push(word.toLowerCase());
+            other += t.slice(upTo, x.index) + claimPronounReplacement(word, fresh, rest);
+            upTo = x.index + word.length;
+            clauses.push(word + (b ? rest.slice(0, b.index) : rest));
+        }
+        other += t.slice(upTo);
+        const words = taken.map(p => '“' + p + '”').join(' and ');
+        claimAmbiguous(words + ' may be “' + m[1] + '”, or someone the box does not name',
+            [{ label: r.texts[0], build: () => null }, { label: CLAIM_SOMEONE_ELSE, build: () => null }], true,
+            { pronoun: true, texts: [r.texts[0], other], other: words, part: m[1] + ': ' + clauses.join('; ') });
+        return r.texts[0];
+    }
     function claimResolvePronouns(text) {
         const found = claimPronounSites(text);
         if (!found) return text;
@@ -13778,6 +13809,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // A clause cut short, read with the clause before it (r27.88).
             const cut = !symbolic ? claimEllipsisReading(text) : null;
             if (cut) { text = cut.text; claimReadState.notes.push({ kind: 'unread', message: cut.message, ellipsis: true }); }
+            // The one phrase a pronoun may be, asked about as a name is, the box
+            // read with it until answered (r27.211).
+            if (!symbolic && claimSemanticMode()) { const phrased = claimPronounPhraseQuestion(text); if (phrased) text = phrased; }
             const raw = normalizeClaimText(text);
             // The one name a pronoun may be, asked about where a step turns on
             // it (r27.204, r27.205); never asking, read so and said so.

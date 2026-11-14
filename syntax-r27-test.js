@@ -1480,6 +1480,28 @@ console.log('\n-- r27.210: an opening clause with no comma after it is a slip --
         'where no place can take it, said so (the clause in front has no claim after it the check can find), not a phrase of view, place or time; "once" as "formerly" is no slip; so "although"', J(w));
 }
 
+console.log('\n-- r27.211: a pronoun whose only candidate is a phrase asks as one whose candidate is a name does --');
+{
+    // The user, of asking "The teacher left, and then she cried" as "Bob left,
+    // and then she cried" asks: "ok".
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || { semantic: true })} }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const s = [step(['The teacher left, and then she cried.'], 'The teacher cried.'), step(['The teacher left, and then she cried.'], 'The teacher left.'),
+        step(['The teacher left, and then she cried.'], 'The teacher cried.', {}), step(['The man left, and then his dog barked.'], 'The man left.')];
+    ok(s[0].rule === null && s[0].why === 'Did you mean “The teacher left, and then the teacher cried”, or is “she” someone else?' &&
+        s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' && s[3].rule === 'conjunction elimination',
+        '"The teacher left, and then she cried", so "the teacher cried", asks: the teacher, or someone else (it had been read as the teacher, and said so); "the teacher left" follows whoever she is; never asking, read as the teacher, as before', J(s));
+    const kept = [step(['A teacher left, and then she cried.'], 'A teacher cried.'), step(['Mary bought a car, and she loves it.'], 'Mary bought a car.'),
+        step(['The teacher praised the student, and she cried.'], 'The teacher cried.'), step(['Mary praised Ann, and then she praised her again.'], 'Mary praised Ann again.')];
+    ok(/read with “she” as “the teacher”, the one it can be in this box, so the sentence is read as one claim/.test(kept[0].why) &&
+        /"she" is read as "Mary", the one name this claim gives/.test(kept[1].why) &&
+        kept[2].why === 'Did you mean “The teacher praised the student, and the teacher cried” or “The teacher praised the student, and the student cried”?' &&
+        !/someone the box does not name/.test(kept[3].why),
+        'not after "a teacher" (one claim), nor in a box with an "it" too (one claim: neither reading could be written back), nor where two pronouns go back to two ("she" Mary, "her" Ann); two candidates ask as before', J(kept));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

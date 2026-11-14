@@ -829,8 +829,12 @@ console.log('\n-- 23. (r27.149) a quantifier binds a pronoun in its own verb phr
     ok(some.rule === 'expository syllogism', '"Bob thinks Bob will win" and "Bob is a person", so "someone thinks they will win"', J(some));
     const same = step(['Some student thinks they will win.'], 'Some student thinks that they will win.');
     ok(!same.rule && /only repeats/.test(same.why), '"some student thinks they will win" and "... that they will win", one claim (the "that" had made them two)', J(same));
-    const mary = step(['Every student who loves Mary thinks she is smart.', 'Bob is a student who loves Mary.'], 'Bob thinks Mary is smart.');
-    ok(mary.rule === 'universal modus ponens', 'where the box names what the pronoun is, it is that: "every student who loves Mary thinks she is smart" -- Mary, as before', J(mary));
+    // The one someone the box gives, asked about as a name is: that one, or
+    // someone else (r27.211); written in, the step follows.
+    const mary = step(['Every student who loves Mary thinks she is smart.', 'Bob is a student who loves Mary.'], 'Bob thinks Mary is smart.'),
+        maryIn = step(['Every student who loves Mary thinks Mary is smart.', 'Bob is a student who loves Mary.'], 'Bob thinks Mary is smart.');
+    ok(mary.rule === null && mary.why === 'Did you mean “Every student who loves Mary thinks Mary is smart”, or is “she” someone else?' && maryIn.rule === 'universal modus ponens',
+        'where the box names what the pronoun may be: "every student who loves Mary thinks she is smart" -- Mary, or someone else, asked (r27.211); with Mary written in, universal modus ponens', J([mary, maryIn]));
     const NOT = [[['Everyone loves him.', 'Bob is a person.'], 'Bob loves himself.'], [['Every student believes that they are smart.', 'Bob is a student.'], 'Bob believes that Al is smart.']];
     ok(!certified(NOT).length, 'not "everyone loves him" as each one loving themselves; not someone else', J(certified(NOT)));
     // Where the subject ends: before a verb that takes a claim.
@@ -845,8 +849,12 @@ console.log('\n-- 24. (r27.150) a pronoun in a "who" clause; the subject is the 
 {
     const HER = [[['Every student who knows Mary loves her.', 'Bob is a student who knows Mary.'], 'Bob loves Mary.'],
         [['No student who knows Mary hates her.', 'Bob is a student who knows Mary.'], 'Bob does not hate Mary.']];
-    ok(!misses(HER, 'universal modus ponens').length, '"every student who knows Mary loves her": "her" is Mary -- universal modus ponens ' +
-        '(r27.149 had kept "her" and said nothing; before, Mary had been ruled out as the subject of "loves her")', J(misses(HER, 'universal modus ponens')));
+    // Mary, or someone else, asked (r27.211); with Mary written in, the step.
+    const herAsks = HER.map(([p, c]) => step(p, c).why), HER_IN = HER.map(([p, c]) => [p.map(x => x.replace(/\bher\b/, 'Mary')), c]);
+    ok(!misses(HER_IN, 'universal modus ponens').length && /^Did you mean “Every student who knows Mary loves Mary”, or is “her” someone else\?$/.test(herAsks[0]) &&
+        /^Did you mean “No student who knows Mary hates Mary”, or is “her” someone else\?$/.test(herAsks[1]),
+        '"every student who knows Mary loves her": "her" may be Mary, or someone else, asked (r27.211); with Mary written in, universal modus ponens ' +
+        '(r27.149 had kept "her" and said nothing; before, Mary had been ruled out as the subject of "loves her")', J([misses(HER_IN, 'universal modus ponens'), herAsks]));
     const read = ev(`return ['The woman who met Mary loves her.', 'The man that Mary loves hates her.', 'The man who bought the car sold it.'].map(function (s) {
         return claimPronounReadingsUncached(s).texts; });`);
     ok(J(read) === J([['The woman who met Mary loves Mary.'], ['The man that Mary loves hates Mary.'], ['The man who bought the car sold the car.']]),
