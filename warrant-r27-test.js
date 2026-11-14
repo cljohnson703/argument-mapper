@@ -294,12 +294,14 @@ try {
             flagged: r.notes.some(n => n.kind === 'ambiguous' && n.always)}; }`, {sentence,explicit});
         check(result.same && !result.flagged, 'unique same-premise referent: ' + sentence + ' ' + JSON.stringify(result));
     }
-    // r27.205: "she" after the box's one name is read as it, and asked about:
-    // she may be Ada or someone the box does not name.
+    // r27.212 (the user: "if a pronoun has only one possible referent, the app
+    // should have the pronoun refer to that referent"): "she" after the box's
+    // one name is read as it, and said so. r27.205 had asked whether she was
+    // Ada or someone the box does not name.
     {
         const result = call(`input => { const r = parseClaimFull(input.sentence); return {same: claimKey(r.form) === claimKey(parseClaim(input.explicit)),
-            asked: r.notes.some(n => n.kind === 'ambiguous' && n.pronoun && /or someone the box does not name/.test(n.message))}; }`, {sentence: 'Ada is tall and she is kind', explicit: 'Ada is tall and Ada is kind'});
-        check(result.same && result.asked, 'a "she" after the one name: read as it, and asked (r27.205): Ada is tall and she is kind ' + JSON.stringify(result));
+            asked: r.notes.some(n => n.kind === 'ambiguous' && n.pronoun), said: r.notes.some(n => n.kind === 'unread' && /"she" is read as "Ada", the one name this claim gives/.test(n.message))}; }`, {sentence: 'Ada is tall and she is kind', explicit: 'Ada is tall and Ada is kind'});
+        check(result.same && !result.asked && result.said, 'a "she" after the one name: read as it, and said so, not asked (r27.212): Ada is tall and she is kind ' + JSON.stringify(result));
     }
     for (const sentence of ['She is kind', 'Ada is tall and Bea is kind and she is happy',
         'If Ada is a friend of Bea, then she is kind', 'If something is a stove, then it is hot', 'If Poe is a stove, then it is hot',

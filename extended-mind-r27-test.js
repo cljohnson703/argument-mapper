@@ -261,12 +261,14 @@ console.log('\n-- 6. what the check says --');
         { id: 'A', type: 'objection', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of Otto's mind."], collapsed: [], children: [] } ] }];
         deductiveCache.clear(); ensureCollabFields(state); render(); var steps = collectDeductiveSteps(state.trees), v = claimMapVerdict(state.trees, steps); return claimVerdictWhy(v, v('M', 0));`);
     ok(!/\.\./.test(verdict) && /[a-z]\. Nothing on the map supports it\.$/.test(verdict), 'the verdict\'s reason ends once (one full stop, not two)', verdict);
-    // r27.205: as the map has it, "a part of his mind": "his" may be Otto or
-    // someone else, and the step asks.
+    // r27.212 (the user: "if a pronoun has only one possible referent, the app
+    // should have the pronoun refer to that referent"): as the map has it, "a
+    // part of his mind" is Otto's, the box's one name, and modus ponens
+    // follows. r27.205 had asked whether "his" was Otto or someone else.
     const hisMind = ev(`var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: ["The mind extends into the world."], collapsed: [], children: [
         { id: 'A', type: 'support', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of his mind."], collapsed: [], children: [] } ] }])[0];
-        return st.why && st.why.text;`);
-    ok(hisMind === "Did you mean “The records in Otto's notebook are a part of Otto's mind”, or is “his” someone else?", '"a part of his mind": asked whether "his" is Otto (r27.205)', hisMind);
+        return { rule: st.rule ? st.rule.name : null, why: st.why ? st.why.text : '' };`);
+    ok(hisMind.rule === 'modus ponens' && !hisMind.why, '"a part of his mind": "his" is Otto, the box\'s one name, and modus ponens follows (r27.212; r27.205 had asked)', J(hisMind));
 }
 
 console.log('\n-- 7. "If an AI system is reliably and routinely consulted ..." (r27.119) --');

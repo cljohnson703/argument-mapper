@@ -4,6 +4,34 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: a pronoun's one possible referent is its referent (r27.212)
+
+The user:
+* "I'm beginning to think that if a pronoun has only one possible referent, the app should have the pronoun refer to that referent. It would be a hassle otherwise."
+
+Changes:
+* A "he", "she", "him", "his" or "her" that can be only one name or phrase in its box is read as it, and the box says so, whatever Semantic mode says.
+  * It had asked whether the pronoun was someone else, where a step turned on it (r27.204, r27.205, r27.211).
+  * "Bob left, and then she cried; so Bob cried" follows by conjunction elimination, "she" read as Bob. A name says nothing of whose sex it is.
+  * So "The teacher left, and then she cried" (the teacher), "Despite her doubts, Mary agreed", "With his help, Bob won" and "His dog loves Bob".
+  * The Mary's Room objections pass in their own words, each "she" read as Mary: modus tollens, and modus ponens.
+* A noun that says whose sex it is ("the man", "the king", "the mother", "the nun") is no referent of the other pronoun.
+  * "The man left, and then she cried": "she" has nothing in the box to refer to, and the box says "'she' cannot be 'the man'; name who she is". Never asking, it had been read as the man; asking, it had asked whether she was the man or someone else.
+  * "The man saw the woman, and she smiled" reads "she" as the woman. It had asked which of the two she was.
+* With the questions gone, so are the chooser's "Other: someone else. I will say who." row and a step's "or is 'she' someone else?".
+
+Tests:
+* syntax-r27-test.js has 197 checks.
+  * The 2 new ones fail on r27.211.
+  * Changed: the r27.204, r27.205 and r27.211 sections expect the pronoun read in, and said so; the r27.207 check that switching Semantic mode on asks now uses "Poe can fly".
+* Checks of the pronoun questions, now read in:
+  * logic-r27-basis-test.js, 15 of them, among them the Mary's Room steps;
+  * anaphora-r27-test.js, extended-mind-r27-test.js ("a part of his mind": modus ponens), locutions-r27-test.js, reading-r27-chooser-test.js ("His dog loves Bob": no list opens), rules-r27-ordinary-test.js and warrant-r27-test.js.
+* Take-one-out: each of the 5 changes in behavior is caught. The 10 edits that remove what can no longer be reached change nothing, and nothing catches them.
+* With Semantic mode on, 93 sentences in the corpus read differently, none in what it says: each pronoun that was asked about is read in, and said so. By default, 0 do: never asking, they had been read in already. No sentence in the corpus has a noun that says whose sex it is beside the other pronoun.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: a pronoun whose only candidate is a phrase asks too (r27.211)
 
 The user:

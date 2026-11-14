@@ -1309,29 +1309,36 @@ console.log('\n-- r27.204: a pronoun before the one name it may be: the name, or
         finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); }`);
     const asked = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return n.kind === 'ambiguous' && n.pronoun; })
         .map(function (n) { return [n.message, n.readings.length, (n.texts || [])[0] || null]; });`);
-    const asks = ['Before she left, Mary called.', 'Despite her doubts, Mary agreed.', 'With his help, Bob won.', 'His dog loves Bob.', 'If he wins, then Bob is happy.', 'In his view, Bob is right.',
-        'According to her, Mary is right.'].map(asked);
-    ok(J(asks.map(a => a.length === 1 ? a[0][2] : null)) === J(['Before Mary left, Mary called.', "Despite Mary's doubts, Mary agreed.", "With Bob's help, Bob won.", "Bob's dog loves Bob.",
-            'If Bob wins, then Bob is happy.', "In Bob's view, Bob is right.", 'According to Mary, Mary is right.']) &&
-        asks.every(a => a[0][1] === 2 && /may be “(?:Mary|Bob)”, or someone the box does not name$/.test(a[0][0])),
-        'a pronoun before the box\'s one name -- after a clause or a phrase in front, or "his" before a noun -- may be that name or someone the box does not name: asked, the name offered, and "Other" (it had been the name after a clause, and no one after a phrase or in "His dog loves Bob")', J(asks));
+    // r27.212 (the user: "if a pronoun has only one possible referent, the app
+    // should have the pronoun refer to that referent. It would be a hassle
+    // otherwise"): read as the name, and said so. r27.204 had asked, the name
+    // or someone the box does not name.
+    const plain = t => ev(`return normalizeClaimText(${J(t)}).split(String.fromCharCode(0xE000)).join('');`);
+    const said = t => ev(`return parseClaimFull(${J(t)}).notes.filter(function (n) { return /is read as "/.test(n.message); }).map(function (n) { return n.message; });`);
+    const front = ['Before she left, Mary called.', 'Despite her doubts, Mary agreed.', 'With his help, Bob won.', 'His dog loves Bob.', 'If he wins, then Bob is happy.', 'In his view, Bob is right.',
+        'According to her, Mary is right.'].map(t => [plain(t), said(t), asked(t)]);
+    ok(J(front.map(g => g[0])) === J(['before mary left, mary called', "despite mary's doubts, mary agreed", "with bob's help, bob won", "bob's dog loves bob",
+            'if bob wins, then bob is happy', "in bob's view, bob is right", 'according to mary, mary is right']) &&
+        front.every(g => g[1].length === 1 && /^"(?:she|her|his|he)" is read as "(?:Mary|Bob)", the one name this claim gives$/.test(g[1][0]) && !g[2].length),
+        'a pronoun before the box\'s one name -- after a clause or a phrase in front, or "his" before a noun -- is read as that name, and said so, not asked (r27.212; r27.204 had asked, the name or someone the box does not name)', J(front));
     const none = ['She met Mary.', 'He said that Bob left.', 'Before she met her, Mary left.'].map(asked);
     ok(none.every(a => a.length === 1 && a[0][1] === 0 && /has nothing in this box to refer to/.test(a[0][0])),
         'not where it cannot be the name -- the subject of a clause the name is in, or two in one clause, one the other\'s object: it has nothing in this box to refer to, as before', J(none));
     const s = [step(['If he wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.'), step(['Although she was tired, Mary agreed.'], 'Mary agreed.'),
         step(['Although she was tired, Mary agreed.'], 'Mary was tired.'), step(['If he wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.', { semantic: false }),
         step(['If Bob wins, then Bob is happy.', 'Bob wins.'], 'Bob is happy.'), step(['His dog loves Bob.'], 'Something loves Bob.')];
-    ok(s[0].rule === null && s[0].why === 'Did you mean “If Bob wins, then Bob is happy”, or is “he” someone else?' &&
-        s[1].rule === 'conjunction elimination' && s[2].rule === null && s[2].why === 'Did you mean “Although Mary was tired, Mary agreed”, or is “she” someone else?' &&
+    ok(s[0].rule === 'modus ponens' && !s[0].why && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' && !s[2].why &&
         s[3].rule === 'modus ponens' && s[4].rule === 'modus ponens' && s[5].rule === 'existential introduction',
-        'where a step turns on it, it asks "Did you mean ..., or is "he" someone else?"; where it holds whoever the pronoun is, it stands ("Although she was tired, Mary agreed", so "Mary agreed"); never asking, the pronoun is read as the name, as before r27.204 (r27.205); with the name, modus ponens', J(s));
+        'read as the name, the step follows, asking or not: "If he wins, then Bob is happy" and "Bob wins", so "Bob is happy", by modus ponens, as with the name written in; "Although she was tired, Mary agreed", so "Mary was tired" (r27.212: each had asked where the step turned on it)', J(s));
 }
 
 console.log('\n-- r27.205: a pronoun after the one name asks too --');
 {
     // The user, of asking after the name too -- the name, or someone else,
     // where a step turns on it, reversing "the only available referent is the
-    // referent" (2026-09-28): "ok".
+    // referent" (2026-09-28): "ok". Reversed again (r27.212; the user: "if a
+    // pronoun has only one possible referent, the app should have the pronoun
+    // refer to that referent"): read as the name, and said so.
     const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(Object.assign({ semantic: true }, rules || {}))} }; deductiveCache.clear();
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
@@ -1340,12 +1347,13 @@ console.log('\n-- r27.205: a pronoun after the one name asks too --');
     const s = [step(['Bob left and then she cried.'], 'Bob cried.'), step(['Bob left and then she cried.'], 'Bob left.'), step(['Bob left and then she cried.'], 'Bob cried.', { semantic: false }),
         step(['When Mary exits the room and sees a ripe red tomato, she learns a new fact.', 'If, when Mary exits the room and sees a ripe red tomato, she learns a new fact, then physicalism is false.'], 'Physicalism is false.')];
     // With a comma between the clauses since r27.206.
-    ok(s[0].rule === null && s[0].why === 'Did you mean “Bob left, and then Bob cried”, or is “she” someone else?' && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' &&
+    ok(s[0].rule === 'conjunction elimination' && !s[0].why && s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' &&
         s[3].rule === 'modus ponens',
-        'after the name too: "Bob left and then she cried", so "Bob cried", asks -- it had been read with Bob, the box\'s one name, and followed; "Bob left" follows whoever she is; never asking, it is read with the name, as before; the same clause in two boxes is one question, so modus ponens stands', J(s));
-    const more = ['Mary said that the dog bit her.', 'Bob is sad about learning that someone never loved him.', 'Mary believes that she is late.'].map(asked);
-    ok(more.every(m => m.length === 1 && /may be “(?:Mary|Bob)”, or someone the box does not name$/.test(m[0])),
-        'so across "that" ("said that the dog bit her", "believes that she is late") and in "learning that someone never loved him"', J(more));
+        'after the name: "Bob left and then she cried", so "Bob cried", follows, "she" read as Bob, the box\'s one name, asking or not (r27.212; r27.205 had asked, Bob or someone else); the same clause in two boxes is one claim, so modus ponens stands', J(s));
+    const plain = t => ev(`return normalizeClaimText(${J(t)}).split(String.fromCharCode(0xE000)).join('');`);
+    const more = ['Mary said that the dog bit her.', 'Bob is sad about learning that someone never loved him.', 'Mary believes that she is late.'].map(t => [plain(t), asked(t)]);
+    ok(J(more.map(m => m[0])) === J(['mary said that the dog bit mary', 'bob is sad about learning that someone never loved bob', 'mary believes that mary is late']) && more.every(m => !m[1].length),
+        'so across "that" ("said that the dog bit her", "believes that she is late") and in "learning that someone never loved him": read as the name, not asked (r27.212)', J(more));
 }
 
 console.log('\n-- r27.206: a comma between independent clauses in the app\'s own wordings; "yet" without one --');
@@ -1399,16 +1407,16 @@ console.log('\n-- r27.207: "Never ask" is the default --');
         state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; out.empty = claimSemanticSetting();
         out.she = step(null, ['Bob left and then she cried.'], 'Bob cried.');
         out.can = step({}, ['Poe can fly.'], 'Poe is able to fly.');
-        out.on = step({ semantic: true }, ['Bob left and then she cried.'], 'Bob cried.');
+        out.on = step({ semantic: true }, ['Poe can fly.'], 'Poe is able to fly.');
         state.logic = { base: 'standard', rules: {} };
         switchSemanticSetting('turns'); out.turns = [state.logic.rules.semantic, claimSemanticSetting()];
         switchSemanticSetting('always'); out.always = [state.logic.rules.semantic, claimSemanticSetting()];
         switchSemanticSetting('never'); out.never = ['semantic' in state.logic.rules, claimSemanticSetting()];
         state.logic = keep; claimRulesCache = null; deductiveCache.clear(); return out;`);
     ok(r.none === 'never' && r.empty === 'never' && r.she.rule === 'conjunction elimination' && r.can.rule === null &&
-        r.on.rule === null && r.on.why === 'Did you mean “Bob left, and then Bob cried”, or is “she” someone else?' &&
+        r.on.rule === null && /^Did you mean “Poe is able to fly”, /.test(r.on.why) &&
         J(r.turns) === J([true, 'turns']) && J(r.always) === J(['always', 'always']) && J(r.never) === J([false, 'never']),
-        'a map that says nothing reads each box as written and asks nothing: "Bob left and then she cried", so "Bob cried", with "she" read as Bob, and "Poe can fly" gives no "able"; switched to "Ask where a step turns on it", the map says so, and it asks; "Never ask" says nothing', J(r));
+        'a map that says nothing reads each box as written and asks nothing: "Bob left and then she cried", so "Bob cried", with "she" read as Bob, and "Poe can fly" gives no "able"; switched to "Ask where a step turns on it", the map says so, and "Poe can fly" asks; "Never ask" says nothing', J(r));
 }
 
 console.log('\n-- r27.208: every reading of "can\'t conclude", the most obvious first --');
@@ -1490,16 +1498,45 @@ console.log('\n-- r27.211: a pronoun whose only candidate is a phrase asks as on
         state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
     const s = [step(['The teacher left, and then she cried.'], 'The teacher cried.'), step(['The teacher left, and then she cried.'], 'The teacher left.'),
         step(['The teacher left, and then she cried.'], 'The teacher cried.', {}), step(['The man left, and then his dog barked.'], 'The man left.')];
-    ok(s[0].rule === null && s[0].why === 'Did you mean “The teacher left, and then the teacher cried”, or is “she” someone else?' &&
+    // r27.212 (the user: "if a pronoun has only one possible referent, the app
+    // should have the pronoun refer to that referent"): read as the teacher,
+    // and said so, asking or not, as before r27.211.
+    ok(s[0].rule === 'conjunction elimination' && !s[0].why &&
         s[1].rule === 'conjunction elimination' && s[2].rule === 'conjunction elimination' && s[3].rule === 'conjunction elimination',
-        '"The teacher left, and then she cried", so "the teacher cried", asks: the teacher, or someone else (it had been read as the teacher, and said so); "the teacher left" follows whoever she is; never asking, read as the teacher, as before', J(s));
+        '"The teacher left, and then she cried", so "the teacher cried": read as the teacher, and said so, asking or not (r27.212; r27.211 had asked, the teacher or someone else)', J(s));
     const kept = [step(['A teacher left, and then she cried.'], 'A teacher cried.'), step(['Mary bought a car, and she loves it.'], 'Mary bought a car.'),
         step(['The teacher praised the student, and she cried.'], 'The teacher cried.'), step(['Mary praised Ann, and then she praised her again.'], 'Mary praised Ann again.')];
     ok(/read with “she” as “the teacher”, the one it can be in this box, so the sentence is read as one claim/.test(kept[0].why) &&
         /"she" is read as "Mary", the one name this claim gives/.test(kept[1].why) &&
         kept[2].why === 'Did you mean “The teacher praised the student, and the teacher cried” or “The teacher praised the student, and the student cried”?' &&
-        !/someone the box does not name/.test(kept[3].why),
-        'not after "a teacher" (one claim), nor in a box with an "it" too (one claim: neither reading could be written back), nor where two pronouns go back to two ("she" Mary, "her" Ann); two candidates ask as before', J(kept));
+        kept[3].rule === 'conjunction elimination',
+        'as before: after "a teacher" (one claim), in a box with an "it" too (one claim), and where two pronouns go back to two ("she" Mary, "her" Ann); two candidates ask', J(kept));
+}
+
+console.log('\n-- r27.212: a pronoun\'s one possible referent is its referent; a noun that says whose sex it is is no referent of the other pronoun --');
+{
+    // The user: "I'm beginning to think that if a pronoun has only one
+    // possible referent, the app should have the pronoun refer to that
+    // referent. It would be a hassle otherwise."
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules)} }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.kind + ': ' + n.message; });`);
+    // Never asking, asking where a step turns on it, and always asking alike.
+    const s = [{}, { semantic: true }, { semantic: 'always' }].map(rules => [step(['Bob left, and then she cried.'], 'Bob cried.', rules).rule,
+        step(['The teacher left, and then she cried.'], 'The teacher cried.', rules).rule, step(['The man saw the woman, and she smiled.'], 'The woman smiled.', rules).rule]);
+    ok(s.every(r => J(r) === J(['conjunction elimination', 'conjunction elimination', 'conjunction elimination'])) &&
+        notes('Bob left, and then she cried.').indexOf('unread: "she" is read as "Bob", the one name this claim gives') >= 0 &&
+        notes('The teacher left, and then she cried.').indexOf('unread: read with “she” as “the teacher”, the one it can be in this box') >= 0,
+        'one possible referent: read in, and said so, whatever Semantic mode says -- a name ("Bob left, and then she cried": a name says nothing of whose sex it is) or a phrase ("the teacher")', J(s));
+    const man = step(['The man left, and then she cried.'], 'The man cried.', { semantic: true });
+    ok(J(notes('The man left, and then she cried.')) === J(['ambiguous: “she” has nothing in this box to refer to: “she” cannot be “the man”; name who she is']) &&
+        man.rule === null && /“she” cannot be “the man”/.test(man.why) &&
+        J(notes('The man saw the boy, and she smiled.')) === J(['ambiguous: “she” has nothing in this box to refer to: “she” cannot be “the man” or “the boy”; name who she is']) &&
+        notes('The man saw the woman, and he smiled.').indexOf('unread: read with “he” as “the man”, the one it can be in this box') >= 0 &&
+        notes('The queen met the king, and he bowed.').indexOf('unread: read with “he” as “the king”, the one it can be in this box') >= 0,
+        'a noun that says whose sex it is is no referent of the other pronoun: "The man left, and then she cried" -- "she" cannot be "the man", and has nothing in the box to refer to (it had been read as the man); of "the man" and "the woman", "she" is the woman, "he" the man (they had been asked)', J(man));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

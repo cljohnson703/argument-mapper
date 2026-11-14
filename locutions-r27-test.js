@@ -114,13 +114,15 @@ console.log('\n-- 1. words the reader had misread --');
     ok(refused(['Every integer is even or odd.', 'Seven is an integer.'], 'Seven is odd.') && refused(['Every integer is even or odd.'], 'Every integer is even.'),
         'and gives neither alternative alone');
     ok(read('Assuming Socrates is a man, he is mortal.').kind === 'if', '"Assuming" opens a condition', J(read('Assuming Socrates is a man, he is mortal.')));
-    // r27.205: "he" may be Socrates or someone else, and the step asks --
-    // offering Socrates, not "Assuming Socrates"; with the name, it follows.
+    // r27.212 (the user: "if a pronoun has only one possible referent, the app
+    // should have the pronoun refer to that referent"): "he" is read as
+    // Socrates, not "Assuming Socrates", and said so; the step follows.
+    // r27.205 had asked whether he was Socrates or someone else.
     ok(certifies(['Assuming Socrates is a man, Socrates is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', 'modus ponens') &&
         certifies(['Provided Socrates is a man, Socrates is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', 'modus ponens') &&
-        ev(`var st = collectDeductiveSteps([{ id: 'M', type: 'contention', texts: ['Socrates is mortal.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Assuming Socrates is a man, he is mortal.', 'Socrates is a man.'], collapsed: [], children: [] }] }])[0];
-            return st.why && st.why.text;`) === 'Did you mean “Assuming Socrates is a man, Socrates is mortal”, or is “he” someone else?',
-        'and is no part of a name: "he" may be Socrates, not "Assuming Socrates" (asked, r27.205)');
+        certifies(['Assuming Socrates is a man, he is mortal.', 'Socrates is a man.'], 'Socrates is mortal.', 'modus ponens') &&
+        ev(`return parseClaimFull('Assuming Socrates is a man, he is mortal.').notes.map(function (n) { return n.message; });`).indexOf('"he" is read as "Socrates", the one name this claim gives') >= 0,
+        'and is no part of a name: "he" is Socrates, not "Assuming Socrates" (read in, and said so: r27.212; r27.205 had asked)');
 }
 
 console.log('\n-- 2. variables --');
