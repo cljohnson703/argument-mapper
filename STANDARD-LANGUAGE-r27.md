@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: what "possibly" covers, asked before which kind (r27.215)
+
+The user:
+* Of "Possibly Bob left and Mary cried": "(b) [two short questions in turn, scope first and then kind], so long as each of the ten readings can be recovered by answering the two questions".
+
+Changes:
+* "Possibly Bob left and Mary cried" asks first what "possibly" covers: "Did you mean 'Possibly both Bob left and Mary cried' or 'Mary cried, and possibly Bob left'?" What stands on its own goes first (r27.193).
+  * Each, written in, asks which kind, five readings: "It is metaphysically possible that both Bob left and Mary cried", ...; "Mary cried, and it is metaphysically possible that Bob left", ... Ten in all.
+  * It had asked which kind alone, each reading covering both clauses.
+  * So "necessarily", "not necessarily", "it is possible that", "it is necessary that", "it is impossible that" and "it is not possible that", and over "or" ("Necessarily either Bob left or Mary cried", or "Mary cried, or necessarily Bob left").
+  * Not yet over three clauses or more ("Possibly Bob left, Ann sang, and Mary cried" asks which kind, as before).
+  * Asked, the box is read as one claim until it is answered, and says so in the question's words; never asking, as before.
+  * Never asking, the hint names the reading that gives the step: "Possibly Bob left and Mary cried; so Mary cried": 'Written "Mary cried, and possibly Bob left", the step follows by conjunction elimination.'
+* A word that qualifies a whole claim, in front of one, leaves it a clause: "Mary cried, and possibly Bob left" is two claims, its second asking which kind. It had been one claim about Mary, whose verb was "cried and possibly Bob left". So "probably", "surely", "clearly", "apparently" and "necessarily".
+  * Not where what follows is no clause: "Mary cried and possibly left" is Mary's two verbs, as before.
+  * Not yet "perhaps": "Mary cried, and perhaps Bob left" is still one claim.
+* A word that qualifies the claim, opening the box, keeps its capital there only: "Mary cried, and possibly Bob left", not "Possibly".
+
+Tests:
+* syntax-r27-test.js has 202 checks.
+  * The 5 new ones fail on r27.214: the ten readings in two questions; "necessarily", "or", "it is impossible that" and "not necessarily"; the step and the hint; "and possibly Bob left"; asked when set to ask always.
+  * Changed: the r27.209 check of "Possibly Bob left and Mary cried", which now asks first what "possibly" covers; its readings of each kind are checked on "Possibly both Bob left and Mary cried".
+* Take-one-out: each of the 8 changes is caught.
+* 0 sentences in the corpus read differently, by default or with Semantic mode on: none of its sentences has a modal word over two clauses, or a qualifying word after "and".
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: never asking, the hint names the words that give the step (r27.214)
 
 The user:

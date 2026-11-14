@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.214';
+    const APP_BUILD = '2026-11-14 r27.215';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11636,6 +11636,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!tokens.length) return false;
         const first = claimWord(tokens[0]);
         if (/^(?:if|either|both|neither|unless|whenever|provided|assuming|although|though)$/.test(first)) return true;
+        // A word that qualifies a whole claim, in front of one ("possibly Bob
+        // left", "probably Bob left", "necessarily Bob left"): a clause where
+        // what follows is one (r27.215: "Mary cried, and possibly Bob left"
+        // had been one claim about Mary, whose verb was "cried and possibly
+        // Bob left"); not where it is not ("possibly left": a verb of the
+        // subject before it).
+        if (tokens.length > 1 && (claimQualifierKind(first) || /^(?:perhaps|maybe|necessarily)$/.test(first)))
+            return claimLooksLikeClause(s.replace(/^\S+?,?\s+/, ''));
         // A verb group first, with nothing before it that could be its
         // subject ("quickly left the room", "is laid out"): no clause, as the
         // syntax tree has it (r27.187, stage two; the older tests below took
@@ -15260,6 +15268,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (ors.length === 2 && ands.length === 1 && clauses(ors)) return 'either ' + ors.map(x => x.trim()).join(' or ');
         return c;
     }
+    // "Possibly Bob left and Mary cried": does "possibly" cover both clauses,
+    // or only "Bob left"? Asked first, then which kind -- two questions in
+    // turn (r27.215; the user: "(b), so long as each of the ten readings can
+    // be recovered by answering the two questions"): "Possibly both Bob left
+    // and Mary cried" or "Mary cried, and possibly Bob left", what stands on
+    // its own first (r27.193); each, written in, asks which kind. The reading
+    // chosen; null where it is asked and unanswered; undefined where what
+    // follows the word is not two clauses joined by "and" or "or".
+    function claimModalScope(front, clause, s) {
+        const c = String(clause == null ? '' : clause).trim(), f = String(front == null ? '' : front).trim().replace(/,$/, '');
+        if (!c || !f || /^(?:both|either|neither)\s/.test(c)) return undefined;
+        const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
+        // Two clauses, neither a list of its own ("possibly A, B, and C": not yet).
+        const two = xs => xs.length === 2 && xs.every(x => claimLooksLikeClause(x.trim()) && claimSplitTop(x.trim(), /\s*,\s+/).length === 1);
+        const word = two(ands) && ors.length === 1 ? 'and' : two(ors) && ands.length === 1 ? 'or' : null;
+        if (!word) return undefined;
+        const [a, b] = (word === 'and' ? ands : ors).map(x => x.trim());
+        const wide = f + ' ' + (word === 'and' ? 'both ' : 'either ') + a + ' ' + word + ' ' + b, narrow = b + ', ' + word + ' ' + f + ' ' + a;
+        const why = '"' + claimHedgeWord(f) + '" may cover both clauses, or only the first ("' + claimClauseStart(claimLabel(claimRecase(a, claimBoxRaw || ''))) + '")';
+        const form = claimAmbiguous(why, [wide, narrow].map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
+            Object.assign(claimModalMarks(s), { scope: true }));
+        return { form, why };
+    }
     function claimModalReadings(op, denied, clause, whole) {
         clause = claimGroupedClause(clause);
         const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
@@ -15329,8 +15360,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             word = 'possible world'; op = 'poss'; clause = m[1];
         }
         else return null;
-        const asked = claimModalAsked(word, op, denied, clause, s);
+        const scoped = /^in /.test(word) ? undefined : claimModalScope(s.slice(0, s.length - clause.length), clause, s);
+        if (scoped && scoped.form) return scoped.form;
+        const asked = !scoped && claimModalAsked(word, op, denied, clause, s);
         if (asked) return asked;
+        // What it covers asked, unanswered: read as one claim, its question
+        // saying so.
+        if (scoped && claimModalAsking()) { claimUnread(scoped.why + ': the sentence is read as one claim'); return Object.assign(claimAtom(s), { src: s }); }
         // Unanswered, "it is not possible that P" denies "it is possible that
         // P" as written (r27.203): "if it rains, then it is possible that Poe
         // flies" and it, so "it does not rain", by modus tollens.
@@ -15381,8 +15417,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // out by what is known ("for all we know"). It had offered "for all we
         // know" alone, and "metaphysically possible" only where metaphysical
         // necessity was switched on.
-        const possible = (text, words) => claimLooksLikeClause(text) ? (claimModalAsked(claimHedgeWord(words), 'poss', false, text, s) ||
-            opaque(claimModalWhy(claimHedgeWord(words), 'poss') + ': the sentence is read as one claim', claimHedgeWord(words), text)) : null;
+        const possible = (text, words) => {
+            if (!claimLooksLikeClause(text)) return null;
+            // What it covers first, where it may cover two clauses (r27.215):
+            // asked, its question says how the box is read meanwhile.
+            const scoped = claimModalScope(words, text, s);
+            if (scoped && scoped.form) return scoped.form;
+            return (!scoped && claimModalAsked(claimHedgeWord(words), 'poss', false, text, s)) ||
+                opaque((scoped && claimModalAsking() ? scoped.why : claimModalWhy(claimHedgeWord(words), 'poss')) + ': the sentence is read as one claim', claimHedgeWord(words), text);
+        };
         // What reads as "not established" is that ("according to what we know, ...").
         const settled = () => readNotEstablished(s);
         // Necessity said without its kind (r27.101): which is meant, asked
@@ -21319,6 +21362,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         capitals.forEach((w, k) => {
             const l = w.toLowerCase();
             if (k === 0 && opening && capitals.indexOf(w, 1) < 0 && (claimOpeningPlural(l) || claimOpeningInPhrase(original))) return;
+            if (k === 0 && opening && (claimQualifierKind(l) || /^(?:perhaps|maybe|necessarily)$/.test(l))) return;
             if (!CLAIM_NOT_A_NAME.has(l) && !/^(?:even|only|every|each|all|no|some|any|not|it|there)$/i.test(w) && !CLAIM_RELATIVE_HEADS.test(l) && !lower.has(l) && !claimKnownAdjective(l)) caps.set(l, w);
         });
         return String(label).replace(/\b[a-z][A-Za-z0-9'\u2019-]*\b/g, (w, at, all) =>
@@ -25457,7 +25501,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const entry = { text: texts[i], message: note.message, readings: note.readings, derives, site: note.site,
                 generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope, canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
                 canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal,
-                typo: !!note.typo, missing: !!note.missing, single: !!note.single };
+                typo: !!note.typo, missing: !!note.missing, single: !!note.single, scope: !!note.scope };
             // A question offers its readings in words the check reads back,
             // and asks only where there are two or more, each of them so
             // written (r27.166): a question without one of its readings would
@@ -26056,7 +26100,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimNoteOffered(text, n) {
         const entry = { text, message: n.message, readings: n.readings, site: n.site, generic: !!n.generic, grouping: !!n.grouping, anyScope: !!n.anyScope, canScope: !!n.canScope,
             someScope: !!n.someScope, canDenied: !!n.canDenied, grammar: !!n.grammar, subject: n.subject || null, part: n.part || null, canPlain: !!n.canPlain, canFrom: n.canFrom || null,
-            canBe: n.canBe || null, modal: !!n.modal, typo: !!n.typo, missing: !!n.missing, single: !!n.single, object: !!n.object };
+            canBe: n.canBe || null, modal: !!n.modal, typo: !!n.typo, missing: !!n.missing, single: !!n.single, object: !!n.object, scope: !!n.scope };
         return claimReadingOffers(entry, null).length === n.readings.length;
     }
     // A question a step waits on where it turns on it (r27.189, r27.199):
@@ -35549,8 +35593,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const askedOf = n => n.part ? claimTokens(String(n.part)).map(claimWord).join(' ') : null;
         const answered = n => n.message === entry.message && (!askedOf(n) || !askedOf(entry) || askedOf(n) === askedOf(entry));
         const had = n => orig.some(o => o.message === n.message && (n.message !== entry.message || (!answered(o) && !!askedOf(o) && askedOf(o) === askedOf(n))));
+        const next = n => !!entry.scope && /does not say which kind of (?:possibility|necessity) is meant/.test(n.message);
         return !!want && !!got.form && !got.notes.some(n => n.kind === 'ambiguous' && !n.generic && (n.always || (n.readings || []).length >= 2) &&
-                (answered(n) || !had(n))) &&
+                (answered(n) || !had(n)) && !next(n)) &&
             (claimSame(want, got.form) || (!!turned(got.form) && claimSame(want, turned(got.form))));
     }
     // The readings a question may offer (r27.166; the user: "The available

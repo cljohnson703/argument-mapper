@@ -1469,10 +1469,13 @@ console.log('\n-- r27.209: "both ... and" and "either ... or" say where the pare
     const ors = offered('Bob sings and Mary dances or Ann runs.'), poss = offered('Possibly Bob left and Mary cried.'), nec = offered('Necessarily, Bob left or Mary cried.');
     ok(J(ors) === J([2, ['Either both Bob sings and Mary dances or Ann runs.', 'Both Bob sings and either Mary dances or Ann runs.']]),
         '"and" and "or" grouped two ways: "Either both Bob sings and Mary dances or Ann runs", "Both Bob sings and either Mary dances or Ann runs" (they had been "Both ..., or Ann runs" and "Bob sings, and either ...")', J(ors));
-    ok(poss[0] === 5 && poss[1].length === 5 && poss[1][0] === 'It is metaphysically possible that both Bob left and Mary cried.' &&
-        poss[1][3] === 'It has not been established that it is not the case that both Bob left and Mary cried.' && poss[1][4] === 'For all we know, both Bob left and Mary cried.' &&
-        nec[0] === 5 && nec[1].length === 5 && nec[1][0] === 'It is metaphysically necessary that either Bob left or Mary cried.' && nec[1][4] === 'We know that either Bob left or Mary cried.',
-        'a modal word\'s readings say what it covers -- "It is metaphysically possible that both Bob left and Mary cried" -- and so each reads back, every one offered (one had not been)', J([poss, nec]));
+    // r27.215: what "possibly" covers is asked first; written in, "Possibly
+    // both Bob left and Mary cried" asks which kind, its readings saying so.
+    const both = offered('Possibly both Bob left and Mary cried.'), either = offered('Necessarily either Bob left or Mary cried.');
+    ok(poss[0] === 2 && both[0] === 5 && both[1].length === 5 && both[1][0] === 'It is metaphysically possible that both Bob left and Mary cried.' &&
+        both[1][3] === 'It has not been established that it is not the case that both Bob left and Mary cried.' && both[1][4] === 'For all we know, both Bob left and Mary cried.' &&
+        nec[0] === 2 && either[0] === 5 && either[1].length === 5 && either[1][0] === 'It is metaphysically necessary that either Bob left or Mary cried.' && either[1][4] === 'We know that either Bob left or Mary cried.',
+        'a modal word\'s readings say what it covers -- "It is metaphysically possible that both Bob left and Mary cried" -- and so each reads back, every one offered (one had not been); since r27.215, what it covers is asked first', J([poss, both, nec, either]));
 }
 
 console.log('\n-- r27.210: an opening clause with no comma after it is a slip --');
@@ -1546,6 +1549,52 @@ console.log('\n-- r27.212: a pronoun\'s one possible referent is its referent; a
         notes('The man saw the woman, and he smiled.').indexOf('unread: read with “he” as “the man”, the one it can be in this box') >= 0 &&
         notes('The queen met the king, and he bowed.').indexOf('unread: read with “he” as “the king”, the one it can be in this box') >= 0,
         'a noun that says whose sex it is is no referent of the other pronoun: "The man left, and then she cried" -- "she" cannot be "the man", and has nothing in the box to refer to (it had been read as the man); of "the man" and "the woman", "she" is the woman, "he" the man (they had been asked)', J(man));
+}
+
+console.log('\n-- r27.215: what "possibly" covers, asked before which kind; "and possibly Bob left" --');
+{
+    // The user, of "Possibly Bob left and Mary cried": "(b) [two short
+    // questions in turn, scope first and then kind], so long as each of the
+    // ten readings can be recovered by answering the two questions".
+    const offers = t => ev(`state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;
+        var n = parseClaimFull(${J(t)}).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        return n ? claimReadingOffers(Object.assign({ text: ${J(t)} }, n), null).map(function (o) { return o.words; }) : null;`);
+    const scope = offers('Possibly Bob left and Mary cried.'), wide = offers(scope[0]), narrow = offers(scope[1]);
+    const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
+    ok(J(scope) === J(['Possibly both Bob left and Mary cried.', 'Mary cried, and possibly Bob left.']) &&
+        J(wide) === J(kinds('It is ', ' possible that both Bob left and Mary cried.').concat(['It has not been established that it is not the case that both Bob left and Mary cried.',
+            'For all we know, both Bob left and Mary cried.'])) &&
+        J(narrow) === J(kinds('Mary cried, and it is ', ' possible that Bob left.').concat(['Mary cried, and it has not been established that Bob did not leave.',
+            'Mary cried, and we do not know that Bob did not leave.'])) &&
+        new Set(wide.concat(narrow)).size === 10,
+        '"Possibly Bob left and Mary cried" asks first what "possibly" covers -- "Possibly both Bob left and Mary cried" or "Mary cried, and possibly Bob left", what stands on its own first; each, written in, asks which kind: ten readings, two questions in turn', J([scope, wide, narrow]));
+    const more = ['Necessarily, Bob left or Mary cried.', 'It is impossible that Bob left and Mary cried.', 'Not necessarily Bob left and Mary cried.'].map(offers);
+    ok(J(more) === J([['Necessarily either Bob left or Mary cried.', 'Mary cried, or necessarily Bob left.'], ['It is impossible that both Bob left and Mary cried.', 'Mary cried, and it is impossible that Bob left.'],
+            ['Not necessarily both Bob left and Mary cried.', 'Mary cried, and not necessarily Bob left.']]) &&
+        offers('Possibly Bob left, Ann sang, and Mary cried.').length === 5,
+        'so "necessarily", over "or" ("either ... or"), "it is impossible that" and "not necessarily"; not yet over three clauses, which asks which kind as before', J(more));
+    const step = (ps, c, rules) => ev(`state.logic = { base: 'standard', rules: ${J(rules || { semantic: true })} }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const s = [step(['Possibly Bob left and Mary cried.'], 'Mary cried.'), step(['Possibly Bob left and Mary cried.'], 'Mary cried.', {}),
+        step(['Mary cried, and possibly Bob left.'], 'Mary cried.'),
+        step(['Mary cried, and possibly Bob left.', 'If it is metaphysically possible that Bob left, then Ann wept.'], 'Ann wept.'),
+        step(['Mary cried, and it is metaphysically possible that Bob left.'], 'It is metaphysically possible that Bob left.')];
+    ok(s[0].rule === null && s[0].why === 'Did you mean “Possibly both Bob left and Mary cried” or “Mary cried, and possibly Bob left”?' &&
+        s[1].rule === null && /Written “Mary cried, and possibly Bob left”, the step follows by conjunction elimination\.$/.test(s[1].why) &&
+        s[2].rule === 'conjunction elimination' && s[3].rule === null && /^Did you mean “Mary cried, and it is metaphysically possible that Bob left”, /.test(s[3].why) &&
+        s[4].rule === 'conjunction elimination',
+        'the step asks what "possibly" covers, and nothing else meanwhile; never asking, it says in what words the step would follow; "Mary cried, and possibly Bob left" gives "Mary cried", and asks which kind where that decides the step; answered, the reading is read as it says', J(s));
+    const keys = ['Mary cried, and possibly Bob left.', 'Mary cried, and surely Bob left.', 'Mary cried, and necessarily Bob left.', 'Mary cried and possibly left.'].map(t =>
+        ev(`state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; var f = parseClaim(${J(t)}); state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null;
+            return f ? claimKey(f).split(String.fromCharCode(0xE000)).join('') : null;`));
+    ok(J(keys) === J(['C[P:mary|~did cried;A:possibly, bob left]', 'C[P:mary|~did cried;A:surely, bob left]', 'C[P:mary|~did cried;A:necessarily bob left]', 'C[P:mary|~did cried;P:mary|~did possibly left]']),
+        'a word that qualifies a whole claim, in front of one, leaves it a clause: "Mary cried, and possibly Bob left" is two claims (it had been one about Mary, "cried and possibly Bob left"); "Mary cried and possibly left" is her two verbs, as before', J(keys));
+    const always = ev(`state.logic = { base: 'standard', rules: { semantic: 'always' } }; claimRulesCache = null; claimAsksCache.clear();
+        var out = [claimAsksUser('Possibly Bob left and Mary cried.'), claimAsksUser('Mary cried, and possibly Bob left.')];
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; claimAsksCache.clear(); return out;`);
+    ok(J(always) === J([true, true]), 'set to ask always, the box asks what "possibly" covers, as it asks which kind', J(always));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
