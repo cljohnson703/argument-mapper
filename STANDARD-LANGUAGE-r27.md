@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: never asking, the hint names the words that give the step (r27.214)
+
+The user:
+* Of the "Never ask" hint naming the wording that gives the step, rather than where to switch Semantic mode on: "a, I think?".
+
+Changes:
+* Never asking, where the words as written do not give the step and another reading of them would, the check says so in the words that reading is written in, and the rule it follows by:
+  * "Ravens are black; Poe is a raven; so Poe is black": 'Written "All ravens are black", the step follows by universal modus ponens.'
+  * "If we lack reasons to think that Poe is black, then we can't conclude that Poe is black", against "Poe is black": 'Written "If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black", the step follows by modus ponens.'
+  * "Poe flies; so Poe can fly": 'Written "It is physically possible for Poe to fly" or "It is logically possible for Poe to fly", the step follows by ab esse ad posse.'
+* It had said: "On another reading of its words, the step follows: set Semantic mode to 'Ask where a step turns on it' in the Logic panel to choose that reading."
+* Several readings that each give the step are named by rule ("written 'A' or 'B', the step follows by R; written 'C', by S").
+* Where a reading rewords more than one box, or more than three readings give the step, the first is named, the most obvious, and then "as it does on other readings of its words":
+  * "If it is possible that zombies exist, then physicalism is false; zombies might exist; so physicalism is false": 'Written "If it is metaphysically possible that zombies exist, then physicalism is false" and "It is metaphysically possible that zombies exist", the step follows by modus ponens, as it does on other readings of its words.'
+* Where what the check says already quotes those words, the hint is not added: "The premises give 'Socrates is mortal' by universal modus ponens, but not 'Socrates must be mortal' ..." says no more.
+* A reading whose words do not read back is said as the check reads it ("Read as ...").
+
+Tests:
+* syntax-r27-test.js has 197 checks.
+  * Changed: the check of the hint's words, and the "Mary sings and loves Bob; so Mary sings" step ('Written "Mary sings, and Mary loves Bob", the step follows by conjunction elimination.').
+* The hint's words: logic-r27-english-test.js (the weak objection's "we can't conclude", "Poe flies; so Poe can fly", "Poe can fly or swim") and modal-r27-test.js (nine steps).
+* Take-one-out: each of the 5 changes is caught.
+* 0 sentences in the corpus read differently, by default or with Semantic mode on: the hint is the step's, not the box's.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: the readings of a plain "can", the most obvious first (r27.213)
 
 The user:

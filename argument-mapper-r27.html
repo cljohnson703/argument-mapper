@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.213';
+    const APP_BUILD = '2026-11-14 r27.214';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -25376,8 +25376,49 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // it as "all" or "some" would derive the step, since it usually means what
     // it says.
     // Semantic mode off (r27.184): where read another way the step would
-    // follow.
-    const CLAIM_SEMANTIC_HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
+    // follow, said so -- in the words that reading is written in, and the
+    // rule it follows by (r27.214; the user, of naming the wording rather
+    // than where to switch Semantic mode on: "a, I think?"). Each way: the
+    // words of each box it re-reads, and its rule; "read" where the words do
+    // not read back, said as the check reads them.
+    function claimHintWays(text, note, derives, denials) {
+        const entry = { text, message: note.message, readings: note.readings, site: note.site, generic: !!note.generic, grouping: !!note.grouping, anyScope: !!note.anyScope,
+            canScope: !!note.canScope, someScope: !!note.someScope, canDenied: !!note.canDenied, grammar: !!note.grammar, subject: note.subject || null, part: note.part || null,
+            canPlain: !!note.canPlain, canFrom: note.canFrom || null, canBe: note.canBe || null, modal: !!note.modal, typo: !!note.typo, missing: !!note.missing, single: !!note.single,
+            object: !!note.object };
+        const offers = claimReadingOffers(entry, denials);
+        return derives.filter(d => d.rule).map(d => {
+            const r = typeof d.reading === 'number' ? d.reading : note.readings.indexOf(d.label), o = offers.find(x => x.reading === r);
+            return o ? { words: [o.words], rule: d.rule.name } : { words: [claimCommaWords(claimRecase(claimLabel(note.readings[r]), text))], rule: d.rule.name, read: true };
+        });
+    }
+    // A role's ways (claimGenericRole, claimObjectRole): each reading that
+    // gives the step, in every box it re-reads at once.
+    function claimRoleHintWays(role, texts, denials) {
+        return (role.derives || []).map(d => {
+            const each = role.entries.map(e => claimHintWays(texts[e.box], e.note, [{ reading: role.joint ? e.reading : d.reading, rule: d.rule }], denials)[0]).filter(Boolean);
+            return { words: [].concat(...each.map(w => w.words)), rule: d.rule.name, read: each.some(w => w.read) };
+        }).filter(w => w.words.length);
+    }
+    // Every way, where each re-reads one box and they are three or fewer, by
+    // rule; else the first -- the most obvious reading -- and that it follows
+    // on others too. Nothing where what is said already quotes its words.
+    function claimSemanticHint(ways, said) {
+        const quote = t => '\u201c' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '\u201d';
+        const list = (xs, word) => xs.length === 1 ? xs[0] : claimListWords(xs, word);
+        if (!ways.length) return 'On another reading of its words, the step follows.';
+        const named = ways.length <= 3 && ways.every(w => w.words.length === 1) ? ways : ways.slice(0, 1);
+        if (said && named.every(w => w.words.every(x => said.indexOf(quote(x)) >= 0))) return '';
+        const groups = [];
+        named.forEach(w => {
+            const words = list(w.words.map(quote), 'and');
+            const g = w.words.length === 1 && groups.find(x => x.one && x.rule === w.rule && x.read === !!w.read);
+            if (g) { if (g.said.indexOf(words) < 0) g.said.push(words); }
+            else groups.push({ one: w.words.length === 1, rule: w.rule, read: !!w.read, said: [words] });
+        });
+        return groups.map((g, k) => (g.read ? (k ? 'read as ' : 'Read as ') : (k ? 'written ' : 'Written ')) + list(g.said, 'or') +
+            (k ? ', by ' : ', the step follows by ') + g.rule).join('; ') + (named.length < ways.length ? ', as it does on other readings of its words' : '') + '.';
+    }
     function diagnoseDeductiveStep(premiseTexts, conclusionText, attack, nearMiss, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
@@ -25408,7 +25449,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
             // Semantic mode off (r27.184): not asked; said, where a reading
             // gives the step.
-            if (note.literal) { if (derives.some(d => d.rule)) hinted.push(texts[i]); return; }
+            if (note.literal) { if (derives.some(d => d.rule)) hinted.push(...claimHintWays(texts[i], note, derives, claimStepDenials ? [...claimStepDenials] : null)); return; }
             if (!note.always && !derives.length) return;
             // Asked only where the step turns on it (r27.189): where some
             // reading gives it and some does not (claimStepDecidedVerdicts).
@@ -25855,10 +25896,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             .concat(claimAskedWords(ambiguous))
             // An ambiguity asked about already says how the sentence is read
             // meanwhile: its "read as one claim" note is not repeated.
-            .concat(unread.filter(u => !ambiguous.some(a => a.text === u.text && u.message.startsWith(a.message))).map(u => quote(u.text) + ': ' + u.message + '.'))
-            .concat(hinted.length ? [CLAIM_SEMANTIC_HINT] : []);
+            .concat(unread.filter(u => !ambiguous.some(a => a.text === u.text && u.message.startsWith(a.message))).map(u => quote(u.text) + ': ' + u.message + '.'));
+        const hint = hinted.length ? claimSemanticHint(hinted, lines.join(' ')) : '';
+        if (hint) lines.push(hint);
         return { unread, ambiguous, nearMiss: nearMiss || null, worded: worded || null, ordered: ordered || null, short: short || null, partial: partial || null,
-            fallacy: fallacy || null, text: claimRestoreStops(lines.join(' '), texts) };
+            fallacy: fallacy || null, hinted: hinted.length > 0, text: claimRestoreStops(lines.join(' '), texts) };
     }
     // --- Inference words in a box ------------------------------------------------
     // "Because", "since", "therefore", "so", "hence" and their like make a box an
@@ -26337,7 +26379,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // out, beside "if it is possible that zombies exist, ...").
             if (entries[0].note.literal) {
                 if (entries[0].note.modal && results.every(Boolean) && !entries.some(e => e.note.maybe || e.note.must)) { if (!every) every = results[0]; }
-                else if (results.some(Boolean)) hint = hint || entries;
+                else if (results.some(Boolean)) hint = hint || { entries, derives: results.map((rule, r) => rule ? { reading: r, rule } : null).filter(Boolean) };
                 continue;
             }
             // Asked (the old way, where the answer decides the step): "we
@@ -26647,7 +26689,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         if (!claimSemanticMode()) {
                             if (!found.rule && (role || (generic && generic.hint))) {
                                 const why = found.why || { unread: [], ambiguous: [], nearMiss: null, worded: null, ordered: null, short: null, partial: null, text: '' };
-                                if (why.text.indexOf(CLAIM_SEMANTIC_HINT) < 0) found.why = Object.assign({}, why, { text: (why.text ? why.text + ' ' : '') + CLAIM_SEMANTIC_HINT });
+                                const hint = why.hinted ? '' : claimSemanticHint(claimRoleHintWays(role || generic.hint, premiseTexts.concat([conclusionText]), [...denials]), why.text);
+                                if (hint) found.why = Object.assign({}, why, { hinted: true, text: (why.text ? why.text + ' ' : '') + hint });
                             }
                             role = null;
                         }

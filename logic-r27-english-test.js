@@ -1015,8 +1015,8 @@ function reportCorpus(name, res) {
         ok(/\? not recognized/.test(h.doDirect), '"We do conclude that ..." does not itself deny "it is physically impossible for us to conclude that ...": "we can" comes from it by a step of its own', h.doDirect);
         ok(/in a box/.test(h.lone), 'alone, "We can conclude that ..." is still an inference word', h.lone);
         ok(/^A \? ambiguous \| Did you mean “If we lack reasons to think that the tests are reliable, then we are not entitled to conclude that the tests are reliable”, “If we lack reasons to think that the tests are reliable, then we are incapable of concluding that the tests are reliable”, /.test(h.challenge) &&
-            h.off.challenge === 'A ? not recognized | On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
-            'a weak objection\'s "we can\'t conclude that ..." asks which is meant, with Semantic mode on; off, as written, it is not "not established": the challenge does not follow, and it says that read another way it would (r27.184)', J([h.challenge, h.off.challenge]));
+            h.off.challenge === 'A ? not recognized | Written “If we lack reasons to think that the tests are reliable, then we are not entitled to conclude that the tests are reliable”, the step follows by modus ponens.',
+            'a weak objection\'s "we can\'t conclude that ..." asks which is meant, with Semantic mode on; off, as written, it is not "not established": the challenge does not follow, and it says in what words it would (r27.184, r27.214)', J([h.challenge, h.off.challenge]));
         ok(h.object.indexOf("A ? ambiguous | “If we can't conclude that Mary loves any raven, then we can't conclude that others think”: did you mean “If we can't conclude that Mary loves every raven, then we can't conclude that others think” or “If we can't conclude that Mary loves some raven, then we can't conclude that others think”?") === 0 &&
             h.anyone.indexOf("A ? ambiguous | “If we can't conclude that anyone left, then we can't conclude that others think”: did you mean “If we can't conclude that everyone left, then we can't conclude that others think” or “If we can't conclude that someone left, then we can't conclude that others think”?") === 0,
             '"any" as an object, and "anyone", are asked about too', J([h.object, h.anyone]));
@@ -1046,8 +1046,8 @@ function reportCorpus(name, res) {
             var f = collectDeductiveSteps(state.trees)[0];
             state.logic = { base: 'standard', rules: { semantic: true } };
             return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f), flyWhy: f.why ? String(f.why.text) : '' };`);
-        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
-            'off: "Poe can fly" in both boxes of a modus ponens follows as written; "Poe flies", so "Poe can fly" does not -- "can" is not "possible" as written -- and it says that read another way it would (r27.184)', J(offBoth));
+        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
+            'off: "Poe can fly" in both boxes of a modus ponens follows as written; "Poe flies", so "Poe can fly" does not -- "can" is not "possible" as written -- and it says in what words it would (r27.184, r27.214)', J(offBoth));
         const c = T(W, `
             var step = function (premises, conclusion) {
                 state.trees = [{ id: 'M', type: 'contention', texts: [conclusion], collapsed: [], x: 0, y: 0, children: [
@@ -1167,8 +1167,8 @@ function reportCorpus(name, res) {
             '"it is possible for me to draw a red card, or it is possible for me to draw a black card": an "or", each part asking only which kind (r27.203); "it is possible for Poe to fly, and Poe is a bird", the same (r27.176; the first had been one garbled claim, and each asked which "can" was meant)', J(either));
         ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “Poe is allowed to fly or swim”, “It is physically possible for Poe to fly or swim”, “It is metaphysically possible for Poe to fly or swim”, or “It is logically possible for Poe to fly or swim”?',
             '"I", not "i", in what "can" may say; "Poe can fly or swim" still offers each reading (r27.176)', J([either.i, either.rows]));
-        ok(either.off === '? not recognized | On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
-            'with Semantic mode off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" does not follow as written; read as "possible" it would, and it says so (r27.184)', either.off);
+        ok(either.off === '? not recognized | Written “It is physically possible for Poe to fly or swim”, “It is not physically possible for Poe to fly”, and “It is physically possible for Poe to swim”, the step follows by disjunctive syllogism, as it does on other readings of its words.',
+            'with Semantic mode off, "Poe can fly or swim", "Poe can\'t fly", so "Poe can swim" does not follow as written; read as "possible" it would, and it says in what words: of three boxes read together, the first reading, and that the others give it too (r27.184, r27.214)', either.off);
         // r27.177: no hint to word two premises alike so that they contradict
         // each other -- it had said "... would give 'I am able to draw a black
         // card' by explosion". A contradiction as spelled, but for a capital

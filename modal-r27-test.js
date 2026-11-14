@@ -433,7 +433,8 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     // where the answer decided the step.
     askModality = true; setModal(null);
     ok(ev(`return typeof claimSemanticMode === 'function' && claimSemanticMode() === true && claimModalAsking() === true;`), 'on unless a map switches it off');
-    const HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
+    // Off, where another reading gives the step: in its words (r27.214; the
+    // user: "a, I think?"). It had said where to switch Semantic mode on.
     const cases = {
         mp: [['If zombies are possible, then physicalism is false.', 'Zombies are possible.'], 'Physicalism is false.'],
         can: [['If Poe can fly, then Poe is a bird.', 'Poe can fly.'], 'Poe is a bird.'],
@@ -474,14 +475,16 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     ok(Object.values(off).every(r => !r.asks && r.tag !== '? ambiguous' && r.tag !== '? generic'), 'off: nothing is asked', J(Object.fromEntries(Object.entries(off).map(([k, r]) => [k, r.tag]))));
     ok(off.mp.rule === 'modus ponens' && off.can.rule === 'modus ponens' && off.every.rule === 'modus ponens' && off.anyRaven.rule === 'modus ponens',
         'off: the same words in both boxes follow as written -- "if zombies are possible, ...", "if Poe can fly, ...", "if Mary believes that any raven is black, ..."; and "it is necessary that" beside "necessarily", one family of words, on every kind', J([off.mp, off.can, off.every, off.anyRaven]));
-    ok(!off.decides.rule && off.decides.why.endsWith(' ' + HINT) && !off.flies.rule && off.flies.why === HINT && !off.able.rule && off.able.why === HINT &&
-        !off.inPlace.rule && off.inPlace.why.endsWith(' ' + HINT),
-        'off: where the words as written do not give the step and another reading does, it says so -- "Poe can fly" is not "Poe is able to fly" (the user: "That\'s right")', J([off.decides, off.flies, off.able, off.inPlace]));
-    ok(!off.might.rule && off.might.why.endsWith(HINT),
+    ok(!off.decides.rule && off.decides.why.endsWith(' Written “Zombies are metaphysically possible”, the step follows by modus ponens.') &&
+        !off.flies.rule && off.flies.why === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.' &&
+        !off.able.rule && off.able.why === 'Written “Poe is able to fly”, the step follows by modus ponens.' &&
+        !off.inPlace.rule && off.inPlace.why.endsWith(' Written “If it has not been established that zombies do not exist, then physicalism is false” and “It has not been established that zombies do not exist”, the step follows by modus ponens, as it does on other readings of its words.'),
+        'off: where the words as written do not give the step and another reading does, it says so, in that reading\'s words (r27.214) -- "Poe can fly" is not "Poe is able to fly" (the user: "That\'s right")', J([off.decides, off.flies, off.able, off.inPlace]));
+    ok(!off.might.rule && off.might.why.endsWith(' Written “If it is metaphysically possible that zombies exist, then physicalism is false” and “It is metaphysically possible that zombies exist”, the step follows by modus ponens, as it does on other readings of its words.'),
         'off: "zombies might exist" beside "if it is possible that zombies exist, ...": other words, whose kinds are not taken to be the same (r27.175 had answered them together, kind for kind)', J(off.might));
-    ok(!off.cant.rule && off.cant.why === HINT,
-        'off: "we can\'t conclude" is not "not entitled to conclude", so not "not established": the challenge does not follow as written (the user: "Correct"), and it says that read another way it would', J(off.cant));
-    ok(!off.ravens.rule && off.ravens.why.indexOf(HINT) < 0, 'off: where no reading gives the step, no reading is offered', J(off.ravens));
+    ok(!off.cant.rule && off.cant.why === 'Written “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black”, the step follows by modus ponens.',
+        'off: "we can\'t conclude" is not "not entitled to conclude", so not "not established": the challenge does not follow as written (the user: "Correct"), and it says in what words it would (r27.214)', J(off.cant));
+    ok(!off.ravens.rule && !/Written|Read as|On another reading/.test(off.ravens.why), 'off: where no reading gives the step, no reading is offered', J(off.ravens));
     ok(!off.kenny.rule, 'off: "Poe can fly or swim" is one claim, so "Poe can\'t fly" does not give "Poe can swim" by the disjunctive syllogism', J(off.kenny));
     ok(ev(`return [parseClaim('Poe can fly.'), parseClaim('Poe is able to fly.'), parseClaim('Poe can’t fly.'), parseClaim('We can’t conclude that Poe is black.'), parseClaim('It has not been established that Poe is black.')].map(claimKey);`)
             .every((k, i, all) => all.indexOf(k) === i) &&
@@ -489,13 +492,13 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
         'off: "Poe can fly", "Poe is able to fly", "Poe can\'t fly", "we can\'t conclude that ...", "it has not been established that ..." -- five claims; "can\'t" denies "can"');
     setModal(['T', '5']);
     const nec = step(['Necessarily, God exists.'], 'God exists.');
-    ok(!nec.asks && !nec.rule && nec.why.endsWith(' ' + HINT), 'off, with metaphysical necessity on: "necessarily, God exists" gives "God exists" by T on one reading: said, not asked', J(nec));
+    ok(!nec.asks && !nec.rule && nec.why.endsWith(' Written “It is metaphysically necessary that God exists”, the step follows by axiom T.'), 'off, with metaphysical necessity on: "necessarily, God exists" gives "God exists" by T on one reading: said, not asked', J(nec));
     // What a box asks follows the switch (claimAsksUser), not what it asked before.
     askModality = true; setModal(null);
     const again = step(['Poe flies.'], 'Poe can fly.');
     askModality = false; setModal(null);
     const offAgain = step(['Poe flies.'], 'Poe can fly.');
-    ok(again.asks && !offAgain.asks && offAgain.why === HINT,
+    ok(again.asks && !offAgain.asks && offAgain.why === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
         'switched off, the box asks nothing: what it asked before is not kept', J([again, offAgain]));
     // r27.201 (the user: "If you want it to always ask, it does. If you want
     // it to only ask if a step turns on it, it does. If you want it to never
@@ -546,11 +549,12 @@ console.log('\n-- 9. "must": which is meant --');
     // Semantic mode off (r27.184): as written, "must" a word of its verb
     // (r27.97); where a reading gives the step, said so.
     askModality = false; setModal(null);
-    const HINT = 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.';
+    // Off: a hint in the reading's words, unless what is said quotes them (r27.214).
     const off = { soc: step(['All men are mortal.', 'Socrates is a man.'], 'Socrates must be mortal.'), mp: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe must be black.'),
         plain: step(['If Poe is a raven, then Poe must be black.', 'Poe is a raven.'], 'Poe is black.') };
-    ok(!off.soc.asks && !off.soc.rule && off.soc.why.endsWith(' ' + HINT) && off.mp.rule === 'modus ponens' && !off.plain.asks && !off.plain.rule && off.plain.why.endsWith(' ' + HINT),
-        'off: "so Socrates must be mortal" does not follow as written, and read as what follows it would: said, not asked; "must" in both boxes of a modus ponens follows as written; so "so Poe is black" from "then Poe must be black"', J(off));
+    ok(!off.soc.asks && !off.soc.rule && off.soc.why === 'The premises give “Socrates is mortal” by universal modus ponens, but not “Socrates must be mortal”: the checker has no rules for “must” yet, as they belong to modal logic.' &&
+        off.mp.rule === 'modus ponens' && !off.plain.asks && !off.plain.rule && off.plain.why.endsWith(' But the checker has no rules for “must” yet, as they belong to modal logic.'),
+        'off: "so Socrates must be mortal" does not follow as written, and read as what follows it would: said, not asked -- once, the words quoted already (r27.214); "must" in both boxes of a modus ponens follows as written; so "so Poe is black" from "then Poe must be black"', J(off));
 }
 
 console.log('\n-- 10. "might", "may" and "could": which is meant --');

@@ -302,8 +302,8 @@ console.log('\n-- an object that may be shared (r27.64) --');
     // r27.200: "so Mary loves Bob" follows on both readings, which are all
     // one can choose, and asks nothing (the box as written had held it).
     ok(yes && yes.rule === 'conjunction elimination' && !yes.asked.length && wait && !wait.rule && J(wait.asked) === '[2]' && yesOff && yesOff.rule === 'conjunction elimination' && waitOff && !waitOff.rule &&
-        waitOff.why === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
-        'on the map, with Semantic mode on, "so Mary sings" offers the two readings, where the step turns on them; "so Mary loves Bob" follows on both and asks nothing (r27.200); as written, "so Mary loves Bob" is certified and "so Mary sings" is not, and it says that read another way it would', J([yes, wait, yesOff, waitOff]));
+        waitOff.why === 'Written “Mary sings, and Mary loves Bob”, the step follows by conjunction elimination.',
+        'on the map, with Semantic mode on, "so Mary sings" offers the two readings, where the step turns on them; "so Mary loves Bob" follows on both and asks nothing (r27.200); as written, "so Mary loves Bob" is certified and "so Mary sings" is not, and it says in what words it would be (r27.214)', J([yes, wait, yesOff, waitOff]));
 }
 
 console.log('\n-- misreadings found beside it (r27.64) --');
@@ -1239,8 +1239,16 @@ console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; th
     ok(short.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person’, with “Poe can fly” read as “Poe is able to fly”.' &&
         shown.rule === 'universal modus ponens',
         'the case a rule needs, and the reading a box needs for it: "once it is shown that \'Poe is a person\', with \'Poe can fly\' read as \'Poe is able to fly\'"; "everyone who is able to fly" is a person, and able to fly', J([short, shown]));
-    ok(ev(`return CLAIM_SEMANTIC_HINT;`) === 'On another reading of its words, the step follows: set Semantic mode to “Ask where a step turns on it” in the Logic panel to choose that reading.',
-        'the hint names the setting, without commas');
+    // r27.214 (the user, of naming the wording rather than where to switch
+    // Semantic mode on: "a, I think?"): the words the step follows on, and its
+    // rule; several, by rule; many, the first; nothing where they are said.
+    const hints = ev(`return [typeof CLAIM_SEMANTIC_HINT, claimSemanticHint([{ words: ['Poe is able to fly.'], rule: 'modus ponens' }]),
+        claimSemanticHint([{ words: ['A.'], rule: 'R' }, { words: ['B.'], rule: 'R' }, { words: ['C.'], rule: 'S' }]),
+        claimSemanticHint([{ words: ['A.', 'B.'], rule: 'R' }, { words: ['C.', 'D.'], rule: 'R' }]), claimSemanticHint([{ words: ['A.'], rule: 'R', read: true }]),
+        claimSemanticHint([{ words: ['A.'], rule: 'R' }], 'It gives \u201cA\u201d.'), claimSemanticHint([])];`);
+    ok(J(hints) === J(['undefined', 'Written \u201cPoe is able to fly\u201d, the step follows by modus ponens.', 'Written \u201cA\u201d or \u201cB\u201d, the step follows by R; written \u201cC\u201d, by S.',
+            'Written \u201cA\u201d and \u201cB\u201d, the step follows by R, as it does on other readings of its words.', 'Read as \u201cA\u201d, the step follows by R.', '', 'On another reading of its words, the step follows.']),
+        'the hint names the words a step follows on, and its rule, not the setting (r27.214): several by rule; where one re-reads more than one box, or there are more than three, the first; nothing where what is said quotes them already', J(hints));
     const notes = ev(`return [LOGIC_GROUP_GLOSSES.able, LOGIC_GROUP_GLOSSES.kinds, (DEDUCTIVE_EXTENSIONS.find(function (g) { return g.id === 'kinds'; }) || {}).label];`);
     ok(/"Poe is able to fly" gives "it is physically possible for Poe to fly"/.test(notes[0]) && /^Word meaning, not logic: what is physically possible is metaphysically possible/.test(notes[1] || '') &&
         notes[2] === 'Word meaning: kinds of possibility',
