@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.215';
+    const APP_BUILD = '2026-11-14 r27.216';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -14514,15 +14514,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "could": "However many readings are possible"): what is possible --
     // metaphysically, logically or physically -- or what is not ruled out by
     // what is known; "may", what is allowed too; "could", what one was able
-    // to do. In the order of "possibly"'s readings, so that a step's "might"
-    // and "possibly" are answered together, kind for kind. "Might not", "may
+    // to do. The most obvious first (r27.216; the user: "ok"): "might" and
+    // "may", what is not ruled out -- "may", what is allowed too -- then the
+    // kinds; "could", what one was able to do first. Each reading says its
+    // kind, so that a step's "might" and "possibly" are answered together,
+    // kind for kind (claimPairedReading). "Might not", "may
     // not": possible that not -- and "may not", not allowed; "could not": not
     // possible, not able. Of a plain subject, as "must" (r27.179); not "could
     // choose not to", read with "would" as its dual (r27.112).
     const CLAIM_MAYBE_WHY = Object.assign(Object.create(null), {
-        might: '"might" may say what is possible (metaphysically, logically or physically), or what is not ruled out by what has been established or by what we know',
-        may: '"may" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, or what is allowed',
-        could: '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, what one was able to do, or what one would be able to do' });
+        might: '"might" may say what is not ruled out by what we know or by what has been established, or what is possible (metaphysically, logically or physically)',
+        may: '"may" may say what is not ruled out by what we know or by what has been established, what is allowed, or what is possible (metaphysically, logically or physically)',
+        could: '"could" may say what one was able to do, what one would be able to do, what is not ruled out by what we know or by what has been established, or what is possible (metaphysically, logically or physically)' });
     function claimMaybeQuestion(text, modal) {
         const m = new RegExp('^(.+?) ' + modal + ' (not )?(.+)$').exec(text);
         if (!m || /\b(?:if|then|that|whether|and|or|but|not|must|might|may|could|it|all|every|each|some|no|any|most|many|few|several|both|either|neither)\b/.test(m[1]) ||
@@ -14544,9 +14547,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // a longer box "we do not know that Poe does not fly" -- or, "could
         // not", "we know that Poe does not fly".
         const know = wide ? 'we know that ' + no : whole ? 'for all we know, ' + (denied ? no : yes) : 'we do not know that ' + (denied ? yes : no);
-        const labels = kinds.concat([known, know], extra, !denied && modal !== 'could' && claimAuxNounWords(text, modal) || []);
+        const aux = [].concat(!denied && modal !== 'could' && claimAuxNounWords(text, modal) || []);
+        const labels = (modal === 'could' ? extra.concat([know, known]) : [know, known].concat(extra)).concat(kinds, aux);
+        const kindTags = (modal === 'could' ? ['able'].concat(extra.length > 1 ? ['would'] : [], ['know', 'est']) : ['know', 'est'].concat(extra.length ? ['allowed'] : []))
+            .concat(CLAIM_KIND_TAGS.slice(0, 3), aux.map(() => 'aux'));
         return claimAmbiguous(CLAIM_MAYBE_WHY[modal], labels.map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
-            Object.assign(claimModalMarks(text), { maybe: true }, claimModalAsking() || modal === 'might' ? {} : { subject: modal }));
+            Object.assign(claimModalMarks(text), { maybe: true, kindTags }, claimModalAsking() || modal === 'might' ? {} : { subject: modal }));
     }
     // "We can conclude that P" read as what is possible for us: a predication
     // marked so (the "can" ab esse ad posse and "we do" speak to).
@@ -14658,9 +14664,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // of "we can't conclude that P", whose words waited on the user).
             if (f) {
                 const word = m[1] === 'impossible' ? k => k + ' impossible' : m[1] === 'not possible' ? k => 'not ' + k + ' possible' : k => k + ' possible';
-                const asked = claimAmbiguous('"' + m[1] + '" does not say which kind of possibility is meant: metaphysical, logical or physical',
-                    ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' for ' + m[2] + ' to ' + m[3]).map(label => ({ label, build: () => readClaim(label) })),
-                    claimModalAsking(), claimModalMarks(s));
+                // Physically first, as "can" (r27.216; the user: "ok").
+                const asked = claimAmbiguous('"' + m[1] + '" does not say which kind of possibility is meant: physical, metaphysical or logical',
+                    ['physically', 'metaphysically', 'logically'].map(k => 'it is ' + word(k) + ' for ' + m[2] + ' to ' + m[3]).map(label => ({ label, build: () => readClaim(label) })),
+                    claimModalAsking(), Object.assign(claimModalMarks(s), { kindTags: ['phys', 'meta', 'logic'] }));
                 if (asked) return asked;
             }
             if (f) return denied ? negateClaim(f) : f;
@@ -15336,7 +15343,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // longer box; or, off, read as written -- and where read another way the
     // step would follow, said so (claimGenericRole).
     const claimModalMarks = s => claimModalAsking() ? { ask: true, part: s } : { generic: true, modal: true, subject: 'modality', part: s };
-    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause, claimWholeBox(s)), claimModalAsking(), claimModalMarks(s));
+    // The kinds of a modal word's readings, in "possibly"'s order: what a
+    // step's hint pairs, box with box (r27.216).
+    const CLAIM_KIND_TAGS = ['meta', 'logic', 'phys', 'est', 'know'];
+    const claimModalAsked = (word, op, denied, clause, s) => claimAmbiguous(claimModalWhy(word, op), claimModalReadings(op, denied, clause, claimWholeBox(s)), claimModalAsking(),
+        Object.assign(claimModalMarks(s), { kindTags: CLAIM_KIND_TAGS }));
     function claimModalUnasked(word, op, s) {
         claimUnread(claimModalWhy(word, op) + ': the sentence is read as one claim');
         return Object.assign(claimAtom(s), { src: s });
@@ -17101,7 +17112,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // or "we know that zombies do not exist".
         const know = denied || impossible ? 'we know that ' + said + ' ' + not
             : claimWholeBox(s) ? 'for all we know, ' + said + ' ' + (be === 'are' ? 'exist' : 'exists') : 'we do not know that ' + said + ' ' + not;
-        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known, know]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(), claimModalMarks(s));
+        return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known, know]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
+            Object.assign(claimModalMarks(s), { kindTags: CLAIM_KIND_TAGS }));
     }
     // "Bob called Mary a taxi": a taxi called for Mary, or what Mary was
     // called, said in quotation marks -- words, not a taxi (r27.178; the
@@ -25440,7 +25452,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // gives the step, in every box it re-reads at once.
     function claimRoleHintWays(role, texts, denials) {
         return (role.derives || []).map(d => {
-            const each = role.entries.map(e => claimHintWays(texts[e.box], e.note, [{ reading: role.joint ? e.reading : d.reading, rule: d.rule }], denials)[0]).filter(Boolean);
+            const each = role.entries.map(e => {
+                const r = role.joint ? e.reading : claimPairedReading(role.entries[0].note, e.note, d.reading);
+                return r < 0 ? null : claimHintWays(texts[e.box], e.note, [{ reading: r, rule: d.rule }], denials)[0];
+            }).filter(Boolean);
             return { words: [].concat(...each.map(w => w.words)), rule: d.rule.name, read: each.some(w => w.read) };
         }).filter(w => w.words.length);
     }
@@ -26370,6 +26385,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // on every reading, or on none, the question plays no role; where it
     // follows on some and not others, it does: { entries, derives } for the
     // first such subject -- its notes, and the readings that give the step.
+    // The reading of a box answered with another's: kind for kind where both
+    // say their kinds ("might", "for all we know" first, beside "possibly",
+    // metaphysical first: r27.216); else in the same place. -1: it has none.
+    const claimPairedReading = (first, note, r) => first.kindTags && note.kindTags ? note.kindTags.indexOf(first.kindTags[r]) : r;
     function claimGenericRole(premiseTexts, conclusionText, attack, weak) {
         const texts = premiseTexts.concat([conclusionText]);
         const reads = texts.map(t => parseClaimFull(t));
@@ -26392,8 +26411,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const mine = entries.filter(e => e.box === i);
                     if (!mine.length) return reads[i].form;
                     const sites = {};
-                    mine.forEach(e => { sites[e.note.site] = r; });
-                    return parseClaim(t, { sites });
+                    let missing = false;
+                    mine.forEach(e => { const k = claimPairedReading(entries[0].note, e.note, r); if (k < 0) missing = true; sites[e.note.site] = k; });
+                    return missing ? null : parseClaim(t, { sites });
                 });
                 read.push(forms);
                 const parent = forms[forms.length - 1];

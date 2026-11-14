@@ -1083,7 +1083,7 @@ function reportCorpus(name, res) {
         // question, answered the same way in both, and modus ponens holds on
         // every answer -- so nothing is asked.
         ok(c.possible.tag === '✓ ab esse ad posse' && c.bare.tag === '? ambiguous' &&
-            c.bare.why === 'Did you mean “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, or “It is physically possible for Poe to fly”?' &&
+            c.bare.why === 'Did you mean “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?' &&
             c.both.tag === '✓ modus ponens' && !c.both.why,
             'said "physically possible for", it follows; said "possible for", it asks which kind -- metaphysically it is the map\'s axiom T (r27.203); "Poe can fly" in both boxes of a modus ponens follows however it is meant, and asks nothing (r27.199; r27.169 had asked)', J([c.possible.tag, c.bare, c.both]));
         ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If Poe is allowed to fly, then Poe is a bird”, “If it is physically possible for Poe to fly, then Poe is a bird”, “If it is metaphysically possible for Poe to fly, then Poe is a bird”, or “If it is logically possible for Poe to fly, then Poe is a bird”?' &&
@@ -1122,7 +1122,8 @@ function reportCorpus(name, res) {
             var s = collectDeductiveSteps(state.trees)[0];
             return { offers: (s.why.ambiguous || []).map(function (a) { return (a.offers || []).map(function (o) { return o.words; }); }),
                 key: claimKey(parseClaim('It is possible for Mary to sing and Bob cannot dance.')).replace(/\\uE000/g, '') };`);
-        const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
+        // "Possible for": physically first, as "can" (r27.216).
+        const kinds = (pre, post) => ['physically', 'metaphysically', 'logically'].map(k => pre + k + post);
         // A comma between the two clauses (r27.206).
         // "Can": able, allowed, then the kinds, physically first (r27.213).
         const canKinds = (pre, post) => ['physically', 'metaphysically', 'logically'].map(k => pre + k + post);
@@ -1160,9 +1161,9 @@ function reportCorpus(name, res) {
             state.logic = { base: 'standard', rules: { semantic: true } };
             return r;`);
         // Said of a kind, each the same (r27.203): the bare words ask which.
-        ok(/^✓ disjunctive syllogism/.test(either.ds) && !/^✓/.test(either.able) && /^\? ambiguous \| “It is possible for Poe to fly or swim\.”: did you mean “It is metaphysically possible for Poe to fly or swim”/.test(either.dsBare),
+        ok(/^✓ disjunctive syllogism/.test(either.ds) && !/^✓/.test(either.able) && /^\? ambiguous \| “It is possible for Poe to fly or swim\.”: did you mean “It is physically possible for Poe to fly or swim”/.test(either.dsBare),
             '"it is physically possible for Poe to fly or swim" and "it is not physically possible for Poe to fly" give "it is physically possible for Poe to swim"; on ability, not (r27.176; it had been one claim); said without a kind, each asks which (r27.203)', J([either.ds, either.able, either.dsBare]));
-        ok(J(either.clauses) === J(['"possible" does not say which kind of possibility is meant: metaphysical, logical or physical', '"possible" does not say which kind of possibility is meant: metaphysical, logical or physical']) &&
+        ok(J(either.clauses) === J(['"possible" does not say which kind of possibility is meant: physical, metaphysical or logical', '"possible" does not say which kind of possibility is meant: physical, metaphysical or logical']) &&
             /^D\[/.test(either.clausesKey) && either.bird === '✓ conjunction elimination',
             '"it is possible for me to draw a red card, or it is possible for me to draw a black card": an "or", each part asking only which kind (r27.203); "it is possible for Poe to fly, and Poe is a bird", the same (r27.176; the first had been one garbled claim, and each asked which "can" was meant)', J(either));
         ok(either.i.length === 1 && /what I am able to do/.test(either.i[0]) && either.rows === '? ambiguous | Did you mean “Poe is able to fly or swim”, “Poe is allowed to fly or swim”, “It is physically possible for Poe to fly or swim”, “It is metaphysically possible for Poe to fly or swim”, or “It is logically possible for Poe to fly or swim”?',

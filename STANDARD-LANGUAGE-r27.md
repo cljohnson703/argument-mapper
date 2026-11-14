@@ -4,6 +4,34 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: each family of modal words, the most obvious reading first (r27.216)
+
+The user:
+* Of an order for each family of modal words, the most obvious first, with the step's hint pairing readings by kind: "ok".
+
+Changes:
+* "It is possible for Poe to fly" (and "impossible for", "not possible for") offers physically, metaphysically, logically, as "can" does (r27.213). It had been metaphysically, logically, physically.
+* "Zombies might exist" offers:
+  * "For all we know, zombies exist";
+  * "It has not been established that zombies do not exist";
+  * then metaphysically, logically, physically.
+* "May" the same, with "Zombies are allowed to exist" before the kinds.
+* "Bob could swim" offers "Bob was able to swim" and "Bob would be able to swim" first, then "for all we know", "not established", and the kinds.
+* They had gone the kinds first, then what is not established, what we know, and what is allowed or what one was able to do. What each says of itself follows the same order.
+* Not changed: "possibly", "necessarily", "it is possible that", "zombies are possible" and "must".
+* Never asking, a step's hint paired one box's readings with another's by place: "If it is possible that zombies exist, ..." beside "Zombies might exist" matched only because both lists began with "metaphysically". Readings that say their kind are now paired by kind, wherever each list puts it. The hint is as it was: 'Written "If it is metaphysically possible that zombies exist, then physicalism is false" and "It is metaphysically possible that zombies exist", ...'.
+* Said without its kind, "Mary sings; so it is possible for Mary to sing" stands by ab esse ad posse, the rule of its first reading, physically; it had been axiom T, the rule of metaphysical possibility. Each kind still follows.
+
+Tests:
+* Checks that give the orders, changed, each failing on r27.215:
+  * modal-r27-test.js: "might", "may" and "could", their denials, inside an "if", and what "could" says of itself; "Mary sings; so it is possible for Mary to sing" by ab esse ad posse;
+  * logic-r27-english-test.js and syntax-r27-test.js: "possible for" and "impossible for", physically first, and what each says of itself.
+* New in modal-r27-test.js, which has 85 checks: a step's hint pairs "zombies are possible" with "zombies might exist" by kind.
+* Take-one-out: each of the 8 changes is caught (the one for "zombies are possible" by the new check). A ninth edit, to a comment, changes nothing.
+* 9 sentences in the corpus read differently, by default and with Semantic mode on, none in what it says: each "might", "may" or "possible for" offers its readings in the new order, and says them so.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: what "possibly" covers, asked before which kind (r27.215)
 
 The user:

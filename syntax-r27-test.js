@@ -1226,7 +1226,7 @@ console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; th
     const able = [step(['Poe is able to fly.'], 'It is physically possible for Poe to fly.'), step(['Poe is able to fly.'], 'It is possible for Poe to fly.'),
         step(['Poe is not able to fly.'], 'It is not physically possible for Poe to fly.')];
     ok(able[0].rule === 'ability gives possibility' && able[1].rule === null &&
-        able[1].why === 'Did you mean “It is metaphysically possible for Poe to fly”, “It is logically possible for Poe to fly”, or “It is physically possible for Poe to fly”?' && able[2].rule === null &&
+        able[1].why === 'Did you mean “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?' && able[2].rule === null &&
         key('It is physically possible for Poe to fly.').replace(//g, '') === key('It is physically possible that Poe flies.').replace(//g, ''),
         'what one is able to do is possible -- physically; "possible for" alone asks which kind, in one step only physically (r27.203); not "not able"; "it is physically possible for Poe to fly" says what "... that Poe flies" says', J(able));
     const kinds = [step(['It is physically possible that Poe flies.'], 'It is logically possible that Poe flies.'), step(['It is physically possible for Poe to fly.'], 'It is metaphysically possible for Poe to fly.'),
@@ -1284,12 +1284,13 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
         mt[0].rule === null && /“It is not possible that Poe flies[.]”: did you mean “It is metaphysically impossible that Poe flies”/.test(mt[0].why) && mt[1].rule === 'modus tollens' &&
         key('It is not possible that Poe flies.') === 'N(A:possible, poe flies)' && key('It is not possible that Poe flies.') === key('It is not the case that it is possible that Poe flies.'),
         '"it is not possible that Poe flies" asks which kind, as "it is impossible that" does; as written, it denies "it is possible that Poe flies": modus tollens (it had been read as said of "it")', J(mt));
-    const kinds = (pre, post) => ['metaphysically', 'logically', 'physically'].map(k => pre + k + post);
+    // "Possible for": physically first, as "can" (r27.216).
+    const kinds = (pre, post) => ['physically', 'metaphysically', 'logically'].map(k => pre + k + post);
     ok(J(readings('It is possible for Poe to fly.')) === J([kinds('It is ', ' possible for Poe to fly.')]) &&
         J(readings('It is impossible for Poe to fly.')) === J([kinds('It is ', ' impossible for Poe to fly.')]) &&
         J(readings('It is not possible for Poe to fly.')) === J([kinds('It is not ', ' possible for Poe to fly.')]) &&
         J(readings('Poe can fly.')) === J([['Poe is able to fly.', 'Poe is allowed to fly.'].concat(['physically', 'metaphysically', 'logically'].map(k => 'It is ' + k + ' possible for Poe to fly.'))]),
-        '"it is possible for Poe to fly", "impossible", "not possible": which kind, metaphysically, logically or physically; "Poe can fly": able, allowed, or possible of each kind, physically first (r27.213)', '');
+        '"it is possible for Poe to fly", "impossible", "not possible": which kind, physically, metaphysically or logically (r27.216); "Poe can fly": able, allowed, or possible of each kind, physically first (r27.213)', '');
     const esse = [step(['Poe flies.'], 'It is physically possible for Poe to fly.'), step(['Poe flies.'], 'It is logically possible that Poe flies.'), step(['Poe flies.'], 'It is metaphysically possible for Poe to fly.')];
     ok(esse[0].rule === 'ab esse ad posse' && esse[1].rule === 'ab esse ad posse' && esse[2].rule === null && /by axiom T/.test(esse[2].why),
         'what is, is physically and logically possible (ab esse ad posse); metaphysically, by the map\'s axiom T, where its system has it', J(esse));
@@ -1451,7 +1452,7 @@ console.log('\n-- r27.208: every reading of "can\'t conclude", the most obvious 
         return { incapable: claimSame(parseClaim('We are incapable of concluding that God exists.'), parseClaim(t, { site: n.site, reading: 1 })),
             capable: claimSame(parseClaim('We are capable of concluding that God exists.'), parseClaim(t, { site: n.site, reading: 1 }).inner),
             kind: kind, poe: claimSame(negateClaim(a), b) };`);
-    ok(r.incapable && r.capable && J(r.kind) === J(['"impossible" does not say which kind of possibility is meant: metaphysical, logical or physical']) && r.poe,
+    ok(r.incapable && r.capable && J(r.kind) === J(['"impossible" does not say which kind of possibility is meant: physical, metaphysical or logical']) && r.poe,
         '"we are incapable of concluding that God exists" reads as that reading ("capable" as its denial); "it is impossible for us to conclude that God exists" asks which kind, as "impossible for" does elsewhere; "Poe is incapable of flying" denies "Poe is capable of flying", as before', J(r));
 }
 

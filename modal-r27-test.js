@@ -345,8 +345,9 @@ console.log('\n-- 5. necessity without its kind: asked --');
     // logically and physically, by ab esse ad posse. Each follows, so the
     // step stands.
     ok(step(['Mary sings.'], 'Mary can sing.').why === 'Did you mean “Mary is able to sing”, “Mary is allowed to sing”, “It is physically possible for Mary to sing”, “It is metaphysically possible for Mary to sing”, or “It is logically possible for Mary to sing”?' &&
-        step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'axiom T' && step(['Mary sings.'], 'It is physically possible for Mary to sing.').rule === 'ab esse ad posse',
-        '"can" stays as it is: asked which -- able, possible of each kind, allowed (r27.203) -- and "possible for", of every kind, follows: metaphysically by axiom T, physically and logically by ab esse ad posse');
+        step(['Mary sings.'], 'It is possible for Mary to sing.').rule === 'ab esse ad posse' && step(['Mary sings.'], 'It is metaphysically possible for Mary to sing.').rule === 'axiom T' &&
+        step(['Mary sings.'], 'It is physically possible for Mary to sing.').rule === 'ab esse ad posse',
+        '"can" stays as it is: asked which -- able, allowed, possible of each kind (r27.203, r27.213) -- and "possible for", of every kind, follows: metaphysically by axiom T, physically and logically by ab esse ad posse; said without its kind, by the first, physically (r27.216)');
 }
 
 console.log('\n-- 6. the Logic panel --');
@@ -482,6 +483,12 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
         'off: where the words as written do not give the step and another reading does, it says so, in that reading\'s words (r27.214) -- "Poe can fly" is not "Poe is able to fly" (the user: "That\'s right")', J([off.decides, off.flies, off.able, off.inPlace]));
     ok(!off.might.rule && off.might.why.endsWith(' Written “If it is metaphysically possible that zombies exist, then physicalism is false” and “It is metaphysically possible that zombies exist”, the step follows by modus ponens, as it does on other readings of its words.'),
         'off: "zombies might exist" beside "if it is possible that zombies exist, ...": other words, whose kinds are not taken to be the same (r27.175 had answered them together, kind for kind)', J(off.might));
+    // r27.216: readings paired by kind, wherever each list puts it --
+    // "zombies are possible", metaphysical first, beside "might", what we
+    // know first: what has not been established, with what has not.
+    const pair = step(['If zombies are possible, then physicalism is false.', 'Zombies might exist.'], 'Physicalism is false.');
+    ok(!pair.rule && pair.why === 'Written “If it has not been established that zombies do not exist, then physicalism is false” and “It has not been established that zombies do not exist”, the step follows by modus ponens, as it does on other readings of its words.',
+        'off: a step\'s hint pairs readings by kind, wherever each puts it: "zombies are possible" beside "zombies might exist", what has not been established with what has not (r27.216)', J(pair));
     ok(!off.cant.rule && off.cant.why === 'Written “If we lack reasons to think that Poe is black, then we are not entitled to conclude that Poe is black”, the step follows by modus ponens.',
         'off: "we can\'t conclude" is not "not entitled to conclude", so not "not established": the challenge does not follow as written (the user: "Correct"), and it says in what words it would (r27.214)', J(off.cant));
     ok(!off.ravens.rule && !/Written|Read as|On another reading/.test(off.ravens.why), 'off: where no reading gives the step, no reading is offered', J(off.ravens));
@@ -563,27 +570,31 @@ console.log('\n-- 10. "might", "may" and "could": which is meant --');
     // readings are possible").
     askModality = true; setModal(null);
     const why = question;
-    const P = '“It is metaphysically possible that Poe flies”, “It is logically possible that Poe flies”, “It is physically possible that Poe flies”, “It has not been established that Poe does not fly”, “For all we know, Poe flies”';
-    ok(why('Poe might be black.') === 'Did you mean “It is metaphysically possible that Poe is black”, “It is logically possible that Poe is black”, “It is physically possible that Poe is black”, ' +
-            '“It has not been established that Poe is not black”, or “For all we know, Poe is black”?' &&
-        why('Poe may fly.') === 'Did you mean ' + P + ', or “Poe is allowed to fly”?' && why('Poe could fly.') === 'Did you mean ' + P + ', “Poe was able to fly”, or “Poe would be able to fly”?',
-        '"might": what is possible -- metaphysically, logically or physically -- or what is not ruled out by what is known; "may", what is allowed too; "could", what one was able to do, or would be able to do (r27.182)');
+    // The most obvious first (r27.216; the user: "ok"): "might", "may", what
+    // is not ruled out -- "may", what is allowed -- then the kinds; "could",
+    // what one was able to do, or would be, first.
+    const K = '“It is metaphysically possible that Poe flies”, “It is logically possible that Poe flies”, or “It is physically possible that Poe flies”';
+    ok(why('Poe might be black.') === 'Did you mean “For all we know, Poe is black”, “It has not been established that Poe is not black”, “It is metaphysically possible that Poe is black”, ' +
+            '“It is logically possible that Poe is black”, or “It is physically possible that Poe is black”?' &&
+        why('Poe may fly.') === 'Did you mean “For all we know, Poe flies”, “It has not been established that Poe does not fly”, “Poe is allowed to fly”, ' + K + '?' &&
+        why('Poe could fly.') === 'Did you mean “Poe was able to fly”, “Poe would be able to fly”, “For all we know, Poe flies”, “It has not been established that Poe does not fly”, ' + K + '?',
+        '"might": what is not ruled out by what we know, or by what has been established, then what is possible -- metaphysically, logically or physically; "may", what is allowed before the kinds; "could", what one was able to do, or would be able to do, first (r27.182, r27.216)');
     const not = [why('Poe might not fly.'), why('Poe may not fly.'), why('Poe could not fly.')];
-    ok(/^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, or “For all we know, Poe does not fly”\? “Poe might not fly\.”: "might not" is not read as a denial of "might": the two differ\.$/.test(not[0]) &&
-        /^Did you mean “It is metaphysically possible that Poe does not fly”, .+, “It has not been established that Poe flies”, “For all we know, Poe does not fly”, or “Poe is not allowed to fly”\?/.test(not[1]) &&
-        not[2] === 'Did you mean “It is not metaphysically possible that Poe flies”, “It is not logically possible that Poe flies”, “It is not physically possible that Poe flies”, “It has been established that Poe does not fly”, ' +
-            '“We know that Poe does not fly”, “Poe was not able to fly”, or “Poe would not be able to fly”?',
+    ok(/^Did you mean “For all we know, Poe does not fly”, “It has not been established that Poe flies”, “It is metaphysically possible that Poe does not fly”, .+\? “Poe might not fly\.”: "might not" is not read as a denial of "might": the two differ\.$/.test(not[0]) &&
+        /^Did you mean “For all we know, Poe does not fly”, “It has not been established that Poe flies”, “Poe is not allowed to fly”, “It is metaphysically possible that Poe does not fly”, /.test(not[1]) &&
+        not[2] === 'Did you mean “Poe was not able to fly”, “Poe would not be able to fly”, “We know that Poe does not fly”, “It has been established that Poe does not fly”, ' +
+            '“It is not metaphysically possible that Poe flies”, “It is not logically possible that Poe flies”, or “It is not physically possible that Poe flies”?',
         '"might not", "may not": possible that not -- "may not" not allowed, too; "could not": not possible, not able (no longer said to be unread)', J(not));
     // r27.182 (the user, of "could" as "would be able to": "Sure, let's add
     // it"): where "could" is the whole box -- inside a longer one "would"
     // makes the whole a what-if.
-    ok(/, “A machine was able to pass the Turing test”, or “A machine would be able to pass the Turing test”\?$/.test(why('A machine could pass the Turing test.')) &&
-        /, or “If it rains, Poe was able to fly”\?$/.test(why('If it rains, Poe could fly.')),
+    ok(/did you mean “A machine was able to pass the Turing test”, “A machine would be able to pass the Turing test”, /.test(why('A machine could pass the Turing test.')) &&
+        /^Did you mean “If it rains, Poe was able to fly”, “If it rains, we do not know that Poe does not fly”, /.test(why('If it rains, Poe could fly.')),
         '"could": what one would be able to do, where it is the whole box; not inside an "if" (r27.182)', J([why('A machine could pass the Turing test.'), why('If it rains, Poe could fly.')]));
     ok(ev(`return parseClaimFull('Poe could fly.').notes.filter(function (n) { return n.maybe; })[0].message;`) ===
-            '"could" may say what is possible (metaphysically, logically or physically), what is not ruled out by what has been established or by what we know, what one was able to do, or what one would be able to do',
+            '"could" may say what one was able to do, what one would be able to do, what is not ruled out by what we know or by what has been established, or what is possible (metaphysically, logically or physically)',
         'and its note says so (r27.182)');
-    ok(/^Did you mean “If it rains, it is metaphysically possible that Poe flies”, /.test(why('If it rains, Poe might fly.')) &&
+    ok(/^Did you mean “If it rains, we do not know that Poe does not fly”, “If it rains, it has not been established that Poe does not fly”, “If it rains, it is metaphysically possible that Poe flies”, /.test(why('If it rains, Poe might fly.')) &&
         step(['Bob could choose not to stay.', 'If it rains, then Bob would choose to stay.'], 'It does not rain.').rule === 'modus tollens' &&
         !/did you mean/i.test(why('Someone might fly.')),
         'in place inside a longer box; not "could choose not to", read with "would" as its dual (r27.112); not yet a quantifier\'s', J(why('If it rains, Poe might fly.')));
