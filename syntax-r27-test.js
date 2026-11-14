@@ -973,7 +973,8 @@ console.log('\n-- readings without numbers; three readings of "neither ... if" (
             'The match is off, the roads close, and if it rains, then the ground is wet.']],
         ['It is not the case that Ann left and then Bob cried.', ['It is not the case that first Ann left and then Bob cried.', 'Ann did not leave, and then Bob cried.']],
         ['Mary left and then Bob cried if it rained.', ['If it rained, then Mary left and then Bob cried.', 'Mary left, and then, if it rained, Bob cried.']],
-        ['Poe flies and Fido sings or Rex barks and Ann runs.', ['Both Poe flies and Fido sings, or both Rex barks and Ann runs.', 'Poe flies, either Fido sings or Rex barks, and Ann runs.']],
+        // The whole grouped too, "either" at its head (r27.209).
+        ['Poe flies and Fido sings or Rex barks and Ann runs.', ['Either both Poe flies and Fido sings or both Rex barks and Ann runs.', 'Poe flies, either Fido sings or Rex barks, and Ann runs.']],
         ['Poe flies, and if it rains, Fido sings, and Rex barks.', ['Poe flies, and if it rains, then both Fido sings and Rex barks.', 'Poe flies, Rex barks, and if it rains, then Fido sings.']]];
     const got = cases.map(([t]) => said(t).readings);
     ok(cases.every(([, want], i) => J(got[i]) === J(want)),
@@ -1435,6 +1436,26 @@ console.log('\n-- r27.208: every reading of "can\'t conclude", the most obvious 
             kind: kind, poe: claimSame(negateClaim(a), b) };`);
     ok(r.incapable && r.capable && J(r.kind) === J(['"impossible" does not say which kind of possibility is meant: metaphysical, logical or physical']) && r.poe,
         '"we are incapable of concluding that God exists" reads as that reading ("capable" as its denial); "it is impossible for us to conclude that God exists" asks which kind, as "impossible for" does elsewhere; "Poe is incapable of flying" denies "Poe is capable of flying", as before', J(r));
+}
+
+console.log('\n-- r27.209: "both ... and" and "either ... or" say where the parentheses are --');
+{
+    // The user, of "Possibly Bob left and Mary cried": "'both... and' would
+    // also cover this. We should use it here, no?"; of "Bob sings and Mary
+    // dances, or Ann runs": "'Either... or' and 'both... and' also take care
+    // of this: 'Either both Bob sings and Mary dances or Ann runs.' They tell
+    // us where the parentheses are".
+    const offered = t => ev(`state.logic = { base: 'standard', rules: { semantic: true } };
+        var n = parseClaimFull(${J(t)}).notes.filter(function (x) { return x.kind === 'ambiguous'; })[0];
+        var entry = { text: ${J(t)}, message: n.message, readings: n.readings, site: n.site, grouping: !!n.grouping, modal: !!n.modal, part: n.part || null };
+        return [n.readings.length, claimReadingOffers(entry, null).map(function (o) { return o.words; })];`);
+    const ors = offered('Bob sings and Mary dances or Ann runs.'), poss = offered('Possibly Bob left and Mary cried.'), nec = offered('Necessarily, Bob left or Mary cried.');
+    ok(J(ors) === J([2, ['Either both Bob sings and Mary dances or Ann runs.', 'Both Bob sings and either Mary dances or Ann runs.']]),
+        '"and" and "or" grouped two ways: "Either both Bob sings and Mary dances or Ann runs", "Both Bob sings and either Mary dances or Ann runs" (they had been "Both ..., or Ann runs" and "Bob sings, and either ...")', J(ors));
+    ok(poss[0] === 5 && poss[1].length === 5 && poss[1][0] === 'It is metaphysically possible that both Bob left and Mary cried.' &&
+        poss[1][3] === 'It has not been established that it is not the case that both Bob left and Mary cried.' && poss[1][4] === 'For all we know, both Bob left and Mary cried.' &&
+        nec[0] === 5 && nec[1].length === 5 && nec[1][0] === 'It is metaphysically necessary that either Bob left or Mary cried.' && nec[1][4] === 'We know that either Bob left or Mary cried.',
+        'a modal word\'s readings say what it covers -- "It is metaphysically possible that both Bob left and Mary cried" -- and so each reads back, every one offered (one had not been)', J([poss, nec]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

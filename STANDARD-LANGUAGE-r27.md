@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: "both ... and" and "either ... or" say where the parentheses are (r27.209)
+
+The user:
+* Of a comma left out after a shared opener ("Possibly Bob left and Mary cried"): "'both... and' would also cover this. We should use it here, no?"
+* Of "Bob sings and Mary dances, or Ann runs": "'Either... or' and 'both... and' also take care of this: 'Either both Bob sings and Mary dances or Ann runs.' They tell us where the parentheses are: (Sings(bob) & Dances(mary)) v Runs(ann)".
+
+Changes:
+* "And" and "or" grouped two ways are offered with the whole grouped too, its correlative at its head, and no comma:
+  * "Either both Bob sings and Mary dances or Ann runs";
+  * "Both Bob sings and either Mary dances or Ann runs".
+  * They had been "Both Bob sings and Mary dances, or Ann runs" and "Bob sings, and either Mary dances or Ann runs".
+  * With more parts: "Either both A and B, C, or D"; "A, B, and either C or D".
+* A modal word's readings say what it covers: "Possibly Bob left and Mary cried" offers "It is metaphysically possible that both Bob left and Mary cried", and so for the other kinds, "it has not been established", and "for all we know"; so "either ... or" for an "or".
+  * So every one of them reads back, and is offered: "It has not been established that it is not the case that both Bob left and Mary cried" had not been, nor "We know that either Bob left or Mary cried".
+* Not changed: which reading is read where nothing is asked. "Possibly Bob left and Mary cried" is read as covering both, as before; it does not ask whether "possibly" covers only "Bob left".
+
+Tests:
+* syntax-r27-test.js has 191 checks.
+  * The 2 new ones fail on r27.208.
+  * Changed: "Poe flies and Fido sings or Rex barks and Ann runs" offers "Either both Poe flies and Fido sings or both Rex barks and Ann runs".
+* logic-r27-basis-test.js: "Bob sings and Mary dances or Ann runs" offers "Either both ..." and "Both ... and either ...".
+* Take-one-out: each of the 2 changes is caught.
+* 7 sentences in the corpus read differently, none in what it says: each "and" and "or" question offers its readings grouped by "either" and "both" at their heads.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: every reading of "we can't conclude", the most obvious first (r27.208)
 
 The user:

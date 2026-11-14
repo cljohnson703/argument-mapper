@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.208';
+    const APP_BUILD = '2026-11-14 r27.209';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -15219,7 +15219,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // denial).
     // The box is the clause read, whole.
     const claimWholeBox = s => !!claimBoxRaw && normalizeClaimText(claimBoxRaw).replace(/[.!?]+$/, '').trim() === s;
+    // A clause of two joined by "and" or "or", said after a word that takes
+    // it whole ("it is possible that", "for all we know,"): grouped by "both
+    // ... and" or "either ... or", which say where it begins and ends (r27.209;
+    // the user, of "Possibly Bob left and Mary cried": "'both... and' would
+    // also cover this. We should use it here, no?"): "it is metaphysically
+    // possible that both Bob left and Mary cried".
+    function claimGroupedClause(clause) {
+        const c = String(clause == null ? '' : clause).trim();
+        if (!c || /^(?:both|either|neither)\s/.test(c)) return c;
+        const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
+        const clauses = xs => xs.every(x => claimLooksLikeClause(x.trim()));
+        if (ands.length === 2 && ors.length === 1 && clauses(ands)) return 'both ' + ands.map(x => x.trim()).join(' and ');
+        if (ors.length === 2 && ands.length === 1 && clauses(ors)) return 'either ' + ors.map(x => x.trim()).join(' or ');
+        return c;
+    }
     function claimModalReadings(op, denied, clause, whole) {
+        clause = claimGroupedClause(clause);
         const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
         // What is known not to be: "it has been established that God does not exist".
         const not = () => { const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
@@ -17983,12 +17999,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (ands && ors) {
             const commaOr = ors.slice(1).some(g => /,/.test(g.sep || '')), commaAnd = ands.slice(1).some(g => /,/.test(g.sep || ''));
             if (commaOr !== commaAnd) return build(commaOr ? 'or' : 'and', commaOr ? ors : ands)();
-            // Each part that holds the other word is grouped by its own: "both
-            // A and B, or C"; "A, and either B or C". More parts are numbered.
+            // Each part that holds the other word is grouped by its own, and
+            // the whole by its own, which say where each part begins and ends
+            // (r27.209; the user: "'Either... or' and 'both... and' also take
+            // care of this: 'Either both Bob sings and Mary dances or Ann
+            // runs.' They tell us where the parentheses are"): "either both A
+            // and B or C"; "both A and either B or C". It had been "both A and
+            // B, or C" and "A, and either B or C". More parts: "either both A
+            // and B, C, or D", "A, B, and either C or D"; numbered where those
+            // words do not read back.
             const grouped = (groups, other) => groups.map(g => new RegExp('\\s' + other + '\\s').test(' ' + g.text + ' ') ? (other === 'and' ? 'both ' : 'either ') + g.text : g.text);
             const label = (groups, word, other) => groups.length === 2
-                ? grouped(groups, other).join(', ' + word + ' ')
-                : claimUnnumbered([claimListWords(grouped(groups, other), word, false)], claimListWords(groups.map(g => g.text), word, true));
+                ? (word === 'or' ? 'either ' : 'both ') + grouped(groups, other).join(' ' + word + ' ')
+                : claimUnnumbered([(word === 'or' ? 'either ' : '') + claimListWords(grouped(groups, other), word, false)], claimListWords(groups.map(g => g.text), word, true));
             return claimAmbiguous('"and" and "or" can group this two ways', [label(ors, 'or', 'and'), label(ands, 'and', 'or')]
                 .map(l => ({ label: l, build: () => readClaim(l) })), true) || claimAtom(s);
         }

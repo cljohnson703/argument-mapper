@@ -597,7 +597,8 @@ try {
             'return r ? r.readings.map(function (l) { return claimReadingWords(l, ' + J(t) + '); }) : [];');
         ok(readingsOf('If Bob sings, then Mary dances, Ann runs, and Tom walks').length === 2 &&
             readingsOf('If Bob sings, then Mary dances and Ann runs and Tom walks')[2] === 'Tom walks, and if Bob sings, then both Mary dances and Ann runs' &&
-            readingsOf('Bob sings and Mary dances or Ann runs').join(' | ') === 'Both Bob sings and Mary dances, or Ann runs | Bob sings, and either Mary dances or Ann runs' &&
+            // The whole grouped too: "either" or "both" at its head (r27.209).
+            readingsOf('Bob sings and Mary dances or Ann runs').join(' | ') === 'Either both Bob sings and Mary dances or Ann runs | Both Bob sings and either Mary dances or Ann runs' &&
             readingsOf('Poe is not black or white').join(' | ') === 'Poe is not either black or white | Poe is either not black or white' &&
             readingsOf('If Bob sings, then Mary dances, and Ann runs').join(' | ') === 'If Bob sings, then both Mary dances and Ann runs | Ann runs, and if Bob sings, then Mary dances',
             'the chooser writes its readings with "both", "either" and the free part first, not brackets or numbers, where English can (r27.193)');
