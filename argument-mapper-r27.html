@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.209';
+    const APP_BUILD = '2026-11-14 r27.210';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13789,7 +13789,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             });
             let form, tooLong = false;
             // A slip of agreement: not read until it is fixed, and the fixes offered.
-            const slip = !symbolic && raw ? claimAgreementSlips(text)[0] : null;
+            const slip = !symbolic && raw ? claimAgreementSlips(text)[0] || claimCommaSlip(text) : null;
             if (slip) form = claimAmbiguous(slip.message, slip.fixes.map(t => ({ label: t, build: () => readClaim(normalizeClaimText(t)) })), true, { grammar: true }) || claimAtom(raw);
             else {
                 const savedNames = claimBoxNames, savedText = claimBoxText, savedRaw = claimBoxRaw;
@@ -13946,6 +13946,43 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         are: 'is', were: 'was', have: 'has', do: 'does', "aren't": "isn't", "weren't": "wasn't", "haven't": "hasn't", "don't": "doesn't" });
     const claimSingularVerb = w => /^(?:is|was|has|does|isn't|wasn't|hasn't|doesn't)$/.test(w);
     const claimBaseVerb = w => w === 'has' ? 'have' : /[^aeiou]ies$/.test(w) ? w.slice(0, -3) + 'y' : /(?:ss|x|z|ch|sh|o)es$/.test(w) ? w.slice(0, -2) : w.slice(0, -1);
+    // An opening clause with no comma after it: "If it rains the streets are
+    // wet" (r27.210; the user: "this is improper grammar. We can tell them
+    // they need a comma"). A grammar slip, the box not read until it is
+    // fixed: each place the comma can go, where the clause before it and the
+    // claim after it are each a clause and the claim opens with its subject
+    // -- "If it rains, the streets are wet"; "If Bob sees, Mary Ann leaves"
+    // or "If Bob sees Mary, Ann leaves". Not a word that may be a verb's "-s"
+    // where another place can take the comma ("If Bob knows Mary loves Ann":
+    // "loves" is no subject). It had been read as one claim, "if it rains"
+    // taken for a phrase saying in what view, place or time it holds.
+    const CLAIM_OPENING_CLAUSE = /^(if|unless|when|whenever|although|though|because|since|while|whilst|before|after|once|until)\s+/i;
+    function claimCommaSlip(text) {
+        const raw = String(text == null ? '' : text).trim(), m = CLAIM_OPENING_CLAUSE.exec(raw);
+        if (!m || /[,;:()"\u201c\u201d]/.test(raw) || /\bthen\b/i.test(raw)) return null;
+        const end = /[.!?]+$/.exec(raw), body = raw.slice(m[0].length, end ? end.index : raw.length), words = body.split(/\s+/).filter(Boolean);
+        const found = [];
+        for (let k = 1; k < words.length; k++) {
+            const a = words.slice(0, k).join(' '), b = words.slice(k).join(' '), na = normalizeClaimText(a), nb = normalizeClaimText(b);
+            const ta = claimTokens(na), tb = claimTokens(nb);
+            if (!ta.length || !tb.length) continue;
+            const last = claimSynWord(ta[ta.length - 1]), first = claimSynWord(tb[0]);
+            // Not after a word that waits for more ("that some"), nor before a
+            // relative ("that passes the test"), nor inside a "that" clause not
+            // yet whole ("we can't conclude that some machine").
+            if (last.det || last.prep || last.conj || last.quant || first.aux || first.prep || first.rel) continue;
+            if (/\bthat\b/.test(na) && !claimLooksLikeClause(na.split(/\bthat\b/).pop().trim())) continue;
+            if (!((first.pro && first.pro !== 'obj') || first.det || first.quant || first.name || (first.noun && !first.participle))) continue;
+            if (!claimLooksLikeClause(na) || !claimLooksLikeClause(nb)) continue;
+            const fa = claimQuietly(() => readClaim(na)), fb = claimQuietly(() => readClaim(nb));
+            if (!fa || !fb || fa.kind === 'atom' || fb.kind === 'atom') continue;
+            found.push({ a, b, verb: !!(first.s && first.knownVerb && !first.name && !first.det) });
+        }
+        const places = found.length > 1 ? found.filter(x => !x.verb) : found;
+        if (!places.length) return null;
+        return { message: 'a comma is needed after the opening clause' + (places.length === 1 ? ' \u201c' + m[1].toLowerCase() + ' ' + places[0].a + '\u201d' : ''),
+            fixes: places.map(x => raw.slice(0, m[0].length) + x.a + ', ' + x.b + (end ? end[0] : '')) };
+    }
     function claimAgreementSlips(text) {
         const raw = String(text == null ? '' : text), toks = [], re = /[A-Za-z][A-Za-z'’-]*|\d+|[,;:.!?()"“”]/g;
         let m;
@@ -15094,6 +15131,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const words = tokens.map(claimWord);
         if (!words.length) return null;
         if (!determined && CLAIM_FRAME_STARTS.has(words[0])) {
+            // A clause in front with no comma after it, where no place can
+            // take one (r27.210): not a phrase of view, place or time.
+            if (CLAIM_OPENING_CLAUSE.test(words[0] + ' ')) return 'a clause in front ("' + claimShowWords(tokens.slice(0, 3).join(' ')) +
+                ' ...") has no claim after it that the check can find: write the claim after it, set off by a comma; the sentence is read as one claim';
             return 'a phrase before the claim ("' + claimShowWords(tokens.slice(0, 3).join(' ')) + ' ...") says in what view, place or time it holds: the sentence is read as one claim';
         }
         // "That the vase is broken surprised Mary": a clause as the subject.

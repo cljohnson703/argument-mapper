@@ -1458,6 +1458,28 @@ console.log('\n-- r27.209: "both ... and" and "either ... or" say where the pare
         'a modal word\'s readings say what it covers -- "It is metaphysically possible that both Bob left and Mary cried" -- and so each reads back, every one offered (one had not been)', J([poss, nec]));
 }
 
+console.log('\n-- r27.210: an opening clause with no comma after it is a slip --');
+{
+    // The user, of "If it rains the streets are wet": "this is improper
+    // grammar. We can tell them they need a comma"; of finding where it goes:
+    // "ok". Asked whatever Semantic mode says, as slips are: here, the default.
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: {} }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const s = [step(['If it rains the streets are wet.', 'It rains.'], 'The streets are wet.'), step(['If Bob sees Mary Ann leaves.', 'Bob sees Mary.'], 'Ann leaves.'),
+        step(['If Bob knows Mary loves Ann.', 'Bob knows.'], 'Mary loves Ann.'), step(['If it rains, the streets are wet.', 'It rains.'], 'The streets are wet.')];
+    ok(s[0].rule === null && s[0].why === '“If it rains the streets are wet.” has a grammar slip: a comma is needed after the opening clause “if it rains” — “If it rains, the streets are wet.”.' &&
+        s[1].why === '“If Bob sees Mary Ann leaves.” has a grammar slip: a comma is needed after the opening clause — “If Bob sees, Mary Ann leaves.” or “If Bob sees Mary, Ann leaves.”.' &&
+        s[2].why === '“If Bob knows Mary loves Ann.” has a grammar slip: a comma is needed after the opening clause “if Bob knows” — “If Bob knows, Mary loves Ann.”.' &&
+        s[3].rule === 'modus ponens',
+        '"If it rains the streets are wet" is a slip, its fix offered; where two places can take the comma, both ("If Bob sees Mary Ann leaves"); not where the word after would be a verb ("loves Ann"); with the comma, modus ponens -- it had been read as one claim, "if it rains" a phrase of view, place or time', J(s));
+    const w = [step(['If the weather is bad.'], 'The game is off.'), step(['Once Bob was a king.'], 'Bob was a king.'), step(['Although Bob was tired Mary agreed.'], 'Mary agreed.')];
+    ok(/^“If the weather is bad\.”: a clause in front \("if the weather \.\.\."\) has no claim after it that the check can find: write the claim after it, set off by a comma/.test(w[0].why) &&
+        !/grammar slip/.test(w[1].why) && /a comma is needed after the opening clause “although Bob was tired” — “Although Bob was tired, Mary agreed\.”/.test(w[2].why),
+        'where no place can take it, said so (the clause in front has no claim after it the check can find), not a phrase of view, place or time; "once" as "formerly" is no slip; so "although"', J(w));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

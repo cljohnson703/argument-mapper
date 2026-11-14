@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 14: an opening clause with no comma after it is a slip (r27.210)
+
+The user:
+* Of "If it rains the streets are wet": "Right, and this is improper grammar. We can tell them they need a comma."
+* Of finding the places a comma can go: "ok".
+
+Changes:
+* An opening clause ("if", "unless", "when", "although", "because", "since", "while", "before", "after", "once", "until") with no comma after it is a grammar slip.
+  * It is said whatever Semantic mode says, as slips are, and the box is not read until it is fixed.
+  * "'If it rains the streets are wet.' has a grammar slip: a comma is needed after the opening clause 'if it rains' — 'If it rains, the streets are wet.'" Chosen, the fix is written in, and modus ponens follows.
+  * It had been read as one claim, "if it rains" taken for a phrase saying in what view, place or time the claim holds.
+* The comma goes where the clause before it and the claim after it are each a clause, and the claim opens with its subject.
+  * Where two places can take it, both are offered: "If Bob sees, Mary Ann leaves" or "If Bob sees Mary, Ann leaves".
+  * Not before a word that may be a verb's "-s" where another place can take it: "If Bob knows Mary loves Ann" offers only "If Bob knows, Mary loves Ann".
+* Where no place can take one ("If the weather is bad"), that is what is said: the clause in front has no claim after it that the check can find; write the claim after it, set off by a comma.
+  * A place is not after a word that waits for more, before a relative, or inside a "that" clause not yet whole: "If we can't conclude that some machine that passes the Turing test can think" is said to have no claim after it.
+* Not a box with "then" ("If it rains then the streets are wet" is read as before), nor "once" meaning "formerly" ("Once Bob was a king").
+
+Tests:
+* syntax-r27-test.js has 193 checks.
+  * The 2 new ones fail on r27.209.
+* Take-one-out: each of the 3 changes is caught.
+* 6 sentences in the corpus read differently, each a clause in front with no claim after it ("If physics is complete, then"): now said to have no claim after it, not to be a phrase of view, place or time. None of the corpus's sentences is a slip.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: "both ... and" and "either ... or" say where the parentheses are (r27.209)
 
 The user:
