@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.227';
+    const APP_BUILD = '2026-11-15 r27.228';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11576,7 +11576,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'ideally officially technically legally morally ethically logically metaphysically physically nomologically epistemically ' +
         'empirically scientifically mathematically biologically psychologically socially politically economically intuitively naturally ' +
         'strictly loosely broadly roughly basically essentially fundamentally ultimately literally virtually practically effectively ' +
-        'actually really truly genuinely overall').split(' '));
+        'actually really truly genuinely overall ' +
+        // In front, as "eventually" (r27.228): "Afterwards Bob left" had been
+        // said of one "afterwards bob".
+        'afterwards afterward subsequently thereafter meanwhile').split(' '));
     // Words that add nothing to the claim they sit in: "Poe is also black".
     const CLAIM_EMPTY_WORDS = new Set('also too indeed moreover furthermore besides likewise similarly nevertheless nonetheless however anyway anyhow'.split(' '));
     // ... and phrases, in front: "Moreover, P", "In fact, P", "Note that P".
@@ -11766,7 +11769,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // had been one claim about Mary, whose verb was "cried and possibly
         // Bob left"); not where it is not ("possibly left": a verb of the
         // subject before it).
-        if (tokens.length > 1 && (claimQualifierKind(first) || /^(?:perhaps|maybe|necessarily)$/.test(first)))
+        // So an adverb of time, frequency, manner or domain, which in front
+        // of a sentence qualifies all of it: "Mary cried, and sometimes Bob
+        // left" is two claims (r27.228; it had been one about Mary). Not
+        // "once", which may open a clause of time ("once Bob left, ...").
+        if (tokens.length > 1 && (claimQualifierKind(first) || /^(?:perhaps|maybe|necessarily)$/.test(first) || (CLAIM_FRAME_WORDS.has(first) && first !== 'once')))
             return claimLooksLikeClause(s.replace(/^\S+?,?\s+/, ''));
         // A verb group first, with nothing before it that could be its
         // subject ("quickly left the room", "is laid out"): no clause, as the
@@ -16237,7 +16244,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // that Ann left and then Bob cried") it stays in that claim's words.
     // Beside "or", "if" and the like, where an "and" would be asked about, so
     // is it: brackets settle it.
-    const CLAIM_AND_THEN = /(,?)\s+and(?:\s+|-)then,?\s+/g;
+    // So "and afterwards", "afterward", "subsequently", "thereafter", and
+    // "later" before a clause ("and later Bob left", not "and later trains
+    // were cancelled"): "Mary cried, and afterwards Bob left" is "Mary cried,
+    // and then Bob left" (r27.228).
+    const CLAIM_AND_THEN = /(,?)\s+and(?:\s+|-)(?:then|afterwards?|subsequently|thereafter|later(?=,|\s+(?:\uE000|(?:the|a|an|he|she|it|they|we|i|you|this|that|these|those|his|her|its|their|our|my|your)\b))),?\s+/g;
     const claimThenUntokened = v => typeof v === 'string' ? v.replace(/\band-then\b/g, 'and then')
         : Array.isArray(v) ? v.map(claimThenUntokened)
         : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, claimThenUntokened(x)])) : v;

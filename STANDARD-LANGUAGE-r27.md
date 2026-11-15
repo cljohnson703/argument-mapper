@@ -4,6 +4,26 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: a clause after "and" that opens with an adverb (r27.228)
+
+The user:
+* Of "Mary cried, and sometimes Bob left" and "Mary cried, and afterwards Bob left", each read as one claim: "Maybe this requires a disambiguation?" Grammar settles it, and there is nothing to ask: the adverb goes with the clause it opens.
+* Of the list: "Fix them in order." This is the third.
+
+Changes:
+* "And afterwards" is "and then": "Mary cried, and afterwards Bob left" is the sequence "Mary cried, and then Bob left", and gives "Bob left". It had been one claim about Mary, whose verb was "cried and afterwards bob left". So "afterward", "subsequently", "thereafter", and "later" before a clause ("and later Bob left", not "and later trains were cancelled").
+* After "and", a clause may open with an adverb that, in front of a sentence, qualifies all of it. "Mary cried, and sometimes Bob left" is two claims: "Mary cried", and "sometimes, Bob left", which counts times, and is not read, as "Sometimes Bob left" alone is not. So "often", "usually", "soon", "now", "yesterday" and "generally".
+* So a denial in front denies its own clause: "Bob does not sing, and sometimes Mary dances" had denied all of the box.
+* "Afterwards Bob left", alone, is qualified as "Eventually Bob left" is: "afterwards" had been read as part of a name, "afterwards bob". So "afterward", "subsequently", "thereafter" and "meanwhile".
+* Not yet: an adverb in "-ly" in front of a name ("Mary cried, and suddenly Bob left" says something of "suddenly bob"), and "finally", "still", "so" and "therefore" after "and".
+
+Tests:
+* New in syntax-r27-test.js, which has 251 checks: "and afterwards", "and afterward" and "and later" as "and then"; "and sometimes" and "and often"; "Afterwards Bob left" alone; a denial in front; a sequence in a condition; the steps these give.
+* Take-one-out: each of the 3 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: two kinds of possibility, or of necessity, where one would do (r27.227)
 
 The user:

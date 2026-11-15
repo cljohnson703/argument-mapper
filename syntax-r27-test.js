@@ -1908,6 +1908,34 @@ console.log('\n-- r27.227: two kinds of possibility, or of necessity, where one 
     ok(explosion.rule === null && explosion.why === '', 'not where one kind would give it only by explosion', J(explosion));
 }
 
+console.log('\n-- r27.228: a clause after "and" that opens with an adverb; "and afterwards" is "and then" --');
+{
+    // The user, of "Mary cried, and sometimes Bob left" and "Mary cried, and
+    // afterwards Bob left", each read as one claim: "Maybe this requires a
+    // disambiguation?" -- grammar settles it: the adverb goes with the clause
+    // it opens.
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const then = key('Mary cried, and then Bob left.');
+    const seq = ['Mary cried, and afterwards Bob left.', 'Mary cried, and afterward Bob left.', 'Mary cried, and later Bob left.', 'Mary cried and afterwards Bob left.'].map(key);
+    ok(then === 'T[P:mary|~did cried;P:bob|~did left]' && seq.every(k => k === then),
+        '"and afterwards" is "and then", and so "afterward" and "later" before a clause (they had been one claim about Mary, whose verb was "cried and afterwards bob left" -- or, with "afterward", said of one "afterward bob")', J(seq));
+    const freq = ['Mary cried, and sometimes Bob left.', 'Mary cried, and often Bob left.'].map(key);
+    ok(J(freq) === J(['C[P:mary|~did cried;A:sometimes, bob left]', 'C[P:mary|~did cried;A:often, bob left]']),
+        '"Mary cried, and sometimes Bob left": two claims, the second qualified by "sometimes", as "Sometimes Bob left" is alone (it had been one claim about Mary)', J(freq));
+    const alone = key('Afterwards Bob left.');
+    ok(alone === 'A:afterwards, bob left', '"Afterwards Bob left", alone, is qualified as "Eventually Bob left" is (it had been said of one "afterwards bob")', alone);
+    const denied = key('Bob does not sing, and sometimes Mary dances.'), cond = key('If Bob left and afterwards Mary cried, then Ann laughed.');
+    ok(denied === 'C[N(P:bob|~sing);A:sometimes, mary dances]' && cond === 'I(T[P:bob|~did left;P:mary|~did cried]>P:ann|~did laughed)',
+        'the "not" denies its own clause (it had denied all of the box), and in a condition the sequence is the condition', J([denied, cond]));
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const steps = [step(['Mary cried, and afterwards Bob left.'], 'Bob left.'), step(['If Mary cried and then Bob left, then Ann laughed.', 'Mary cried, and afterwards Bob left.'], 'Ann laughed.')];
+    ok(J(steps) === J(['conjunction elimination', 'modus ponens']), 'so "Mary cried, and afterwards Bob left" gives "Bob left", and meets "Mary cried and then Bob left" (neither had followed)', J(steps));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
