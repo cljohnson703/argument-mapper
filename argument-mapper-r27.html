@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.224';
+    const APP_BUILD = '2026-11-15 r27.225';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -15413,18 +15413,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // possible that both Bob left and Mary cried".
     // Three or more joined by "and" ("Bob left, Ann sang and Mary cried"):
     // their clauses -- or null.
-    function claimClauseList(clause) {
+    // So joined by "or" (r27.225).
+    function claimClauseList(clause, word) {
         const c = String(clause == null ? '' : clause).trim();
         const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
-        if (ands.length !== 2 || ors.length !== 1) return null;
-        const parts = claimSplitTop(ands[0].trim(), /\s*,\s+/).concat([ands[1]]).map(x => x.trim());
+        const [mine, other] = word === 'or' ? [ors, ands] : [ands, ors];
+        if (mine.length !== 2 || other.length !== 1) return null;
+        const parts = claimSplitTop(mine[0].trim(), /\s*,\s+/).concat([mine[1]]).map(x => x.trim());
         return parts.length > 2 && parts.every(x => claimLooksLikeClause(x)) ? parts : null;
     }
     function claimGroupedClause(clause) {
         const c = String(clause == null ? '' : clause).trim();
         if (!c || /^(?:both|either|neither)\s/.test(c)) return c;
-        // "Both" is for two: three or more, as they are (r27.221).
-        if (claimClauseList(c)) return c;
+        // "Both" is for two: three or more, as a list (r27.221), with a comma
+        // before its "and" -- or, with "either", its "or" (r27.225; the user:
+        // "Can we default to using the Oxford comma here?").
+        const list = claimClauseList(c), alternatives = !list && claimClauseList(c, 'or');
+        if (list) return claimListWords(list, 'and');
+        if (alternatives) return 'either ' + claimListWords(alternatives, 'or');
         const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
         const clauses = xs => xs.every(x => claimLooksLikeClause(x.trim()));
         if (ands.length === 2 && ors.length === 1 && clauses(ands)) return 'both ' + ands.map(x => x.trim()).join(' and ');
@@ -26389,7 +26395,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!g) groups.push(g = { said, boxes: [] });
             if (g.boxes.indexOf(box) < 0) g.boxes.push(box);
         });
-        return groups.map(g => (g.boxes.length > 2 ? g.boxes.slice(0, -1).join(', ') + ' and ' + g.boxes[g.boxes.length - 1] : g.boxes.join(' and ')) + ': ' + g.said + '.').join(' ');
+        return groups.map(g => (g.boxes.length > 2 ? g.boxes.slice(0, -1).join(', ') + ', and ' + g.boxes[g.boxes.length - 1] : g.boxes.join(' and ')) + ': ' + g.said + '.').join(' ');
     }
     // The step's verdict on each reading of the questions asked only where a
     // step turns on them (`stepDecides`; r27.189; the user: "It depends on
@@ -27329,7 +27335,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // A verdict in words: why the box comes to what it does.
     function claimVerdictWhy(verdict, v) {
         const q = t => '“' + stripClaimMarkup(claimShowWords(t)) + '”';
-        const list = texts => texts.length === 1 ? q(texts[0]) : texts.slice(0, -1).map(q).join(', ') + ' and ' + q(texts[texts.length - 1]);
+        const list = texts => texts.length === 1 ? q(texts[0]) : texts.length === 2 ? q(texts[0]) + ' and ' + q(texts[1])
+            : texts.slice(0, -1).map(q).join(', ') + ', and ' + q(texts[texts.length - 1]);
         const gives = st => list(st.premiseTexts) + (st.premiseTexts.length === 1 ? ' gives ' : ' give ');
         const kindName = st => (KIND_NAME[st.kind] || st.kind).toLowerCase();
         const node = verdict.nodes.get(v.nodeId), text = node ? node.texts[v.idx] : '';

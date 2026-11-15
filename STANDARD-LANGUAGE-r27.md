@@ -4,6 +4,26 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: the Oxford comma in the app's own lists (r27.225)
+
+The user:
+* Of r27.221's reading "it is metaphysically possible that Bob left, Ann sang and Mary cried": "Can we default to using the Oxford comma here? Others can omit it when there is no ambiguity (in semantic mode) or the inference doesn't turn on it."
+
+Changes:
+* A list of three or more that the app says puts a comma before its "and": "it is metaphysically possible that Bob left, Ann sang, and Mary cried"; "for all we know, Bob left, Ann sang, and Mary cried".
+* So a list joined by "or": "it is metaphysically possible that either Bob left, Ann sang, or Mary cried". It had been "either Bob left, Ann sang or Mary cried".
+* So the boxes a step says the same thing of: '“If Mary sang, then she danced.”, “If Mary danced, then she cried.”, and “If Mary sang, then she cried.”: ...'.
+* So the premises a verdict names: 'the step from “The books are heavy.”, “Ann sings.”, and “Mary dances.” isn’t confirmed'. Two are joined by "and" alone, as before.
+* A box's own words are as written. "Bob left, Ann sang and Mary cried" means what "Bob left, Ann sang, and Mary cried" means, and each reading the app offers reads back asking nothing.
+
+Tests:
+* Changed, failing on r27.224 as written: syntax-r27-test.js, the readings of "possibly" before three clauses, now with the comma.
+* New in syntax-r27-test.js, which has 240 checks: a list joined by "or"; a list written with the comma; a box's list the same with the comma or without it; three boxes a step says the same thing of; a verdict that names three premises, and two.
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: what is so is metaphysically possible, by ab esse ad posse (r27.224)
 
 The user:

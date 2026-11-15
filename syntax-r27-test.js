@@ -1791,10 +1791,10 @@ console.log('\n-- r27.221: "both" is for two; three or more, said as a list --')
         var back = labels.map(function (l) { return parseClaimFull(l).notes.filter(function (n) { return n.kind === 'ambiguous'; }).length; });
         state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return { labels: labels.map(function (l) { return claimUnmarked(l); }), asks: back };`);
     const poss = offered('Possibly Bob left, Ann sang and Mary cried.', 'always');
-    ok(J(poss.labels) === J(['it is metaphysically possible that bob left, ann sang and mary cried', 'it is logically possible that bob left, ann sang and mary cried',
-            'it is physically possible that bob left, ann sang and mary cried', 'it has not been established that bob did not leave, ann did not sing, or mary did not cry',
-            'for all we know, bob left, ann sang and mary cried']) && poss.asks.every(n => n === 0),
-        '"possibly" before three clauses: no "both" (it had been "both bob left, ann sang and mary cried"), the denial each part denied, and each reads back asking nothing', J(poss));
+    ok(J(poss.labels) === J(['it is metaphysically possible that bob left, ann sang, and mary cried', 'it is logically possible that bob left, ann sang, and mary cried',
+            'it is physically possible that bob left, ann sang, and mary cried', 'it has not been established that bob did not leave, ann did not sing, or mary did not cry',
+            'for all we know, bob left, ann sang, and mary cried']) && poss.asks.every(n => n === 0),
+        '"possibly" before three clauses: no "both" (it had been "both bob left, ann sang and mary cried"), the denial each part denied, and each reads back asking nothing -- the list with a comma before its "and" (r27.225)', J(poss));
     const nec = offered('Necessarily Bob left, Ann sang and Mary cried.', 'always'), imp = offered('It is impossible that Bob left, Ann sang and Mary cried.', 'always');
     ok(nec.labels[4] === 'we know that bob left, that ann sang, and that mary cried' && imp.labels[4] === 'we know that either bob did not leave, ann did not sing, or mary did not cry' &&
         !/\bboth\b/.test(nec.labels.concat(imp.labels).join(' ')) && nec.asks.concat(imp.asks).every(n => n === 0),
@@ -1839,6 +1839,40 @@ console.log('\n-- r27.223: "zombies are metaphysically possible" says what "it i
         state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
     const mp = step(['If zombies are metaphysically possible, then physicalism is false.', 'It is metaphysically possible that zombies exist.'], 'Physicalism is false.');
     ok(mp === 'modus ponens', 'so "if zombies are metaphysically possible, then physicalism is false" and "it is metaphysically possible that zombies exist" give "physicalism is false"', mp);
+}
+
+console.log('\n-- r27.225: the app\'s own lists of three or more, with a comma before their "and" or "or" --');
+{
+    // The user: "Can we default to using the Oxford comma here? Others can
+    // omit it when there is no ambiguity (in semantic mode) or the inference
+    // doesn't turn on it."
+    const offered = (t, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; claimRulesCache = null;
+        var r = parseClaimFull(${J(t)}), labels = [].concat.apply([], r.notes.filter(function (n) { return n.readings; }).map(function (n) { return n.readings; }));
+        var back = labels.map(function (l) { return parseClaimFull(l).notes.filter(function (n) { return n.kind === 'ambiguous'; }).length; });
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return { labels: labels.map(function (l) { return claimUnmarked(l); }), asks: back };`);
+    const or = offered('Possibly Bob left, Ann sang or Mary cried.', 'always');
+    ok(or.labels[0] === 'it is metaphysically possible that either bob left, ann sang, or mary cried' && !or.labels.some(l => /sang or/.test(l)) && or.asks.every(n => n === 0),
+        'a list joined by "or", said again: a comma before its "or" (it had been "either bob left, ann sang or mary cried"); each reads back asking nothing', J(or));
+    const written = offered('Possibly Bob left, Ann sang, and Mary cried.', 'always');
+    ok(written.labels[0] === 'it is metaphysically possible that bob left, ann sang, and mary cried' && written.asks.every(n => n === 0),
+        'written with the comma, said with it', J(written));
+    const box = ev(`return parseClaimFull('Bob left, Ann sang and Mary cried.').form ? claimKey(parseClaimFull('Bob left, Ann sang and Mary cried.').form) : null;`),
+        boxComma = ev(`return parseClaimFull('Bob left, Ann sang, and Mary cried.').form ? claimKey(parseClaimFull('Bob left, Ann sang, and Mary cried.').form) : null;`);
+    ok(box && box === boxComma, 'a box\'s own list means the same with the comma or without it', J([box, boxComma]));
+    const notes = ev(`return claimStepReadNotes({ premiseTexts: ['If Mary sang, then she danced.', 'If Mary danced, then she cried.'], conclusionText: 'If Mary sang, then she cried.' });`);
+    ok(notes === '“If Mary sang, then she danced.”, “If Mary danced, then she cried.”, and “If Mary sang, then she cried.”: "she" is read as "Mary", the one name this claim gives.',
+        'three boxes a step says the same of: a comma before the "and" (it had been "“If Mary danced, then she cried.” and “If Mary sang, then she cried.”")', notes);
+    const verdict = n => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Bob is a student.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'S', type: 'support', texts: ${J(['The books are heavy.', 'Ann sings.', 'Mary dances.'])}.slice(0, ${n}), collapsed: [], children: [] } ] }];
+        ensureCollabFields(state); deductiveLive = true; render();
+        var v = document.querySelector('.verdict-tag'), r = v ? v.title : '';
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    const three = verdict(3), two = verdict(2);
+    ok(three === 'Unwarranted: not established — the step from “The books are heavy.”, “Ann sings.”, and “Mary dances.” isn’t confirmed. Click for every step.' &&
+        two === 'Unwarranted: not established — the step from “The books are heavy.” and “Ann sings.” isn’t confirmed. Click for every step.',
+        'a verdict that names three premises: a comma before the "and"; two, none', J([three, two]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
