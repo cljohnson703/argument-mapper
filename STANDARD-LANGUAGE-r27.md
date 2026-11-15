@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "waiter", and the other nouns that name a person (r27.222)
+
+The user:
+* Of the five bugs reported with r27.215: "Proceed in order". This is the third.
+
+Changes:
+* "The waiter left, and then he cried" had said "he" had nothing in the box to refer to: "waiter" was not among the nouns that name a person. It is now, with other common ones:
+  * the jobs people do ("cashier", "clerk", "dentist", "journalist", "plumber", "secretary");
+  * the parts they play ("passenger", "tourist", "visitor", "voter", "winner");
+  * their place in a family or a group ("sibling", "twin", "roommate", "teammate").
+* Those that say a woman are she ("waitress", "policewoman", "heiress"), and a "bachelor" is he. The "-man" titles ("chairman") may be anyone.
+* Not "coach", "fan", "cleaner" or "model", which are also things, nor "member", "candidate", "ancestor" or "descendant", said of sets, solutions and trees: a noun that names a person is no "it".
+* A phrase set off by commas after a name says who the name is, and is no one of its own. "Bob, a baker, makes cakes and sells them": "them" is the cakes. It would have been "the baker" or the cakes, "baker" a person now; it had been "the teacher" in "Bob, a teacher, ...".
+* Not yet: a plural with no "the" after its verb ("Bob grades papers and returns them") is no thing "them" can be, though "cakes" is.
+
+Tests:
+* New in syntax-r27-test.js, which has 231 checks, each failing on r27.221:
+  * "the waiter", "the cashier" and "the journalist" as someone a pronoun can be;
+  * a waitress she, a bachelor he;
+  * "fan" still a thing;
+  * "Bob, a baker, makes cakes and sells them".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "both" is for two (r27.221)
 
 The user:

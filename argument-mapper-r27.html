@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.221';
+    const APP_BUILD = '2026-11-15 r27.222';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -9832,9 +9832,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "actor", "host", "hero", "priest" and the like, said of anyone; nor any
     // name, which says no such thing.
     const CLAIM_NOUN_SEX = Object.assign(Object.create(null),
-        Object.fromEntries('man boy gentleman father son brother husband uncle nephew grandfather grandson stepfather boyfriend fiance widower groom king prince emperor duke monk'
+        Object.fromEntries('man boy gentleman father son brother husband uncle nephew grandfather grandson stepfather boyfriend fiance widower groom king prince emperor duke monk bachelor'
             .split(' ').map(w => [w, 'm'])),
-        Object.fromEntries('woman girl lady mother daughter sister wife aunt niece grandmother granddaughter stepmother girlfriend fiancee widow bride queen princess empress duchess nun priestess goddess heroine actress landlady maid'
+        Object.fromEntries('woman girl lady mother daughter sister wife aunt niece grandmother granddaughter stepmother girlfriend fiancee widow bride queen princess empress duchess nun priestess goddess heroine actress landlady maid waitress heiress hostess stewardess policewoman saleswoman businesswoman chairwoman spokeswoman spinster'
             .split(' ').map(w => [w, 'f'])));
     const CLAIM_HE_OR_SHE_NOUNS = new Set(`
         person man woman boy girl child baby infant kid teenager adult lady gentleman human individual
@@ -9851,6 +9851,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         witness victim suspect defendant plaintiff client customer tenant landlord landlady owner worker employee employer investor
         critic politician chef cook farmer merchant thief liar spy agent guide detective
         investigator interrogator examiner experimenter observer interviewer researcher guard referee umpire juror
+        waiter waitress cashier clerk banker baker barber butcher carpenter plumber electrician mechanic janitor secretary receptionist
+        accountant architect dentist pharmacist therapist psychologist psychiatrist journalist reporter editor photographer designer
+        producer director founder organizer coordinator supervisor assistant veterinarian attorney prosecutor pastor chaplain midwife
+        paramedic firefighter fireman policeman policewoman salesman saleswoman salesperson businessman businesswoman chairman chairwoman
+        spokesman spokeswoman spokesperson fisherman astronaut inventor explorer traveler traveller tourist passenger shopper buyer seller
+        shopkeeper nanny babysitter caretaker caregiver volunteer resident visitor roommate classmate teammate coworker voter diplomat
+        ambassador lieutenant deputy ranger hunter shepherd miner pirate warrior veteran intern trainee novice beginner toddler youngster
+        orphan heir heiress hostess stewardess sibling twin winner loser champion competitor contestant applicant opponent supporter
+        bachelor spinster
     `.trim().split(/\s+/));
     // Animals, too, may be "he" or "she", and so compete with a name for one:
     // in "Mary's dog barked and she ran", "she" may be the dog.
@@ -10133,6 +10142,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 np.push(y);
             }
             if (!np.length) return;
+            // "Bob, a baker, makes cakes": a phrase set off by commas after a
+            // name says who the name is -- no one of its own to point back to
+            // (r27.222; "them" had been "the baker" or "cakes").
+            const npEnd = toks.indexOf(np[np.length - 1]);
+            if (k > 1 && toks[k - 1].l === ',' && /^[A-Z][a-z]/.test(toks[k - 2].w) && toks[npEnd + 1] && toks[npEnd + 1].l === ',') return;
             const det = /^(?:a|an|some|one|another)$/.test(x.l) ? 'the' : /'s$/.test(x.l) ? x.w : x.l;
             const indef = /^(?:a|an|some|one|another)$/.test(x.l);
             // Its words as the box spells them, its commas too.

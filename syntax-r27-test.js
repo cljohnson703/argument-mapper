@@ -1801,6 +1801,24 @@ console.log('\n-- r27.221: "both" is for two; three or more, said as a list --')
     ok(two.labels[0] === 'possibly both bob left and mary cried', 'two clauses, "both" as before', J(two.labels));
 }
 
+console.log('\n-- r27.222: "waiter" and the other nouns that name a person; a phrase set off after a name --');
+{
+    // The third of the five bugs reported with r27.215.
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.message; });`);
+    const people = ['The waiter left, and then he cried.', 'The cashier left, and then she cried.', 'The journalist left, and then she cried.'].map(notes);
+    ok(people[0].includes('read with “he” as “the waiter”, the one it can be in this box') && people[1].includes('read with “she” as “the cashier”, the one it can be in this box') &&
+        people[2].includes('read with “she” as “the journalist”, the one it can be in this box'),
+        '"the waiter", "the cashier", "the journalist": someone a pronoun can be (it had had nothing in the box to refer to)', J(people));
+    const sexed = [notes('The waitress left, and then he cried.'), notes('The bachelor left, and then she cried.')];
+    ok(sexed[0].some(n => /“he” cannot be “the waitress”/.test(n)) && sexed[1].some(n => /“she” cannot be “the bachelor”/.test(n)),
+        'a waitress is she, a bachelor he', J(sexed));
+    const fan = notes('The fan broke, and then it fell.');
+    ok(fan.includes('read with “it” as “the fan”, the one it can be in this box'), 'and not "fan", which is also a thing', J(fan));
+    const apposed = notes('Bob, a baker, makes cakes and sells them.');
+    ok(apposed.includes('read with “them” as “cakes”, the one it can be in this box'),
+        '"Bob, a baker, makes cakes and sells them": "a baker" says who Bob is, and is no one "them" can be', J(apposed));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
