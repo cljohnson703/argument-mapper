@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.229';
+    const APP_BUILD = '2026-11-15 r27.230';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -12721,6 +12721,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return [tokens];
     }
+    // Names joined as the subject of a relative clause: "Bob and Ann love",
+    // "both Bob and Ann love", "Bob and Ann both love", "Bob and Ann together
+    // love" -- the two names, what is said, and the word that says each or
+    // together (r27.230). Or null.
+    function claimRelativeJoinedNames(tokens) {
+        const w = tokens.map(claimWord);
+        let i = 0, marked = null;
+        if (w[0] === 'both') { marked = 'both'; i = 1; }
+        if (!(/^\uE000[a-z]/.test(tokens[i] || '') && w[i + 1] === 'and' && /^\uE000[a-z]/.test(tokens[i + 2] || ''))) return null;
+        let k = i + 3;
+        if (!marked && /^(?:both|together)$/.test(w[k] || '')) marked = w[k++];
+        const vp = tokens.slice(k);
+        if (!vp.length || vp.some(x => /^(?:and|or|but|nor|that|which|who|whom|together)$/.test(claimWord(x)))) return null;
+        return { names: [tokens[i], tokens[i + 2]], vp, marked };
+    }
     const CLAIM_GAP = '\uE000gapk';
     function claimObjectRelativeProp(tokens) {
         if (!tokens.length || !/^\uE000[a-z]/.test(tokens[0])) return null;
@@ -18282,6 +18297,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         } else {
             ands = splitClaimOn(s, 'and|&|∧');
             ors = splitClaimOn(s, 'or|∨');
+            // A part that ends on "that" and a name is no clause: "There is a
+            // piano that Bob and Ann lifted" joins the names (r27.230; it had
+            // been "there is a piano that Bob", and "Ann lifted").
+            if (ands && ands.slice(0, -1).some(g => /(?:^|\s)(?:that|which|who|whom)\s+\uE000[a-z][a-z'-]*$/.test(g.text.trim()))) ands = null;
         }
         // A bracketed part is a whole claim: nothing is shared across it; nor
         // across a group that "both", "either" or "neither" opens.
@@ -18325,6 +18344,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (ands && ands.alt) {
             const label = gs => gs.map((g, i) => { const sep = String(g.sep || '').trim(); return (i ? (sep === ',' ? ', ' : ', ' + sep.replace(/^,\s*/, '') + ' ') : '') + g.text; }).join('');
             return claimAmbiguous('"and" can group this two ways', [ands, ands.alt].map(gs => ({ label: label(gs), build: build('and', gs) })), true) || claimAtom(s);
+        }
+        // "There is a car that Mary bought and Bob sold": "and" may join what
+        // is said of the car, or two claims -- asked, each reading worded so
+        // that it reads back (r27.230; it had been two claims, the second
+        // "Bob sold"). With a comma before it, two claims.
+        if (ands && ands.length === 2 && !/,/.test(ands[1].sep || '')) {
+            const a = ands[0].text.trim(), b = ands[1].text.trim(), bt = claimTokens(b), rel = a + ' and that ' + b;
+            if (/^there (?:is|are|was|were) .+ (?:that|which) \uE000[a-z][a-z'-]* \S/.test(a) && /^\uE000[a-z]/.test(bt[0] || '') && bt.length > 1 &&
+                claimQuietly(() => claimObjectRelativeProp(bt)) && claimQuietly(() => { const f = readClaim(rel); return !!f && f.kind === 'some'; }))
+                return claimAmbiguous('"and" can group this two ways', [{ label: rel, build: () => readClaim(rel) }, { label: a + ', and ' + b, build: build('and', ands) }], true) || claimAtom(s);
         }
         if (ands) return build('and', ands)();
         if (ors) return build('or', ors)();
@@ -18611,6 +18640,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // said of the thing -- the last as what is said of it, the others
             // with its noun (r27.219).
             const each = claimRelativeClauses(t.slice(r + 1)), said = c => claimObjectRelativeProp(c) || (/^\uE000/.test(c[0]) ? null : verbPhraseProp(c));
+            // "There is a dog that Bob and Ann love": said of each, or of the
+            // two together, as "Bob and Ann love Fido" is asked (r27.230;
+            // "and ann love" had been Bob's verb). "Both" says each, and
+            // "together" the two; so does a verb said only of each, or only of
+            // the two.
+            const joined = !denied && claimRelativeJoinedNames(t.slice(r + 1));
+            if (joined) {
+                const kind = restrictorProp(t.slice(0, r)), names = joined.names, vp = joined.vp, one = n => said([n].concat(vp));
+                const eachForm = () => { const ps = names.map(one); return kind && ps.every(Boolean) ? { kind: 'some', subject: restrictorProp(t.slice(0, r + 1).concat([names[0]], vp)), predicate: ps[1] } : null; };
+                const togetherForm = () => { const p = one(names[0]), group = names.map(claimWord).join(' and ') + ' together';
+                    return kind && p ? { kind: 'some', subject: kind, predicate: p.replace(/^(\u00ac?\^)[^|]+\|/, '$1' + group + '|') } : null; };
+                // Its object, the thing, put back for the test: "love it" (with
+                // nothing after it, "love" is said of each).
+                const withObject = vp.concat(['it']);
+                if (joined.marked === 'both' || (!joined.marked && claimEachOnly(withObject))) return eachForm();
+                if (joined.marked === 'together' || claimTogetherOnly(withObject)) return togetherForm();
+                const head = ['there', verb].concat(tokens.slice(0, tokens.length - t.length + r + 1)).join(' '), pair = names.join(' and ');
+                return claimAmbiguous('"' + names.map(claimWord).join(' and ') + '" can be said of each, or of them together', [
+                    { label: head + ' both ' + pair + ' ' + vp.join(' '), build: eachForm },
+                    { label: head + ' ' + pair + ' together ' + vp.join(' '), build: togetherForm }], false) || claimAtom(['there', verb].concat(tokens).join(' '));
+            }
             const last = each.length > 1 ? said(each[each.length - 1]) : null;
             const subject = restrictorProp(last ? t.slice(0, r).concat(...each.slice(0, -1).map((c, i) => (i ? ['and', 'that'] : ['that']).concat(c))) : t.slice(0, r));
             const predicate = last || claimObjectRelativeProp(t.slice(r + 1)) || verbPhraseProp(t.slice(r + 1));

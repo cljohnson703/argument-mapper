@@ -4,6 +4,27 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: names joined in a relative clause, and "a car that Mary bought and Bob sold" (r27.230)
+
+The user:
+* Of the list with "a dog that Bob and Ann love" and "a car that Mary bought and Bob sold": "Fix them in order." This is the fifth.
+
+Changes:
+* "There is a dog that Bob and Ann love" had read "Bob" as the clause's subject and "and ann love" as its verb. Names joined there are read as in a claim of their own: "Bob and Ann love Fido" asks whether "love" is said of each or of the two together, and so does this. Its readings are "There is a dog that both Bob and Ann love" and "There is a dog that Bob and Ann together love", and each reads back asking nothing.
+* With "both" or "together" written, it asks nothing. So with a verb said only of each, or only of the two, as in a claim of their own.
+* So "There is a piano that Bob and Ann lifted". It had been two claims, "there is a piano that Bob" and "Ann lifted". A part that ends on "that" and a name is no clause, so "It is clear that Bob and Ann left" is one claim too; it had been "it is clear that Bob" and "Ann left".
+* "There is a car that Mary bought and Bob sold" had been two claims, the second "Bob sold". By grammar, "and" may join what is said of the car, or two claims, so it is asked, as "and" is in "Bob met Al and Cy and Al met Dee". The readings are "There is a car that Mary bought and that Bob sold" and "There is a car that Mary bought, and Bob sold".
+* With a comma before the "and", it is two claims, as before.
+* Until a question is answered, the box is read as written, one claim with nothing inside it used, as "Bob and Ann love Fido" is.
+* Not yet: such a clause in a subject ("The dog that Bob and Ann walked barked"), three names or more, and a pronoun as a joined subject.
+
+Tests:
+* New in syntax-r27-test.js, which has 260 checks: "a dog that Bob and Ann love", asked, and its readings; "both" and "together"; "a piano that Bob and Ann lifted"; "a car that Mary bought and Bob sold", asked, and its readings; with a comma; "It is clear that Bob and Ann left".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: a plural after a verb no list knows (r27.229)
 
 The user:

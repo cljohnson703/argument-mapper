@@ -1948,6 +1948,36 @@ console.log('\n-- r27.229: a plural after a verb no list knows: "Bob grades pape
     ok(before.includes('read with “they” as “Ravens”, the one it can be in this box'), 'a plural before it still comes first, as since r27.109: "Ravens eat worms and they fly"', J(before));
 }
 
+console.log('\n-- r27.230: names joined in a relative clause; "a car that Mary bought and Bob sold" --');
+{
+    const asked = t => ev(`state.logic = { base: 'standard', rules: { semantic: 'always' } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var amb = r.notes.filter(function (n) { return n.kind === 'ambiguous'; });
+        var out = { key: r.form ? claimUnmarked(claimKey(r.form)) : null, q: amb.map(function (n) { return claimUnmarked(n.message); }),
+            readings: amb.length ? amb[0].readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }) : [],
+            back: amb.length ? amb[0].readings.map(function (l) { var f = parseClaimFull(l); return [f.form ? claimUnmarked(claimKey(f.form)) : null, f.notes.filter(function (n) { return n.kind === 'ambiguous'; }).length]; }) : [] };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return out;`);
+    const dog = asked('There is a dog that Bob and Ann love.');
+    ok(J(dog.q) === J(['"bob and ann" can be said of each, or of them together']) &&
+        J(dog.readings) === J(['There is a dog that both Bob and Ann love.', 'There is a dog that Bob and Ann together love.']) &&
+        J(dog.back) === J([['E:(=dog&^bob|~love _)|^ann|~love _', 0], ['E:=dog|^bob and ann together|~love _', 0]]),
+        '"There is a dog that Bob and Ann love": said of each, or of the two together, asked as "Bob and Ann love Fido" is; each reading reads back asking nothing (it had read "and ann love" as Bob\'s verb)', J(dog));
+    const marked = ['There is a dog that both Bob and Ann love.', 'There is a dog that Bob and Ann together love.'].map(asked);
+    ok(marked.every(m => !m.q.length) && J(marked.map(m => m.key)) === J(['E:(=dog&^bob|~love _)|^ann|~love _', 'E:=dog|^bob and ann together|~love _']),
+        '"both" says each, and "together" the two: nothing asked', J(marked));
+    const piano = asked('There is a piano that Bob and Ann lifted.');
+    ok(J(piano.q) === J(['"bob and ann" can be said of each, or of them together']),
+        'so "there is a piano that Bob and Ann lifted" (it had been "there is a piano that Bob", and "Ann lifted": a part that ends on "that" and a name is no clause)', J(piano));
+    const car = asked('There is a car that Mary bought and Bob sold.');
+    ok(J(car.q) === J(['"and" can group this two ways']) &&
+        J(car.readings) === J(['There is a car that Mary bought and that Bob sold.', 'There is a car that Mary bought, and Bob sold.']) &&
+        J(car.back) === J([['E:(=car&^mary|~did bought _)|^bob|~did sold _', 0], ['C[E:=car|^mary|~did bought _;P:bob|~did sold]', 0]]),
+        '"There is a car that Mary bought and Bob sold": "and" may join what is said of the car, or two claims -- asked, each reading reading back (it had been two claims, the second "Bob sold")', J(car));
+    const comma = asked('There is a car that Mary bought, and Bob sold.');
+    ok(!comma.q.length && comma.key === 'C[E:=car|^mary|~did bought _;P:bob|~did sold]', 'with a comma before the "and", two claims, as before', J(comma));
+    const clear = ev(`var r = parseClaimFull('It is clear that Bob and Ann left.'); return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    ok(clear === 'P:it|=clear that bob and ann left', '"It is clear that Bob and Ann left" is one claim (it had been "it is clear that Bob", and "Ann left")', clear);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
