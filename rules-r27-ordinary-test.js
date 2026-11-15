@@ -424,7 +424,7 @@ console.log('\n-- 11. (r27.136) relations --');
             var art = function (w) { return /of$/.test(w) ? 'a ' : ''; };
             [[e[0], e[1]], [e[1], e[0]]].forEach(function (ab) {
                 var one = __step(['Kim is ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is ' + art(ab[1]) + ab[1] + ' Kim.');
-                var name = 'converses \u2018' + ab[0] + '\u2019 and \u2018' + ab[1] + '\u2019';
+                var name = 'converses \u201c' + ab[0] + '\u201d and \u201c' + ab[1] + '\u201d';
                 var no = __step(['Kim is not ' + art(ab[0]) + ab[0] + ' Lee.'], 'Lee is not ' + art(ab[1]) + ab[1] + ' Kim.');
                 if (CLAIM_RELATION_TWO_SENSES[ab[0]]) { if ((one && one.rule) || (no && no.rule)) out.two.push(ab[0] + ' / ' + ab[1]); return; }
                 if (!one || one.rule !== name) out.gives.push('Kim is ' + ab[0] + ' Lee / Lee is ' + ab[1] + ' Kim: ' + (one && one.rule));
@@ -456,7 +456,7 @@ console.log('\n-- 11. (r27.136) relations --');
     ok(g.label === 'Word meaning: relations' && g.on === true && J(g.rules) === J(['relations']) && g.after && /^Word meaning, not logic: "Bob is taller than Al" gives "Al is shorter than Bob"/.test(g.gloss || ''),
         'a group of its own, "Word meaning: relations", after "knows that", on by default, with its note', J(g));
     const off = without('relations', () => step(['Bob is taller than Al.'], 'Al is shorter than Bob.'));
-    ok(!off.rule && off.why === 'With Word meaning: relations switched on in the Logic panel, the premises would give “Al is shorter than Bob” by converses ‘taller than’ and ‘shorter than’.',
+    ok(!off.rule && off.why === 'With Word meaning: relations switched on in the Logic panel, the premises would give “Al is shorter than Bob” by converses “taller than” and “shorter than”.',
         'switched off: the check names the switch', J(off));
 }
 
@@ -527,8 +527,8 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
         [['The man is grateful that Mary came.'], 'The man is grateful.'], [['Bob might be relieved that Mary left.'], 'Bob might be relieved.'],
         [['Bob is very glad that Mary left.'], 'Bob is very glad.']];
     // As written (r27.184): "might" asks which is meant, with Semantic mode on.
-    ok(!asWritten(() => misses(GLAD, 'dropping a \u2018that\u2019 clause')).length, '"Bob is glad that Mary left" gives "Bob is glad", in any tense, after "might be" too (it had not)',
-        J(asWritten(() => misses(GLAD, 'dropping a \u2018that\u2019 clause'))));
+    ok(!asWritten(() => misses(GLAD, 'dropping a \u201cthat\u201d clause')).length, '"Bob is glad that Mary left" gives "Bob is glad", in any tense, after "might be" too (it had not)',
+        J(asWritten(() => misses(GLAD, 'dropping a \u201cthat\u201d clause'))));
     ok(step(['Bob is glad that Mary left.'], 'Mary left.').rule === 'factive verbs', '... and still gives "Mary left", by factive verbs');
     const NOT = [[['Bob is not glad that Mary left.'], 'Bob is not glad.'], [['Bob is glad.'], 'Bob is glad that Mary left.'], [['Bob is glad that Mary left.'], 'Al is glad.'],
         [['Bob believes that Mary left.'], 'Bob believes.'], [['Bob is certain that Mary left.'], 'Bob is certain.'], [['Bob is unaware that Mary left.'], 'Bob is unaware.'],
@@ -536,13 +536,13 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
     ok(!certified(NOT).length, 'not under "not", not added, not of another, not "believes" or "certain", not "unaware" (alone, read "not aware"); not "happy", "proud" or "sorry"',
         J(certified(NOT)));
     const proud = step(['Bob is proud that Mary won.'], 'Bob is proud.'), sorry = step(['Bob is sorry that you feel that way.'], 'Bob is sorry.');
-    ok(proud.why === 'On its own, \u2018proud\u2019 can mean \u201cvain\u201d, which \u2018proud that \u2026\u2019 need not; so \u201cBob is proud that Mary won\u201d does not give \u201cBob is proud\u201d.' &&
-        /^On its own, \u2018sorry\u2019 can mean \u201capologizing\u201d/.test(sorry.why), '"proud" and "sorry": the check says what the bare word can say', J([proud, sorry]));
+    ok(proud.why === 'On its own, \u201cproud\u201d can mean \u201cvain\u201d, which \u201cproud that \u2026\u201d need not; so \u201cBob is proud that Mary won\u201d does not give \u201cBob is proud\u201d.' &&
+        /^On its own, \u201csorry\u201d can mean \u201capologizing\u201d/.test(sorry.why), '"proud" and "sorry": the check says what the bare word can say', J([proud, sorry]));
     const g = ev(`var g = DEDUCTIVE_EXTENSIONS.find(function (x) { return x.id === 'modifiers'; }); return { rules: g.rules, gloss: LOGIC_GROUP_GLOSSES.modifiers };`);
     ok(J(g.rules) === J(['modifiers', 'that-clause', 'made-into']) && /"Bob is glad that Mary left" gives "Bob is glad"/.test(g.gloss) && /"Bob made the clay into a pot" gives "Bob made a pot"/.test(g.gloss),
         'a rule of the modifiers group, in its note -- and making X into Y (r27.202)', J(g));
     const off = without('that-clause', () => step(['Bob is glad that Mary left.'], 'Bob is glad.'));
-    ok(!off.rule && off.why === 'With dropping a \u2018that\u2019 clause switched on in the Logic panel (Word meaning: modifiers), the premises would give \u201cBob is glad\u201d.',
+    ok(!off.rule && off.why === 'With dropping a \u201cthat\u201d clause switched on in the Logic panel (Word meaning: modifiers), the premises would give \u201cBob is glad\u201d.',
         'switched off: the check names the switch', J(off));
     // Relations of two senses.
     const TWO = [[['The rope is shorter than the cable.'], 'The cable is taller than the rope.'], [['The rope is shorter than the cable.'], 'The cable is longer than the rope.'],
@@ -550,7 +550,7 @@ console.log('\n-- 15. (r27.141) a "that" clause dropped; relations of two senses
         [['Al is not shorter than Bob.'], 'Bob is not taller than Al.']];
     ok(!certified(TWO).length, '"shorter", "lighter", "thinner": no converse from them ("The rope is shorter than the cable" had given "The cable is taller than the rope")', J(certified(TWO)));
     const rope = step(...TWO[0]), thin = step(...TWO[3]);
-    ok(rope.why === '\u2018shorter\u2019 can mean less tall or less long, so \u201cThe rope is shorter than the cable\u201d does not give \u201cThe cable is taller than the rope\u201d; \u201cThe rope is shorter in height than the cable\u201d would.' &&
+    ok(rope.why === '\u201cshorter\u201d can mean less tall or less long, so \u201cThe rope is shorter than the cable\u201d does not give \u201cThe cable is taller than the rope\u201d; \u201cThe rope is shorter in height than the cable\u201d would.' &&
         /; \u201cBob is less thick than Al\u201d would\.$/.test(thin.why), 'the check says which senses, and how to say the one wanted', J([rope, thin]));
     const SAID = [[['The rope is shorter in length than the cable.'], 'The cable is longer than the rope.'], [['Al is shorter in height than Bob.'], 'Bob is taller than Al.'],
         [['The box is lighter in weight than the crate.'], 'The crate is heavier than the box.'], [['Bob is taller than Al.'], 'Al is shorter in height than Bob.'],

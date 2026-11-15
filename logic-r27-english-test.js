@@ -1284,7 +1284,7 @@ function reportCorpus(name, res) {
             return { rule: near && near.rule.name, text: d && d.text };
         });`);
         const [cap, plain, words, quant, denial, none] = Array.isArray(why) ? why : [];
-        ok(cap && cap.rule === 'modus ponens' && /‘republic’ and ‘Republic’ differ in capital letters/.test(cap.text),
+        ok(cap && cap.rule === 'modus ponens' && /“republic” and “Republic” differ in capital letters/.test(cap.text),
             'a claim a rule needs twice, spelled with different capitals, is a near miss: the rule it would follow by, and the letters that differ', J(cap));
         ok(plain && plain.rule === null && plain.text === null, 'a step spelled alike is no near miss', J(plain));
         ok(words && words.rule === null && words.text === null,
@@ -1309,7 +1309,7 @@ function reportCorpus(name, res) {
            spaced[1] && spaced[1].text === '✗ typo?' && /has a typo: two spaces after “If”/.test(spaced[1].title),
             'an extra space anywhere in a step -- between two logic words too -- holds it back, tagged "✗ typo?", with its fix', J(spaced));
         ok(spaced[2] && spaced[2].text === '✓ modus ponens', 'spaces at the end of a box are nothing', J(spaced[2]));
-        ok(quant && quant.rule === 'universal modus ponens' && /‘Raven’ and ‘raven’ differ in capital letters/.test(quant.text),
+        ok(quant && quant.rule === 'universal modus ponens' && /“Raven” and “raven” differ in capital letters/.test(quant.text),
             'so is a quantifier whose words are spelled otherwise in its case', J(quant));
         ok(denial && denial.rule === 'modus tollens' && /capital letters/.test(denial.text),
             'a denial may be worded any way, but the claim it denies must be spelled as written', J(denial));
@@ -1348,7 +1348,7 @@ function reportCorpus(name, res) {
             showHintToast = realHint;
             return { trees: state.trees.length, top: state.trees[0].id, hint: window.__hints.slice(-1)[0] };`);
         ok(toast && toast.trees === 1 && toast.top === 'G' &&
-           /Spelled the same way each time, these premises would give “Caesar won” by modus ponens, but ‘republic’ and ‘Republic’ differ in capital letters/.test(toast.hint || ''),
+           /Spelled the same way each time, these premises would give “Caesar won” by modus ponens, but “republic” and “Republic” differ in capital letters/.test(toast.hint || ''),
             'Derive Parent adds nothing for a near miss, and says what it would give and what to respell', J(toast));
         const spacedToast = T(W, `
             window.__hints = []; var realHint = showHintToast; showHintToast = function (t, force) { window.__hints.push(t); return true; };
@@ -1357,7 +1357,7 @@ function reportCorpus(name, res) {
             toggleStepChecks(['G']);
             showHintToast = realHint;
             return { trees: state.trees.length, hint: window.__hints.slice(-1)[0] };`);
-        ok(spacedToast && spacedToast.trees === 1 && /Without the extra space, these premises would give “The ground is wet” by modus ponens, but ‘It {2}rains’ has an extra space/.test(spacedToast.hint || ''),
+        ok(spacedToast && spacedToast.trees === 1 && /Without the extra space, these premises would give “The ground is wet” by modus ponens, but “It {2}rains” has an extra space/.test(spacedToast.hint || ''),
             'Derive Parent points out an extra space too, and adds nothing', J(spacedToast));
         const kept = T(W, `var d = deriveConclusion(['If God exists, then the Republic is safe', 'The Republic is not safe']); return d && d.text;`);
         ok(kept === 'God does not exist', 'a derived conclusion keeps the premises’ capitals', J(kept));

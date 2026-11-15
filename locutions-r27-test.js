@@ -346,12 +346,12 @@ console.log('\n-- 9. "it rains" and "it is raining" --');
         var s = collectDeductiveSteps(state.trees)[0];
         return { tag: deductiveStepTagText(s), why: s.why && s.why.text, rule: s.rule ? s.rule.name : null };`);
     const mp = why(['If it rains, then the ground is wet.', 'It is raining.'], 'The ground is wet.');
-    ok(!mp.rule && mp.why === 'Worded the same way each time, the premises would give “The ground is wet” by modus ponens, but ‘it is raining’ and ‘it rains’ differ: “is raining” in one where the other has “rains”.',
+    ok(!mp.rule && mp.why === 'Worded the same way each time, the premises would give “The ground is wet” by modus ponens, but “it is raining” and “it rains” differ: “is raining” in one where the other has “rains”.',
         'a step that would follow but for them says so -- and does not follow', J(mp));
     const mt = why(['If it rains, then the ground is wet.', 'The ground is not wet.'], 'It is not raining.');
-    ok(!mt.rule && /would give “It is not raining” by modus tollens, but ‘it is raining’ and ‘it rains’ differ/.test(mt.why || ''), 'so a denial: modus tollens', J(mt));
+    ok(!mt.rule && /would give “It is not raining” by modus tollens, but “it is raining” and “it rains” differ/.test(mt.why || ''), 'so a denial: modus tollens', J(mt));
     const ds = why(['Either Poe flies or Mary sings.', 'Poe is not flying.'], 'Mary sings.');
-    ok(!ds.rule && /would give “Mary sings” by disjunctive syllogism, but ‘poe is flying’ and ‘poe flies’ differ: “is flying” in one where the other has “flies”/.test(ds.why || ''),
+    ok(!ds.rule && /would give “Mary sings” by disjunctive syllogism, but “poe is flying” and “poe flies” differ: “is flying” in one where the other has “flies”/.test(ds.why || ''),
         'disjunctive syllogism', J(ds));
     ok(refused(['Poe flies.'], 'Poe is flying.') && refused(['Poe is flying.'], 'Poe flies.'), 'neither gives the other');
 }

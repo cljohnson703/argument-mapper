@@ -457,8 +457,8 @@ try {
             derived(['Only Bob runs']) === null,
             'it offers the substitution of equivalents, keeps a title\'s full stop, and derives nothing from an ambiguous box');
         // Part of a name an identity gives whole says so, in the map's own spelling.
-        ok(/Did you mean \u2018Clark Kent\u2019 where it says \u2018Kent\u2019\? The identity is about Clark Kent; if Kent is someone else, it says nothing about them\./.test(step(['Clark Kent is Superman', 'Kent wears glasses'], 'Superman wears glasses').why) &&
-            /Did you mean \u2018Dr\. Jekyll\u2019 where it says \u2018Jekyll\u2019\?/.test(step(['Dr. Jekyll is Mr. Hyde', 'Jekyll is a doctor'], 'Mr. Hyde is a doctor').why),
+        ok(/Did you mean \u201cClark Kent\u201d where it says \u201cKent\u201d\? The identity is about Clark Kent; if Kent is someone else, it says nothing about them\./.test(step(['Clark Kent is Superman', 'Kent wears glasses'], 'Superman wears glasses').why) &&
+            /Did you mean \u201cDr\. Jekyll\u201d where it says \u201cJekyll\u201d\?/.test(step(['Dr. Jekyll is Mr. Hyde', 'Jekyll is a doctor'], 'Mr. Hyde is a doctor').why),
             'a step that uses part of a name an identity gives whole asks whether the whole name was meant, since it may be someone else');
         // A very long step still gets its check, but not the near-miss hints (r27.43).
         const longPremise = Array.from({ length: 110 }, (_, k) => 'Bob' + k + ' runs').join(' and ');
@@ -663,9 +663,9 @@ try {
         ok(!rule(['Every bird that is black or white is happy', 'Tweety is a bird', 'Tweety is red'], 'Tweety is happy'),
             'but an alternative the kind does not offer shows nothing');
         // A universal short of its case says what is missing.
-        ok(/once it is shown that \u2018Tweety is a bird\u2019/.test(step(['Every bird that is black or white is happy', 'Tweety is black'], 'Tweety is happy').why) &&
-            /once it is shown that \u2018Fido sings\u2019/.test(step(['Every raven is black if it sings', 'Fido is a raven'], 'Fido is black').why) &&
-            /once it is shown that \u2018Tweety is black or white\u2019/.test(step(['Every bird that is black or white is happy', 'Tweety is a bird', 'Tweety is red'], 'Tweety is happy').why),
+        ok(/once it is shown that \u201cTweety is a bird\u201d/.test(step(['Every bird that is black or white is happy', 'Tweety is black'], 'Tweety is happy').why) &&
+            /once it is shown that \u201cFido sings\u201d/.test(step(['Every raven is black if it sings', 'Fido is a raven'], 'Fido is black').why) &&
+            /once it is shown that \u201cTweety is black or white\u201d/.test(step(['Every bird that is black or white is happy', 'Tweety is a bird', 'Tweety is red'], 'Tweety is happy').why),
             'a universal short of its case says, in English, what the case still needs');
         // "Only Bob runs" and "even if": flagged, and each reading offered --
         // since r27.166 not said to be the one the step needs (the user:
@@ -1121,7 +1121,7 @@ try {
         ok(tagOf(['It has not been shown that God Exists'], 'God exists', 'weak-objection')[0] === '\u2717 bare challenge' &&
             tagOf(['God does not Exist'], 'God exists', 'objection')[0] === '\u2717 bare denial' &&
             tagOf(['God Exists'], 'God exists')[0] === '\u2717 restates its box' &&
-            spelled[0] === '\u2717 spelled differently' && /\u2018Exists\u2019 and \u2018exists\u2019 differ in capital letters/.test(spelled[1]) && !/\u2018God\u2019/.test(spelled[1]),
+            spelled[0] === '\u2717 spelled differently' && /\u201cExists\u201d and \u201cexists\u201d differ in capital letters/.test(spelled[1]) && !/\u201cGod\u201d/.test(spelled[1]),
             'a bare denial, challenge or restatement is one however it is spelled; a spelling hint names only the word that differs', J(spelled));
         // "It is the case that" groups all that follows it, as brackets do --
         // to the end, or to the "then" of its if-clause.

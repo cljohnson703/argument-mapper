@@ -68,7 +68,7 @@ console.log('\n-- 1. every pair, both ways --');
                 // that shows it (r27.129).
                 var say = e.verb ? verb : adj, one = __step([say(ab[0], false)], say(ab[1], true)),
                     back = __step([say(ab[0], true)].concat(e.sort ? ['Kim is a ' + e.sort + '.'] : []), say(ab[1], false));
-                var name = (e.both ? 'contradictories' : 'contraries') + ' \\u2018' + ab[0] + '\\u2019 and \\u2018' + ab[1] + '\\u2019';
+                var name = (e.both ? 'contradictories' : 'contraries') + ' \\u201c' + ab[0] + '\\u201d and \\u201c' + ab[1] + '\\u201d';
                 if (!one || one.rule !== name) gives.push(say(ab[0], false) + ' / ' + say(ab[1], true) + ': ' + (one && one.rule));
                 if (e.both && (!back || back.rule !== name)) reverse.push(say(ab[0], true) + ' / ' + say(ab[1], false) + ': ' + (back && back.rule));
                 if (!e.both && back && back.rule) wrong.push(say(ab[0], true) + ' / ' + say(ab[1], false) + ': ' + back.rule);
@@ -96,8 +96,8 @@ console.log('\n-- 2. tenses, kinds, identity, objections --');
         step(['Socrates will lack a body.'], 'Socrates will not have a body.'),
         step(['The law forbade the trade.'], 'The law did not allow the trade.'),
     ];
-    ok(J(tense.map(t => t && t.rule)) === J(['contradictories ‘lack’ and ‘have’', 'contradictories ‘have’ and ‘lack’', 'contraries ‘lose’ and ‘win’',
-        'contraries ‘dead’ and ‘alive’', 'contraries ‘dead’ and ‘alive’', 'contradictories ‘lack’ and ‘have’', 'contraries ‘forbid’ and ‘allow’']),
+    ok(J(tense.map(t => t && t.rule)) === J(['contradictories “lack” and “have”', 'contradictories “have” and “lack”', 'contraries “lose” and “win”',
+        'contraries “dead” and “alive”', 'contraries “dead” and “alive”', 'contradictories “lack” and “have”', 'contraries “forbid” and “allow”']),
         'in any tense: "lacked", "did not have", "lost", "was dead", "will be dead", "will lack", "forbade"', J(tense));
     const kinds = [
         step(['All zombies are dead.'], 'No zombie is alive.'),
@@ -105,7 +105,7 @@ console.log('\n-- 2. tenses, kinds, identity, objections --');
         step(['No zombie has consciousness.'], 'Every zombie lacks consciousness.'),
         step(['Some zombies are dead.'], 'Some zombies are not alive.'),
     ];
-    ok(J(kinds.map(t => t && t.rule)) === J(['contraries ‘dead’ and ‘alive’', 'contradictories ‘lack’ and ‘have’', 'contradictories ‘have’ and ‘lack’', 'contraries ‘dead’ and ‘alive’']),
+    ok(J(kinds.map(t => t && t.rule)) === J(['contraries “dead” and “alive”', 'contradictories “lack” and “have”', 'contradictories “have” and “lack”', 'contraries “dead” and “alive”']),
         'of all or some of a kind: "all zombies are dead" gives "no zombie is alive"', J(kinds));
     const same = [
         step(['Kim is different from Lee.'], 'Kim is not the same as Lee.'),
@@ -113,11 +113,11 @@ console.log('\n-- 2. tenses, kinds, identity, objections --');
         step(['Kim is not distinct from Lee.'], 'Kim is identical to Lee.'),
         step(['The mind is distinct from the brain.'], 'The mind is not identical to the brain.'),
     ];
-    ok(J(same.map(t => t && t.rule)) === J(['contradictories ‘different from’ and ‘same as’', 'contradictories ‘same as’ and ‘different from’',
-        'contradictories ‘distinct from’ and ‘identical to’', 'contradictories ‘distinct from’ and ‘identical to’']),
+    ok(J(same.map(t => t && t.rule)) === J(['contradictories “different from” and “same as”', 'contradictories “same as” and “different from”',
+        'contradictories “distinct from” and “identical to”', 'contradictories “distinct from” and “identical to”']),
         'of an identity too: "Kim is the same as Lee", read as one, is the denial of "Kim is different from Lee"', J(same));
     const objection = [step(['Pre-linguistic humans have minds.'], 'Pre-linguistic humans lack minds.', 'objection'), step(['Mary is sad.'], 'Mary is happy.', 'objection')];
-    ok(J(objection.map(t => t && t.rule)) === J(['contradictories ‘have’ and ‘lack’', 'contraries ‘sad’ and ‘happy’']),
+    ok(J(objection.map(t => t && t.rule)) === J(['contradictories “have” and “lack”', 'contraries “sad” and “happy”']),
         'an objection that says the opposite of the box it attacks is certified', J(objection));
     const not = [step(['Mary is unhappy.'], 'Bob is not happy.'), step(['Mary rejects the theory.'], 'Mary does not accept the method.'),
         step(['The action is determined.'], 'The action is not free.'), step(['Mary is very happy.'], 'Mary is not sad.')];
@@ -127,24 +127,24 @@ console.log('\n-- 2. tenses, kinds, identity, objections --');
 console.log('\n-- 3. hints --');
 {
     const reversed = step(['Mary is not happy.'], 'Mary is unhappy.');
-    ok(!reversed.rule && reversed.why === '‘happy’ and ‘unhappy’ are contraries: one can be neither, so “Mary is not happy” does not give “Mary is unhappy”.',
+    ok(!reversed.rule && reversed.why === '“happy” and “unhappy” are contraries: one can be neither, so “Mary is not happy” does not give “Mary is unhappy”.',
         'contraries taken for contradictories: said so', J(reversed));
     const lost = step(['Mary did not win the race.'], 'Mary lost the race.');
-    ok(!lost.rule && /^‘win’ and ‘lose’ are contraries: one can be neither, so “Mary did not win the race” does not give “Mary lost the race”\.$/.test(lost.why), 'so of verbs', J(lost));
+    ok(!lost.rule && /^“win” and “lose” are contraries: one can be neither, so “Mary did not win the race” does not give “Mary lost the race”\.$/.test(lost.why), 'so of verbs', J(lost));
     const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: { semantic: false } }; setDeductiveRule('opposites', false);
         var r = __step(['Mary is unhappy.'], 'Mary is not happy.'); state.logic = was; claimRulesCache = null; return r;`);
-    ok(!off.rule && off.why === 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give “Mary is not happy” by contraries ‘unhappy’ and ‘happy’.',
+    ok(!off.rule && off.why === 'With Word meaning: contraries and contradictories switched on in the Logic panel, the premises would give “Mary is not happy” by contraries “unhappy” and “happy”.',
         'switched off in the Logic panel: the step is not taken, and the hint says what would take it', J(off));
     // "Metaphysically possible": "possible" asks which kind (r27.172).
     const two = step(['If zombies are metaphysically possible, then pre-linguistic humans lack minds.', 'Pre-linguistic humans have minds.'], 'Zombies are not metaphysically possible.');
-    ok(!two.rule && two.why === 'Getting to “Zombies are not metaphysically possible” takes two steps. First, “Pre-linguistic humans have minds” gives “Pre-linguistic humans do not lack minds” by contradictories ‘have’ and ‘lack’. ' +
+    ok(!two.rule && two.why === 'Getting to “Zombies are not metaphysically possible” takes two steps. First, “Pre-linguistic humans have minds” gives “Pre-linguistic humans do not lack minds” by contradictories “have” and “lack”. ' +
         'Then “Pre-linguistic humans do not lack minds” and “If zombies are metaphysically possible, then pre-linguistic humans lack minds” give “Zombies are not metaphysically possible” by modus tollens. ' +
         'Add “Pre-linguistic humans do not lack minds” as a box of its own, with “Pre-linguistic humans have minds” under it.',
         'two rules in one step: the claim between them, in the box\'s own words', J(two));
     const words = [step(['If zombies are metaphysically possible, then Mary lacks a mind.', 'Mary has a mind.'], 'Zombies are not metaphysically possible.'),
         step(['If the trial was fair, then the man was guilty.', 'The man was innocent.'], 'The trial was not fair.')];
-    ok(/First, “Mary has a mind” gives “It is not the case that Mary lacks a mind” by contradictories ‘have’ and ‘lack’\./.test(words[0].why) &&
-        /First, “The man was innocent” gives “The man was not guilty” by contradictories ‘innocent’ and ‘guilty’\./.test(words[1].why),
+    ok(/First, “Mary has a mind” gives “It is not the case that Mary lacks a mind” by contradictories “have” and “lack”\./.test(words[0].why) &&
+        /First, “The man was innocent” gives “The man was not guilty” by contradictories “innocent” and “guilty”\./.test(words[1].why),
         'where "does not lack a mind" would not read so, "it is not the case that ..."; a copula in the past kept', J(words.map(w => w.why)));
     const dead = step(['If Socrates is dead, then the city mourns.', 'Socrates is not alive.'], 'The city mourns.');
     ok(!dead.rule && !/takes two steps/.test(dead.why), 'and no claim between where contraries give none ("not alive" does not give "dead")', J(dead));
@@ -170,8 +170,8 @@ console.log('\n-- 5. "tall" and "short"; a noun after "a" --');
     const tall = [['John is tall.', 'John is not short.'], ['The rope is long.', 'The rope is not short.'], ['The box is heavy.', 'The box is not light.'],
         ['The room is dark.', 'The room is not light.'], ['The pillow is soft.', 'The pillow is not hard.'], ['The exam is easy.', 'The exam is not hard.']]
         .map(([p, c]) => step([p], c).rule);
-    ok(J(tall) === J(['contraries ‘tall’ and ‘short’', 'contraries ‘long’ and ‘short’', 'contraries ‘heavy’ and ‘light’', 'contraries ‘dark’ and ‘light’',
-        'contraries ‘soft’ and ‘hard’', 'contraries ‘easy’ and ‘hard’']),
+    ok(J(tall) === J(['contraries “tall” and “short”', 'contraries “long” and “short”', 'contraries “heavy” and “light”', 'contraries “dark” and “light”',
+        'contraries “soft” and “hard”', 'contraries “easy” and “hard”']),
         '"John is tall" gives "John is not short"; so "long" and "short", "heavy" and "light", "dark" and "light", "soft" and "hard", "easy" and "hard"', J(tall));
     const not = [['John is not short.', 'John is tall.'], ['The lamp is a light.', 'The lamp is not heavy.'], ['Free speech is a right.', 'Free speech is not wrong.'],
         ['John is short of money.', 'John is not tall.']].map(([p, c]) => step([p], c).rule);
@@ -181,9 +181,9 @@ console.log('\n-- 5. "tall" and "short"; a noun after "a" --');
     // the head of a phrase a determiner opens is a noun, whatever the
     // determiner; an adjective before its noun is not.
     const nouns = [['Voting is the right.', 'Voting is not wrong.'], ['The lamp is my light.', 'The lamp is not heavy.']].map(([p, c]) => step([p], c).rule);
-    ok(nouns.every(r => !r) && step(['Kim is a friend of Lee.'], 'Kim is not an enemy of Lee.').rule === 'contraries ‘friend of’ and ‘enemy of’',
+    ok(nouns.every(r => !r) && step(['Kim is a friend of Lee.'], 'Kim is not an enemy of Lee.').rule === 'contraries “friend of” and “enemy of”',
         'by the syntax tree: "the right", "my light" are nouns, as "a light" is; "a friend of Lee" still the pair "friend of"', J(nouns));
-    ok(step(['Mary is a good person.'], 'Mary is not a bad person.').rule === 'contraries ‘good’ and ‘bad’', '"a good person": an adjective before its noun, as before');
+    ok(step(['Mary is a good person.'], 'Mary is not a bad person.').rule === 'contraries “good” and “bad”', '"a good person": an adjective before its noun, as before');
     const note = ev('return [DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === "opposites"; }).gloss, CLAIM_OPPOSITES.length];');
     ok(note[0].indexOf('a list of ' + note[1] + ' pairs') === 0 && /“?"tall" and "short"/.test(note[0]), 'the rule\'s note counts the pairs as the list has them, and names "tall" and "short"', J(note));
 }
@@ -200,20 +200,20 @@ console.log('\n-- 6. a word of two senses, verbs of change, an outcome, a sort (
     const kept = [['Mary lost the race.', 'Mary did not win the race.'], ['Bob passed the exam.', 'Bob did not fail the exam.'],
         ['The man was guilty.', 'The man was not innocent.'], ['The man was innocent.', 'The man was not guilty.'], ['Bob is not married.', 'Bob is unmarried.']]
         .map(([p, c]) => step([p], c).rule);
-    ok(J(kept) === J(['contraries ‘lose’ and ‘win’', 'contraries ‘pass’ and ‘fail’', 'contradictories ‘guilty’ and ‘innocent’', 'contradictories ‘innocent’ and ‘guilty’',
-        'contradictories ‘married’ and ‘unmarried’']), 'an outcome of what it is of; "guilty" and "innocent" deny each other of anything', J(kept));
+    ok(J(kept) === J(['contraries “lose” and “win”', 'contraries “pass” and “fail”', 'contradictories “guilty” and “innocent”', 'contradictories “innocent” and “guilty”',
+        'contradictories “married” and “unmarried”']), 'an outcome of what it is of; "guilty" and "innocent" deny each other of anything', J(kept));
     const shown = step(['The man was not guilty.', 'The man is a person.'], 'The man was innocent.');
     const unused = step(['The man was guilty.', 'The man is a person.'], 'The man was not innocent.');
-    ok(shown.rule === 'contradictories ‘guilty’ and ‘innocent’' && !unused.rule && /is not needed/.test(unused.why),
+    ok(shown.rule === 'contradictories “guilty” and “innocent”' && !unused.rule && /is not needed/.test(unused.why),
         'from "not guilty", "innocent" takes a premise that the man is a person -- and only there is it used', J([shown, unused]));
     const hint = step(['Socrates was not guilty.'], 'Socrates was innocent.');
-    ok(!hint.rule && hint.why === '‘guilty’ and ‘innocent’ are contradictories only of a person: “Socrates was not guilty” gives “Socrates was innocent” once it is shown that ‘Socrates is a person’.',
+    ok(!hint.rule && hint.why === '“guilty” and “innocent” are contradictories only of a person: “Socrates was not guilty” gives “Socrates was innocent” once it is shown that “Socrates is a person”.',
         'without it, the hint says what it needs', J(hint));
     // Nor is either offered as the claim between two rules.
     const between = [step(['Bob won.', 'If Bob did not lose, then Al is happy.'], 'Al is happy.'),
         step(['The man was not guilty.', 'If the man was innocent, then the trial was fair.'], 'The trial was fair.'),
         step(['Mary lost the race.', 'If Mary did not win the race, then Al is sad.'], 'Al is sad.')].map(s => s.why);
-    ok(!/takes two steps/.test(between[0]) && !/takes two steps/.test(between[1]) && /First, “Mary lost the race” gives “Mary did not win the race” by contraries ‘lose’ and ‘win’\./.test(between[2]),
+    ok(!/takes two steps/.test(between[0]) && !/takes two steps/.test(between[1]) && /First, “Mary lost the race” gives “Mary did not win the race” by contraries “lose” and “win”\./.test(between[2]),
         'no step between "Bob won" and "Bob did not lose", nor "not guilty" and "innocent"; "lost the race", "did not win the race" still', J(between));
 }
 

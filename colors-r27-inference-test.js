@@ -924,7 +924,7 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
             J(runs(tall.boxes[0], /^ic-c/)) === J(['Bob is', 'tall']) && J(runs(tall.boxes[0], /^ic-u/)) === J(['very']) &&
             J(runs(store.boxes[0], /^ic-c/)) === J(['Bob', 'ran to the store']) && J(runs(store.boxes[0], /^ic-u/)) === J(['quickly']),
             'a modifier dropped: "Bob ran" goes on, "quickly" dimmed (it had dimmed "ran quickly"); "very" in "very tall"; "quickly" before the verb', J([ran, tall, store]));
-        ok(glad.rule === 'dropping a \u2018that\u2019 clause' && J(runs(glad.boxes[0], /^ic-c/)) === J(['Bob is glad']) && J(runs(glad.boxes[0], /^ic-u/)) === J(['that Mary left']),
+        ok(glad.rule === 'dropping a \u201cthat\u201d clause' && J(runs(glad.boxes[0], /^ic-c/)) === J(['Bob is glad']) && J(runs(glad.boxes[0], /^ic-u/)) === J(['that Mary left']),
             'a "that" clause dropped: "Bob is glad" goes on, "that Mary left" dimmed', J(glad));
     }
 

@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: the app's own quotations, double where they are made (r27.218)
+
+The user:
+* Of a plural's possessive inside a single-quoted quotation ("‘the students’ books’"), which r27.217 left as is: "I think we should address this".
+
+Changes:
+* The app's own quotations are written in double quotes where they are made, rather than made double where they are shown:
+  * a rule named with its words: "contraries “unhappy” and “happy”", "converses “taller than” and “shorter than”", "meaning of “-able”", "dropping a “that” clause";
+  * what differs between two boxes ("“republic” and “Republic” differ in capital letters");
+  * what a step would need ("once it is shown that “Socrates is a person”");
+  * a part named for its whole ("Did you mean “Clark Kent” where it says “Kent”?");
+  * a verdict's steps, and a typo's toast.
+* So where one of the app's quotations ends no longer turns on a closing single quote, which an apostrophe looks just like. A box "The students’ books are heavy." had shown in a verdict as “The students” books are heavy.’; it now shows whole.
+* A single-quoted quotation that still stands at the top level (a reader's own) closes at the first closing quote that cannot end a plural's possessive, else at the last before the next opening quote. A closing quote after an "s" and before a space can end a possessive. So "‘the students’ books’ are heavy" shows as "“the students’ books” are heavy".
+* Otherwise, what is shown is as in r27.217.
+
+Tests:
+* Checks changed, each failing on r27.217, the app's own quotations double: opposites-r27-test.js (22 lines), hints-r27-test.js (10), rules-r27-ordinary-test.js (8), extended-mind-r27-test.js (7), logic-r27-basis-test.js (6), logic-r27-english-test.js (4), syntax-r27-test.js (4), locutions-r27-test.js (3), and one line each in colors-r27-inference-test.js, logic-r27-deductive-test.js, logic-r27-stress-test.js and modal-r27-test.js.
+* New in syntax-r27-test.js, which has 214 checks:
+  * a verdict quoting a box with a plural's possessive;
+  * Derive's toast quoting a premise with a typo;
+  * where a single-quoted quotation at the top closes.
+* Take-one-out: each of the 20 changes is caught. Derive's toast at first was not: where it is shown, r27.217 had already made its quotation double, so its check reads the message as made.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on: the quotations changed are in what the check says of a step, not in how a box is read.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 14: the app's quotation marks, consistent (r27.217)
 
 The user:

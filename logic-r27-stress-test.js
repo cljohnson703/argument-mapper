@@ -1188,7 +1188,7 @@ const VERDICT_CASES = [
     ['the objection weakly rebutted, with no support', [V_tree('M', [VC.C], [Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'faces a weak rebuttal that stands'],
     ['the objection weakly rebutted, with a support', [V_tree('M', [VC.C], [V_S(), Object.assign(V_O(), { children: [V_at(V_W('WR', 'It has not been shown that evil exists'), 1)] })])], 'unresolved', 'challenge is unsettled'],
     ['a support and an open, valid weak objection', [V_tree('M', [VC.C], [V_S(), V_W('W', 'It has not been shown that God exists')])], 'unresolved', 'says it hasn’t been shown'],
-    ['a support whose premise is weakly objected to', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })])], 'unestablished', 'we can’t conclude that ‘God exists’ from'],
+    ['a support whose premise is weakly objected to', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_W('W', 'It has not been shown that the universe is caused'), 1)] })])], 'unestablished', 'we can’t conclude that “God exists” from'],
     ['a support whose premise is refuted', [V_tree('M', [VC.C], [Object.assign(V_S(), { children: [V_at(V_R('R', 'The universe is not caused'), 1)] })])], 'unestablished', 'is refuted by an objection that stands'],
     ['a support whose step is not certified', [V_tree('M', [VC.C], [{ id: 'S', type: 'support', texts: ['The universe is caused'], collapsed: [], children: [] }])], 'unestablished', 'isn’t confirmed'],
     ['an objection and a weak objection', [V_tree('M', [VC.C], [V_O(), V_W('W', 'It has not been shown that God exists')])], 'refuted', 'its denial follows'],

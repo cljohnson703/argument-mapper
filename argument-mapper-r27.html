@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-14 r27.217';
+    const APP_BUILD = '2026-11-15 r27.218';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -6997,9 +6997,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         for (let i = 0; i < s.length; i++) {
             if (pair.has(i)) { if (pair.get(i) > i) ends.push(pair.get(i)); else ends.pop(); continue; }
             if (s[i] !== '\u2018') continue;
+            // Its closing quote (r27.218): the first that cannot end a
+            // plural's possessive ("the students' books"), else the last --
+            // not past the next opening one, nor inside a quotation within.
             const end = ends.length ? ends[ends.length - 1] : s.length;
-            for (let j = i + 1; j < end; j++)
-                if (s[j] === '\u2019' && !/[A-Za-z]/.test(s[j + 1] || '')) { pair.set(i, j); pair.set(j, i); ends.push(j); break; }
+            let first = -1, last = -1;
+            for (let j = i + 1; j < end; j++) {
+                if (pair.has(j)) { if (pair.get(j) > j) { j = pair.get(j); continue; } break; }
+                if (s[j] === '\u2018' && /\S/.test(s[j + 1] || '')) break;
+                if (s[j] !== '\u2019' || /[A-Za-z]/.test(s[j + 1] || '')) continue;
+                if (first < 0 && !(/[sSxXzZ]/.test(s[j - 1]) && s[j + 1] === ' ')) first = j;
+                last = j;
+            }
+            const j = first >= 0 ? first : last;
+            if (j >= 0) { pair.set(i, j); pair.set(j, i); ends.push(j); }
         }
         let out = '', depth = 0;
         const single = new Set();
@@ -22818,14 +22829,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // The step named by its relation, as contraries are by their pair.
     const CLAIM_RELATION_RULES = new Map();
     function claimRelationRule(step) {
-        const say = w => '\u2018' + ({ meet: 'met', marry: 'married' }[w] || w) + '\u2019';
+        const say = w => '\u201c' + ({ meet: 'met', marry: 'married' }[w] || w) + '\u201d';
         const name = step.kind === 'converse' ? 'converses ' + say(step.rel) + ' and ' + say(step.to) : step.kind + ' ' + say(step.rel);
         if (!CLAIM_RELATION_RULES.has(name)) CLAIM_RELATION_RULES.set(name, Object.assign({}, DEDUCTIVE_OPTIONAL_RULES.find(r => r.id === 'relations'), { name }));
         return CLAIM_RELATION_RULES.get(name);
     }
     const CLAIM_OPPOSITE_RULES = new Map();
     function claimOppositeRule(step) {
-        const name = (step.both ? 'contradictories' : 'contraries') + ' \u2018' + step.from + '\u2019 and \u2018' + step.to + '\u2019';
+        const name = (step.both ? 'contradictories' : 'contraries') + ' \u201c' + step.from + '\u201d and \u201c' + step.to + '\u201d';
         if (!CLAIM_OPPOSITE_RULES.has(name)) CLAIM_OPPOSITE_RULES.set(name, Object.assign({}, DEDUCTIVE_OPTIONAL_RULES.find(r => r.id === 'opposites'), { name }));
         return CLAIM_OPPOSITE_RULES.get(name);
     }
@@ -22884,7 +22895,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const DEDUCTIVE_OPTIONAL_RULES = [
         // A rule of word meaning, not of logic (the user, 2026-09-30, of "We can
         // conceive of X" and "X is conceivable": the one-way rule, its own step).
-        { id: 'able-meaning', name: 'meaning of ‘-able’', optional: true,
+        { id: 'able-meaning', name: 'meaning of “-able”', optional: true,
           gloss: '"we can conceive of X" gives "X is conceivable" (likewise knowable, provable, imaginable…), not the reverse',
           test: (P, C) => P.length === 1 && claimAbleStep(P[0], C) },
         // What is, can be: "we conclude that P" gives "it is possible for us to
@@ -22948,7 +22959,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           test: (P, C) => P.length === 1 && !!P[0] && P[0].kind === 'pred' && !!C && C.kind === 'pred' &&
               (m => !!m && claimSame(C, Object.assign({}, P[0], { prop: m[1] + ' ' + m[2], vpText: undefined, src: undefined })))(/^(~(?:\S+ )*?ma(?:de|kes?|king)) (?:\S+ )+?into (.+)$/.exec(String(P[0].prop || ''))) },
         // A "that" clause dropped (r27.141): a rule of word meaning.
-        { id: 'that-clause', name: 'dropping a ‘that’ clause', optional: true,
+        { id: 'that-clause', name: 'dropping a “that” clause', optional: true,
           gloss: '"Bob is glad that Mary left" gives "Bob is glad"; likewise pleased, surprised, upset, grateful, worried… -- not "happy", "proud" or "sorry", whose bare word says more, nor under "not"',
           test: (P, C) => claimThatClauseDropped(P, C) },
         { id: 'double-negation', name: 'double-negation replacement', optional: true,
@@ -25445,12 +25456,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (i && j && w !== v && w.toLowerCase() === v.toLowerCase() && !capitals.some(c => c[0] === w && c[1] === v)) capitals.push([w, v]);
         }));
         const notes = [];
-        if (capitals.length) notes.push(capitals.map(c => '‘' + c[0] + '’ and ‘' + c[1] + '’').join(', ') + ' differ in capital letters');
-        if (!notes.length) notes.push('‘' + x + '’ and ‘' + y + '’ are worded differently');
+        if (capitals.length) notes.push(capitals.map(c => '“' + c[0] + '” and “' + c[1] + '”').join(', ') + ' differ in capital letters');
+        if (!notes.length) notes.push('“' + x + '” and “' + y + '” are worded differently');
         return notes.join('; ');
     }
     function claimNearMissNotes(pairs, spaces) {
-        const notes = (spaces || []).map(t => '‘' + t + '’ has an extra space');
+        const notes = (spaces || []).map(t => '“' + t + '” has an extra space');
         // Where the spelling differs: inside a denial or a "not established"
         // that both are.
         const inmost = (a, b) => {
@@ -25603,10 +25614,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // is shown that the man is a person (r27.129).
                 const of = step && step.sort && P[0] ? P[0].subjectText || (P[0].inner && P[0].inner.subjectText) : null;
                 if (of) return Object.assign(none, { contraries: step,
-                    text: '‘' + step.from + '’ and ‘' + step.to + '’ are contradictories only of a ' + step.sort + ': ' + said(premiseTexts[0]) + ' gives ' + target +
-                        ' once it is shown that ‘' + claimRecase(claimShowWords(of), premiseTexts[0]).replace(/^./, c => c.toUpperCase()) + ' is a ' + step.sort + '’.' });
+                    text: '“' + step.from + '” and “' + step.to + '” are contradictories only of a ' + step.sort + ': ' + said(premiseTexts[0]) + ' gives ' + target +
+                        ' once it is shown that “' + claimRecase(claimShowWords(of), premiseTexts[0]).replace(/^./, c => c.toUpperCase()) + ' is a ' + step.sort + '”.' });
                 if (step && !step.sort) return Object.assign(none, { contraries: step,
-                    text: '‘' + step.from + '’ and ‘' + step.to + '’ are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
+                    text: '“' + step.from + '” and “' + step.to + '” are contraries: one can be neither, so ' + said(premiseTexts[0]) + ' does not give ' + target + '.' });
             }
         }
         // A "that" clause dropped from a word whose bare form can say more
@@ -25617,7 +25628,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (w && CLAIM_THAT_CLAUSE_MORE[w]) {
                 const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
                 return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, thatClause: w,
-                    text: 'On its own, ‘' + w + '’ can mean “' + CLAIM_THAT_CLAUSE_MORE[w] + '”, which ‘' + w + ' that …’ need not; so ' +
+                    text: 'On its own, “' + w + '” can mean “' + CLAIM_THAT_CLAUSE_MORE[w] + '”, which “' + w + ' that …” need not; so ' +
                         said(premiseTexts[0]) + ' does not give ' + said(conclusionText) + '.' };
             }
         }
@@ -25632,7 +25643,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const word = p.rel.replace(/ than$/, ''), plain = stripClaimMarkup(premiseTexts[0]);
                 const at = new RegExp('\\b' + word + ' than\\b', 'i'), would = at.test(plain) ? plain.replace(at, fix) : null;
                 return { unread, ambiguous, nearMiss: null, worded: null, ordered: null, short: null, partial: null, twoSenses: p.rel,
-                    text: '\u2018' + word + '\u2019 can mean ' + two.senses + ', so ' + said(premiseTexts[0]) + ' does not give ' + said(conclusionText) +
+                    text: '\u201c' + word + '\u201d can mean ' + two.senses + ', so ' + said(premiseTexts[0]) + ' does not give ' + said(conclusionText) +
                         (would ? '; ' + said(would) + ' would.' : '.') };
             }
         }
@@ -25684,10 +25695,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const value = claimRecase(claimShowWords(claimUnmarked(String(inst.donkeyValue))), texts.join(' '));
                     const notes = (near ? near.pairs : []).map(p => {
                         const d = claimWordDiff(claimWordsOf(p.a), claimWordsOf(p.b)), says = w => '\u201c' + w.join(' ') + '\u201d';
-                        return '\u2018' + claimShowForm(p.a) + '\u2019 and \u2018' + claimShowForm(p.b) + '\u2019 differ: ' +
+                        return '\u201c' + claimShowForm(p.a) + '\u201d and \u201c' + claimShowForm(p.b) + '\u201d differ: ' +
                             (d.onlyX.length && d.onlyY.length ? says(d.onlyX) + ' in one where the other has ' + says(d.onlyY) : says(d.onlyX.length ? d.onlyX : d.onlyY) + ' is in one and not the other');
                     }).filter((x, k, all) => all.indexOf(x) === k);
-                    return done(said(premiseTexts[i]) + ' would give ' + target + ' once it is shown that \u2018' + value + ' is ' + (/^[aeiou]/.test(n) ? 'an ' : 'a ') + n + '\u2019' +
+                    return done(said(premiseTexts[i]) + ' would give ' + target + ' once it is shown that \u201c' + value + ' is ' + (/^[aeiou]/.test(n) ? 'an ' : 'a ') + n + '\u201d' +
                         (notes.length ? ', and worded the same way each time: ' + notes.slice(0, 2).join('; ') : '') + '.');
                 }
             }
@@ -25893,7 +25904,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const says = w => '“' + w.join(' ') + '”';
             const what = d.onlyX.length && d.onlyY.length ? says(d.onlyX) + ' in one where the other has ' + says(d.onlyY)
                 : says(d.onlyX.length ? d.onlyX : d.onlyY) + ' is in one and not the other';
-            return '‘' + claimShowForm(p.a) + '’ and ‘' + claimShowForm(p.b) + '’ differ: ' + what;
+            return '“' + claimShowForm(p.a) + '” and “' + claimShowForm(p.b) + '” differ: ' + what;
         }).filter((n, i, all) => all.indexOf(n) === i) : [];
         const quote = t => '“' + stripClaimMarkup(t) + '”';
         // A box as the hints name it: its words, without the full stop; and
@@ -25903,7 +25914,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const said = t => '“' + stripClaimMarkup(t).trim().replace(/[.!?]+$/, '') + '”';
         const target = !attack ? said(conclusionText) : weak ? 'that ' + said(conclusionText) + ' has not been established' : 'the denial of ' + said(conclusionText);
         const give = n => n === 1 ? 'gives' : 'give';
-        const persons = ps => ps.map(p => '‘' + (claimSayPart(p, texts) || claimShowForm(p)) + '’').join(' and ');
+        const persons = ps => ps.map(p => '“' + (claimSayPart(p, texts) || claimShowForm(p)) + '”').join(' and ');
         // Words that differ, not their capitals: "Worded", not "Spelled" ("the
         // mind" and "minds", r27.115).
         const missNotes = nearMiss ? claimNearMissNotes(nearMiss.pairs, nearMiss.spaces) : '';
@@ -25916,11 +25927,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 ? 'The two differ only in the order or grouping of their parts: commutation or association makes the one the other.'
                 : 'With the parts of the claims in the same order and grouping, the premises would give ' + target + ' by ' + ordered.name +
                     '; commutation and association change order and grouping.'] : [])
-            .concat(partial ? ['Did you mean ‘' + claimRecase(partial.whole, texts.join(' ')) + '’ where it says ‘' + claimRecase(partial.part, texts.join(' ')) +
-                '’? The identity is about ' + claimRecase(partial.whole, texts.join(' ')) + '; if ' + claimRecase(partial.part, texts.join(' ')) + ' is someone else, it says nothing about them.'] : [])
+            .concat(partial ? ['Did you mean “' + claimRecase(partial.whole, texts.join(' ')) + '” where it says “' + claimRecase(partial.part, texts.join(' ')) +
+                '”? The identity is about ' + claimRecase(partial.whole, texts.join(' ')) + '; if ' + claimRecase(partial.part, texts.join(' ')) + ' is someone else, it says nothing about them.'] : [])
             .concat(able ? (() => {
                 const gives = '“' + claimRecase(able.said.charAt(0).toUpperCase() + able.said.slice(1), texts.join(' ')) + '”';
-                return [quote(texts[able.at]) + ' gives ' + gives + ' by the meaning of ‘-able’: with ' + gives + ' as a box of its own, the premises would give ' +
+                return [quote(texts[able.at]) + ' gives ' + gives + ' by the meaning of “-able”: with ' + gives + ' as a box of its own, the premises would give ' +
                     target + ' by ' + able.rule.name + '.'];
             })() : [])
             // The other voice, the indirect object moved (r27.153).
@@ -27150,7 +27161,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     // A verdict in words: why the box comes to what it does.
     function claimVerdictWhy(verdict, v) {
-        const q = t => '‘' + stripClaimMarkup(claimShowWords(t)) + '’';
+        const q = t => '“' + stripClaimMarkup(claimShowWords(t)) + '”';
         const list = texts => texts.length === 1 ? q(texts[0]) : texts.slice(0, -1).map(q).join(', ') + ' and ' + q(texts[texts.length - 1]);
         const gives = st => list(st.premiseTexts) + (st.premiseTexts.length === 1 ? ' gives ' : ' give ');
         const kindName = st => (KIND_NAME[st.kind] || st.kind).toLowerCase();
@@ -35322,7 +35333,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         const typo = said.map(t => ({ t, slip: claimTextSlips(t) })).find(x => x.slip);
         if (found && typo) {
-            showHintToast('Without the typo, these premises would give “' + found.text + '” by ' + found.rule.name + ', but ‘' + typo.t + '’ has one: ' + typo.slip.message + '.', true);
+            showHintToast('Without the typo, these premises would give “' + found.text + '” by ' + found.rule.name + ', but “' + typo.t + '” has one: ' + typo.slip.message + '.', true);
             return null;
         }
         if (!found) {

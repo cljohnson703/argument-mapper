@@ -188,7 +188,7 @@ console.log('\n-- 3. duality, and strict matching --');
         'a modal claim is a claim like any other to the other rules: modus ponens on it');
     ok(step(['If it is metaphysically necessary that God exists, then evil is a mystery.', 'In every metaphysically possible world, God exists.'], 'Evil is a mystery.').rule === 'modus ponens',
         'its operator\'s words are logic, as a quantifier\'s are: "in every metaphysically possible world" matches "it is metaphysically necessary that"');
-    ok(/^Worded the same way each time, the premises would give “Plato was right” by modus ponens, but ‘the soul survives the death of a body’ and ‘the soul survives the death of the body’ differ/.test(
+    ok(/^Worded the same way each time, the premises would give “Plato was right” by modus ponens, but “the soul survives the death of a body” and “the soul survives the death of the body” differ/.test(
         step(['If it is metaphysically necessary that the soul survives the death of the body, then Plato was right.', 'It is metaphysically necessary that the soul survives the death of a body.'], 'Plato was right.').why),
         'and the check says which words inside differ');
     ok(step(['It is not the case that it is metaphysically possible that it does not rain.'], 'It is metaphysically necessary that it is not the case that it does not rain.').rule === 'modal duality',

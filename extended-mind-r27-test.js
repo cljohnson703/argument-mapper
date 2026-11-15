@@ -189,7 +189,7 @@ console.log('\n-- 4. "a subject ... that subject": any subject, said of the one 
     ok(J(more.map(x => x.rule)) === J(['universal modus ponens', 'universal modus tollens', 'universal modus ponens', 'universal modus ponens', 'universal modus ponens']),
         '"every ... of a subject", modus tollens, "a subject\'s brain", and "a person ... that person" with "Mary is a person"', J(more.map(x => x.rule)));
     const kind = step(['Anything that is a child of a person is loved by that person.', 'Bob is a child of Mary.'], 'Bob is loved by Mary.');
-    ok(!kind.rule && kind.why === '“Anything that is a child of a person is loved by that person” would give “Bob is loved by Mary” once it is shown that ‘Mary is a person’.',
+    ok(!kind.rule && kind.why === '“Anything that is a child of a person is loved by that person” would give “Bob is loved by Mary” once it is shown that “Mary is a person”.',
         '"a person" limits the rule, as "everyone" does: not of Mary until she is shown to be one', J(kind));
     const not = [
         step([U, CASE], "The records in Otto's notebook are a part of Mary's mind."),
@@ -222,11 +222,11 @@ console.log('\n-- 6. what the check says --');
 {
     const typo = step(['If all non-occurrent beliefs have to have the capacity to influence reasoning without being consciously recalled, then influencing reasoning is a necessary fucntion of non-occurrent beliefs.',
         'All non-occurrent beliefs have to have the capacity to influence reasoning without being consciously recalled.'], 'Influencing reasoning is not a necessary function of non-occurrent beliefs.', 'rebuttal');
-    ok(/‘influencing reasoning is a necessary function of non-occurrent beliefs’ differ: “fucntion” in one where the other has “function”\.$/.test(typo.why),
+    ok(/“influencing reasoning is a necessary function of non-occurrent beliefs” differ: “fucntion” in one where the other has “function”\.$/.test(typo.why),
         'what a denial denies, in its own words: "is a necessary function" (it had been "influencing reasoning necessary function"), and the one word that differs', typo.why);
     const mind = asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of Otto's mind."],
         "Minds don't extend into the world.", 'objection'));
-    ok(mind.tag === '✗ spelled differently' && /^Worded the same way each time, the premises would give the denial of “Minds don't extend into the world” by modus ponens, but ‘the mind extends into the world’ and ‘minds extend into the world’ are worded differently\./.test(mind.why),
+    ok(mind.tag === '✗ spelled differently' && /^Worded the same way each time, the premises would give the denial of “Minds don't extend into the world” by modus ponens, but “the mind extends into the world” and “minds extend into the world” are worded differently\./.test(mind.why),
         '"the mind" and "minds": "Worded", not "Spelled", the same way', mind.why);
     ok(asWritten(() => step(["If the records in Otto's notebook are a part of Otto's mind, then minds extend into the world.", "The records in Otto's notebook are a part of Otto's mind."], "Minds don't extend into the world.", 'objection').rule) === 'modus ponens',
         'so worded, the objection follows');
@@ -241,13 +241,13 @@ console.log('\n-- 6. what the check says --');
         '"that subject" copied from the rule, in a box with no subject: said, with the subject the step names', dang.why);
     const half = step(["The records in Otto's notebook play the same causal/explanatory role as mental states of Otto.",
         'Anything that plays the same causal/explanatory roles as a mental state of a subject is itself a mental state of that subject.'], "The records in Otto's notebook are mental states of Otto.");
-    ok(/^Worded the same way each time, the premises would give “The records in Otto's notebook are mental states of Otto” by universal modus ponens, but ‘[^’]*roles as mental state of Otto’ and ‘[^’]*role as mental states of Otto’ differ: “roles state” in one where the other has “role states”\.$/.test(half.why),
+    ok(/^Worded the same way each time, the premises would give “The records in Otto's notebook are mental states of Otto” by universal modus ponens, but “[^”]*roles as mental state of Otto” and “[^”]*role as mental states of Otto” differ: “roles state” in one where the other has “role states”\.$/.test(half.why),
         'with the subject named: the words of the rule\'s case that differ, and no others', half.why);
     const sue = step(['Anything that is a child of a thing is loved by that thing.', 'Bob is a child of Mary.'], 'Bob is loved by Sue.').why;
-    ok(/‘bob is loved by mary’ and ‘bob is loved by sue’ differ: “mary” in one where the other has “sue”\.$/i.test(sue) && !/“thing” in one/.test(sue),
+    ok(/“bob is loved by mary” and “bob is loved by sue” differ: “mary” in one where the other has “sue”\.$/i.test(sue) && !/“thing” in one/.test(sue),
         'a case the check makes says its "is", and the rule is said of Mary, not compared as written ("thing" against "Mary")', sue);
     const kindSue = step(['Anything that is a child of a person is loved by that person.', 'Bob is a child of Mary.'], 'Bob is loved by Sue.').why;
-    ok(/would give “Bob is loved by Sue” once it is shown that ‘Mary is a person’, and worded the same way each time: ‘bob is loved by Mary’ and ‘bob is loved by Sue’ differ: “mary” in one where the other has “sue”\.$/.test(kindSue),
+    ok(/would give “Bob is loved by Sue” once it is shown that “Mary is a person”, and worded the same way each time: “bob is loved by Mary” and “bob is loved by Sue” differ: “mary” in one where the other has “sue”\.$/.test(kindSue),
         'with a kind: what it would give once Mary is shown to be one, and the words that differ', kindSue);
     const can = step(['If the notebook is able to perform the most important functions of non-occurrent beliefs, then the records in Otto\'s notebook are able to perform all the relevant functions of non-occurrent beliefs.',
         'The notebook is able to perform the most important functions of non-occurrent beliefs.'], "The records in Otto's notebook are not able to perform all the relevant functions of non-occurrent beliefs.", 'objection');
@@ -255,7 +255,7 @@ console.log('\n-- 6. what the check says --');
         'an objection\'s "are" red in "are able" against "are not able", though "non-occurrent" is said in both (r27.118; "can" against "cannot" asks, r27.169)', J(can.colors[0]));
     const syn = asWritten(() => step(['Computer programs are only syntactical.', 'Syntactics is not sufficient for semantics.',
         'If computer programs are only syntactical and syntax is not sufficient for semantics, then computers lack semantics.'], 'Computers lack semantics.'));
-    ok(/‘syntactics is not sufficient for semantics’ and ‘syntax is not sufficient for semantics’ differ: “syntactics” in one where the other has “syntax”\.$/.test(syn.why),
+    ok(/“syntactics is not sufficient for semantics” and “syntax is not sufficient for semantics” differ: “syntactics” in one where the other has “syntax”\.$/.test(syn.why),
         'a copula\'s number is no difference in words ("syntactics are" and "syntax is" differ in "syntactics" alone)', syn.why);
     const verdict = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ["Minds don't extend into the world."], collapsed: [], x: 0, y: 0, children: [
         { id: 'A', type: 'objection', texts: ["If the records in Otto's notebook are a part of Otto's mind, then the mind extends into the world.", "The records in Otto's notebook are a part of Otto's mind."], collapsed: [], children: [] } ] }];

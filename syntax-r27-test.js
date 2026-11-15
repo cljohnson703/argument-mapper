@@ -594,14 +594,14 @@ console.log('\n-- "-able" words (r27.65) --');
     const yes = asWritten(() => [tag(['We are able to conceive of zombies.'], 'Zombies are conceivable.'), tag(['We are able to conceive of zombies.'], 'Zombies are able to be conceived.'),
         tag(['Zombies are able to be conceived.'], 'Zombies are conceivable.'), tag(['Mary is able to prove the theorem.'], 'The theorem is provable.'),
         tag(['It is possible for us to conceive of zombies.'], 'Zombies are conceivable.')]);
-    ok(yes.every(r => r && r.rule === 'meaning of \u2018-able\u2019'),
+    ok(yes.every(r => r && r.rule === 'meaning of \u201c-able\u201d'),
         '"we are able to conceive of zombies" gives "zombies are conceivable" and "zombies are able to be conceived", by the meaning of "-able"; so "provable"; so "it is possible for us to conceive"', J(yes));
     const no = [tag(['Zombies are conceivable.'], 'We are able to conceive of zombies.'), tag(['We are not able to conceive of zombies.'], 'Zombies are not conceivable.'),
         tag(['We are able to read the book.'], 'The book is readable.'), tag(['We are able to conceive of a zombie.'], 'Zombies are conceivable.')];
     ok(no.every(r => r && !r.rule && !/Did you mean/.test(r.why)), 'never the other way; nor from "not able"; nor for a word whose meaning has moved ("readable"); nor from another number', J(no));
     // "Metaphysically possible": "possible" asks which kind (r27.172).
     const direct = tag(['If zombies are conceivable, then zombies are metaphysically possible.', 'We are able to conceive of zombies.'], 'Zombies are metaphysically possible.');
-    ok(direct && !direct.rule && /\u201cWe are able to conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u2018-able\u2019: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are metaphysically possible\u201d by modus ponens\./.test(direct.why),
+    ok(direct && !direct.rule && /\u201cWe are able to conceive of zombies\.\u201d gives \u201cZombies are conceivable\u201d by the meaning of \u201c-able\u201d: with \u201cZombies are conceivable\u201d as a box of its own, the premises would give \u201cZombies are metaphysically possible\u201d by modus ponens\./.test(direct.why),
         'the direct route is not one step: its explanation names the box that is missing', J(direct));
     const off = ev(`var was = state.logic; state.logic = { base: 'standard', rules: { semantic: true } }; setDeductiveRule('able-meaning', false);
         var trees = [{ id: 'M', type: 'contention', texts: ['Zombies are conceivable.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['We are able to conceive of zombies.'], collapsed: [], children: [] }] }];
@@ -1173,7 +1173,7 @@ console.log('\n-- r27.200: the gaps r27.199 turned up --');
     // "Everyone who is able to fly" splits since r27.202; a kind the reader
     // does not split keeps its article.
     const hint = step(['Everyone who is afraid of the dark is careful.'], 'Poe is careful.');
-    ok(hint.why === '\u201cEveryone who is afraid of the dark is careful\u201d would give \u201cPoe is careful\u201d once it is shown that \u2018Poe is a person that is afraid of the dark\u2019.',
+    ok(hint.why === '\u201cEveryone who is afraid of the dark is careful\u201d would give \u201cPoe is careful\u201d once it is shown that \u201cPoe is a person that is afraid of the dark\u201d.',
         'the case a rule needs, with its article: "Poe is a person that is afraid of the dark" (it had been "Poe is person that ...")', J(hint));
 }
 
@@ -1236,7 +1236,7 @@ console.log('\n-- r27.202: "made into"; ability and the kinds of possibility; th
         kinds[4].rule === null && /^Getting to “It is logically possible for Poe to fly” takes two steps\. First, “Poe is able to fly” gives “It is physically possible for Poe to fly” by ability gives possibility\. Then /.test(kinds[4].why),
         'the kinds nest: physically possible gives metaphysically and logically possible, logically necessary gives physically necessary -- not the other way; from "able" to "logically possible", two steps, the one between them said', J(kinds));
     const short = step(['Everyone who is able to fly is happy.', 'Poe can fly.'], 'Poe is happy.'), shown = step(['Everyone who is able to fly is happy.', 'Poe is a person.', 'Poe is able to fly.'], 'Poe is happy.');
-    ok(short.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that ‘Poe is a person’, with “Poe can fly” read as “Poe is able to fly”.' &&
+    ok(short.why === '“Everyone who is able to fly is happy” would give “Poe is happy” once it is shown that “Poe is a person”, with “Poe can fly” read as “Poe is able to fly”.' &&
         shown.rule === 'universal modus ponens',
         'the case a rule needs, and the reading a box needs for it: "once it is shown that \'Poe is a person\', with \'Poe can fly\' read as \'Poe is able to fly\'"; "everyone who is able to fly" is a person, and able to fly', J([short, shown]));
     // r27.214 (the user, of naming the wording rather than where to switch
@@ -1699,6 +1699,39 @@ console.log('\n-- r27.217: the quotation marks of what is shown, consistent --')
     const hamlet = ev(`return claimTypeQuotes(claimPronounNote('In Hamlet, Ophelia is mad, and she drowns.'));`);
     ok(hamlet === 'if “Hamlet” is a title, put it in quotation marks (“In ‘Hamlet’, ...”): then it is mentioned, not a name the pronoun may stand for',
         'a title in quotation marks, its example single inside double, curly (straight single until r27.217)', hamlet);
+}
+
+console.log('\n-- r27.218: the app\'s own quotations double where they are made --');
+{
+    // The user, of a plural's possessive inside a single-quoted quotation:
+    // "I think we should address this".
+    const verdict = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'M', type: 'contention', texts: ['Bob is a student.'], collapsed: [], x: 0, y: 0, children: [
+            { id: 'S', type: 'support', texts: ['The students’ books are heavy.'], collapsed: [], children: [] } ] }];
+        ensureCollabFields(state); deductiveLive = true; render();
+        var v = document.querySelector('.verdict-tag'), r = v ? v.title : '';
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return r;`);
+    ok(verdict === 'Unwarranted: not established — the step from “The students’ books are heavy.” isn’t confirmed. Click for every step.',
+        'a verdict quotes a box with a plural\'s possessive whole: “The students’ books are heavy.” (it had shown “The students” books are heavy.’)', verdict);
+    // Derive's toast, a premise with a typo quoted as written.
+    const toast = ev(`window.__hints = []; var realHint = showHintToast; showHintToast = function (t) { window.__hints.push(t); return true; };
+        state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        state.trees = [{ id: 'G', type: 'support', texts: ['If it rains , then the ground is wet.', 'It rains.'], collapsed: [], x: 100, y: 100, freePosition: true, children: [] }];
+        ensureCollabFields(state); render(); deriveParentFor('G');
+        showHintToast = realHint; state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear();
+        return window.__hints.slice(-1)[0] || '';`);
+    ok(toast === 'Without the typo, these premises would give “The ground is wet.” by modus ponens, but “If it rains , then the ground is wet.” has one: a space before “,”.',
+        'Derive\'s toast quotes the premise with a typo in double quotes, as written', toast);
+    const typed = ev(`return [
+        claimTypeQuotes('‘the students’ books’ are heavy'),
+        claimTypeQuotes('‘the students’ books’, and ‘the dog’.'),
+        claimTypeQuotes('‘the boss’ hat’ is red'),
+        claimTypeQuotes('‘the dogs’ and ‘the cats’ differ'),
+        claimTypeQuotes('‘He said “the dogs’ bowls” today’ is odd')];`);
+    ok(J(typed) === J(['“the students’ books” are heavy', '“the students’ books”, and “the dog”.', '“the boss’ hat” is red',
+            '“the dogs” and “the cats” differ', '“He said ‘the dogs’ bowls’ today” is odd']),
+        'a single-quoted quotation at the top closes at the first closing quote that cannot end a plural\'s possessive, else at the last before the next opening one', J(typed));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

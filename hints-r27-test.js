@@ -91,24 +91,24 @@ const both = (premises, between, firstFrom, secondWith, conclusion, rules) => {
 console.log('\n-- 1. "someone": the person shown --');
 {
     const s = step(['Socrates is wise.'], 'Someone is wise.');
-    ok(!s.rule && s.why === '“Socrates is a person and Socrates is wise” would give “Someone is wise” by existential introduction, but the premises do not show that ‘Socrates is a person’.',
+    ok(!s.rule && s.why === '“Socrates is a person and Socrates is wise” would give “Someone is wise” by existential introduction, but the premises do not show that “Socrates is a person”.',
         '"Socrates is wise" to "someone is wise": what is missing, and the box it would follow from', J(s));
     ok(step(['Socrates is a person and Socrates is wise.'], 'Someone is wise.').rule === 'existential introduction', 'and from that box it does');
     ok(step(['John loves Mary.'], 'Someone loves Mary.').why ===
-        '“John is a person and John loves Mary” would give “Someone loves Mary” by existential introduction, but the premises do not show that ‘John is a person’.',
+        '“John is a person and John loves Mary” would give “Someone loves Mary” by existential introduction, but the premises do not show that “John is a person”.',
         'so for "someone loves Mary"');
     ok(step(['Poe is black.'], 'Some raven is black.').why ===
-        '“Poe is a raven and Poe is black” would give “Some raven is black” by existential introduction, but the premises do not show that ‘Poe is a raven’.',
+        '“Poe is a raven and Poe is black” would give “Some raven is black” by existential introduction, but the premises do not show that “Poe is a raven”.',
         'and "some raven": a raven shown');
 }
 
 console.log('\n-- 2. a name in -s is one --');
 {
-    ok(step(['Everyone loves Mary.'], 'Socrates loves Mary.').why === '“Everyone loves Mary” would give “Socrates loves Mary” once it is shown that ‘Socrates is a person’.',
+    ok(step(['Everyone loves Mary.'], 'Socrates loves Mary.').why === '“Everyone loves Mary” would give “Socrates loves Mary” once it is shown that “Socrates is a person”.',
         '"Socrates is a person", not "Socrates are people"');
-    ok(step(['All humans are mortal.'], 'Socrates is mortal.').why === '“All humans are mortal” would give “Socrates is mortal” once it is shown that ‘Socrates is human’.',
+    ok(step(['All humans are mortal.'], 'Socrates is mortal.').why === '“All humans are mortal” would give “Socrates is mortal” once it is shown that “Socrates is human”.',
         '"Socrates is human"');
-    ok(/‘The ravens are birds’/.test(step(['Every bird sings.'], 'The ravens sing.').why), 'a plural the reader knows stays plural: "the ravens are birds"',
+    ok(/“The ravens are birds”/.test(step(['Every bird sings.'], 'The ravens sing.').why), 'a plural the reader knows stays plural: "the ravens are birds"',
         step(['Every bird sings.'], 'The ravens sing.').why);
 }
 
@@ -308,7 +308,7 @@ console.log('\n-- 10. a fallacy\'s tag, and the verdict (r27.100) --');
     const support = { id: 'A', type: 'support', texts: ['All men are mortal.', 'Socrates is mortal.'], collapsed: [], children: [] };
     const objection = { id: 'B', type: 'objection', texts: ['If Socrates is a god, then Socrates is not a man.', 'Socrates is a god.'], collapsed: [], children: [] };
     const alone = verdict([support]);
-    ok(alone.status === 'unestablished' && alone.why === 'Unwarranted: not established — the step from ‘All men are mortal.’ and ‘Socrates is mortal.’ is invalid (undistributed middle).',
+    ok(alone.status === 'unestablished' && alone.why === 'Unwarranted: not established — the step from “All men are mortal.” and “Socrates is mortal.” is invalid (undistributed middle).',
         'the verdict says the step is invalid, and why', J(alone));
     const against = verdict([support, objection]);
     ok(against.status === 'refuted', 'and an objection that stands refutes the box: an invalid support leaves nothing unresolved', J(against));
@@ -319,7 +319,7 @@ console.log('\n-- 10. a fallacy\'s tag, and the verdict (r27.100) --');
         deductiveCache.clear(); ensureCollabFields(state); var steps = collectDeductiveSteps(state.trees), vf = claimMapVerdict(state.trees, steps), v = vf('M', 0);
         return { status: v.status, why: claimVerdictWhy(vf, v), tag: deductiveStepTagText(steps[0]), warrant: warrantStepExplanation(steps[0], vf) };`);
     ok(quoted.tag === '✗ undistributed middle' && quoted.status === 'established' &&
-        quoted.why === 'Warranted, given the map’s premises: the argument from ‘All men are mortal.’ and ‘Socrates is mortal.’ is invalid (undistributed middle). Nothing that stands is against it.' &&
+        quoted.why === 'Warranted, given the map’s premises: the argument from “All men are mortal.” and “Socrates is mortal.” is invalid (undistributed middle). Nothing that stands is against it.' &&
         quoted.warrant === 'This step is about the quoted argument that concludes “Socrates is a man”. “All men are mortal” and “Socrates is mortal” do not give “Socrates is a man”: ' +
             'that is the fallacy of undistributed middle. An invalid argument can’t answer the challenge.',
         '"We cannot conclude that ... from ...": the argument it names is invalid, so the claim is warranted', J(quoted));
@@ -344,7 +344,7 @@ console.log('\n-- 10. a fallacy\'s tag, and the verdict (r27.100) --');
     const obj = attacked('Socrates is not a man.', 'objection', ['All men are mortal.', 'Socrates is mortal.']);
     ok(obj.tag === '✗ undistributed middle' &&
         obj.step === '“All men are mortal” and “Socrates is mortal” do not give the denial of “Socrates is not a man”: that is the fallacy of undistributed middle.' &&
-        obj.status === 'stands' && obj.why === 'Unwarranted: no objection succeeds — the objection from ‘All men are mortal.’ and ‘Socrates is mortal.’ is invalid (undistributed middle) — ' +
+        obj.status === 'stands' && obj.why === 'Unwarranted: no objection succeeds — the objection from “All men are mortal.” and “Socrates is mortal.” is invalid (undistributed middle) — ' +
             'but it has no support of its own, and beating objections doesn’t establish it.',
         'an objection: named against the denial of its box, and fended off', J(obj));
     const reb = ev(`state.trees = [{ id: 'M', type: 'contention', texts: ['The game is on.'], collapsed: [], x: 0, y: 0, children: [{ id: 'O', type: 'objection', texts: ['It does not rain.'], collapsed: [],
@@ -353,7 +353,7 @@ console.log('\n-- 10. a fallacy\'s tag, and the verdict (r27.100) --');
     ok(reb === '✗ affirming the consequent', 'a rebuttal', reb);
     const qual = attacked('Functionalism is not ruled out.', 'objection', ['If functionalism is ruled out, then Q.', 'Q.']);
     ok(qual.tag === '✗ affirming the consequent' && qual.status === 'established' &&
-        /the argument from ‘If functionalism is ruled out, then Q\.’ and ‘Q\.’ is invalid \(affirming the consequent\)/.test(qual.why),
+        /the argument from “If functionalism is ruled out, then Q\.” and “Q\.” is invalid \(affirming the consequent\)/.test(qual.why),
         'an objection to "not ruled out" that is invalid grounds that claim', J(qual));
     const weak = attacked('Socrates is a man.', 'weak-objection', ['If Socrates is not a man, then Socrates is a god.', 'Socrates is a god.']);
     ok(weak.tag === '? not recognized' && !/fallacy/.test(weak.step), 'not a weak objection: what it gives is that a box has not been established', J(weak));
