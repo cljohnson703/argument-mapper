@@ -1936,6 +1936,18 @@ console.log('\n-- r27.228: a clause after "and" that opens with an adverb; "and 
     ok(J(steps) === J(['conjunction elimination', 'modus ponens']), 'so "Mary cried, and afterwards Bob left" gives "Bob left", and meets "Mary cried and then Bob left" (neither had followed)', J(steps));
 }
 
+console.log('\n-- r27.229: a plural after a verb no list knows: "Bob grades papers and returns them" --');
+{
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.message; });`);
+    const papers = notes('Bob grades papers and returns them.');
+    ok(papers.includes('read with “them” as “papers”, the one it can be in this box'),
+        '"Bob grades papers and returns them": "them" is the papers -- "grades", which no list knows as a verb, is one after its subject (it had had nothing to refer to)', J(papers));
+    const two = ev(`return parseClaimFull('Bob grades papers and Mary returns them.').notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message; });`);
+    ok(J(two) === J(['“them” may be “Bob” or “papers”']), '"Bob grades papers and Mary returns them": "them" may be Bob or the papers, and is asked (it had been read as Bob)', J(two));
+    const before = notes('Ravens eat worms and they fly.');
+    ok(before.includes('read with “they” as “Ravens”, the one it can be in this box'), 'a plural before it still comes first, as since r27.109: "Ravens eat worms and they fly"', J(before));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

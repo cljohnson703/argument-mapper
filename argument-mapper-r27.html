@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.228';
+    const APP_BUILD = '2026-11-15 r27.229';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10205,7 +10205,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 claimPastStem(toks[i].l) === null) i--;
             const v = toks[i], w = claimSynWord(v.l);
             const joined = /^(?:and|or)$/.test(v.l) && bare.some(c => c.k1 === i - 1);
-            if (!joined && !CLAIM_SYN_PREPOSITIONS.has(v.l) && !/^(?:has|have|had|having)$/.test(v.l) && !(/^[a-z]/.test(v.w) && !w.closed && (w.knownVerb || w.past || w.ing))) return;
+            // Or a verb no list knows, after its subject, where the phrases
+            // say a verb may start: "Bob grades papers and returns them"
+            // (r27.229; "grades" had been a noun only, and "them" had had
+            // nothing to refer to).
+            const afterSubject = i > 0 && w.s && !!claimSynVerbStart(synWs, i, 'sg') &&
+                (/^(?:he|she|it)$/.test(toks[i - 1].l) || cands.some(c => c.k1 === i - 1 && c.kind !== 'many'));
+            if (!joined && !CLAIM_SYN_PREPOSITIONS.has(v.l) && !/^(?:has|have|had|having)$/.test(v.l) && !(/^[a-z]/.test(v.w) && !w.closed && (w.knownVerb || w.past || w.ing)) && !afterSubject) return;
             bare.push({ at: toks[i + 1].at, k0: i + 1, k1: j, words: t.slice(toks[i + 1].at, y.at + y.w.length), kind: 'many' });
         });
         // A name the box says is no one: "Poe is a raven".

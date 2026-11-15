@@ -4,6 +4,23 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: a plural after a verb no list knows (r27.229)
+
+The user:
+* Of the list with "Bob grades papers and returns them: a bare plural is never a 'them' candidate": "Fix them in order." This is the fourth.
+
+Changes:
+* "Bob grades papers and returns them" reads "them" as "papers". It had said "them" had nothing in the box to refer to: a plural with no determiner is what a "them" may be after a verb, and "grades" is no verb any list knows. After its subject, where the phrases say a verb may start, it is one.
+* So "Bob grades papers and Mary returns them" asks whether "them" is Bob or the papers. It had read "them" as Bob.
+* As before, such a plural is offered only where nothing plural comes before it: "Ravens eat worms and they fly" reads "they" as the ravens. By grammar alone, "they" may be the worms; whether to ask there is for the user to decide.
+
+Tests:
+* New in syntax-r27-test.js, which has 254 checks: "Bob grades papers and returns them"; "... and Mary returns them"; "Ravens eat worms and they fly", as before.
+* Take-one-out: the change is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: a clause after "and" that opens with an adverb (r27.228)
 
 The user:
