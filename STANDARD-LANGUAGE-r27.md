@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: the colors of a claim about some thing, in its parts (r27.226)
+
+The user:
+* Of the colors not showing on "Mary bought a car, and she loves it", read as "There is a car that Mary bought and that Mary loves": "Can we fix this?"
+* Of the list that began with it: "Fix them in order." This is the first.
+
+Changes:
+* "Mary bought a car, and she loves it; so Mary bought a car": "Mary bought a car" goes on, and "she loves it" is dimmed. With "Mary loves a car", "a car" and "she loves it" go on, and "Mary bought" is dimmed. The box had been read in words not its own, and nothing in it was colored.
+* So "Mary bought a car, and it broke; so some car broke", and "Mary bought a car and loves it".
+* So "There is a car that Mary bought and that Mary loves", as typed: "There is a car" and "Mary loves" go on, and "Mary bought" is dimmed, for "Mary loves a car". It had gone on whole.
+* "Some car is red and fast; so some car is red": "Some car is red" goes on, and "fast" is dimmed. All of "is red and fast" had been dimmed. So "some bird sings and dances; so some bird sings".
+
+Tests:
+* New in colors-r27-inference-test.js, which has 143 checks: the car boxes, each way; "there is a car that ...", as typed; "some car is red and fast" and "some bird sings and dances".
+* Take-one-out: each of the 9 changes is caught by colors-r27-inference-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: the Oxford comma in the app's own lists (r27.225)
 
 The user:

@@ -80,6 +80,10 @@
 // (13) r27.145: a name in capitals ("NASA") is found among the box's words,
 //     as any word is; "A student cheats", with "the student" in the
 //     conclusion, goes on as the student, "cheats" meeting the kind.
+// (14) r27.226: a claim about some thing in its parts -- "Mary bought a car,
+//     and she loves it", read as "there is a car that Mary bought and that
+//     Mary loves", in the box's own words; "some car is red and fast", with
+//     "is red" going on and "fast" dimmed.
 //
 // Run:  node colors-r27-inference-test.js [argument-mapper-r27.html]
 const fs = require('fs');
@@ -984,6 +988,25 @@ const step = (premises, conclusion, type) => [{ id: 'M', type: 'contention', tex
         ok(mp.rule === 'modus ponens' && J(runs(mp.boxes[0], /^ic-k/)) === J(['an after-image is not a physical space', 'a brain process is']) &&
             J(runs(mp.boxes[0], /^ic-c/)) === J(['an after-image is not a brain process']),
             'the "if" clause meets the other box, and the "then" clause goes on, each in its own words (they had stood two words off)', J(mp));
+    }
+
+    console.log('\n-- (r27.226) a claim about some thing, in its parts: "Mary bought a car, and she loves it"; "some car is red and fast" --');
+    {
+        // The user, of the colors not showing on such a box: "Can we fix this?"
+        const bought = paint(['Mary bought a car, and she loves it.'], 'Mary bought a car.');
+        const loves = paint(['Mary bought a car, and she loves it.'], 'Mary loves a car.');
+        const broke = paint(['Mary bought a car, and it broke.'], 'Some car broke.');
+        ok(bought.rule === 'conjunction elimination under ∃' && J(runs(bought.boxes[0], /^ic-c/)) === J(['Mary bought a car']) && J(runs(bought.boxes[0], /^ic-u/)) === J(['she loves it']) &&
+            J(runs(loves.boxes[0], /^ic-c/)) === J(['a car', 'she loves it']) && J(runs(loves.boxes[0], /^ic-u/)) === J(['Mary bought']) &&
+            J(runs(broke.boxes[0], /^ic-c/)) === J(['a car', 'it broke']) && J(runs(broke.boxes[0], /^ic-u/)) === J(['Mary bought']),
+            '"Mary bought a car, and she loves it": what the step keeps goes on, what it drops is dimmed (the box had been read in words not its own, and nothing in it was colored)', J([bought, loves, broke]));
+        const typed = paint(['There is a car that Mary bought and that Mary loves.'], 'Mary loves a car.');
+        ok(J(runs(typed.boxes[0], /^ic-c/)) === J(['There is a car', 'Mary loves']) && J(runs(typed.boxes[0], /^ic-u/)) === J(['Mary bought']),
+            'so "there is a car that Mary bought and that Mary loves", as typed (it had gone on whole)', J(typed));
+        const red = paint(['Some car is red and fast.'], 'Some car is red.'), sings = paint(['Some bird sings and dances.'], 'Some bird sings.');
+        ok(J(runs(red.boxes[0], /^ic-c/)) === J(['Some car is red']) && J(runs(red.boxes[0], /^ic-u/)) === J(['fast']) &&
+            J(runs(sings.boxes[0], /^ic-c/)) === J(['Some bird sings']) && J(runs(sings.boxes[0], /^ic-u/)) === J(['dances']),
+            '"some car is red and fast", so "some car is red": "is red" goes on, "fast" is dimmed (all of "is red and fast" had been); so "sings" and "dances"', J([red, sings]));
     }
 
     ok(W.errors.length === 0, 'no JSDOM script errors', W.errors.join(' | '));

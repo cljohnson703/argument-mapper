@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.225';
+    const APP_BUILD = '2026-11-15 r27.226';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10778,7 +10778,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // a car that Mary bought and that Mary loves (r27.219).
             const there = loose && slots.length === 1 ? claimThereIsReading(t, toks, clauses, chosen[0], slots[0].members, named) : null;
             auto = there
-                ? { text: there, message: 'read with ' + said3 + ', the one it can be in this box: ' + quote(there.replace(/\.$/, '')) }
+                ? { text: there.text, there: there.words, message: 'read with ' + said3 + ', the one it can be in this box: ' + quote(there.text.replace(/\.$/, '')) }
                 : loose
                 ? { whole: true, text: texts[0], message: 'read with ' + said3 + ', the one it can be in this box, so the sentence is read as one claim' }
                 : { text: texts[0], edits: editsOf(chosen), message: 'read with ' + said3 + ', the one ' + (slots.length > 1 ? 'each' : 'it') + ' can be in this box' +
@@ -10815,7 +10815,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (!first || !second || /\b(?:it|its|he|she|him|her|they|them)\b/i.test(first + ' ' + second)) return null;
         const np = t.slice(c.at, toks[c.k1].at + toks[c.k1].w.length);
         const text = 'There is ' + np.charAt(0).toLowerCase() + np.slice(1) + ' that ' + first + ' and that ' + second + '.';
-        return claimReadsAsThereIs(text) ? text : null;
+        if (!claimReadsAsThereIs(text)) return null;
+        // With its parts in the box's own words, for the colors (r27.226):
+        // "Mary bought", "a car", "she loves it" -- or "it broke" -- and the
+        // two first together, "Mary bought a car".
+        const upto = k => toks[k].at + toks[k].w.length;
+        return { text, words: { subject: t.slice(toks[A.from].at, upto(c.k1)), first: t.slice(toks[A.from].at, c.at).trim(), np,
+            second: p.k === Bc.from ? t.slice(p.at, upto(b1)) : t.slice(toks[Bc.from].at, p.at + p.w.length) } };
     }
     // Whether words read as "there is" a thing two clauses say something of.
     function claimReadsAsThereIs(text) {
@@ -10852,7 +10858,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimPronounQuestion() {
         if (claimReadState.notes.some(n => n.pronoun || n.reference)) return;
         const r = claimPronounReadings(claimBoxRaw || '');
-        if (r.auto) { if (!claimReadState.quiet) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true, auto: r.auto.text, whole: !!r.auto.whole }); return; }
+        if (r.auto) { if (!claimReadState.quiet) claimReadState.notes.push({ kind: 'unread', message: r.auto.message, pronoun: true, auto: r.auto.text, whole: !!r.auto.whole, there: r.auto.there }); return; }
         if (!r.texts.length) claimAmbiguous(r.missing || 'a pronoun here has nothing in this box to refer to; name who or what it is', [], true, { pronoun: true, missing: true, texts: [] });
         else claimAmbiguous(r.message, r.texts.map(label => ({ label, build: () => null })), true, { pronoun: true, texts: r.texts });
     }
@@ -13989,6 +13995,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         claimBoxText = normalizeClaimText(auto.auto);
                         claimBoxNames = new Set((claimBoxText.match(/\uE000[a-z][a-z'-]*/g) || []).map(n => n.slice(1)));
                         form = claimLocalReferences(readClaim(claimBoxText));
+                        // "Mary bought a car, and she loves it", read as "there is
+                        // a car that Mary bought and that Mary loves": its parts
+                        // in the box's words, for the colors (r27.226).
+                        const tw = auto.there && form && form.kind === 'some' && form.thereWords;
+                        if (tw && tw.kids.length === 2) form = Object.assign({}, form, { thereWords: { subject: auto.there.subject,
+                            kids: [{ words: auto.there.first, prop: tw.kids[1].prop }, { words: auto.there.np, prop: tw.kids[0].prop }], said: auto.there.second } });
                     }
                     // A pronoun asked about and answered: the box is read with
                     // the referent chosen in its place.
@@ -18587,6 +18599,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const predicate = last || claimObjectRelativeProp(t.slice(r + 1)) || verbPhraseProp(t.slice(r + 1));
             if (!subject || !predicate) return null;
             form = { kind: 'some', subject, predicate };
+            // Its parts' words, for the colors (r27.226): the thing ("there is
+            // a car"), and each clause said of it ("Mary bought", "Mary loves").
+            const lead = tokens.length - t.length;
+            if (last && !denied) {
+                const thing = (lead >= 0 && tokens.slice(lead).every((x, i) => x === t[i]) ? ['there', verb].concat(tokens.slice(0, lead + r)) : t.slice(0, r)).join(' ');
+                const kids = [{ words: thing, prop: restrictorProp(t.slice(0, r)) }].concat(each.slice(0, -1).map(c => ({ words: c.join(' '), prop: said(c) })));
+                if (kids.every(k => k.prop)) form.thereWords = { subject: kids.map(k => k.words).join(' '), kids, said: each[each.length - 1].join(' ') };
+            }
         } else if (/^(?:thing|person)$/.test(claimWord(t[0])) && t.length > 1) {
             form = { kind: 'some', subject: restrictorProp([t[0]]), predicate: claimNounProp(t.slice(1).join(' ')) };   // "there is something physical"
         } else {
@@ -34373,6 +34393,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function icSplit(cl) {
         const made = cl.form.kind === 'not' && !cl.form.src && !cl.form.vpText;
         const f = cl.form.kind === 'not' && cl.form.inner ? cl.form.inner : cl.form;
+        // "There is a car that Mary bought and that Mary loves", or "Mary
+        // bought a car, and she loves it" read so: the thing and each clause
+        // said of it a part, in the box's words (r27.226; they had had none,
+        // and the box went uncolored).
+        if (f === cl.form && f.kind === 'some' && f.thereWords && f.subject && f.predicate) {
+            const w = f.thereWords;
+            return [{ key: 'p:' + claimPropCanon(f.subject), words: w.subject, kids: w.kids.map(k => ({ key: 'p:' + claimPropCanon(k.prop), words: k.words })) },
+                    { key: 'p:' + claimPropCanon(f.predicate), words: w.said, said: true, neg: icDenies(w.said) }];
+        }
         if ((f.kind === 'all' || f.kind === 'some') && f.subject && f.predicate) {
             const src = f.src || '', vp = f.vp || '';
             const at = vp ? src.toLowerCase().lastIndexOf(vp.toLowerCase()) : -1;
@@ -34389,7 +34418,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             return [{ key: 'p:' + claimPropCanon(f.subject), words: kind, kids: icRestrictor(f.subject, kind) },
                     // What is said, in one spelling too: "is a black bird" meets
                     // "Poe is a black bird" (r27.156; it had been dimmed).
-                    { key: 'p:' + claimPropCanon(String(f.predicate).replace(/^\u00ac/, '')), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made }];
+                    { key: 'p:' + claimPropCanon(String(f.predicate).replace(/^\u00ac/, '')), words: runs ? runs.said : vp || said, said: true, neg: icDenies(runs ? runs.said : said) !== made,
+                      // In its parts, for a step that keeps one: "is red" and
+                      // "fast" in "is red and fast" (r27.226; all had been dimmed).
+                      kids: made ? null : icSaidParts(f.predicate, runs ? runs.said : vp || said) }];
         }
         if (f.kind === 'pred' && f.term && f.prop) {
             const vp = String(cl.form.vpText || f.vpText || ''), said = vp.replace(IC_COPULA, '');
@@ -34404,6 +34436,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     { key: 'p:' + claimPropCanon(String(f.compound).replace(/^\u00ac/, '')), words: vp, said: true, neg: icDenies(said) !== made }];
         }
         return null;
+    }
+    // What is said in its parts, where its words have them, as its formula
+    // has them: "is red and fast" as "is red" and "fast"; "sings and dances"
+    // as "sings" and "dances" (r27.226). Or null.
+    function icSaidParts(prop, words) {
+        const p = String(prop || ''), t = /^[=~]/.test(p) ? claimPropFol(p, '\uE000k') : null, flat = t ? folFlat(t, 'and') : [];
+        if (flat.length < 2 || !words || flat.some(x => x.op !== 'pred' || !/^nl_prop(?:erty)?_/.test(x.name))) return null;
+        const props = flat.map(x => /^nl_property_/.test(x.name) ? '=' + x.name.slice(12) : x.name.slice(8));
+        const pieces = claimSplitTop(String(words).trim(), /\s*,\s*(?:and\s+)?|\s+and\s+/).map(x => x.trim()).filter(Boolean);
+        return pieces.length === props.length ? props.map((q, k) => ({ key: 'p:' + claimPropCanon(q), words: pieces[k], said: true, neg: false })) : null;
     }
     const icQuantified = f => !!f && (f.kind === 'all' || f.kind === 'some' || (f.kind === 'not' && icQuantified(f.inner)));
     // Where a run of words stands among a clause's, from token `from` on:
@@ -34663,7 +34705,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
     function icPlanRead(step) {
         if (!Array.isArray(step.premises) || !step.premises.length || step.premises.some(p => !p)) return null;
-        const C = step.rule ? step.conclusion : null;
+        // "Mary bought a car", from what is said of some car, as the step
+        // reads it: "there is a car that Mary bought" (r27.219; its colors
+        // since r27.226).
+        const C0 = step.rule ? step.conclusion : null;
+        const C = C0 && step.rule.lifted && /^∃/.test(step.rule.quants || '') && C0.kind === 'pred' ? claimSomeObjectForm(C0) || C0 : C0;
         // "Anything that is a mental state of a subject ...": as said of the
         // subject the step names (r27.115).
         const P = claimDefinitePremises(claimDonkeyPremises(step.premises, step.conclusion), step.conclusion, true);
