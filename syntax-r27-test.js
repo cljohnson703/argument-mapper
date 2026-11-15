@@ -1520,10 +1520,10 @@ console.log('\n-- r27.211: a pronoun whose only candidate is a phrase asks as on
     const kept = [step(['A teacher left, and then she cried.'], 'A teacher cried.'), step(['Mary bought a car, and she loves it.'], 'Mary bought a car.'),
         step(['The teacher praised the student, and she cried.'], 'The teacher cried.'), step(['Mary praised Ann, and then she praised her again.'], 'Mary praised Ann again.')];
     ok(/read with “she” as “the teacher”, the one it can be in this box, so the sentence is read as one claim/.test(kept[0].why) &&
-        /"she" is read as "Mary", the one name this claim gives/.test(kept[1].why) &&
+        kept[1].rule === 'conjunction elimination under ∃' &&
         kept[2].why === 'Did you mean “The teacher praised the student, and the teacher cried” or “The teacher praised the student, and the student cried”?' &&
         kept[3].rule === 'conjunction elimination',
-        'as before: after "a teacher" (one claim), in a box with an "it" too (one claim), and where two pronouns go back to two ("she" Mary, "her" Ann); two candidates ask', J(kept));
+        'as before: after "a teacher" (one claim), and where two pronouns go back to two ("she" Mary, "her" Ann); two candidates ask -- and "Mary bought a car, and she loves it" gives "Mary bought a car" (r27.219; it had been one claim the check does not take apart)', J(kept));
 }
 
 console.log('\n-- r27.212: a pronoun\'s one possible referent is its referent; a noun that says whose sex it is is no referent of the other pronoun --');
@@ -1732,6 +1732,36 @@ console.log('\n-- r27.218: the app\'s own quotations double where they are made 
     ok(J(typed) === J(['“the students’ books” are heavy', '“the students’ books”, and “the dog”.', '“the boss’ hat” is red',
             '“the dogs” and “the cats” differ', '“He said ‘the dogs’ bowls’ today” is odd']),
         'a single-quoted quotation at the top closes at the first closing quote that cannot end a plural\'s possessive, else at the last before the next opening one', J(typed));
+}
+
+console.log('\n-- r27.219: "a car ... it" as one claim about some car; a relative clause of two --');
+{
+    // The roadmap (the user: "a"): "Read it as what it says: there is a car
+    // that Mary bought and that Mary loves."
+    const key = t => ev(`var r = parseClaimFull(${J(t)}); return [r.form ? claimKey(r.form) : null, r.notes.map(function (n) { return n.message; })];`);
+    const car = key('Mary bought a car, and she loves it.');
+    ok(car[0] === 'E:(=car&^mary|~did bought _)|^mary|~love _' &&
+        car[1].indexOf('read with “it” as “the car”, the one it can be in this box: “There is a car that Mary bought and that Mary loves”') >= 0,
+        '"Mary bought a car, and she loves it": there is a car that Mary bought and that Mary loves, and the check says so (it had been one claim it does not take apart)', J(car));
+    const same = ['Mary bought a car and loves it.', 'Mary bought a car, but she loves it.', 'There is a car that Mary bought and that Mary loves.', 'There is a car that Mary bought and loves.'].map(t => key(t)[0]);
+    ok(same.slice(0, 1).concat(same.slice(2)).every(k => k === car[0]) && same[1] === 'E:(=car&^mary|~did bought _)|^mary|~love _',
+        'so "Mary bought a car and loves it", "... but she loves it"; and the words the check gives read back to the same claim, as does "a car that Mary bought and loves"', J(same));
+    const broke = [key('Mary bought a car, and it broke.')[0], key('There is a car that Mary bought and that broke.')[0]];
+    ok(broke.every(k => k === 'E:(=car&^mary|~did bought _)|~did broke'), '"and it broke": the car, the subject of the next clause', J(broke));
+    const rel = [key('Some car that Mary bought and that Mary loves is red.')[0], key('There is a person who sings and dances.')[0]];
+    ok(rel[0] === 'E:(=car&^mary|~did bought _&^mary|~love _)|=red' && rel[1] === 'E:=person|~sing and dance',
+        'a relative clause of two, "and that" between them, is two parts of the thing (it had been one, "Mary bought and that Mary loves _"); "sings and dances" as before', J(rel));
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = st && st.rule ? st.rule.name : null;
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const follows = [step(['Mary bought a car, and she loves it.'], 'Mary bought a car.'), step(['Mary bought a car, and she loves it.'], 'Mary loves a car.'),
+        step(['Mary bought a car, and it broke.'], 'Some car broke.'), step(['There is a car that Mary bought and that Mary loves.'], 'Mary loves a car.')];
+    ok(follows.every(r => r === 'conjunction elimination under ∃'),
+        '"so Mary bought a car", "so Mary loves a car", "so some car broke": by dropping one part under "some"', J(follows));
+    const not = [step(['Mary bought a car, and she loves it.'], 'Mary hates a car.'), step(['Mary bought a car.'], 'Mary loves a car.'),
+        step(['Mary bought a car, and she loves it.'], 'Bob bought a car.')];
+    ok(not.every(r => r === null), 'and not "Mary hates a car", nor "Mary loves a car" from "Mary bought a car", nor "Bob bought a car"', J(not));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

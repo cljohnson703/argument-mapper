@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.218';
+    const APP_BUILD = '2026-11-15 r27.219';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10760,12 +10760,59 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const chosen = picks[0];
             const loose = slots.some((x, i) => chosen[i].indef && x.members.some(p => !joins(p, chosen[i])));
             const said3 = slots.map((x, i) => quote(x.members[0].w) + ' as ' + say(chosen[i])).join(', ');
-            auto = loose
+            // "Mary bought a car, and she loves it": one claim, that there is
+            // a car that Mary bought and that Mary loves (r27.219).
+            const there = loose && slots.length === 1 ? claimThereIsReading(t, toks, clauses, chosen[0], slots[0].members, named) : null;
+            auto = there
+                ? { text: there, message: 'read with ' + said3 + ', the one it can be in this box: ' + quote(there.replace(/\.$/, '')) }
+                : loose
                 ? { whole: true, text: texts[0], message: 'read with ' + said3 + ', the one it can be in this box, so the sentence is read as one claim' }
                 : { text: texts[0], edits: editsOf(chosen), message: 'read with ' + said3 + ', the one ' + (slots.length > 1 ? 'each' : 'it') + ' can be in this box' +
                     (slots.some((x, i) => x.members.some(p => joins(p, chosen[i]))) ? ': ' + quote(texts[0]) : '') };
         }
         return { texts, message, missing: null, itAsks, auto, dem: open.some(p => p.dem) };
+    }
+    // "Mary bought a car, and she loves it" as the one claim it is: "There is
+    // a car that Mary bought and that Mary loves" (r27.219). The thing is an
+    // indefinite the first clause ends on, a name its subject; the next
+    // clause, after "and" or "but", has the pronoun as its subject ("and it
+    // broke") or its last word ("and she loves it", "and loves it"). Its
+    // words, where they read so; or null.
+    function claimThereIsReading(t, toks, clauses, c, members, named) {
+        if (!c || !c.indef || clauses.length !== 2 || members.length !== 1) return null;
+        const p = members[0], A = clauses[0], Bc = clauses[1];
+        if (p.ci !== 1 || A.by || !/^(?:and|but)$/.test(Bc.by || '')) return null;
+        const end = C => { let k = C.to - 1; while (k >= C.from && /^[,;:.!?()]$/.test(toks[k].l)) k--; return k; };
+        const a1 = end(A), b1 = end(Bc);
+        if (!/^[A-Z][a-z]/.test(toks[A.from].w) || CLAIM_FUNCTION_WORDS.has(toks[A.from].l) || c.k0 !== A.from + 2 || c.k1 !== a1 ||
+            toks.slice(c.k0, c.k1 + 1).some(x => /^(?:that|which|who|whom|and|or|but)$/.test(x.l))) return null;
+        const words = (a, b) => {
+            let out = '', at = a;
+            named.filter(e => e.at >= a && e.end <= b).sort((x, y) => x.at - y.at).forEach(e => { out += t.slice(at, e.at) + e.say; at = e.end; });
+            return (out + t.slice(at, b)).replace(/\s+/g, ' ').trim();
+        };
+        const subject = toks[A.from].w, first = words(toks[A.from].at, c.at);
+        let second = null;
+        if (p.k === Bc.from && /^(?:it|he|she)$/.test(p.l) && b1 > p.k) second = words(p.at + p.w.length, toks[b1].at + toks[b1].w.length);
+        else if (p.k === b1 && p.k > Bc.from && /^(?:it|him|her)$/.test(p.l)) {
+            const rest = words(toks[Bc.from].at, p.at), own = /^(?:he|she)$/.test(toks[Bc.from].l) || /^[A-Z][a-z]/.test(toks[Bc.from].w);
+            second = own ? rest : /^[a-z]/.test(toks[Bc.from].w) && !CLAIM_FUNCTION_WORDS.has(toks[Bc.from].l) ? subject + ' ' + rest : null;
+        }
+        if (!first || !second || /\b(?:it|its|he|she|him|her|they|them)\b/i.test(first + ' ' + second)) return null;
+        const np = t.slice(c.at, toks[c.k1].at + toks[c.k1].w.length);
+        const text = 'There is ' + np.charAt(0).toLowerCase() + np.slice(1) + ' that ' + first + ' and that ' + second + '.';
+        return claimReadsAsThereIs(text) ? text : null;
+    }
+    // Whether words read as "there is" a thing two clauses say something of.
+    function claimReadsAsThereIs(text) {
+        const sr = claimBoxRaw, st = claimBoxText, sn = claimBoxNames;
+        try {
+            claimBoxRaw = text;
+            claimBoxText = normalizeClaimText(text);
+            claimBoxNames = new Set((claimBoxText.match(/\uE000[a-z][a-z'-]*/g) || []).map(n => n.slice(1)));
+            const f = claimQuietly(() => readClaim(claimBoxText)), fol = f && f.kind === 'some' ? claimFolOf(f) : null;
+            return !!fol && fol.op === 'some' && folFlat(fol.body, 'and').filter(x => x.op === 'pred' && /^nl_prop_[\^~]/.test(x.name)).length >= 2;
+        } catch (e) { return false; } finally { claimBoxRaw = sr; claimBoxText = st; claimBoxNames = sn; }
     }
     // Whether a reading still has an "it" in it -- not one a quantifier took
     // ("if a raven sings, it is black" is every raven that sings) -- or, with
@@ -12509,10 +12556,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (objRel > 0 && !nestedObjRel && (claimClauseHead(words.slice(0, objRel)) || CLAIM_PERSON_CLAUSE_ADJECTIVES.has(words[objRel - 1]) ||
             words.slice(0, objRel).some(w => /^(?:so|such)$/.test(w)))) return null;
         if (objRel > 0 && !nestedObjRel) {
-            const head = normalizeClaimTerm(tokens.slice(0, objRel).join(' ')), rel = claimObjectRelativeProp(tokens.slice(objRel + 1));
-            if (!head || !rel || /\b(?:that|who|which|whom)\b/.test(claimUnmarked(head))) return null;
+            const head = normalizeClaimTerm(tokens.slice(0, objRel).join(' '));
+            // "Car that Mary bought and that she loves": each clause, said of
+            // the thing (r27.219) -- one with no subject of its own, as a
+            // verb's ("and that broke").
+            const each = claimRelativeClauses(tokens.slice(objRel + 1));
+            const rels = each.length > 1 ? each.map(c => claimObjectRelativeProp(c) || (/^\uE000/.test(c[0]) ? null : verbPhraseProp(c)))
+                : [claimObjectRelativeProp(tokens.slice(objRel + 1))];
+            if (!head || !rels.every(Boolean) || /\b(?:that|who|which|whom)\b/.test(claimUnmarked(head))) return null;
             const headParts = claimHeadParts(head);
-            return headParts ? { parts: headParts.concat([rel]) } : null;
+            return headParts ? { parts: headParts.concat(rels) } : null;
         }
         // "Raven that sings", "raven that loves Fido": a subject relative with
         // a verb, said of the thing -- not "raven that Poe loves" (the relative
@@ -12613,6 +12666,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // "(A raven) that Poe does not love": a clause with a subject of its own,
     // its object the thing it is said of -- "¬^poe|~love _", Poe not loving
     // it. Read with a name in the object's place, and that name taken out.
+    // A relative clause's clauses, "and" between them, each as one of its own
+    // (r27.219): "Mary bought and that she loves" ("and that", "and which",
+    // "and who", "and whom"), "Mary bought and Bob sold", or "Mary bought and
+    // loves", a name its subject, shared. One clause, where none of these.
+    function claimRelativeClauses(tokens) {
+        const w = tokens.map(claimWord), out = [];
+        let from = 0;
+        for (let i = 1; i < tokens.length - 1; i++)
+            if (w[i] === 'and' && /^(?:that|which|who|whom)$/.test(w[i + 1]) && i > from) { out.push(tokens.slice(from, i)); from = i + 2; i++; }
+        out.push(tokens.slice(from));
+        if (out.length > 1) return out.every(c => c.length) ? out : [tokens];
+        const k = w.indexOf('and');
+        if (k > 1 && k === w.lastIndexOf('and') && k < tokens.length - 1 && /^\uE000[a-z]/.test(tokens[0])) {
+            if (/^\uE000[a-z]/.test(tokens[k + 1])) return [tokens.slice(0, k), tokens.slice(k + 1)];
+            if (!CLAIM_FUNCTION_WORDS.has(w[k + 1])) return [tokens.slice(0, k), [tokens[0]].concat(tokens.slice(k + 1))];
+        }
+        return [tokens];
+    }
     const CLAIM_GAP = '\uE000gapk';
     function claimObjectRelativeProp(tokens) {
         if (!tokens.length || !/^\uE000[a-z]/.test(tokens[0])) return null;
@@ -18437,7 +18508,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // pronoun (r27.108).
         const r = t.findIndex((tok, i) => i > 0 && /^(?:that|which|who)$/.test(claimWord(tok)) && !(claimWord(tok) === 'that' && claimAttitudeWord(claimWord(t[i - 1]))));
         if (r > 0 && !CLAIM_PREPOSITIONS.has(claimWord(t[r - 1]))) {
-            const subject = restrictorProp(t.slice(0, r)), predicate = claimObjectRelativeProp(t.slice(r + 1)) || verbPhraseProp(t.slice(r + 1));
+            // "There is a car that Mary bought and that she loves": each clause
+            // said of the thing -- the last as what is said of it, the others
+            // with its noun (r27.219).
+            const each = claimRelativeClauses(t.slice(r + 1)), said = c => claimObjectRelativeProp(c) || (/^\uE000/.test(c[0]) ? null : verbPhraseProp(c));
+            const last = each.length > 1 ? said(each[each.length - 1]) : null;
+            const subject = restrictorProp(last ? t.slice(0, r).concat(...each.slice(0, -1).map((c, i) => (i ? ['and', 'that'] : ['that']).concat(c))) : t.slice(0, r));
+            const predicate = last || claimObjectRelativeProp(t.slice(r + 1)) || verbPhraseProp(t.slice(r + 1));
             if (!subject || !predicate) return null;
             form = { kind: 'some', subject, predicate };
         } else if (/^(?:thing|person)$/.test(claimWord(t[0])) && t.length > 1) {
@@ -20577,8 +20654,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return CLAIM_LIFTED_RULES.get(key);
     }
     let claimLiftDepth = 0;
+    // "Mary bought a car" as "there is a car that Mary bought" (r27.219): a
+    // name, a verb, and the indefinite it ends on -- where the two say the
+    // same, the verb's object put back. Or null.
+    const claimSomeObjectCache = new WeakMap();
+    function claimSomeObjectForm(C) {
+        if (!C || C.kind !== 'pred' || typeof C.term !== 'string' || !/^[a-z][a-z'-]*$/.test(C.term) || CLAIM_NO_INDIVIDUAL.test(C.term) ||
+            typeof C.vpText !== 'string' || typeof C.prop !== 'string') return null;
+        if (claimSomeObjectCache.has(C)) return claimSomeObjectCache.get(C);
+        let out = null;
+        const m = /^([a-z][a-z' -]*?)\s+((?:a|an)\s+[a-z][a-z'-]*(?:\s+[a-z][a-z'-]*){0,2})$/.exec(C.vpText.trim());
+        if (m && !claimTokens(m[2]).slice(1).some(w => CLAIM_FUNCTION_WORDS.has(claimWord(w)) || CLAIM_PREPOSITIONS.has(claimWord(w)))) {
+            const f = claimQuietly(() => readClaim('there is ' + m[2] + ' that \uE000' + C.term + ' ' + m[1]));
+            const kind = f && typeof f.subject === 'string' && f.subject.charAt(0) === '=' ? f.subject.slice(1) : null;
+            if (f && f.kind === 'some' && kind && typeof f.predicate === 'string' && C.prop.endsWith(' ' + kind) &&
+                f.predicate === '^' + C.term + '|' + C.prop.slice(0, C.prop.length - kind.length) + '_') out = f;
+        }
+        claimSomeObjectCache.set(C, out);
+        return out;
+    }
     function claimLiftedStep(P, C) {
         const ct = claimFolOf(C);
+        // "Mary bought a car" says there is a car that Mary bought: so, from
+        // a premise under "some" (r27.219).
+        if (ct && ct.op !== 'all' && ct.op !== 'some' && claimLiftDepth <= 15 && P.length && P.every(Boolean) && P.some(p => (claimFolOf(p) || {}).op === 'some')) {
+            const S = claimSomeObjectForm(C);
+            if (S) return claimLiftedStep(P, S);
+        }
         if (!ct || (ct.op !== 'all' && ct.op !== 'some') || claimLiftDepth > 15 || !P.length || P.some(p => !p)) return null;
         const tree = p => claimFolOf(p), names = new Set();
         [ct].concat(P.map(tree)).forEach(t => folNames(t, names));

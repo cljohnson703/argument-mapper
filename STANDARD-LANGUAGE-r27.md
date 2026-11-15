@@ -4,6 +4,40 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "a car ... it" as one claim about some car (r27.219)
+
+The user:
+* Of the roadmap's "a car ... it": "a" (on the roadmap, after the "possibly" work). Then, of what comes next: "Proceed in order".
+
+Changes:
+* "Mary bought a car, and she loves it" is read as what it says: "There is a car that Mary bought and that Mary loves".
+  * It had been one claim the check does not take apart (r27.211): its "it" can only be the car, and "she loves it" cannot be written to say so on its own.
+  * The check says so: 'read with “it” as “the car”, the one it can be in this box: “There is a car that Mary bought and that Mary loves”'. Those words read back to the same claim.
+* So "Mary bought a car" follows, by dropping one part under "some" (conjunction elimination under ∃), and so does "Mary loves a car".
+* The same goes for "Mary bought a car and loves it" and "Mary bought a car, but she loves it" ("but" read as "and", as elsewhere). So too "Mary bought a car, and it broke", whose "it" is the next clause's subject: so "some car broke".
+* This applies only where the thing is the object the first clause ends on, with a name as that clause's subject, and the pronoun is the next clause's subject or last word. "A teacher left, and Bob praised her" is one claim, as before: its "a teacher" may mean every one, some one, or one in general.
+* "Mary bought a car" is taken to say that there is a car that Mary bought where a rule under "some" takes the step. Everywhere else it is read as before.
+* A relative clause of two, with "and" between them, is read as two:
+  * "There is a car that Mary bought and that she loves";
+  * "... that Mary bought and loves";
+  * "... that Mary bought and that broke";
+  * "Some car that Mary bought and that Mary loves is red".
+  They had been read as one clause, "Mary bought and that Mary loves _".
+* Not yet: the highlighter colors no part of such a box, because the words the check reads stand in another order than the box's.
+* The roadmap's entry for this is gone, now that it is built.
+
+Tests:
+* Changed: syntax-r27-test.js's check that "Mary bought a car, and she loves it" is one claim, which gave no step. Now "Mary bought a car" follows; that fails on r27.218.
+* New in syntax-r27-test.js, which has 220 checks:
+  * the readings, and the check's words for them reading back;
+  * "and it broke";
+  * a relative clause of two;
+  * the steps that follow, and three that do not ("Mary hates a car", "Mary loves a car" from "Mary bought a car", "Bob bought a car").
+* Take-one-out: each of the 7 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on: none has a pronoun going back to an object so, or a relative clause of two.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: the app's own quotations, double where they are made (r27.218)
 
 The user:
