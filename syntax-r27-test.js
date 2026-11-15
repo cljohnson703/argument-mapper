@@ -1292,8 +1292,10 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
         J(readings('Poe can fly.')) === J([['Poe is able to fly.', 'Poe is allowed to fly.'].concat(['physically', 'metaphysically', 'logically'].map(k => 'It is ' + k + ' possible for Poe to fly.'))]),
         '"it is possible for Poe to fly", "impossible", "not possible": which kind, physically, metaphysically or logically (r27.216); "Poe can fly": able, allowed, or possible of each kind, physically first (r27.213)', '');
     const esse = [step(['Poe flies.'], 'It is physically possible for Poe to fly.'), step(['Poe flies.'], 'It is logically possible that Poe flies.'), step(['Poe flies.'], 'It is metaphysically possible for Poe to fly.')];
-    ok(esse[0].rule === 'ab esse ad posse' && esse[1].rule === 'ab esse ad posse' && esse[2].rule === null && /by axiom T/.test(esse[2].why),
-        'what is, is physically and logically possible (ab esse ad posse); metaphysically, by the map\'s axiom T, where its system has it', J(esse));
+    ok(esse.every(r => r.rule === 'ab esse ad posse'),
+        'what is, is physically, logically and metaphysically possible, by ab esse ad posse, whatever the map\'s modal system (r27.224; the user: "a"; metaphysically it had been the map\'s axiom T)', J(esse));
+    const esseGloss = ev(`return (DEDUCTIVE_OPTIONAL_RULES.find(function (r) { return r.id === 'ab-esse-ad-posse'; }) || {}).gloss;`);
+    ok(/"it is metaphysically possible for Poe to fly"/.test(esseGloss || ''), 'and its description in the Logic panel says so', esseGloss);
     const keys = ['It is physically possible for Poe to fly or swim.', 'It is not physically possible for Poe to beat any player.', 'It is metaphysically possible for Mary to sing and Bob cannot dance.'].map(key);
     ok(J(keys) === J(['D[◇phys(P:poe|~fly);◇phys(P:poe|~swim)]', '□phys(N(P:poe|~beat player))', 'C[◇meta(P:mary|~sing);N(P:bob|~can dance)]']) &&
         step(['It is physically possible for Poe to fly or swim.', 'It is not physically possible for Poe to fly.'], 'It is physically possible for Poe to swim.').rule === 'disjunctive syllogism',

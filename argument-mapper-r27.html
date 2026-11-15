@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.223';
+    const APP_BUILD = '2026-11-15 r27.224';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -23068,16 +23068,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // conclude that P" -- the "can" of what is possible for us, not of
         // what is established (the user, 2026-10-05).
         { id: 'ab-esse-ad-posse', name: 'ab esse ad posse', optional: true,
-          gloss: 'what is, can be: "we conclude that X" gives "it is possible for us to conclude that X"; "Poe flies" gives "it is physically possible for Poe to fly" and "it is logically possible for Poe to fly"',
+          gloss: 'what is, can be: "we conclude that X" gives "it is possible for us to conclude that X"; "Poe flies" gives "it is physically possible for Poe to fly", "it is metaphysically possible for Poe to fly" and "it is logically possible for Poe to fly"',
           // Of the physical and logical kinds too (r27.203): what is so is
           // physically and logically possible -- "Poe can fly" read as either
-          // follows from "Poe flies", as it did read as "possible". Not
-          // metaphysical possibility outright: that is the map's modal
-          // system's, axiom T where it has it (in K what is need not be
-          // possible).
+          // follows from "Poe flies", as it did read as "possible". And
+          // metaphysically, whatever the map's modal system (r27.224; the
+          // user: "a"): it had been axiom T's, while this rule gave physical
+          // possibility and "kinds of possibility" made that metaphysical, so
+          // that even in K what is was possible, in two steps.
           test: (P, C) => P.length === 1 && !!P[0] && !!C && ((C.kind === 'pred' && !!C.possible && P[0].kind === 'pred' && !P[0].possible &&
               P[0].term === C.term && C.prop === '~can ' + String(P[0].prop).slice(1)) ||
-              (C.kind === 'modal' && C.op === 'poss' && /^(?:logic|phys)$/.test(C.mod || '') && claimSame(P[0], C.inner))) },
+              (C.kind === 'modal' && C.op === 'poss' && /^(?:logic|phys|meta)$/.test(C.mod || '') && claimSame(P[0], C.inner))) },
         // What one is able to do is possible (r27.202; the user: "yes, I want
         // both"): "Poe is able to fly" gives "it is physically possible for Poe
         // to fly", and "it is possible for Poe to fly". Not "not able": what

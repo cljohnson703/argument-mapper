@@ -149,8 +149,11 @@ console.log('\n-- 2. each axiom, in each of the fifteen systems --');
         ['none', [A], nec(A)], ['none', [poss(A)], A], ['none', [poss(A)], nec(A)], ['none', [nec(poss(A))], poss(nec(A))],
     ];
     let right = 0, wrong = [];
+    // The system's own steps: with ab esse ad posse off, which gives "P, so
+    // ◇P" whatever the system (r27.224; the user: "a").
     for (const [name, axioms] of Object.entries(SYSTEMS)) {
         setModal(axioms);
+        ev("setDeductiveRule(['ab-esse-ad-posse'], false); deductiveCache.clear(); return 1;");
         for (const [, P, C] of steps) {
             const certified = !!step(P.map(show), show(C)).rule, holdsIn = valid(P, C, axioms);
             if (certified && !holdsIn) wrong.push('UNSOUND ' + name + ': ' + P.map(show).join(', ') + ' ⊢ ' + show(C));
@@ -159,6 +162,9 @@ console.log('\n-- 2. each axiom, in each of the fifteen systems --');
         }
     }
     ok(!wrong.length, 'certified exactly where the system\'s frames have it: ' + right + ' of ' + (15 * steps.length), wrong.slice(0, 6).join(' | '));
+    setModal(SYSTEMS.K);
+    const esseK = step(['P'], '◇P').rule;
+    ok(esseK === 'ab esse ad posse', 'and with ab esse ad posse on, as it is unless switched off, "P, so ◇P" holds in K too, by that rule (r27.224; the user: "a")', esseK);
     setModal(['T', '5']);
     const names = [step(['□P'], 'P').rule, step(['P'], '◇P').rule, step(['□P'], '◇P').rule, step(['□P'], '□□P').rule, step(['P'], '□◇P').rule, step(['◇□P'], '□P').rule];
     ok(J(names) === J(['axiom T', 'axiom T', 'axiom D', 'axiom 4', 'axiom B', 'axiom 5']), 'each named by its axiom', J(names));
@@ -477,7 +483,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     ok(off.mp.rule === 'modus ponens' && off.can.rule === 'modus ponens' && off.every.rule === 'modus ponens' && off.anyRaven.rule === 'modus ponens',
         'off: the same words in both boxes follow as written -- "if zombies are possible, ...", "if Poe can fly, ...", "if Mary believes that any raven is black, ..."; and "it is necessary that" beside "necessarily", one family of words, on every kind', J([off.mp, off.can, off.every, off.anyRaven]));
     ok(!off.decides.rule && off.decides.why === 'Written “Zombies are metaphysically possible”, the step follows by modus ponens.' &&
-        !off.flies.rule && off.flies.why === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.' &&
+        !off.flies.rule && off.flies.why === 'Written “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.' &&
         !off.able.rule && off.able.why === 'Written “Poe is able to fly”, the step follows by modus ponens.' &&
         off.inPlace.rule === 'modus ponens',
         'off: where the words as written do not give the step and another reading does, it says so, in that reading\'s words (r27.214) -- "Poe can fly" is not "Poe is able to fly" (the user: "That\'s right"); no note of words that differ before it, "zombies are metaphysically possible" no longer read as said of zombies; and "if zombies are possible, ..." beside "possibly, zombies exist" follows on every kind, one family of words, as written (r27.223; the metaphysical readings had not met, and it followed on some kinds only)', J([off.decides, off.flies, off.able, off.inPlace]));
@@ -505,7 +511,7 @@ console.log('\n-- 8. "Semantic mode": on unless a map switches it off --');
     const again = step(['Poe flies.'], 'Poe can fly.');
     askModality = false; setModal(null);
     const offAgain = step(['Poe flies.'], 'Poe can fly.');
-    ok(again.asks && !offAgain.asks && offAgain.why === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
+    ok(again.asks && !offAgain.asks && offAgain.why === 'Written “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
         'switched off, the box asks nothing: what it asked before is not kept', J([again, offAgain]));
     // r27.201 (the user: "If you want it to always ask, it does. If you want
     // it to only ask if a step turns on it, it does. If you want it to never

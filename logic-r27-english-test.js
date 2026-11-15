@@ -1046,7 +1046,7 @@ function reportCorpus(name, res) {
             var f = collectDeductiveSteps(state.trees)[0];
             state.logic = { base: 'standard', rules: { semantic: true } };
             return { both: deductiveStepTagText(s), fly: deductiveStepTagText(f), flyWhy: f.why ? String(f.why.text) : '' };`);
-        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'Written “It is physically possible for Poe to fly” or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
+        ok(offBoth.both === '✓ modus ponens' && offBoth.fly === '? not recognized' && offBoth.flyWhy === 'Written “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”, the step follows by ab esse ad posse.',
             'off: "Poe can fly" in both boxes of a modus ponens follows as written; "Poe flies", so "Poe can fly" does not -- "can" is not "possible" as written -- and it says in what words it would (r27.184, r27.214)', J(offBoth));
         const c = T(W, `
             var step = function (premises, conclusion) {
@@ -1082,10 +1082,9 @@ function reportCorpus(name, res) {
         // where a step turns on it): "Poe can fly" in both boxes is one
         // question, answered the same way in both, and modus ponens holds on
         // every answer -- so nothing is asked.
-        ok(c.possible.tag === '✓ ab esse ad posse' && c.bare.tag === '? ambiguous' &&
-            c.bare.why === 'Did you mean “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”?' &&
+        ok(c.possible.tag === '✓ ab esse ad posse' && c.bare.tag === '✓ ab esse ad posse' && !c.bare.why &&
             c.both.tag === '✓ modus ponens' && !c.both.why,
-            'said "physically possible for", it follows; said "possible for", it asks which kind -- metaphysically it is the map\'s axiom T (r27.203); "Poe can fly" in both boxes of a modus ponens follows however it is meant, and asks nothing (r27.199; r27.169 had asked)', J([c.possible.tag, c.bare, c.both]));
+            'said "physically possible for", it follows; said "possible for", it follows on every kind and asks nothing -- metaphysically too, by ab esse ad posse (r27.224; it had been the map\'s axiom T, so the step turned on the kind, and asked); "Poe can fly" in both boxes of a modus ponens follows however it is meant, and asks nothing (r27.199; r27.169 had asked)', J([c.possible.tag, c.bare, c.both]));
         ok(c.strict.tag === '? ambiguous' && c.strict.why === 'Did you mean “If Poe is able to fly, then Poe is a bird”, “If Poe is allowed to fly, then Poe is a bird”, “If it is physically possible for Poe to fly, then Poe is a bird”, “If it is metaphysically possible for Poe to fly, then Poe is a bird”, or “If it is logically possible for Poe to fly, then Poe is a bird”?' &&
             c.strict.rows[2] === 'If it is physically possible for Poe to fly, then Poe is a bird',
             '"physically possible for Poe" and "Poe can fly" read as ability are two claims: modus ponens across them asks', J(c.strict));

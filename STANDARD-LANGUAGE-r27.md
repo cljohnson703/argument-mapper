@@ -4,6 +4,30 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: what is so is metaphysically possible, by ab esse ad posse (r27.224)
+
+The user:
+* Of ab esse ad posse and the map's modal system (the fifth of the five bugs reported with r27.215), "(a) Ab esse ad posse gives metaphysical possibility directly, in every system": "a".
+
+Changes:
+* What is so is metaphysically possible by ab esse ad posse, as it is physically and logically possible: "Mary sings; so it is metaphysically possible that Mary sings"; "zombies exist; so zombies are metaphysically possible".
+* It had been the map's modal system's, by axiom T where the system has it. Meanwhile ab esse ad posse gave physical possibility and "kinds of possibility" made that metaphysical, so even in K what is was possible, in two steps.
+* So it holds whatever the system: in K, D, K4, D4, K5 and D5, whose frames do not give "P, so ◇P", it is ab esse ad posse that gives it. Switched off (Word meaning, in the Logic panel), each system gives just what its frames give.
+* Never asking, "Poe flies; so it is possible for Poe to fly" follows on every kind, so it asks nothing. It had asked, since only the metaphysical kind did not follow.
+* The hint for "Poe can fly", read as written, names all three kinds: 'Written “It is physically possible for Poe to fly”, “It is metaphysically possible for Poe to fly”, or “It is logically possible for Poe to fly”, ...'.
+* The rule's description in the Logic panel says so.
+
+Tests:
+* Changed, each failing on r27.223 as written:
+  * syntax-r27-test.js: what is, metaphysically possible by ab esse ad posse;
+  * logic-r27-english-test.js and modal-r27-test.js: the hints that name the kinds; "possible for", following on every kind;
+  * modal-r27-test.js: each system's steps against its frames, now with ab esse ad posse off, beside a new check that it gives "P, so ◇P" in K.
+* New in syntax-r27-test.js, which has 235 checks: the rule's description.
+* Take-one-out: each of the 2 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "zombies are metaphysically possible" as what it says (r27.223)
 
 The user:
