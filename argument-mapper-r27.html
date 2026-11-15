@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.220';
+    const APP_BUILD = '2026-11-15 r27.221';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -15397,9 +15397,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // the user, of "Possibly Bob left and Mary cried": "'both... and' would
     // also cover this. We should use it here, no?"): "it is metaphysically
     // possible that both Bob left and Mary cried".
+    // Three or more joined by "and" ("Bob left, Ann sang and Mary cried"):
+    // their clauses -- or null.
+    function claimClauseList(clause) {
+        const c = String(clause == null ? '' : clause).trim();
+        const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
+        if (ands.length !== 2 || ors.length !== 1) return null;
+        const parts = claimSplitTop(ands[0].trim(), /\s*,\s+/).concat([ands[1]]).map(x => x.trim());
+        return parts.length > 2 && parts.every(x => claimLooksLikeClause(x)) ? parts : null;
+    }
     function claimGroupedClause(clause) {
         const c = String(clause == null ? '' : clause).trim();
         if (!c || /^(?:both|either|neither)\s/.test(c)) return c;
+        // "Both" is for two: three or more, as they are (r27.221).
+        if (claimClauseList(c)) return c;
         const ands = claimSplitTop(c, /\s*,?\s+and\s+/), ors = claimSplitTop(c, /\s*,?\s+or\s+/);
         const clauses = xs => xs.every(x => claimLooksLikeClause(x.trim()));
         if (ands.length === 2 && ors.length === 1 && clauses(ands)) return 'both ' + ands.map(x => x.trim()).join(' and ');
@@ -15433,8 +15444,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         clause = claimGroupedClause(clause);
         const word = k => op === 'nec' ? (denied ? 'not ' + k + ' necessary' : k + ' necessary') : (denied ? k + ' impossible' : k + ' possible');
         // What is known not to be: "it has been established that God does not exist".
-        const not = () => { const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
+        // Three or more (r27.221): denied, each part denied -- "Bob did not
+        // leave, Ann did not sing, or Mary did not cry"; after "we know that",
+        // "that" before each part, and "either" before the denial's list.
+        const list = claimClauseList(clause);
+        const not = () => {
+            if (list) {
+                const each = list.map(p => { const f = claimQuietly(() => readClaim(p)); return f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [p], style: 0 })); });
+                if (each.every(Boolean)) return normalizeClaimText(claimListWords(each, 'or'));
+            }
+            const f = claimQuietly(() => readClaim(clause)), n = f && claimQuietly(() => claimSayForm(negateClaim(f), { texts: [clause], style: 0 }));
             return n ? normalizeClaimText(n) : 'it is not the case that ' + clause; };
+        const knowThat = c => 'we know that ' + (c === clause && list ? list.slice(0, -1).map((p, i) => i ? 'that ' + p : p).join(', ') + ', and that ' + list[list.length - 1]
+            : list ? 'either ' + c : c);
         const known = op === 'nec' ? (denied ? 'it has not been established that ' + clause : 'it has been established that ' + clause)
             : 'it has ' + (denied ? '' : 'not ') + 'been established that ' + not();
         // What we know, beside what has been established (r27.183; the user:
@@ -15442,8 +15464,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // disambiguations"): "we know that P", "we do not know that P", "we
         // know that not P"; "for all we know, P" -- inside a longer box "we do
         // not know that not P", which says the same.
-        const know = op === 'nec' ? (denied ? 'we do not know that ' + clause : 'we know that ' + clause)
-            : denied ? 'we know that ' + not() : whole ? 'for all we know, ' + clause : 'we do not know that ' + not();
+        const know = op === 'nec' ? (denied ? 'we do not know that ' + clause : knowThat(clause))
+            : denied ? knowThat(not()) : whole ? 'for all we know, ' + clause : 'we do not know that ' + not();
         return ['metaphysically', 'logically', 'physically'].map(k => 'it is ' + word(k) + ' that ' + clause).concat([known, know])
             .map(label => ({ label, build: () => readClaim(label) }));
     }

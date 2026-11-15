@@ -1781,6 +1781,26 @@ console.log('\n-- r27.220: "perhaps" is no verb; "always", "sometimes", "often" 
         '"Bob always sings": "always", then the verb, as "generally" (it had been "~alway sings", "always" a verb and "sings" its object)', J(often));
 }
 
+console.log('\n-- r27.221: "both" is for two; three or more, said as a list --');
+{
+    // The second of the five bugs reported with r27.215.
+    const offered = (t, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; claimRulesCache = null;
+        var r = parseClaimFull(${J(t)}), labels = [].concat.apply([], r.notes.filter(function (n) { return n.readings; }).map(function (n) { return n.readings; }));
+        var back = labels.map(function (l) { return parseClaimFull(l).notes.filter(function (n) { return n.kind === 'ambiguous'; }).length; });
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return { labels: labels.map(function (l) { return claimUnmarked(l); }), asks: back };`);
+    const poss = offered('Possibly Bob left, Ann sang and Mary cried.', 'always');
+    ok(J(poss.labels) === J(['it is metaphysically possible that bob left, ann sang and mary cried', 'it is logically possible that bob left, ann sang and mary cried',
+            'it is physically possible that bob left, ann sang and mary cried', 'it has not been established that bob did not leave, ann did not sing, or mary did not cry',
+            'for all we know, bob left, ann sang and mary cried']) && poss.asks.every(n => n === 0),
+        '"possibly" before three clauses: no "both" (it had been "both bob left, ann sang and mary cried"), the denial each part denied, and each reads back asking nothing', J(poss));
+    const nec = offered('Necessarily Bob left, Ann sang and Mary cried.', 'always'), imp = offered('It is impossible that Bob left, Ann sang and Mary cried.', 'always');
+    ok(nec.labels[4] === 'we know that bob left, that ann sang, and that mary cried' && imp.labels[4] === 'we know that either bob did not leave, ann did not sing, or mary did not cry' &&
+        !/\bboth\b/.test(nec.labels.concat(imp.labels).join(' ')) && nec.asks.concat(imp.asks).every(n => n === 0),
+        'after "we know that", "that" before each part -- and "either" before a denial\'s list -- so that it reads as one thing known', J([nec, imp]));
+    const two = offered('Possibly Bob left and Mary cried.', 'always');
+    ok(two.labels[0] === 'possibly both bob left and mary cried', 'two clauses, "both" as before', J(two.labels));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

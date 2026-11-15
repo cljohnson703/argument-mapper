@@ -4,6 +4,27 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "both" is for two (r27.221)
+
+The user:
+* Of the five bugs reported with r27.215: "Proceed in order". This is the second.
+
+Changes:
+* "Possibly Bob left, Ann sang and Mary cried" had offered "it is metaphysically possible that both Bob left, Ann sang and Mary cried": "both" is for two. A list of three or more joined by "and" is said as it is: "it is metaphysically possible that Bob left, Ann sang and Mary cried". So "necessarily", "impossible" and "not necessary".
+* Its denial is said part by part: "it has not been established that Bob did not leave, Ann did not sing, or Mary did not cry". Said whole, "it is not the case that Bob left, Ann sang and Mary cried" may deny all of the "and" or only its first part.
+* After "we know that", "that" stands before each part ("we know that Bob left, that Ann sang, and that Mary cried"), and "either" before a denial's list ("we know that either Bob did not leave, Ann did not sing, or Mary did not cry"). So it reads as one thing known: without them, "and" and "or" may join a claim of their own.
+* Each of these readings reads back to the same claim, asking nothing.
+* Two clauses as before: "possibly both Bob left and Mary cried".
+
+Tests:
+* New in syntax-r27-test.js, which has 227 checks, each failing on r27.220:
+  * the readings of "possibly", "necessarily" and "impossible" before three clauses, each reading back;
+  * two clauses, "both" as before.
+* Take-one-out: each of the 3 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "perhaps" is no verb (r27.220)
 
 The user:
