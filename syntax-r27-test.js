@@ -1875,6 +1875,39 @@ console.log('\n-- r27.225: the app\'s own lists of three or more, with a comma b
         'a verdict that names three premises: a comma before the "and"; two, none', J([three, two]));
 }
 
+console.log('\n-- r27.227: two kinds of possibility, or of necessity, where one would do --');
+{
+    // The user, of the note r27.223 took away ('"zombies are metaphysically
+    // possible" and "zombies are physically possible" differ'): "Is this a
+    // concern?"; then, of a hint that says when two modal claims differ in
+    // kind: "Fix them in order".
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); }`);
+    const wider = step(['If it is metaphysically possible that zombies exist, then physicalism is false.', 'It is physically possible that zombies exist.'], 'Physicalism is false.');
+    ok(wider.rule === null && wider.why === 'Getting to “Physicalism is false” takes two steps. First, “It is physically possible that zombies exist” gives “It is metaphysically possible that zombies exist” by kinds of possibility. ' +
+            'Then “It is metaphysically possible that zombies exist” and “If it is metaphysically possible that zombies exist, then physicalism is false” give “Physicalism is false” by modus ponens. ' +
+            'Add “It is metaphysically possible that zombies exist” as a box of its own, with “It is physically possible that zombies exist” under it.',
+        'what is physically possible, where the step takes what is metaphysically possible: two steps, the first by kinds of possibility (it had said nothing)', J(wider));
+    const narrower = step(['If it is physically possible that zombies exist, then physicalism is false.', 'It is metaphysically possible that zombies exist.'], 'Physicalism is false.');
+    ok(narrower.rule === null && narrower.why === 'Of one kind each time, the premises would give “Physicalism is false” by modus ponens, but “it is metaphysically possible that zombies exist” and ' +
+            '“it is physically possible that zombies exist” differ in kind: what is metaphysically possible need not be physically possible.',
+        'what is metaphysically possible, where the step takes what is physically possible: the two differ in kind, and why that matters (it had said nothing)', J(narrower));
+    const reductio = step(['If physicalism is false, then both zombies are metaphysically possible and zombies are not physically possible.'], 'Physicalism is true.');
+    ok(reductio.rule === null && reductio.why === 'Of one kind each time, the premises would give “Physicalism is true” by reductio, but “zombies are metaphysically possible” and ' +
+            '“zombies are not physically possible” differ in kind: what is metaphysically possible need not be physically possible.',
+        'a reductio on "zombies are metaphysically possible and zombies are not physically possible": no contradiction, and why -- "not physically possible" is "necessarily not", and still of its kind (since r27.223 it had said nothing)', J(reductio));
+    const necessary = step(['If it is metaphysically necessary that water is H2O, then Kripke is right.', 'It is physically necessary that water is H2O.'], 'Kripke is right.');
+    ok(necessary.why === 'Of one kind each time, the premises would give “Kripke is right” by modus ponens, but “it is physically necessary that water is H2O” and ' +
+            '“it is metaphysically necessary that water is H2O” differ in kind: what is physically necessary need not be metaphysically necessary.',
+        'so of necessity: what is physically necessary need not be metaphysically necessary', J(necessary));
+    const same = step(['It is metaphysically possible that zombies exist.'], 'It is physically possible that zombies exist.');
+    ok(same.why === 'The claims differ in kind: what is metaphysically possible need not be physically possible.', 'one claim of two kinds: they differ in kind', J(same));
+    const explosion = step(['It is metaphysically possible that zombies exist.', 'It is not physically possible that zombies exist.'], 'Physicalism is false.');
+    ok(explosion.rule === null && explosion.why === '', 'not where one kind would give it only by explosion', J(explosion));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

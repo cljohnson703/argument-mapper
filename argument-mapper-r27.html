@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.226';
+    const APP_BUILD = '2026-11-15 r27.227';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -21105,6 +21105,68 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         try { return claimCertifiesOrRestates(premises, conclusions, attack); } finally { claimUnorderedKeys = saved; }
     }
     // The rule a failed step would follow by, were its near-alike claims worded alike.
+    // What a modal claim gives of another kind, by kinds of possibility: "it
+    // is physically possible that zombies exist" gives "it is metaphysically
+    // possible ..." and "it is logically possible ..."; what is logically
+    // necessary, what is metaphysically and physically necessary (r27.227).
+    function claimKindsGiven(f) {
+        const wide = { phys: 0, meta: 1, logic: 2 }, k = f && f.kind === 'modal' ? f.mod || 'meta' : null;
+        if (!k || !(k in wide) || !/^(?:poss|nec)$/.test(f.op) || !claimRuleOn('possibility-kinds')) return [];
+        return Object.keys(wide).filter(j => f.op === 'poss' ? wide[j] > wide[k] : wide[j] < wide[k]).map(j => ({ kind: 'modal', op: f.op, mod: j, inner: f.inner }));
+    }
+    // Claims that differ in kind alone (r27.227): "it is metaphysically
+    // possible that zombies exist" where the step has it, "it is physically
+    // possible ..." where it needs it. Of one kind each time, would the step
+    // follow? Where what it has does not give what it needs, the rule, the
+    // two, and why ("what is metaphysically possible need not be physically
+    // possible"); or that the two differ in kind and nothing more. Where it
+    // does give it, that is a step of its own, which claimStepBetween finds,
+    // and this says nothing. Or null.
+    function claimKindNearMiss(premises, conclusions, attack) {
+        const wide = { phys: 0, meta: 1, logic: 2 }, adverb = { phys: 'physically', meta: 'metaphysically', logic: 'logically' }, kind = f => f.mod || 'meta';
+        // Each modal claim, and whether the step has it (a premise's) or needs
+        // it (the conclusion's): "not", and an "if" clause, turn that about.
+        // "Necessarily not P" is "not possibly P", and "possibly not P" is "not
+        // necessarily P": "zombies are not physically possible".
+        const found = [];
+        const walk = (f, has) => {
+            if (!f || typeof f !== 'object') return;
+            if (f.kind === 'modal') {
+                const dual = !!f.inner && f.inner.kind === 'not' && !!f.inner.inner;
+                if (/^(?:poss|nec)$/.test(f.op) && kind(f) in wide)
+                    found.push(dual ? { f, has: !has, op: f.op === 'poss' ? 'nec' : 'poss', inner: f.inner.inner } : { f, has, op: f.op, inner: f.inner });
+                return;
+            }
+            if (f.kind === 'not') walk(f.inner, !has);
+            else if (f.kind === 'if') { (f.conds || []).forEach(c => walk(c, !has)); walk(f.cons, has); }
+            else if ((f.kind === 'and' || f.kind === 'or') && !f.iff) (f.parts || []).forEach(p => walk(p, has));
+        };
+        premises.forEach(p => walk(p, true));
+        conclusions.forEach(c => walk(c, false));
+        // A form with these claims of the other kind.
+        const swap = (f, set, mod) => {
+            if (!f || typeof f !== 'object') return f;
+            if (set.has(f)) return Object.assign({}, f, { mod, folTree: undefined });
+            let out = f;
+            const own = () => out === f ? (out = Object.assign({}, f, { folTree: undefined })) : out;
+            ['inner', 'cons'].forEach(k => { const x = swap(f[k], set, mod); if (x !== f[k]) own()[k] = x; });
+            ['parts', 'conds'].forEach(k => { if (!Array.isArray(f[k])) return; const xs = f[k].map(x => swap(x, set, mod)); if (xs.some((x, i) => x !== f[k][i])) own()[k] = xs; });
+            return out;
+        };
+        for (const g of found.filter(x => x.has)) for (const n of found.filter(x => !x.has)) {
+            const op = g.op, kg = kind(g.f), kn = kind(n.f);
+            if (n.op !== op || kg === kn || (op === 'poss' ? wide[kg] < wide[kn] : wide[kg] > wide[kn]) || !claimSame(g.inner, n.inner)) continue;
+            const set = new Set(found.filter(x => x.op === op && kind(x.f) === kn && claimSame(x.inner, g.inner)).map(x => x.f));
+            // A restatement counts: "it is metaphysically possible that zombies
+            // exist", so "it is physically possible ...".
+            const rule = claimCertifiesOrRestates(premises.map(p => swap(p, set, kg)), conclusions.map(c => swap(c, set, kg)), attack);
+            if (rule && rule.id !== 'explosion') {
+                const word = op === 'poss' ? ' possible' : ' necessary';
+                return { rule, given: g.f, needed: n.f, from: adverb[kg] + word, to: adverb[kn] + word };
+            }
+        }
+        return null;
+    }
     function claimWordedNearMiss(premises, conclusions, attack) {
         const saved = claimNearMisses, savedWorded = claimWorded;
         claimNearMisses = []; claimWorded = true;
@@ -21963,6 +22025,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // possible for Poe to fly", between "Poe is able to fly" and
                 // a wider kind it gives (r27.202).
                 .concat(from.filter(f => f.kind === 'pred' && !f.possible && /^~can /.test(String(f.prop))).map(f => () => 'it is physically possible for ' + claimShowWords(String(f.term)) + ' to ' + String(f.prop).slice(5)))
+                // A modal claim, said of the kind it gives by kinds of
+                // possibility: "it is physically possible that zombies exist"
+                // as "it is metaphysically possible that zombies exist"
+                // (r27.227; of one premise, as that rule takes, and not tried
+                // first of more, which it would then not be tried again for).
+                .concat(from.length === 1 ? claimKindsGiven(from[0]).map(g => x => claimSayForm(g, x)) : [])
                 .concat(from.length === 2 ? [from, from.slice().reverse()].map(two => x => claimSayJunction('and', two.map(f => c => claimSayForm(f, c)), x)) : [])
                 .concat(...from.map(f => f.kind === 'and' && !f.iff ? f.parts.map(p => x => claimSayForm(p, x)) : []));
             for (const say of sayings) {
@@ -26029,6 +26097,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (!split) between = claimStepBetween(premiseTexts, P, C, attack);
         }
+        // Two kinds of possibility, or of necessity, where one would do
+        // (r27.227): "it is metaphysically possible", where the step needs
+        // "physically possible".
+        let kinds = null;
+        if (affordable && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able && !split && !between && !ambiguous.some(x => x.derives.length) && reads.every(r => r.form)) {
+            const forms = reads.map(r => r.form);
+            kinds = claimKindNearMiss(forms.slice(0, -1), claimStepConclusions(forms[forms.length - 1], attack, weak), attack);
+        }
         // A step in the form of a common fallacy: which (r27.98) -- said for
         // "the claims differ" too ("all" to "some": the existential fallacy).
         let fallacy = null;
@@ -26091,7 +26167,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // A claim's name the map gives two claims (r27.116): read as neither.
         const twice = [];
         texts.forEach(t => claimNamedConflictsIn(t).forEach(c => { if (!twice.some(x => x.name === c.name)) twice.push(c); }));
-        if (!unread.length && !ambiguous.length && !hinted.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able && !voice && !split && !between && !must && !fallacy && !wrapped && !gives && !dangling && !twice.length) return null;
+        if (!unread.length && !ambiguous.length && !hinted.length && !nearMiss && !worded && !ordered && !short && !partial && !modal && !able && !voice && !split && !between && !kinds && !must && !fallacy && !wrapped && !gives && !dangling && !twice.length) return null;
         const wordedNotes = worded ? worded.pairs.map(p => {
             const x = claimWordsOf(p.a), y = claimWordsOf(p.b), d = claimWordDiff(x, y);
             const says = w => '“' + w.join(' ') + '”';
@@ -26120,6 +26196,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 ? 'The two differ only in the order or grouping of their parts: commutation or association makes the one the other.'
                 : 'With the parts of the claims in the same order and grouping, the premises would give ' + target + ' by ' + ordered.name +
                     '; commutation and association change order and grouping.'] : [])
+            // Of two kinds, where the one does not give the other (r27.227).
+            .concat(kinds ? [kinds.rule.id === DEDUCTIVE_SAME_CLAIM.id ? 'The claims differ in kind: what is ' + kinds.from + ' need not be ' + kinds.to + '.'
+                : 'Of one kind each time, the premises would give ' + target + ' by ' + kinds.rule.name + ', but “' + claimShowForm(kinds.given) + '” and “' +
+                    claimShowForm(kinds.needed) + '” differ in kind: what is ' + kinds.from + ' need not be ' + kinds.to + '.'] : [])
             .concat(partial ? ['Did you mean “' + claimRecase(partial.whole, texts.join(' ')) + '” where it says “' + claimRecase(partial.part, texts.join(' ')) +
                 '”? The identity is about ' + claimRecase(partial.whole, texts.join(' ')) + '; if ' + claimRecase(partial.part, texts.join(' ')) + ' is someone else, it says nothing about them.'] : [])
             .concat(able ? (() => {

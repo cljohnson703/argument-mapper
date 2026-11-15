@@ -4,6 +4,28 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: two kinds of possibility, or of necessity, where one would do (r27.227)
+
+The user:
+* Of the note r27.223 took away, '“zombies are metaphysically possible” and “zombies are physically possible” differ': "Is this a concern?"
+* Of the list with "a hint that says when two modal claims differ in kind": "Fix them in order." This is the second.
+
+Changes:
+* A step with claims of two kinds, where it would follow were they of one, had said nothing. Now it says one of two things.
+* Where the claim the step has gives the one it needs, by kinds of possibility, the step takes two steps, and the hint says which: 'Getting to “Physicalism is false” takes two steps. First, “It is physically possible that zombies exist” gives “It is metaphysically possible that zombies exist” by kinds of possibility. Then ...'. So "zombies are physically possible", and "metaphysically possible" where the step needs "logically possible".
+* Where it does not, the hint says why: 'Of one kind each time, the premises would give “Physicalism is false” by modus ponens, but “it is metaphysically possible that zombies exist” and “it is physically possible that zombies exist” differ in kind: what is metaphysically possible need not be physically possible.'
+* So a reductio on "zombies are metaphysically possible and zombies are not physically possible", which is no contradiction. "Not physically possible" is read as "necessarily not", and is of its kind all the same.
+* So of necessity: "what is physically necessary need not be metaphysically necessary".
+* One claim of two kinds: "The claims differ in kind: what is metaphysically possible need not be physically possible."
+* Not where one kind would give the step only by explosion.
+
+Tests:
+* New in syntax-r27-test.js, which has 246 checks: each of these, and the step that one kind would give only by explosion.
+* Take-one-out: each of the 5 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: the colors of a claim about some thing, in its parts (r27.226)
 
 The user:
