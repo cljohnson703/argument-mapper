@@ -1764,6 +1764,23 @@ console.log('\n-- r27.219: "a car ... it" as one claim about some car; a relativ
     ok(not.every(r => r === null), 'and not "Mary hates a car", nor "Mary loves a car" from "Mary bought a car", nor "Bob bought a car"', J(not));
 }
 
+console.log('\n-- r27.220: "perhaps" is no verb; "always", "sometimes", "often" and "seldom" before a verb --');
+{
+    // The first of the five bugs reported with r27.215 (the user: "Proceed in order").
+    const key = t => ev(`var r = parseClaimFull(${J(t)}); return r.form ? claimKey(r.form) : null;`);
+    const perhaps = ['Mary cried, and perhaps Bob left.', 'Mary cried, and maybe Bob left.', 'Mary cried, and probably Bob left.'].map(key);
+    ok(perhaps.every(k => k === 'C[P:mary|~did cried;W(N(P:bob|~did left))]'),
+        '"Mary cried, and perhaps Bob left": two claims, the second "perhaps Bob left", as with "maybe" and "probably" (it had been one claim about Mary, "cried and perhaps bob left")', J(perhaps));
+    const inside = ['Bob perhaps left.', 'Mary cried, and Bob perhaps left.'].map(key);
+    ok(inside[0] === 'W(N(P:bob|~did left))' && inside[1] === 'C[P:mary|~did cried;W(N(P:bob|~did left))]',
+        '"Bob perhaps left" says what "perhaps Bob left" says (it had been "~perhap left", "perhaps" a verb)', J(inside));
+    const besides = key('Bob left, and besides Mary cried.');
+    ok(/^C\[P:bob\|~did left;/.test(besides || ''), '"besides" is no verb either: "Bob left, and besides Mary cried" is two claims', besides);
+    const often = ['Bob always sings.', 'Bob sometimes sings.', 'Bob often sings.', 'Bob seldom sings.', 'Bob generally sings.'].map(key);
+    ok(J(often) === J(['P:bob|~always sing', 'P:bob|~sometimes sing', 'P:bob|~often sing', 'P:bob|~seldom sing', 'P:bob|~generally sing']),
+        '"Bob always sings": "always", then the verb, as "generally" (it had been "~alway sings", "always" a verb and "sings" its object)', J(often));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

@@ -4,6 +4,29 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "perhaps" is no verb (r27.220)
+
+The user:
+* Of the five bugs reported with r27.215, after "a car ... it": "Proceed in order". This is the first.
+
+Changes:
+* "Mary cried, and perhaps Bob left" is two claims, the second "perhaps Bob left", as with "maybe" and "probably". It had been one claim about Mary, "cried and perhaps bob left": "perhaps", ending in -s, was taken for a verb ("perhap"), so "and perhaps Bob left" went on with Mary's verbs.
+* "Bob perhaps left" says what "perhaps Bob left" says. It had been "~perhap left". So "maybe" inside a claim, as "probably" is.
+* A word that ends in -s and is no plural and no verb is read as what it is: "perhaps", "always", "sometimes", "afterwards", "nowadays", "besides", "towards", "whereas", and "sideways", "upwards" and the like. So "Bob left, and besides Mary cried" is two claims.
+* "Bob always sings" reads "always", then the verb, as "Bob generally sings" does. It had been "~alway sings": "always" a verb, "sings" its object. So "sometimes", "often" and "seldom".
+* Not yet: "Mary cried, and sometimes Bob left" and "Mary cried, and afterwards Bob left" are each still one claim, by another route. "Afterwards" there may say what "and then" says.
+
+Tests:
+* New in syntax-r27-test.js, which has 224 checks, each failing on r27.219:
+  * "perhaps", "maybe" and "probably" after "and";
+  * "perhaps" inside a claim;
+  * "besides";
+  * "always", "sometimes", "often" and "seldom" before a verb, beside "generally".
+* Take-one-out: each of the 3 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "a car ... it" as one claim about some car (r27.219)
 
 The user:

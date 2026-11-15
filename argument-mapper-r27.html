@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.219';
+    const APP_BUILD = '2026-11-15 r27.220';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11604,7 +11604,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const claimTokens = text => String(text || '').split(' ').filter(Boolean);
     const claimWord = token => String(token || '').replace(/[^a-z0-9'∧∨&-]/g, '');
     // A plural noun or a verb in -s: "ravens", "flies" -- not "glass", "virus", "this".
-    const claimEndsInS = token => /[^su'i]s$/.test(claimWord(token)) || /ies$/.test(claimWord(token));
+    // Not one of them: a word in -s that is no plural and no verb -- "perhaps",
+    // "always", "sometimes", "afterwards", "besides" (r27.220; "perhaps" had
+    // been a verb, "perhap", and "Mary cried, and perhaps Bob left" one claim).
+    const CLAIM_NOT_S_WORDS = /^(?:perhaps|always|sometimes|afterwards|nowadays|besides|towards|whereas|sideways|upwards|downwards|inwards|outwards|backwards|indoors|outdoors|upstairs|downstairs|overseas)$/;
+    const claimEndsInS = token => !CLAIM_NOT_S_WORDS.test(claimWord(token)) && (/[^su'i]s$/.test(claimWord(token)) || /ies$/.test(claimWord(token)));
     // A verb with no auxiliary: "flies", or in the past, "erred", "went".
     const claimPlainVerb = token => claimEndsInS(token) || claimPastStem(claimWord(token)) !== null;
     // Past tenses. "Caesar crossed the Rubicon" and "Caesar did not cross the
@@ -13478,7 +13482,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const pieces = joined && words.filter((_, i) => i % 2 === 0), links = joined && words.filter((_, i) => i % 2 === 1);
             if (pieces && pieces.length > 1 && links.every(w => w === links[0]) && pieces.every(p => claimPlainVerb(p) && !CLAIM_FUNCTION_WORDS.has(claimWord(p))))
                 prop = '~' + pieces.map(p => baseClaimVerb(p)).join(' ' + links[0] + ' ');
-            else prop = /^[a-z]{3,}ly$/.test(first) && words.length > 1 ? '~' + first + ' ' + baseClaimVerb(words.slice(1).join(' ')) : '~' + baseClaimVerb(words.join(' '));
+            // So "always", "sometimes", "often" and "seldom" (r27.220; "always
+            // sings" had been "alway" with "sings" its object).
+            else prop = (/^[a-z]{3,}ly$/.test(first) || /^(?:always|sometimes|often|seldom)$/.test(first)) && words.length > 1 ? '~' + first + ' ' + baseClaimVerb(words.slice(1).join(' ')) : '~' + baseClaimVerb(words.join(' '));
         }
         if (!negated) {
             const reading = claimObjectReading(prop);
@@ -15220,7 +15226,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return j >= 0 && k > j && out[k + 1] && /^\uE000/.test(out[k + 1]) ? out.slice(0, k + 1).concat([claimClauseStart(out[k + 1])], out.slice(k + 2)) : out;
     }
     // Is this a word that qualifies the claim it sits in, and how?
-    const claimQualifierKind = w => CLAIM_EMPTY_WORDS.has(w) ? 'empty' : CLAIM_LIKELY_WORDS.has(w) ? 'likely' : w === 'possibly' ? 'possibly' :
+    // "Perhaps" and "maybe" inside a claim, as in front of it (r27.220).
+    const claimQualifierKind = w => CLAIM_EMPTY_WORDS.has(w) ? 'empty' : CLAIM_LIKELY_WORDS.has(w) || w === 'perhaps' || w === 'maybe' ? 'likely' : w === 'possibly' ? 'possibly' :
         CLAIM_SPEAKER_WORDS.has(w) ? 'speaker' : null;
     // A qualifying word inside the claim: in its subject ("Poe probably is
     // black"), or just after its auxiliary ("Poe is probably black") -- not in
