@@ -4,6 +4,32 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "zombies are metaphysically possible" as what it says (r27.223)
+
+The user:
+* Of the five bugs reported with r27.215: "Proceed in order". This is the fourth.
+
+Changes:
+* "Zombies are metaphysically possible" says what "it is metaphysically possible that zombies exist" says, and is read so, its own words kept. It had been read as said of zombies, "metaphysically possible", so the two did not meet: "if zombies are metaphysically possible, then physicalism is false" and "it is metaphysically possible that zombies exist" gave nothing. They give "physicalism is false" by modus ponens.
+* So "logically" and "physically", "impossible" ("zombies are metaphysically impossible"), and "not ... possible" ("zombies are not physically possible").
+* This holds of a kind or of some thing ("zombies", "time travel", "a world without suffering"), as "zombies are possible" asks which kind (r27.172). Not of one named: "the argument is metaphysically possible" is as before.
+* Never asking, a step's hint now pairs "zombies are possible" with "zombies might exist" at their first kind, metaphysical: "Written “If zombies are metaphysically possible, then physicalism is false” and “It is metaphysically possible that zombies exist”, ...". It had paired them at what has not been established, since the metaphysical readings had not met.
+* Never asking, "if zombies are possible, then physicalism is false" beside "possibly, zombies exist" follows by modus ponens. They are one family of words, and the step now follows on every kind; it had on some only.
+* Two of a step's explanations are gone with the old reading:
+  * "zombies are metaphysically possible" and "zombies are physically possible" are no longer said to "differ: “physically” in one where the other has “metaphysically”". As claims about what is possible, their kinds differ, which the check does not yet say, of these or of "it is metaphysically possible that zombies exist" and "it is physically possible that zombies exist".
+  * A note of words that differ is gone from before a hint.
+* The colors as before: in "if zombies are metaphysically possible, then physicalism is false", the "are" that "zombies are not metaphysically possible" denies is red.
+
+Tests:
+* Changed, each failing on r27.222 as written:
+  * modal-r27-test.js: the hint that pairs "zombies are possible" with "zombies might exist"; a step's hint with no note before it; "if zombies are possible, ..." beside "possibly, zombies exist" following;
+  * syntax-r27-test.js: a reductio of two kinds, no longer said to differ in a word.
+* New in syntax-r27-test.js, which has 234 checks: "zombies are metaphysically possible" and four more beside what they say; one named, as before; modus ponens across the two wordings.
+* Take-one-out: each of the 5 changes is caught, 4 by syntax-r27-test.js and the red "are" by colors-r27-inference-test.js.
+* 12 sentences of 4542 in the corpus read differently by default, and 14 with Semantic mode on: each "zombies are metaphysically possible" (or "not metaphysically possible"), alone, in a condition, in what is not shown, or after "we can't conclude that", now says what is metaphysically possible.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit.
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "waiter", and the other nouns that name a person (r27.222)
 
 The user:

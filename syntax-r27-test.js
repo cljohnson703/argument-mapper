@@ -1275,8 +1275,8 @@ console.log('\n-- r27.203: which kind of "possible"; "can" of five; the reductio
     ok(z[0].rule === null && z[0].why.indexOf('“' + both + '”: did you mean “If physicalism is false, then both zombies are metaphysically possible and zombies are not possible”') === 0 &&
         z[0].why.indexOf('did you mean “If physicalism is false, then both zombies are possible and zombies are not metaphysically possible”') > 0 &&
         z[1].rule === null && z[1].why.indexOf('Did you mean “If physicalism is false, then both zombies are metaphysically possible and zombies are not metaphysically possible”') === 0 &&
-        z[2].rule === 'reductio' && z[3].rule === null && /differ: “physically” in one where the other has “metaphysically”/.test(z[3].why) && z[4].rule === 'reductio',
-        'a reductio on "both zombies are possible and zombies are not possible" asks which kind each "possible" is -- two questions, answering one leaves the other (each had kept the other from being offered, and the reductio stood); of one kind, it stands; of two, they differ; never asking, as written, it stands', J(z));
+        z[2].rule === 'reductio' && z[3].rule === null && z[4].rule === 'reductio',
+        'a reductio on "both zombies are possible and zombies are not possible" asks which kind each "possible" is -- two questions, answering one leaves the other (each had kept the other from being offered, and the reductio stood); of one kind, it stands; of two, it does not (r27.223: no longer said to differ in a word, as two things said of zombies); never asking, as written, it stands', J(z));
     const mt = [step(['If it rains, then it is possible that Poe flies.', 'It is not possible that Poe flies.'], 'It does not rain.'),
         step(['If it rains, then it is possible that Poe flies.', 'It is not possible that Poe flies.'], 'It does not rain.', { semantic: false })];
     ok(J(readings('It is not possible that Poe flies.')) === J([['It is metaphysically impossible that Poe flies.', 'It is logically impossible that Poe flies.', 'It is physically impossible that Poe flies.',
@@ -1817,6 +1817,26 @@ console.log('\n-- r27.222: "waiter" and the other nouns that name a person; a ph
     const apposed = notes('Bob, a baker, makes cakes and sells them.');
     ok(apposed.includes('read with “them” as “cakes”, the one it can be in this box'),
         '"Bob, a baker, makes cakes and sells them": "a baker" says who Bob is, and is no one "them" can be', J(apposed));
+}
+
+console.log('\n-- r27.223: "zombies are metaphysically possible" says what "it is metaphysically possible that zombies exist" says --');
+{
+    // The fourth of the five bugs reported with r27.215.
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimKey(r.form) : null;`);
+    const same = [['Zombies are metaphysically possible.', 'It is metaphysically possible that zombies exist.'], ['Zombies are logically possible.', 'It is logically possible that zombies exist.'],
+        ['Zombies are metaphysically impossible.', 'It is metaphysically impossible that zombies exist.'], ['Zombies are not physically possible.', 'It is not physically possible that zombies exist.'],
+        ['A world without suffering is metaphysically possible.', 'It is metaphysically possible that a world without suffering exists.']].map(([a, b]) => [key(a), key(b)]);
+    ok(same.every(([a, b]) => a && a === b) && same[0][0] === '◇meta(P:zombies|~exist)',
+        '"zombies are metaphysically possible" is the claim "it is metaphysically possible that zombies exist" (it had been said of zombies, "metaphysically possible"); so "logically", "impossible", "not physically possible", and of some thing', J(same));
+    const named = key('The argument is metaphysically possible.');
+    ok(named === 'P:the argument|=metaphysically possible', 'not of one named: "the argument is metaphysically possible" as before', named);
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; deductiveCache.clear();
+        var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+        var st = collectDeductiveSteps(trees)[0], out = st && st.rule ? st.rule.name : null;
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; deductiveCache.clear(); return out;`);
+    const mp = step(['If zombies are metaphysically possible, then physicalism is false.', 'It is metaphysically possible that zombies exist.'], 'Physicalism is false.');
+    ok(mp === 'modus ponens', 'so "if zombies are metaphysically possible, then physicalism is false" and "it is metaphysically possible that zombies exist" give "physicalism is false"', mp);
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

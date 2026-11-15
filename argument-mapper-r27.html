@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.222';
+    const APP_BUILD = '2026-11-15 r27.223';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -17193,6 +17193,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if ((f = claimTwoFrameQuestion(s))) return f;
         // "Zombies are possible": which kind of possibility.
         if ((f = claimPossibleKindQuestion(s))) return f;
+        // "Zombies are metaphysically possible": that it is metaphysically
+        // possible that zombies exist (r27.223).
+        if ((f = claimPossibleKindClaim(s))) return f;
         return readIdentityClaim(s) || readQuantifiedClaim(s) || readPredicationClaim(s) || claimAtom(s);
     }
     // "Bob bought a book for Mary": "for Mary" may say on whose behalf, or who
@@ -17261,13 +17264,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // of one named ("the argument is possible", "that is possible"), nor of
     // "everything". It had been read as said of zombies, "possible". The
     // reading chosen, or null.
+    // What "possible" may be said of so: a kind or some thing ("zombies",
+    // "time travel", "a world without suffering"), not one named, nor
+    // "everything" (r27.172; one test since r27.223).
+    function claimPossibleSubject(text) {
+        const subj = claimTokens(text), first = claimWord(subj[0]);
+        return !(!claimWholePhrase(subj) || subj.some(t => /^\uE000/.test(t)) || subj.length > 6 ||
+            /^(?:the|this|that|these|those|my|your|his|her|its|our|their|it|they|he|she|we|you|i|what|which|who|every|each|all|some|no|any|both|either|neither|most|many|few|several|everything|nothing|something|anything|everyone|someone|no one|nobody|one|there)$/.test(first) ||
+            /['\u2019]s$/.test(first) || (/^(?:a|an)$/.test(first) && subj.length < 2));
+    }
     function claimPossibleKindQuestion(s) {
         const m = /^(.+?) (is|are) (not )?(possible|impossible)$/.exec(s);
-        if (!m) return null;
-        const subj = claimTokens(m[1]), first = claimWord(subj[0]);
-        if (!claimWholePhrase(subj) || subj.some(t => /^\uE000/.test(t)) || subj.length > 6 ||
-            /^(?:the|this|that|these|those|my|your|his|her|its|our|their|it|they|he|she|we|you|i|what|which|who|every|each|all|some|no|any|both|either|neither|most|many|few|several|everything|nothing|something|anything|everyone|someone|no one|nobody|one|there)$/.test(first) ||
-            /['\u2019]s$/.test(first) || (/^(?:a|an)$/.test(first) && subj.length < 2)) return null;
+        if (!m || !claimPossibleSubject(m[1])) return null;
         const be = m[2], denied = !!m[3], impossible = m[4] === 'impossible', said = m[1];
         // "Zombies are not impossible": not asked here.
         if (denied && impossible) return null;
@@ -17281,6 +17289,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             : claimWholeBox(s) ? 'for all we know, ' + said + ' ' + (be === 'are' ? 'exist' : 'exists') : 'we do not know that ' + said + ' ' + not;
         return claimAmbiguous(claimModalWhy(m[4], 'poss'), kinds.concat([known, know]).map(label => ({ label, build: () => readClaim(label) })), claimModalAsking(),
             Object.assign(claimModalMarks(s), { kindTags: CLAIM_KIND_TAGS }));
+    }
+    // "Zombies are metaphysically possible" says what "it is metaphysically
+    // possible that zombies exist" says (r27.223; it had been read as said of
+    // zombies, "metaphysically possible", and the two did not meet): so
+    // "logically" and "physically", "impossible", and "not ... possible" --
+    // its own words kept. Or null.
+    function claimPossibleKindClaim(s) {
+        const m = /^(.+?) (is|are) (not )?(metaphysically|logically|physically) (possible|impossible)$/.exec(s);
+        if (!m || (m[3] && m[5] === 'impossible') || !claimPossibleSubject(m[1])) return null;
+        const f = claimQuietly(() => readClaim('it is ' + (m[3] ? 'not ' : '') + m[4] + ' ' + m[5] + ' that ' + m[1] + ' ' + (m[2] === 'are' ? 'exist' : 'exists')));
+        // A form of its own, with the box's words, and its "is" or "are" -- the
+        // word a denial of it says "not" after, for the colors.
+        return f && (f.kind === 'modal' || (f.kind === 'not' && f.inner && f.inner.kind === 'modal')) ? Object.assign({}, f, { src: s, affirms: m[2] }) : null;
     }
     // "Bob called Mary a taxi": a taxi called for Mary, or what Mary was
     // called, said in quotation marks -- words, not a taxi (r27.178; the
@@ -34615,6 +34636,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // past an adverb ("exists" in "God really exists"; "can be minds")
     // (r27.105). A compound has none.
     function icAffirmed(f) {
+        // "Zombies are metaphysically possible", said of what is possible: its
+        // "are" (r27.223).
+        if (f && f.affirms && icWords(f)) return f.affirms;
         if (!f || !/^(?:pred|all|some)$/.test(f.kind)) return null;
         const words = String(icWords(f)), toks = icTokens(words).map(t => t.n);
         const adv = w => CLAIM_SYN_ADVERBS.has(w) || (/^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w));
