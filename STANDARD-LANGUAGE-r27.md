@@ -4,6 +4,28 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: a place or instrument phrase left out (r27.232)
+
+The user:
+* Of the roadmap's "Davidson's trick, two more steps": "So long as it continues to respect the limits of Davidson's trick."
+* Of the list, whose last item holds four older ones: "Fix them in order." This is the third of those four, in part.
+
+Changes:
+* A place or instrument phrase may be left out, as a word of manner may, by "dropping a modifier": "Bob ran in the park" gives "Bob ran"; "Bob buttered the toast with a knife in the kitchen" gives "Bob buttered the toast", and "Bob buttered the toast in the kitchen". So "with Mary", and "in the park" after "is running".
+* The limits, as for any modifier: not after a word that says it may not be so ("Bob almost ran in the park" does not give "Bob almost ran"), and nothing under "not".
+* Not where the phrase is what is said of the subject: "Bob is in the kitchen".
+* Not after a verb the phrase completes, whose sense goes with it: "Bob lives in Paris", "Bob put the book on the table", "Bob relies on Mary".
+* Not in an idiom: "Bob fell in love", "Bob ran into Mary", "Bob came across a book"; nor "at once" or "in fact".
+* The rule's description in the Logic panel says so.
+* Not yet: the other step, "Bob loves Mary; so Bob loves someone". "Something" follows ("Bob loves Fido; so Bob loves something"), but "someone" needs Mary to be a person, which her name alone does not tell the check. The roadmap keeps it.
+
+Tests:
+* New in syntax-r27-test.js, which has 266 checks: five steps that leave a place or instrument phrase out; ten that may not; the rule's description.
+* Take-one-out: each of the 3 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: "either ... or" in what is said, and "and when" (r27.231)
 
 The user:

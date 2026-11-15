@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.231';
+    const APP_BUILD = '2026-11-15 r27.232';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -23126,6 +23126,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         'occasionally falsely hypothetically theoretically potentially partly partially nominally technically somewhat slightly not no').split(' '));
     const CLAIM_MODIFIER_DROP = new Set('fast hard well again already still also too even just today yesterday tomorrow here there now then early late very extremely quite so'.split(' '));
     const CLAIM_MANNER_VERBS = /^(?:behave[sd]?|behaving|treat(?:s|ed|ing)?|fare[sd]?|faring|do|does|did|done|doing|go|goes|went|gone|going|act(?:s|ed|ing)?|word(?:s|ed|ing)?|phrase[sd]?|phrasing)$/;
+    // A place or instrument phrase (r27.232; the roadmap's "Davidson's trick,
+    // two more steps"): its word, and what it says where or with what.
+    const CLAIM_PLACE_WORDS = new Set('in at on near inside outside behind beside under above below beneath through around along among within with'.split(' '));
+    // Verbs a place phrase completes, whose sense goes with it: "lives in
+    // Paris" (is alive), "put the book on the table", "relies on Mary".
+    const CLAIM_PLACE_VERBS = /^(?:live[sd]?|living|reside[sd]?|residing|dwell(?:s|ed|ing)?|dwelt|stay(?:s|ed|ing)?|remain(?:s|ed|ing)?|put(?:s|ting)?|place[sd]?|placing|set(?:s|ting)?|lay(?:s|ing)?|laid|keep(?:s|ing)?|kept|rel(?:y|ies|ied|ying)|depend(?:s|ed|ing)?|believe[sd]?|believing|consist(?:s|ed|ing)?|result(?:s|ed|ing)?|belong(?:s|ed|ing)?|deal(?:s|t|ing)?|insist(?:s|ed|ing)?|count(?:s|ed|ing)?|bank(?:s|ed|ing)?)$/;
+    // Idioms: the phrase is no place ("fell in love", "in fact", "at once").
+    const CLAIM_PLACE_IDIOMS = new Set('love mind touch charge trouble fact general particular short turn vain order case time all once last least first hand earnest public private person secret advance common'.split(' '));
+    // The words of a place or instrument phrase that starts at `j`, as many
+    // as it has: "in the park", "with a knife", "in Paris" -- or 0.
+    function claimPlacePhrase(a, j) {
+        if (!CLAIM_PLACE_WORDS.has(a[j]) || j === 0) return 0;
+        let k = j + 1;
+        if (/^(?:the|a|an|his|her|its|their|our|my|your|this|that|these|those|some)$/.test(a[k] || '')) k++;
+        const from = k;
+        while (k < a.length && k - from < 3 && /^[a-z][a-z'-]*$/.test(a[k]) && !CLAIM_PLACE_WORDS.has(a[k]) && !CLAIM_FUNCTION_WORDS.has(a[k]) && !CLAIM_VERB_MARKERS.has(a[k])) k++;
+        if (k === from || a.slice(from, k).some(w => CLAIM_PLACE_IDIOMS.has(w))) return 0;
+        return k - j;
+    }
     function claimModifierDropped(P, C) {
         const p = P.length === 1 ? P[0] : null;
         if (!p || p.kind !== 'pred' || !C || C.kind !== 'pred' || p.term !== C.term || !p.vpText || !C.vpText) return false;
@@ -23140,9 +23159,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // it was done: either may be left out, with its "and" (r27.188). Not
         // "or": "quickly or quietly" does not give "quickly".
         const joined = j => a[j] === 'and' && j > 0 && j + 1 < a.length && modifier(a[j - 1]) && modifier(a[j + 1]);
+        // A place or instrument phrase, after a verb it does not complete,
+        // not after "is" (where it is what is said), nor after a word that
+        // says it may not be so (r27.232): "Bob ran in the park", so "Bob
+        // ran" -- not "Bob almost ran in the park", so "Bob almost ran".
+        const places = !a.some(w => CLAIM_MODIFIER_KEEP.has(w)) && !a.some(w => CLAIM_PLACE_VERBS.test(w));
+        const place = j => places && !/^(?:is|are|was|were|be|been|being|am)$/.test(a[j - 1] || '') ? claimPlacePhrase(a, j) : 0;
         let i = 0;
         for (let j = 0; j < a.length; j++) {
-            const w = a[j];
+            const w = a[j], n = i < b.length && w === b[i] ? 0 : place(j);
+            if (n) { j += n - 1; continue; }
             if (i < b.length && w === b[i]) i++;
             else if (!modifier(w) && !joined(j)) return false;
         }
@@ -23299,7 +23325,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
           test: (P, C) => !!claimRelationStep(P, C) },
         // A modifier dropped (r27.137): a rule of word meaning.
         { id: 'modifiers', name: 'dropping a modifier', optional: true,
-          gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob made a cake for Mary to have" gives "Bob made a cake" -- not "almost", "allegedly" or "hardly", nor under "not"',
+          gloss: '"Bob ran quickly" gives "Bob ran"; "Bob is very tall" gives "Bob is tall"; "Bob made a cake for Mary to have" gives "Bob made a cake"; "Bob buttered the toast with a knife in the kitchen" gives "Bob buttered the toast" -- not "almost", "allegedly" or "hardly", nor under "not", nor "Bob lives in Paris" or "Bob fell in love"',
           test: (P, C) => claimModifierDropped(P, C) },
         // What one makes something into, one makes (r27.202; the user: "ok"):
         // "Bob made the clay into a pot" gives "Bob made a pot".

@@ -1994,6 +1994,26 @@ console.log('\n-- r27.231: "either ... or" in what is said, and in a relative cl
         '"Bob left, and when Mary arrived, Ann cried": two claims, the second read as alone (it had been one, "when mary arrived, ann cried, bob left, and")', when);
 }
 
+console.log('\n-- r27.232: a place or instrument phrase left out, within the limits of Davidson\'s trick --');
+{
+    // The roadmap's "Davidson's trick, two more steps"; the user: "So long as it
+    // continues to respect the limits of Davidson's trick".
+    const step = (p, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: [${J(p)}], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const gives = [['Bob ran in the park.', 'Bob ran.'], ['Bob buttered the toast with a knife in the kitchen.', 'Bob buttered the toast.'],
+        ['Bob buttered the toast with a knife in the kitchen.', 'Bob buttered the toast in the kitchen.'], ['Bob left with Mary.', 'Bob left.'], ['Bob is running in the park.', 'Bob is running.']].map(([p, c]) => step(p, c));
+    ok(gives.every(r => r === 'dropping a modifier'), '"Bob ran in the park" gives "Bob ran"; "with a knife", "in the kitchen" and "with Mary" left out likewise (none had followed)', J(gives));
+    const not = [['Bob did not run in the park.', 'Bob did not run.'], ['Bob almost ran in the park.', 'Bob almost ran.'], ['Bob is in the kitchen.', 'Bob is.'],
+        ['Bob lives in Paris.', 'Bob lives.'], ['Bob put the book on the table.', 'Bob put the book.'], ['Bob relies on Mary.', 'Bob relies.'],
+        ['Bob fell in love.', 'Bob fell.'], ['Bob ran into Mary.', 'Bob ran.'], ['Bob came across a book.', 'Bob came.'], ['Bob ran in the park.', 'Bob ran in the kitchen.']].map(([p, c]) => step(p, c));
+    ok(not.every(r => r === null), 'its limits: nothing under "not", nor after "almost"; not what is said of the subject ("is in the kitchen"), nor after a verb the phrase completes ("lives in Paris", "put the book on the table", "relies on Mary"); no idiom ("fell in love", "ran into Mary", "came across a book")', J(not));
+    const gloss = ev(`var r = DEDUCTIVE_OPTIONAL_RULES.find(function (x) { return x.id === 'modifiers'; }); return r ? r.gloss : null;`);
+    ok(/"Bob buttered the toast with a knife in the kitchen" gives "Bob buttered the toast"/.test(gloss || '') && /"Bob lives in Paris" or "Bob fell in love"/.test(gloss || ''),
+        'the rule says so in the Logic panel', gloss);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
