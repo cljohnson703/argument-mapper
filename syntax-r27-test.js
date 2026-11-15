@@ -1978,6 +1978,22 @@ console.log('\n-- r27.230: names joined in a relative clause; "a car that Mary b
     ok(clear === 'P:it|=clear that bob and ann left', '"It is clear that Bob and Ann left" is one claim (it had been "it is clear that Bob", and "Ann left")', clear);
 }
 
+console.log('\n-- r27.231: "either ... or" in what is said, and in a relative clause; "and when" --');
+{
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const pairs = [['Some dog either barks or bites.', 'Some dog barks or bites.'], ['There is a dog that either barks or bites.', 'There is a dog that barks or bites.'],
+        ['Every dog either barks or bites.', 'Every dog barks or bites.']].map(([a, b]) => [key(a), key(b)]);
+    ok(pairs.every(([a, b]) => a === b) && pairs[0][0] === 'E:=dog|~bark or bite',
+        '"either" groups the verbs, and is none of them: "some dog either barks or bites" is "some dog barks or bites" (it had read "~either barks", or bites)', J(pairs));
+    const rel = [key('Every dog that either barks or bites is dangerous.'), key('Every dog that barks or bites is dangerous.')];
+    ok(rel[0] === rel[1] && rel[0] === 'U:(=dog&~bark or bite)|=dangerous',
+        'so in a relative clause in the subject: "every dog that either barks or bites is dangerous" (it had asked whether "is dangerous" went with "barks" too, a question with no second reading in it)', J(rel));
+    const when = key('Bob left, and when Mary arrived, Ann cried.');
+    ok(when === 'C[P:bob|~did left;A:when mary arrived, ann cried]',
+        '"Bob left, and when Mary arrived, Ann cried": two claims, the second read as alone (it had been one, "when mary arrived, ann cried, bob left, and")', when);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

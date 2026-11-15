@@ -4,6 +4,23 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 15: "either ... or" in what is said, and "and when" (r27.231)
+
+The user:
+* Of the list, whose last item holds four older ones: "Fix them in order." This is the second of those four: "either ... or" in a relative clause, and a fronted "when" after "and".
+
+Changes:
+* "Some dog either barks or bites" had read "either" as a verb: "~either barks", or bites. "Either" groups the verbs, and is none of them: the claim is "some dog barks or bites". So "There is a dog that either barks or bites", "Every dog either barks or bites", and "both" before verbs joined by "and".
+* "Every dog that either barks or bites is dangerous" had asked whether "is dangerous" went with "barks" as well as "bites", a question with no second reading in it. It is "every dog that barks or bites is dangerous". "Either" just after "that", "which" or "who", with an "or" after it, groups what the clause says, and is no quantifier, as in "either dog".
+* "Bob left, and when Mary arrived, Ann cried" had been read as one claim, "when mary arrived, ann cried, bob left, and". A clause before "when" that ends on "and" is no clause the "when" says when of. It is two claims, the second "when Mary arrived, Ann cried", read as it is alone.
+
+Tests:
+* New in syntax-r27-test.js, which has 263 checks: "either" before verbs, in three places; in a relative clause in the subject; "and when".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: names joined in a relative clause, and "a car that Mary bought and Bob sold" (r27.230)
 
 The user:

@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.230';
+    const APP_BUILD = '2026-11-15 r27.231';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13369,6 +13369,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // ("believes that A, B, and C", "that An, Bo, and Cy left"; r27.191).
         let words = tokens.map(t => /^(?:a|an),+$/.test(t) ? '' + t.replace(/,+$/, '') : t.replace(/,+$/, '')).filter(Boolean);
         if (!words.length) return null;
+        // "Either barks or bites", "both barks and bites": the word that groups
+        // the verbs is no verb of them (r27.231; "either" had been read as one,
+        // "~either barks").
+        { const w0 = claimWord(words[0]), rest = words.slice(2).map(claimWord);
+          if ((w0 === 'either' && rest.includes('or')) || (w0 === 'both' && rest.includes('and'))) words = words.slice(1); }
         // "Believes that (P iff Q)": brackets round all of what is believed only
         // group it; so does "it is the case that" ("believes that it is the case
         // that P iff Q").
@@ -13553,6 +13558,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // in which zombies are possible") is kept whole: it matches itself, and
     // nothing is read into it.
     function restrictorProp(tokens) {
+        // "Dog that either barks or bites": "either" groups what the clause
+        // says, and the kind is the same without it (r27.231; it had been
+        // one, "dog that either barks or bite").
+        { const k = tokens.findIndex((t, i) => i > 0 && /^(?:that|which|who)$/.test(claimWord(t)));
+          if (k > 0 && claimWord(tokens[k + 1] || '') === 'either' && tokens.slice(k + 3).some(t => claimWord(t) === 'or')) tokens = tokens.slice(0, k + 1).concat(tokens.slice(k + 2)); }
         const text = tokens.join(' ').trim();
         if (!text) return null;
         const r = tokens.findIndex((t, i) => i > 0 && /^(?:that|which|who)$/.test(claimWord(t)));
@@ -15737,8 +15747,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "it is not the case that beliefs can influence reasoning while the
         // notebook can't" denies the whole (r27.115; it had been read as one
         // claim, so it denied nothing).
+        // Nor after "and" ("Bob left, and when Mary arrived, Ann cried"): what
+        // comes before it is no clause the "when" says when of (r27.231; it
+        // had been read as "when mary arrived, ann cried, bob left, and").
         if ((m = s.match(CLAIM_FLAGGED_AFTER)) && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[3]) && !claimHasQuotation(s) &&
-            !/^it (?:is|was) (?:not (?:the case|true|so)|false|untrue) that\s/.test(m[1])) {
+            !/^it (?:is|was) (?:not (?:the case|true|so)|false|untrue) that\s/.test(m[1]) && !/(?:^|[\s,])(?:and|or|but|nor|so|yet)$/.test(m[1].trim())) {
             // "Q only when P" is "Q only if P" if "when" is "if": if Q, then P.
             const contrast = /^whil/.test(m[2]), only = m[2] === 'only when', main = only ? m[3] : m[1], cond = only ? m[1] : m[3];
             return claimAmbiguous('"' + m[2] + '" may say ' + (contrast ? 'when, or join two claims' : 'when, or why, rather than on what condition'), [
@@ -18820,6 +18833,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const z = out[k];
             if (z && (/^(?:is|are|was|were|am|has|does)$/.test(z.w) || (z.s && z.knownVerb && !z.aux)))
                 out[i] = { t: x.t, w: x.w, noun: true };
+        });
+        // "Every dog that either barks or bites is dangerous": "either" just
+        // after "that", "which" or "who", with an "or" after it, groups what
+        // the clause says, and is no quantifier, as in "either dog" (r27.231;
+        // "every dog that either" had been the subject, and "barks" its verb).
+        out.forEach((x, i) => {
+            if (x.w === 'either' && i > 0 && /^(?:that|which|who)$/.test(out[i - 1].w) && out.slice(i + 2).some(y => y.w === 'or'))
+                out[i] = { t: x.t, w: x.w, closed: true, conj: true };
         });
         if (claimSynCache.size > 20000) claimSynCache.clear();
         claimSynCache.set(key, out);
