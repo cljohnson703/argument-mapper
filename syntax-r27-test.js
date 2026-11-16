@@ -2094,6 +2094,23 @@ console.log('\n-- r27.237: names joined in a relative clause in the subject --')
     ok(two === 'C[P:the raven that mary saw|~did flew;P:the crow|~did flew]', 'a clause whole before the "and" joins two subjects, as before: "the raven that Mary saw and the crow"', two);
 }
 
+console.log('\n-- r27.238: "able to fly and swim" in a relative clause --');
+{
+    // The roadmap's "Able to fly and swim"; the user: "ok" to fixing it.
+    const key = t => ev(`var f = parseClaim(${J(t)}); return f ? claimUnmarked(claimKey(f)) : null;`);
+    const kinds = [key('Everyone who is able to fly and swim is happy.'), key('Everyone who is able to fly and happy is lucky.')];
+    ok(J(kinds) === J(['U:(=person&~can fly&~can swim)|=happy', 'U:(=person&~can fly&=happy)|=lucky']),
+        '"everyone who is able to fly and swim": able to fly and able to swim (it had been able to fly, and "is a swim"); "able to fly and happy" keeps its adjective', J(kinds));
+    const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const both = step(['Everyone who is able to fly and swim is happy.', 'Poe is a person who is able to fly and able to swim.'], 'Poe is happy.');
+    const roadmap = step(['Everyone who is able to fly and swim is happy.', 'Poe can fly, and Poe can swim.'], 'Poe is happy.');
+    ok(both.rule === 'universal modus ponens' && !/a swim/.test(roadmap.why),
+        'so "Poe is a person who is able to fly and able to swim" gives "Poe is happy" (it had asked for "Poe is a swim"), and the roadmap\'s step no longer asks for it', J([both, roadmap]));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.237';
+    const APP_BUILD = '2026-11-16 r27.238';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -12575,6 +12575,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Person that is able to fly": what the thing can do, read as "Poe is
             // able to fly" is (r27.202).
             const able = p => { const q = p.map(claimWord); return q[0] === 'able' && q[1] === 'to' && q.length > 2 && q.length <= 6 && q.slice(2).every(w => /^[a-z][a-z'-]*$/.test(w)); };
+            // "Able to fly and swim": a verb after "and" shares the "able to"
+            // before it -- able to swim, not "is a swim" (r27.238). Not an
+            // adjective: "able to fly and happy".
+            if (!alternatives && pieces.length > 1 && able(pieces[0]))
+                for (let i = 1; i < pieces.length; i++) {
+                    const w = claimSynWord(claimWord(pieces[i][0] || ''));
+                    if (pieces[i].length === 1 && w.verb && !w.adj && !claimEndsInS(pieces[i][0])) pieces[i] = ['able', 'to'].concat(pieces[i]);
+                }
             if (!pieces.length || !pieces.every(p => plain(p) || able(p)) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
             const parts = [];
             if (head) {

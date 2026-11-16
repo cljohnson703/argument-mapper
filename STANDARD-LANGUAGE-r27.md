@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: "able to fly and swim" in a relative clause (r27.238)
+
+The user:
+* Of the roadmap's "Able to fly and swim": "ok" to fixing it in a later release.
+* Of "Bob loves Mary, so Bob loves someone" (the roadmap's other item): "c", leave it as it is. With "Mary is a person" in the box ("Bob loves Mary, and Mary is a person"), "Bob loves someone" follows by existential introduction; with it in a box of its own, the hint gives the two steps. The roadmap keeps neither item.
+
+Changes:
+* "Everyone who is able to fly and swim is happy" had read "swim" as a noun: everyone who can fly and is a swim. So the step from "Poe can fly, and Poe can swim" asked for "Poe is a swim". A verb after "and" shares the "able to" before it: "able to fly and swim" is able to fly and able to swim.
+* Not an adjective: "everyone who is able to fly and happy" is able to fly, and happy.
+* So "Poe is a person who is able to fly and able to swim" gives "Poe is happy". It had asked for "Poe is a swim".
+* Never asking, the step from "Poe can fly, and Poe can swim" still needs "Poe is able to fly" and "Poe is able to swim": "can", read as written, is not yet ability, which a step that turns on it asks about.
+
+Tests:
+* New in syntax-r27-test.js, which has 284 checks: "able to fly and swim" and "able to fly and happy" in a relative clause; the step it gives; the roadmap's step, no longer asking for "Poe is a swim".
+* Take-one-out: the change is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: names joined in a relative clause in the subject (r27.237)
 
 The user:
