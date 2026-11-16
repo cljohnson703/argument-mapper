@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: "and finally", "and still"; "and so", "and therefore" (r27.235)
+
+The user:
+* Of five bugs found and not fixed, this the third: "Can you fix these?"
+
+Changes:
+* "Mary cried, and finally Bob left" is two claims, the second read as "Finally Bob left" is alone: "Bob finally left". It had been one claim about Mary, whose verb was "cried and finally bob left".
+* "Mary cried, and still Bob left" is "Mary cried" and "Bob left". "Still" here says "nevertheless", which adds nothing to the claim, as in "Still, Bob left". So "Still Bob left" without its comma: before a name or a pronoun, "still" is no adjective. "Still water runs deep" is as before.
+* "Mary cried, and so Bob left" holds a whole inference, as "Mary cried, so Bob left" does, and says so: "give its premises and its conclusion boxes of their own". It had been one claim about Mary. So "and therefore", "and thus", and "and so" with no comma.
+* Not "and so on", "so far", or "and so did Mary"; nor "and so the keyboard", where no clause follows "so", which says "too".
+
+Tests:
+* New in syntax-r27-test.js, which has 278 checks: "and finally", "and still", "Still Bob left", "still water"; four boxes that hold an inference; three that do not.
+* Take-one-out: each of the 3 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: an adverb of manner in front of a clause (r27.234)
 
 The user:

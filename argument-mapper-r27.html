@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.234';
+    const APP_BUILD = '2026-11-16 r27.235';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -11788,7 +11788,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // of a sentence qualifies all of it: "Mary cried, and sometimes Bob
         // left" is two claims (r27.228; it had been one about Mary). Not
         // "once", which may open a clause of time ("once Bob left, ...").
-        if (tokens.length > 1 && (claimQualifierKind(first) || /^(?:perhaps|maybe|necessarily)$/.test(first) || (CLAIM_FRAME_WORDS.has(first) && first !== 'once')))
+        // So "finally" and "still": "Mary cried, and finally Bob left" (r27.235).
+        if (tokens.length > 1 && (claimQualifierKind(first) || /^(?:perhaps|maybe|necessarily|finally|still)$/.test(first) || (CLAIM_FRAME_WORDS.has(first) && first !== 'once')))
             return claimLooksLikeClause(s.replace(/^\S+?,?\s+/, ''));
         // A verb group first, with nothing before it that could be its
         // subject ("quickly left the room", "is laid out"): no clause, as the
@@ -15783,6 +15784,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // front of a clause says how its verb's deed was done, and is read
         // just before the verb -- "Bob suddenly left" (r27.234; it had been
         // read as part of a name, "suddenly bob", or the sentence as one claim).
+        // "Still Bob left": before a name or a pronoun, "still" is no
+        // adjective ("still water"), and says "nevertheless", as "Still, Bob
+        // left" does -- which adds nothing to the claim (r27.235).
+        if (tokens.length > 2 && words[0] === 'still' && (/^\uE000/.test(tokens[1]) || CLAIM_SUBJECT_PRONOUNS.has(words[1])) && claimLooksLikeClause(tokens.slice(1).join(' ')))
+            return readClaim(tokens.slice(1).join(' '));
         if (tokens.length > 2 && /^[a-z]+,?$/i.test(tokens[0]) && claimMannerAdverb(words[0])) {
             const rest = tokens.slice(1).join(' ').replace(/^,\s*/, ''), rt = claimTokens(rest), k = claimSynSubjectEnd(rt);
             if (k > 0 && k < rt.length && claimLooksLikeClause(rest)) return readClaim(rt.slice(0, k).concat([words[0]], rt.slice(k)).join(' '));
@@ -17008,7 +17014,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             claimUnread('"because" and "since" give a reason, which the checker cannot read inside a box: put the reason in a box below');
             return claimAtom(s);
         }
-        if (/,\s+(?:so(?!\s+(?:long|is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)\b)|therefore|thus|hence|consequently)[\s,]/.test(top)) {
+        // So after "and", where a clause follows: "Mary cried, and so Bob left"
+        // (r27.235; it had been one claim about Mary) -- not "and so on", "so
+        // far", "and so did Mary", nor "and so the keyboard" ("so" as "too").
+        const inferred = /(?:,\s+(and\s+)?|\s+(and)\s+)(?:so(?!\s+(?:long|on|forth|far|much|many|is|are|am|was|were|does|do|did|can|could|will|would|has|have|had|must|should|may|might|shall)\b)|therefore|thus|hence|consequently)[\s,]/.exec(top);
+        if (inferred && (!(inferred[1] || inferred[2]) || claimLooksLikeClause(s.slice(inferred.index + inferred[0].length).trim()))) {
             claimUnread('this box holds a whole inference ("so", "therefore"): give its premises and its conclusion boxes of their own');
             return claimAtom(s);
         }

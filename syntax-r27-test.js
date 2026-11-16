@@ -2057,6 +2057,21 @@ console.log('\n-- r27.234: an adverb of manner in front of a clause, read before
     ok(step === 'dropping a modifier', 'so "Suddenly Bob left" gives "Bob left" (it had not)', step);
 }
 
+console.log('\n-- r27.235: "and finally", "and still"; "and so", "and therefore" --');
+{
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.message; });`);
+    const two = ['Mary cried, and finally Bob left.', 'Mary cried, and still Bob left.', 'Still Bob left.', 'Still water runs deep.'].map(key);
+    ok(J(two) === J(['C[P:mary|~did cried;P:bob|~did finally left]', 'C[P:mary|~did cried;P:bob|~did left]', 'P:bob|~did left', 'A:still water runs deep']),
+        '"Mary cried, and finally Bob left": two claims, the second as "Finally Bob left" is alone; "and still Bob left" too, as "Still, Bob left" (each had been one claim about Mary); not "still water"', J(two));
+    const whole = 'this box holds a whole inference ("so", "therefore"): give its premises and its conclusion boxes of their own';
+    const infer = ['Mary cried, and so Bob left.', 'Mary cried, and therefore Bob left.', 'Mary cried, and thus Bob left.', 'Mary cried and so Bob left.'].map(notes);
+    ok(infer.every(n => n.includes(whole)), '"Mary cried, and so Bob left": a whole inference, as "Mary cried, so Bob left" is (it had been one claim about Mary)', J(infer));
+    const not = [notes('Bob bought eggs, milk and so on.'), notes('Bob left and so did Mary.'), notes('B bolds the selected words, and the box stays open: the press keeps its focus, and so the keyboard.')];
+    ok(not.every(n => !n.includes(whole)), 'not "and so on", "and so did Mary", nor "and so the keyboard", with no clause after "so"', J(not));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
