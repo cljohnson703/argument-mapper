@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-15 r27.232';
+    const APP_BUILD = '2026-11-16 r27.233';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -13363,7 +13363,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const head = t.slice(0, at + 5);
         return head + t.slice(at + 5).replace(/(\S)\s+that\s+(?=\uE000|(?:the|a|an|every|each|some|no|all|any|this|these|those|he|she|it|they|we|i|you|there|his|her|its|their|our|my|your)\s)/g, '$1 ');
     }
+    // A list in a verb phrase -- "sings, dances and flies", "is red, fast and
+    // cheap", "is a raven, a crow or a jay" -- its commas said as its one
+    // "and" or "or" (r27.233). Not where a comma may part anything else: a
+    // that-clause, a "but", a list whose items are not short and alike.
+    function claimCommaListJoined(tokens) {
+        const w = tokens.map(t => claimWord(String(t).replace(/,+$/, '')));
+        if (w.some(x => /^(?:that|whether|if|because|since|although|though|while|which|who|whom|whose|but|nor|unless)$/.test(x))) return tokens;
+        const joins = w.map((x, i) => /^(?:and|or)$/.test(x) ? i : -1).filter(i => i >= 0);
+        if (joins.length !== 1 || joins[0] < 2 || joins[0] === tokens.length - 1) return tokens;
+        const j = joins[0], commas = tokens.map((t, i) => /,$/.test(String(t)) ? i : -1).filter(i => i >= 0);
+        if (!commas.length || commas.some(i => i >= j)) return tokens;
+        const item = (a, b) => b - a >= 1 && b - a <= 3 && w.slice(a, b).every((x, k) => /^[a-z][a-z'-]*$/.test(x) && (!CLAIM_FUNCTION_WORDS.has(x) || (k === 0 && /^(?:a|an|the)$/.test(x))));
+        // A list of what is said, not of objects: after "is" ("is red, fast
+        // and cheap"), or of verbs alone ("sings, dances and flies") -- not
+        // "met Al, Cy and Dee", whose objects its phrase keeps whole.
+        const copula = /^(?:is|are|was|were|am|be|been|being)$/.test(w[0]);
+        if (copula ? !item(1, commas[0] + 1) : commas[0] !== 0) return tokens;
+        const ends = commas.concat(commas[commas.length - 1] === j - 1 ? [] : [j - 1]);
+        for (let k = 1; k < ends.length; k++) if (!item(ends[k - 1] + 1, ends[k] + 1)) return tokens;
+        if (!item(j + 1, tokens.length)) return tokens;
+        const out = [];
+        tokens.forEach((t, i) => {
+            if (!commas.includes(i)) { out.push(t); return; }
+            out.push(String(t).replace(/,+$/, ''));
+            if (i !== j - 1) out.push(w[j]);
+        });
+        return out;
+    }
     function verbPhraseProp(tokens) {
+        // "Sings, dances and flies": a list, its commas as its "and" (r27.233;
+        // they had been dropped -- "sing dances", one verb with an object).
+        tokens = claimCommaListJoined(tokens);
         // "A," and "an," are never the article, which no comma follows: a
         // letter or a name whose capital the start of a clause took away
         // ("believes that A, B, and C", "that An, Bo, and Cy left"; r27.191).

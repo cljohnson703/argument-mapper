@@ -2014,6 +2014,25 @@ console.log('\n-- r27.232: a place or instrument phrase left out, within the lim
         'the rule says so in the Logic panel', gloss);
 }
 
+console.log('\n-- r27.233: a list in what is said of some or every, its commas as its "and" or "or" --');
+{
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const verbs = ['Some bird sings, dances and flies.', 'Some bird sings and dances and flies.', 'No bird sings, dances or flies.'].map(key);
+    ok(verbs[0] === verbs[1] && verbs[0] === 'E:=bird|~sing and dance and fly' && verbs[2] === 'U:=bird|¬~sing or dance or fly',
+        '"Some bird sings, dances and flies": three verbs (it had read "sings dances" as one, with an object); so with "or"', J(verbs));
+    const said = ['Some car is red, fast and cheap.', 'Some car is red, fast, and cheap.', 'Some bird is a raven, a crow or a jay.'].map(key);
+    ok(J(said) === J(['E:=car|=red and fast and cheap', 'E:=car|=red and fast and cheap', 'E:=bird|=raven or crow or jay']),
+        'after "is": "red, fast and cheap" three properties, with the comma before "and" or without it (it had been one, "red fast and cheap"); "a raven, a crow or a jay" three kinds', J(said));
+    const objects = key('Mary visited rooms A, B, and C.');
+    ok(objects === 'P:mary|~did visited rooms a b and c', 'not a list of objects, which the verb\'s phrase keeps whole, as before', objects);
+    const step = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: ['Some bird dances.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Some bird sings, dances and flies.'], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    ok(step === 'conjunction elimination under ∃', 'so "some bird sings, dances and flies" gives "some bird dances" (it had not)', step);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

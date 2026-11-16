@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: a list in what is said of some or every (r27.233)
+
+The user:
+* Of five bugs found and not fixed, this the first: "Can you fix these?"
+
+Changes:
+* Under "some", "every" and "no", a list in what is said had lost its commas. "Some bird sings, dances and flies" had read "sings dances" as one verb with an object, and "flies". "Some car is red, fast and cheap" had been one property, "red fast and cheap", and "Some bird is a raven, a crow or a jay" one kind, "raven crow or jay".
+* Each comma is now said as the list's own "and" or "or": "some bird sings and dances and flies", "some car is red and fast and cheap", "some bird is a raven or a crow or a jay". With a comma before the last "and" or without it, the claim is the same, and "some bird sings, dances and flies" gives "some bird dances".
+* Of one thing it had been right already: "Bob sings, dances and flies" was three claims.
+* Not a list of objects, which the verb's phrase keeps whole, as before: "Mary visited rooms A, B, and C", "Bob met Al, Cy and Dee". Nor where a comma may part anything else: a that-clause, a "but", a list whose items are not short.
+
+Tests:
+* New in syntax-r27-test.js, which has 270 checks: verbs in a list, with "and" and with "or"; properties and kinds after "is"; a list of objects, as before; the step it gives.
+* Take-one-out: the change is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 15: a place or instrument phrase left out (r27.232)
 
 The user:
