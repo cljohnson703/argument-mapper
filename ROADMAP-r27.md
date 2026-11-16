@@ -8,4 +8,4 @@ Work the user has asked to keep for later, newest first.
 
 ## Approved, not yet built
 
-None at present. (Davidson's trick: the place or instrument step is done, r27.232; of "Bob loves Mary; so Bob loves someone", the user chose to leave it as it is -- "someone" needs "Mary is a person" in the step. "Able to fly and swim" is done, r27.238.)
+None at present. (Davidson's trick: the place or instrument step is done, r27.232; of "Bob loves Mary; so Bob loves someone", the user chose to leave it as it is -- "someone" needs "Mary is a person" in the step. "Able to fly and swim" is done, r27.238; whether it says each or both at once is asked, r27.239.)

@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: "able to fly and swim": each, or both at once (r27.239)
+
+The user:
+* Of "Poe is able to fly and swim", which may say able to do each, or both at once: "I think (b), since it allows for the user to provide the intended meaning. But it should also ask in Semantic mode when 'Always ask' is enabled."
+
+Changes:
+* "Able to fly and swim" may say able to do each, or both at once. It is asked as "Bob and Ann lifted the piano" asks "each, or together?": where a step turns on it, and every time with "Always ask".
+* The readings are the box worded each way: "Poe is able to fly and able to swim" and "Poe is able to fly and swim at the same time". Each reads back asking nothing.
+* Never asking, it is read as written: one claim, whole. So in "everyone who is able to fly and swim", which r27.238 had read as each, without asking. The step from "Poe is a person who is able to fly and able to swim" to "Poe is happy" then gives the wording: "Written “Everyone who is able to fly and able to swim is happy”, the step follows by universal modus ponens."
+* Not asked where the box says which ("at the same time", "at once", "together", "each"), after "unable", or before an adjective: "able to fly and happy" is able to fly, and happy, as before.
+
+Tests:
+* New in syntax-r27-test.js, which has 288 checks: the question, its readings, and each reading read back; the same in a relative clause; no question where the box says which, after "unable", or before an adjective; a step that turns on it, with each setting.
+* Changed: r27.238's check of "everyone who is able to fly and swim", now whole as written; its step, now worded as each.
+* Take-one-out: each of the 2 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: "able to fly and swim" in a relative clause (r27.238)
 
 The user:

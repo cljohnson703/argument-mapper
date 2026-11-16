@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.238';
+    const APP_BUILD = '2026-11-16 r27.239';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -12575,14 +12575,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Person that is able to fly": what the thing can do, read as "Poe is
             // able to fly" is (r27.202).
             const able = p => { const q = p.map(claimWord); return q[0] === 'able' && q[1] === 'to' && q.length > 2 && q.length <= 6 && q.slice(2).every(w => /^[a-z][a-z'-]*$/.test(w)); };
-            // "Able to fly and swim": a verb after "and" shares the "able to"
-            // before it -- able to swim, not "is a swim" (r27.238). Not an
+            // "Able to fly and swim": able to do each, or both at once, which
+            // the box is asked (claimAbleBothAsked). As written, the kind stays
+            // whole (r27.239; r27.238 had read it as each, without asking, and
+            // before that "swim" had been a noun, "is a swim"). Not an
             // adjective: "able to fly and happy".
-            if (!alternatives && pieces.length > 1 && able(pieces[0]))
-                for (let i = 1; i < pieces.length; i++) {
-                    const w = claimSynWord(claimWord(pieces[i][0] || ''));
-                    if (pieces[i].length === 1 && w.verb && !w.adj && !claimEndsInS(pieces[i][0])) pieces[i] = ['able', 'to'].concat(pieces[i]);
-                }
+            if (!alternatives && pieces.length > 1 && able(pieces[0]) && pieces.slice(1).some(p => {
+                const w = claimSynWord(claimWord(p[0] || ''));
+                return p.length === 1 && w.verb && !w.adj && !claimEndsInS(p[0]);
+            })) return null;
             if (!pieces.length || !pieces.every(p => plain(p) || able(p)) || /\b(?:that|who|which)\b/.test(claimUnmarked(headText))) return null;
             const parts = [];
             if (head) {
@@ -16506,8 +16507,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         }
         return form;
     }
+    // "Able to fly and swim" may say able to do each, or both at once (r27.239;
+    // the user: "(b)"): asked as "Bob and Ann lifted the piano" asks "each, or
+    // together?", its readings the box worded each way -- "able to fly and
+    // able to swim", "able to fly and swim at the same time". Not where the
+    // box says which ("at the same time", "at once", "together", "each"), nor
+    // after "unable", nor where the second word is no verb ("able to fly and
+    // happy"). The answer, or null.
+    function claimAbleBothAsked(s) {
+        const m = /(^|\s)able to ([a-z][a-z'-]*) and ([a-z][a-z'-]*)(?=$|[\s,.;:!?])/.exec(s);
+        if (!m || /^\s*(?:at the same time|at once|together|simultaneously|both|each|in turn)\b/.test(s.slice(m.index + m[0].length))) return null;
+        const v1 = claimSynWord(m[2]), v2 = claimSynWord(m[3]);
+        if (!v1.verb || !v2.verb || v2.adj || claimEndsInS(m[3]) || /^(?:able|unable|not)$/.test(m[3])) return null;
+        const at = m.index + m[1].length, end = m.index + m[0].length;
+        const each = s.slice(0, at) + 'able to ' + m[2] + ' and able to ' + m[3] + s.slice(end);
+        const once = s.slice(0, end) + ' at the same time' + s.slice(end);
+        return claimAmbiguous('"able to ' + m[2] + ' and ' + m[3] + '" may mean able to do each, or both at once', [
+            { label: each, build: () => readClaim(each) }, { label: once, build: () => readClaim(once) }], false);
+    }
     function readClaimUncached(text) {
         text = String(text || '').trim();
+        // Asked of the box as a whole, its readings the whole box reworded
+        // (r27.239). Unanswered, read as written.
+        if (claimWholeBox(text)) { const asked = claimAbleBothAsked(text); if (asked) return asked; }
         const listed = claimNumberedList(text);
         if (listed !== text) return readClaim(listed);
         if (claimNumberReference(text)) {

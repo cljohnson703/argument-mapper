@@ -2099,16 +2099,48 @@ console.log('\n-- r27.238: "able to fly and swim" in a relative clause --');
     // The roadmap's "Able to fly and swim"; the user: "ok" to fixing it.
     const key = t => ev(`var f = parseClaim(${J(t)}); return f ? claimUnmarked(claimKey(f)) : null;`);
     const kinds = [key('Everyone who is able to fly and swim is happy.'), key('Everyone who is able to fly and happy is lucky.')];
-    ok(J(kinds) === J(['U:(=person&~can fly&~can swim)|=happy', 'U:(=person&~can fly&=happy)|=lucky']),
-        '"everyone who is able to fly and swim": able to fly and able to swim (it had been able to fly, and "is a swim"); "able to fly and happy" keeps its adjective', J(kinds));
+    ok(J(kinds) === J(['U:=person that is able to fly and swim|=happy', 'U:(=person&~can fly&=happy)|=lucky']),
+        '"everyone who is able to fly and swim" is no "is a swim" (it had been able to fly, and "is a swim"); as written it is read whole, each or both at once asked (r27.239; r27.238 had read it as each); "able to fly and happy" keeps its adjective', J(kinds));
     const step = (ps, c) => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
         try { var trees = [{ id: 'M', type: 'contention', texts: [${J(c)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(ps)}, collapsed: [], children: [] }] }];
             var st = collectDeductiveSteps(trees)[0]; return { rule: st && st.rule ? st.rule.name : null, why: st && st.why ? st.why.text || '' : '' }; }
         finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
-    const both = step(['Everyone who is able to fly and swim is happy.', 'Poe is a person who is able to fly and able to swim.'], 'Poe is happy.');
+    const both = step(['Everyone who is able to fly and able to swim is happy.', 'Poe is a person who is able to fly and able to swim.'], 'Poe is happy.');
     const roadmap = step(['Everyone who is able to fly and swim is happy.', 'Poe can fly, and Poe can swim.'], 'Poe is happy.');
     ok(both.rule === 'universal modus ponens' && !/a swim/.test(roadmap.why),
-        'so "Poe is a person who is able to fly and able to swim" gives "Poe is happy" (it had asked for "Poe is a swim"), and the roadmap\'s step no longer asks for it', J([both, roadmap]));
+        'so, worded as each, "Poe is a person who is able to fly and able to swim" gives "Poe is happy" (it had asked for "Poe is a swim"), and the roadmap\'s step no longer asks for it', J([both, roadmap]));
+}
+
+console.log('\n-- r27.239: "able to fly and swim": each, or both at once --');
+{
+    // The user: "(b), since it allows for the user to provide the intended
+    // meaning. But it should also ask in Semantic mode when 'Always ask' is
+    // enabled."
+    const asked = (t, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var amb = r.notes.filter(function (n) { return n.kind === 'ambiguous'; });
+        var out = { key: r.form ? claimUnmarked(claimKey(r.form)) : null, q: amb.map(function (n) { return claimUnmarked(n.message); }),
+            readings: amb.length ? amb[0].readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }) : [],
+            back: amb.length ? amb[0].readings.map(function (l) { var f = parseClaimFull(l); return [f.form ? claimUnmarked(claimKey(f.form)) : null, f.notes.filter(function (n) { return n.kind === 'ambiguous'; }).length]; }) : [] };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return out;`);
+    const poe = asked('Poe is able to fly and swim.', 'always');
+    ok(J(poe.q) === J(['"able to fly and swim" may mean able to do each, or both at once']) &&
+        J(poe.readings) === J(['Poe is able to fly and able to swim.', 'Poe is able to fly and swim at the same time.']) &&
+        J(poe.back) === J([['C[P:poe|~can fly;P:poe|~can swim]', 0], ['P:poe|~can fly and swim at the same time', 0]]) && poe.key === 'P:poe|~can fly and swim',
+        '"Poe is able to fly and swim": each, or both at once, asked; each reading reads back asking nothing; as written, one claim, whole', J(poe));
+    const kind = asked('Everyone who is able to fly and swim is happy.', 'always');
+    ok(J(kind.readings) === J(['Everyone who is able to fly and able to swim is happy.', 'Everyone who is able to fly and swim at the same time is happy.']) &&
+        J(kind.back) === J([['U:(=person&~can fly&~can swim)|=happy', 0], ['U:=person that is able to fly and swim at the same time|=happy', 0]]),
+        'so "everyone who is able to fly and swim"', J(kind));
+    const none = ['Poe is able to fly and swim at once.', 'Poe is unable to fly and swim.', 'Poe is able to fly and happy.'].map(t => asked(t, 'always').q.length);
+    ok(J(none) === J([0, 0, 0]), 'not where the box says which ("at once"), after "unable", nor before an adjective', J(none));
+    const step = sem => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: ['Poe is happy.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Everyone who is able to fly and swim is happy.', 'Poe is a person who is able to fly and able to swim.'], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.why ? st.why.text || '' : ''; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const q = 'Did you mean “Everyone who is able to fly and able to swim is happy” or “Everyone who is able to fly and swim at the same time is happy”?';
+    const modes = [step(true), step('always'), step(false)];
+    ok(modes[0] === q && modes[1] === q && /Written “Everyone who is able to fly and able to swim is happy”, the step follows by universal modus ponens\./.test(modes[2]),
+        'a step that turns on it asks, and so with "Always ask"; never asking, the hint gives the wording each way', J(modes));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
