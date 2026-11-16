@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: an adverb of manner in front of a clause (r27.234)
+
+The user:
+* Of five bugs found and not fixed, this the second: "Can you fix these?"
+
+Changes:
+* An adverb of manner in front of a clause says how the verb's deed was done, and is read just before the verb. "Suddenly Bob left" and "Suddenly, Bob left" are "Bob suddenly left", and give "Bob left" by dropping a modifier. They had been said of one "suddenly bob". So "Mary cried, and suddenly Bob left", "Carefully Bob opened the door", and "Quickly the dog ran" and "Silently, every guest left", each of which had been one claim.
+* "Immediately he left" had read "he" as one "Immediately"; "he" now has nothing in the box to refer to. In "Suddenly Bob left, and he cried", "he" is Bob; it had been "Suddenly Bob", and the second claim "Bob suddenly cried".
+* Such an adverb is a word in "-ly" that no list knows as a noun or an adjective, as the phrases already take one. Not a word that qualifies a whole claim ("apparently", "usually", read as before), says it may not be so ("almost"), or says how much of what follows ("exactly one").
+* In front, only where a clause follows it, so "Emily left, and she cried" is Emily's. The common first names in "-ly" are names: "Billy Bob left".
+
+Tests:
+* New in syntax-r27-test.js, which has 275 checks: six sentences with such an adverb in front; "Immediately he left" and "Suddenly Bob left, and he cried"; "Billy Bob left" and Emily's "she"; "exactly one", as before; the step "Suddenly Bob left", so "Bob left".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: a list in what is said of some or every (r27.233)
 
 The user:

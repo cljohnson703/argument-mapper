@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.233';
+    const APP_BUILD = '2026-11-16 r27.234';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10080,8 +10080,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 // "That" or "this" before a name opens a clause, as below ("Mary
                 // said that Bob left, and he cried": Bob may be "he").
                 const determined = k > 0 && /^(?:the|a|an|these|those|my|your|his|her|its|our|their)$/.test(toks[k - 1].l) && claimSynPhraseEnd(synWs, k - 1) > k;
+                // Nor an adverb of manner in front of a clause: "Immediately he
+                // left" (r27.234; "he" had been one "Immediately").
+                const manner = opensClause && claimMannerAdverb(lower) && !!toks[k + 1] && (toks[k + 1].l === ',' || /^[A-Z]/.test(toks[k + 1].w) ||
+                    !!CLAIM_PRONOUN_KIND[toks[k + 1].l] || /^(?:the|a|an|every|each|some|no|all|this|that|these|those|my|your|his|her|its|our|their)$/.test(toks[k + 1].l));
                 if (!(CLAIM_NOT_A_NAME.has(lower) || CLAIM_SPEAKER_WORDS.has(lower) || CLAIM_FRAME_WORDS.has(lower) || CLAIM_EMPTY_WORDS.has(lower) ||
-                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower] || CLAIM_NATIONAL_ADJECTIVES.has(lower) || determined)) {
+                    /^(?:perhaps|maybe|possibly)$/.test(lower) || CLAIM_PRONOUN_KIND[lower] || CLAIM_NATIONAL_ADJECTIVES.has(lower) || determined || manner)) {
                     if (last && last.k === k - 1 && !/['\u2019]s$/.test(last.raw)) { last.words += ' ' + name; last.k = k; last.k1 = k; last.raw = x.w; }
                     else { last = { at: x.at, k0: k, k, k1: k, raw: x.w, words: name, kind: 'person', name: true }; add(last); }
                     // "Mary's dog": the name, and what follows it.
@@ -10992,6 +10996,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const lower = word.toLowerCase();
             if (!word || CLAIM_NOT_A_NAME.has(lower) || CLAIM_SPEAKER_WORDS.has(lower) || CLAIM_FRAME_WORDS.has(lower) ||
                 CLAIM_EMPTY_WORDS.has(lower) || CLAIM_LIKELY_WORDS.has(lower) || /^(?:perhaps|maybe|possibly)$/.test(lower)) { last = null; continue; }
+            // Nor an adverb of manner that opens a clause: "Immediately he
+            // left", "Suddenly Bob left" (r27.234; "he" had been "Immediately",
+            // or "Suddenly Bob").
+            const opening = !said.slice(0, m.index).trim() || /[.!?]\s*$/.test(said.slice(0, m.index));
+            if (opening && claimMannerAdverb(lower) && /^,?\s+(?:[A-Z]|(?:he|she|it|they|we|i|you|the|a|an|every|each|some|no|all|this|that|these|those|my|your|his|her|its|our|their)\b)/.test(said.slice(m.index + m[0].length))) { last = null; continue; }
             // "Clark Kent": capitalized words side by side are one name.
             if (last && said.slice(last.end, m.index) === ' ' && !/['\u2019]s$/.test(last.raw)) {
                 const whole = last.name + ' ' + word;
@@ -15770,6 +15779,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "Apparently P", "usually P", "metaphysically, P".
         if (tokens.length > 2 && (CLAIM_SPEAKER_WORDS.has(words[0]) || CLAIM_FRAME_WORDS.has(words[0])) &&
             claimLooksLikeClause(tokens.slice(1).join(' ').replace(/^,\s*/, ''))) return settled() || opaque(qualified(words[0]), words[0], tokens.slice(1).join(' ').replace(/^,\s*/, ''));
+        // "Suddenly, Bob left", "Quickly the dog ran": an adverb of manner in
+        // front of a clause says how its verb's deed was done, and is read
+        // just before the verb -- "Bob suddenly left" (r27.234; it had been
+        // read as part of a name, "suddenly bob", or the sentence as one claim).
+        if (tokens.length > 2 && /^[a-z]+,?$/i.test(tokens[0]) && claimMannerAdverb(words[0])) {
+            const rest = tokens.slice(1).join(' ').replace(/^,\s*/, ''), rt = claimTokens(rest), k = claimSynSubjectEnd(rt);
+            if (k > 0 && k < rt.length && claimLooksLikeClause(rest)) return readClaim(rt.slice(0, k).concat([words[0]], rt.slice(k)).join(' '));
+        }
         // "Q when P", "Q given that P", "Q in case P", "Q while P".
         if ((m = s.match(CLAIM_FLAGGED_AFTER)) && m[2] === 'given that' && claimLooksLikeClause(m[1]) && claimLooksLikeClause(m[3]) && !claimHasQuotation(s))
             return claimAmbiguous('"given that" may give a reason, as "because" does, or a condition, as "if" does: choose which',
@@ -18764,7 +18781,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_SYN_LY_WORDS = new Set(('family ally belly bully jelly lily rally tally folly holly jolly melancholy anomaly monopoly ' +
         'assembly supply reply apply comply imply multiply rely fly only early daily weekly monthly yearly likely unlikely lonely lovely ' +
         'friendly unfriendly ugly holy silly deadly costly elderly orderly worldly heavenly cowardly scholarly timely lively curly hilly ' +
-        'oily smelly chilly').split(' '));
+        'oily smelly chilly ' +
+        // First names (r27.234): "Billy Bob left" is Billy Bob's.
+        'billy willy sally molly polly dolly kelly shelly emily kimberly beverly milly tilly nelly').split(' '));
+    // An adverb of manner, as the phrases take one -- "suddenly", "quickly",
+    // "carefully": a word in "-ly" no list knows as a noun or an adjective,
+    // and no word that qualifies a whole claim ("apparently", "usually"),
+    // says it may not be so ("almost"), or says how much of what follows
+    // ("exactly one", "especially Bob") (r27.234).
+    const CLAIM_DEGREE_LY = new Set(('exactly precisely approximately merely simply barely fully entirely completely totally utterly wholly ' +
+        'particularly especially specifically exclusively solely equally mostly').split(' '));
+    const claimMannerAdverb = w => /^[a-z]{3,}ly$/.test(w) && !CLAIM_SYN_LY_WORDS.has(w) && !CLAIM_SPEAKER_WORDS.has(w) && !CLAIM_FRAME_WORDS.has(w) &&
+        !CLAIM_EMPTY_WORDS.has(w) && !CLAIM_MODIFIER_KEEP.has(w) && !CLAIM_DEGREE_LY.has(w) && !claimQualifierKind(w);
     // Helping verbs that are nouns too (WordNet): "a can", "free will", "his
     // might", "a must", "the may", "does" (more than one doe) (r27.197).
     const CLAIM_SYN_AUX_NOUNS = new Set(['can', 'will', 'might', 'must', 'may', 'does']);

@@ -2033,6 +2033,30 @@ console.log('\n-- r27.233: a list in what is said of some or every, its commas a
     ok(step === 'conjunction elimination under ∃', 'so "some bird sings, dances and flies" gives "some bird dances" (it had not)', step);
 }
 
+console.log('\n-- r27.234: an adverb of manner in front of a clause, read before its verb --');
+{
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return claimUnmarked(n.message); });`);
+    const front = ['Suddenly Bob left.', 'Suddenly, Bob left.', 'Bob suddenly left.', 'Quickly the dog ran.', 'Silently, every guest left.', 'Mary cried, and suddenly Bob left.'].map(key);
+    ok(J(front) === J(['P:bob|~did suddenly left', 'P:bob|~did suddenly left', 'P:bob|~did suddenly left', 'P:the dog|~did quickly ran', 'U:=guest|~did silently left',
+            'C[P:mary|~did cried;P:bob|~did suddenly left]']),
+        '"Suddenly Bob left" is "Bob suddenly left" (it had been said of one "suddenly bob"); "Quickly the dog ran" and "Silently, every guest left" likewise (each had been one claim)', J(front));
+    const he = notes('Immediately he left.'), bob = notes('Suddenly Bob left, and he cried.');
+    ok(he.some(n => /“he” has nothing in this box to refer to/.test(n)) && !he.some(n => /Immediately/.test(n)) && bob.includes('"he" is read as "Bob", the one name this claim gives'),
+        '"Immediately he left": "he" has nothing to refer to (it had been one "Immediately"); "Suddenly Bob left, and he cried": "he" is Bob (it had been "Suddenly Bob")', J([he, bob]));
+    const names = [key('Billy Bob left.'), notes('Emily left, and she cried.')];
+    ok(names[0] === 'P:billy bob|~did left' && names[1].includes('"she" is read as "Emily", the one name this claim gives'),
+        'first names in "-ly" are names: "Billy Bob left", "Emily left, and she cried"', J(names));
+    const exactly = key('Exactly one raven is black.');
+    ok(exactly === 'A:exactly one raven is black', 'not a word that says how much of what follows: "exactly one", as before', exactly);
+    const step = ev(`state.logic = { base: 'standard', rules: { semantic: false } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: ['Bob left.'], collapsed: [], children: [{ id: 'S', type: 'support', texts: ['Suddenly Bob left.'], collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st && st.rule ? st.rule.name : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    ok(step === 'dropping a modifier', 'so "Suddenly Bob left" gives "Bob left" (it had not)', step);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
