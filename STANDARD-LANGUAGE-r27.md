@@ -4,6 +4,25 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: "they" read as one, in grammatical English (r27.240)
+
+The user:
+* Of how to fix "they": "a". Keep asking wherever singular "they" is possible, with the plural reading first, and make the three fixes. This is the first: the readings said in grammatical English.
+
+Changes:
+* A reading with "they" read as one person had kept the verb "they" takes: "Bob eats worms and Bob fly", "the nurse are tired", "Someone writes essays and pass". The verb agrees: "Bob flies", "the nurse is tired", "and passes"; "does not", "doesn't", "has wings", "often flies", "applies". In the past, or after "can", "will" or "must", it stays: "Bob flew".
+* "They're" had read "Bob're" and "worms're". It is "Bob is" and "worms are"; so "'ve" (has or have), "'ll" (will) and "'d" (had before a past participle, would otherwise).
+* "They both", "them all" and "they are each" are many, never one: "Bob met Al, and they both left" no longer offers "Bob both left". Until r27.241, "they" there has nothing to refer to.
+* In "they like him", with "him" read as Bob, "they" is not Bob too: "Bob likes cats and dogs, and they like him" had offered "Bob like Bob".
+* A capital that opens a clause, joined by "and" to a plural in small letters, is a plural, not a name: "Dogs and cats fight, and they bite" offers "dogs", never "Dogs bites". "Humans and animals feel pain, and they deserve respect" had offered "Humans" as a person. "Williams and Ann" and "Williams and Jones" are names, as before.
+
+Tests:
+* New in syntax-r27-test.js, which has 294 checks: the verb agreeing, in nine sentences; the past and "will"; "they're" and "they'd"; "they both"; "they like him"; "Dogs and cats", and "Williams and Ann".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* One corpus sentence of 4542 reads differently, by default and with Semantic mode on: "Bob makes cakes and they sell well" offers "Bob sells well" (it had been "Bob sell well").
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: "able to fly and swim": each, or both at once (r27.239)
 
 The user:

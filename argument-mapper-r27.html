@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.239';
+    const APP_BUILD = '2026-11-16 r27.240';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10069,7 +10069,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // So before any verb only a plural takes: "Students write essays"
             // (r27.236; "them" after it had been one "Students"). Not one either
             // may take: "Williams left" is a name's.
-            if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && claimPluralWord(x.l) && (/^(?:are|were|have|do)$/.test(toks[k + 1].l) ||
+            // Nor one joined to a plural in small letters: "Dogs and cats
+            // fight", "Humans and animals feel pain" (r27.240; "Dogs" had been
+            // a name, which "they" read as one would make "Dogs bites").
+            // "Williams and Ann", "Williams and Jones" stay names.
+            const joinedPlural = !!toks[k + 1] && /^(?:and|or)$/.test(toks[k + 1].l) && !!toks[k + 2] && /^[a-z][a-z'-]*$/.test(toks[k + 2].w) &&
+                claimPluralWord(toks[k + 2].l) && !/'s$/.test(toks[k + 2].l);
+            if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && claimPluralWord(x.l) && (joinedPlural || /^(?:are|were|have|do)$/.test(toks[k + 1].l) ||
                 (!!claimSynVerbStart(synWs, k + 1, 'pl') && !claimSynVerbStart(synWs, k + 1, 'sg')))) { last = null; }
             // "Black ravens fly", "Real experiences are", "Computer programs
             // are formal": a capital that opens a clause is no name before its
@@ -10189,7 +10195,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     // Its verb after it, as a plural takes one: "Bob makes cakes",
                     // "sells them" open with no plural (r27.109; "them" had been
                     // offered "bob makes").
-                    if (next && claimSynVerbStart(synWs, j + 1, 'pl'))
+                    // Or joined to another plural, before their verb: "dogs and
+                    // cats fight", "Humans and animals feel pain" (r27.240).
+                    if (next && (claimSynVerbStart(synWs, j + 1, 'pl') || (/^(?:and|or)$/.test(next.l) && !!toks[j + 2] && /^[a-z][a-z'-]*$/.test(toks[j + 2].w) &&
+                        claimPluralWord(toks[j + 2].l) && !/'s$/.test(toks[j + 2].l))))
                         add({ at: run[0].at, k0: run[0] === toks[c.from] ? c.from : j, k1: j,
                             words: run.map((z, i) => i === 0 && z.at === 0 && /^[A-Z][a-z]/.test(z.w) && !CLAIM_NATIONAL_ADJECTIVES.has(z.l) ? z.w.toLowerCase() : z.w).join(' '), kind: 'many' });
                     break;
@@ -10567,6 +10576,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Bob makes cakes and sells them": "cakes" (r27.109).
             if (x.kind === 'p' && !list.some(c => c.kind === 'many'))
                 list = list.concat(bare.filter(c => c.at < first.at && c.at >= frameEnd && !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase())));
+            // "They both", "them all", "they are each": many, never one --
+            // "Bob both left" is no reading (r27.240).
+            if (x.kind === 'p' && x.members.some(p => /^(?:they|them)$/.test(p.l) && !!toks[p.k + 1] &&
+                (/^(?:both|all|each)$/.test(toks[p.k + 1].l) || (/^(?:are|were)$/.test(toks[p.k + 1].l) && !!toks[p.k + 2] && /^(?:both|all|each)$/.test(toks[p.k + 2].l)))))
+                list = list.filter(c => c.kind === 'many');
+            // "They like him", where "him" is Bob: "they" is not Bob too --
+            // that would be "himself" (r27.240; it had offered "Bob like Bob").
+            if (x.kind === 'p') x.members.forEach(p => {
+                if (p.l !== 'they') return;
+                nameSites.forEach(site => {
+                    const k = toks.findIndex(y => y.at === site.at);
+                    if (k > p.k && innerOf(k) === p.ii && (/^him$/i.test(site.word) || (/^her$/i.test(site.word) && CLAIM_PRONOUN_TAIL.test(t.slice(site.at + 3)))))
+                        list = list.filter(c => c.words.toLowerCase() !== String(site.becomes).toLowerCase());
+                });
+            });
             // Inside brackets -- a linked box's words, read as the box is
             // alone (r27.89) -- a pronoun goes back to what they hold, where
             // they hold something it can be: "If (Computers can't be minds),
@@ -10758,12 +10782,37 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // With the names the check reads for pronouns written in as well.
         const named = nameSites.map(x => ({ at: x.at, end: x.at + x.word.length, say: x.becomes }));
         // What each pick changes: { at, end, say } in the box's words.
+        // "They" read as one: its verb agrees -- "Bob flies", "the nurse
+        // leaves", "is tired", "does not", "has" -- and "they're" is "Bob is",
+        // "worms are" (r27.240; the readings had been "Bob fly", "the nurse
+        // are tired", "Bob're happy"). A verb in the past, or after "can",
+        // "will" or "must", stays as it is.
+        const one = c => !!c && c.kind !== 'many' && !c.fact;
+        const contracted = p => p.l === 'they' ? /^['\u2019](re|ve|ll|d)\b/i.exec(t.slice(p.at + p.w.length)) : null;
+        const expanded = (p, c, m) => {
+            const w = m[1].toLowerCase(), n = toks[p.k + 1];
+            return w === 're' ? (one(c) ? 'is' : 'are') : w === 've' ? (one(c) ? 'has' : 'have') : w === 'll' ? 'will'
+                : n && claimPastStem(n.l) !== null && !CLAIM_PAST_UNCHANGED.has(n.l) ? 'had' : 'would';
+        };
+        const agree = (p, c) => {
+            if (p.l !== 'they' || !one(c) || contracted(p)) return [];
+            let j = p.k + 1;
+            while (toks[j] && (/^(?:not|never|also|then|still|really|just|always|often|usually|sometimes|rarely|seldom|even|only|already|again|now|soon|later|once|ever|too|certainly|probably|surely|actually)$/.test(toks[j].l) ||
+                (/^[a-z]{3,}ly$/.test(toks[j].l) && !claimSynWord(toks[j].l).verb))) j++;
+            const v = toks[j];
+            if (!v || !/^[a-z][a-z'\u2019-]*$/.test(v.w)) return [];
+            const l = v.l, say = CLAIM_TO_SINGULAR[l] || (CLAIM_VERB_MARKERS.has(l) || claimPastStem(l) !== null || CLAIM_PAST_UNCHANGED.has(l) || claimEndsInS(l) || claimSynClosed(l) ? null : claimThirdPerson(l));
+            return say && say !== l ? [{ at: v.at, end: v.at + v.w.length, say: /\u2019/.test(v.w) ? say.replace(/'/g, '\u2019') : say }] : [];
+        };
         const editsOf = chosen => {
             // Joined, the comma before "and" goes too: "A teacher left and cried".
             const comma = p => { const j = toks.slice(0, p.k).map(x => x.l).lastIndexOf(','); return j >= 0 && j >= p.k - 3 ? [{ at: toks[j].at, end: toks[j].at + 1, say: '' }] : []; };
-            return [].concat(...slots.map((x, i) => [].concat(...x.members.map(p => joins(p, chosen[i])
-                ? [{ at: p.at, end: p.at + p.w.length + (/^\s*/.exec(t.slice(p.at + p.w.length))[0].length), say: '' }].concat(comma(p))
-                : [{ at: p.at, end: p.at + p.w.length, say: put(p, chosen[i]) }]))), named)
+            return [].concat(...slots.map((x, i) => [].concat(...x.members.map(p => {
+                const c = chosen[i], m = contracted(p), cut = m ? m[0].length : 0;
+                return (joins(p, c)
+                    ? [{ at: p.at, end: p.at + p.w.length + cut + (m ? 0 : /^\s*/.exec(t.slice(p.at + p.w.length))[0].length), say: m ? expanded(p, c, m) : '' }].concat(comma(p))
+                    : [{ at: p.at, end: p.at + p.w.length + cut, say: put(p, c) + (m ? ' ' + expanded(p, c, m) : '') }]).concat(agree(p, c));
+            }))), named)
                 .sort((a, b) => a.at - b.at)
                 // Where a sentence begins, with its capital.
                 .map(e => ({ at: e.at, end: e.end, say: !t.slice(0, e.at).trim() || /[.!?]\s+$/.test(t.slice(0, e.at)) ? e.say.charAt(0).toUpperCase() + e.say.slice(1) : e.say }));

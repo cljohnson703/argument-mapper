@@ -2143,6 +2143,44 @@ console.log('\n-- r27.239: "able to fly and swim": each, or both at once --');
         'a step that turns on it asks, and so with "Always ask"; never asking, the hint gives the wording each way', J(modes));
 }
 
+console.log('\n-- r27.240: "they" read as one, in grammatical English --');
+{
+    // The user, of "they": "a" -- keep asking wherever singular "they" is
+    // possible, its readings said in grammatical English (the first of three
+    // fixes). Sorted, as r27.241 puts the plural first.
+    const they = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var n = r.notes.filter(function (n) { return /“(?:they|them|their)”/.test(claimUnmarked(n.message || '')); });
+        return { notes: n.map(function (n) { return n.kind + ': ' + claimUnmarked(n.message); }),
+            readings: [].concat.apply([], n.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) {
+                return n.readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }); })).sort() };`);
+    const agree = [
+        ['Bob eats worms and they fly.', 'Bob eats worms and Bob flies.'],
+        ['The nurse checks the charts, and they are tired.', 'The nurse checks the charts, and the nurse is tired.'],
+        ['The nurse checks the charts, and they leave.', 'The nurse checks the charts, and the nurse leaves.'],
+        ['Someone writes essays, and they pass.', 'Someone writes essays and passes.'],
+        ["Bob eats worms and they don't fly.", "Bob eats worms and Bob doesn't fly."],
+        ['Bob eats worms and they do not fly.', 'Bob eats worms and Bob does not fly.'],
+        ['Bob eats worms and they often fly.', 'Bob eats worms and Bob often flies.'],
+        ['Bob eats worms and they have wings.', 'Bob eats worms and Bob has wings.'],
+        ['Bob eats worms and they apply for jobs.', 'Bob eats worms and Bob applies for jobs.']].map(([t, want]) => [t, they(t).readings.includes(want)]);
+    ok(agree.every(a => a[1]), '"they" read as one person: the verb agrees ("Bob flies", "the nurse is tired", "and passes", "doesn\'t", "has"; it had been "Bob fly", "the nurse are tired", "and pass")', J(agree));
+    const kept = [['Bob eats worms and they flew.', 'Bob eats worms and Bob flew.'], ['Bob eats worms and they will fly.', 'Bob eats worms and Bob will fly.']]
+        .map(([t, want]) => [t, they(t).readings.includes(want)]);
+    ok(kept.every(a => a[1]), 'in the past, or after "will", the verb stays', J(kept));
+    const short = [["Bob eats worms and they're happy.", ['Bob eats worms and Bob is happy.', 'Bob eats worms and worms are happy.']],
+        ["Someone writes essays, and they're happy.", ['Someone writes essays and is happy.', 'Someone writes essays, and essays are happy.']],
+        ["Bob eats worms and they'd left.", ['Bob eats worms and Bob had left.', 'Bob eats worms and worms had left.']]].map(([t, want]) => [t, J(they(t).readings) === J(want.slice().sort())]);
+    ok(short.every(a => a[1]), '"they\'re": "Bob is", "worms are" (it had been "Bob\'re", "worms\'re"); "they\'d left": "had left"', J(short));
+    const both = they('Bob met Al, and they both left.');
+    ok(!J(both).match(/, and (?:Bob|Al) both left/), '"they both" is many: never "Bob both left", "Al both left"', J(both));
+    const him = they('Bob likes cats and dogs, and they like him.');
+    ok(him.readings.length > 1 && !him.readings.some(r => /and Bob likes? Bob/.test(r)), '"they like him", "him" read as Bob: "they" is not Bob too (it had offered "Bob like Bob")', J(him));
+    const dogs = they('Dogs and cats fight, and they bite.'), names = they('Williams and Ann left, and they cried.');
+    ok(dogs.readings.includes('Dogs and cats fight, and dogs bite.') && !dogs.readings.some(r => /Dogs bites|and Dogs bite/.test(r)) &&
+        names.readings.includes('Williams and Ann left, and Williams cried.'),
+        '"Dogs and cats fight": "Dogs" is no name, so no "Dogs bites"; "Williams and Ann left": names, as before', J([dogs, names]));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
