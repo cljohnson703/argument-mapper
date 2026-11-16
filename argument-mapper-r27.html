@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.240';
+    const APP_BUILD = '2026-11-16 r27.241';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10231,6 +10231,43 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!joined && !CLAIM_SYN_PREPOSITIONS.has(v.l) && !/^(?:has|have|had|having)$/.test(v.l) && !(/^[a-z]/.test(v.w) && !w.closed && (w.knownVerb || w.past || w.ing)) && !afterSubject) return;
             bare.push({ at: toks[i + 1].at, k0: i + 1, k1: j, words: t.slice(toks[i + 1].at, y.at + y.w.length), kind: 'many' });
         });
+        // Names and phrases joined by "and" are many: "Bob and Ann", "the cat
+        // and the dog", "Al, Cy, and Dee", "cats and dogs" -- what a "they" or
+        // "them" may be (r27.241; "Bob and Ann left, and they cried" had asked
+        // "Bob or Ann?", and "The cat and the dog fought, and they slept" had
+        // said "they" had nothing to refer to). Commas before the last, which
+        // "and" joins. Not where the "and" joins two clauses: "Bob met Al and
+        // Cy left", "Bob met Al, and Cy left".
+        const joinedGroups = pool => {
+            const out = [], used = new Set();
+            const at0 = k => pool.filter(c => c.k0 === k && !c.fact).sort((a, b) => b.k1 - a.k1)[0];
+            pool.filter(c => !c.fact).sort((a, b) => a.k0 - b.k0 || b.k1 - a.k1).forEach(a => {
+                if (used.has(a)) return;
+                const run = [a];
+                let and = false;
+                for (let cur = a; !and;) {
+                    let j = cur.k1 + 1;
+                    const sep = [];
+                    while (toks[j] && /^(?:,|and)$/.test(toks[j].l) && sep.length < 2) sep.push(toks[j++].l);
+                    if (!sep.length || (sep.length === 2 && sep.join(' ') !== ', and')) break;
+                    const next = at0(j);
+                    if (!next) break;
+                    run.push(next);
+                    cur = next;
+                    and = sep.includes('and');
+                }
+                if (!and || run.length < 2) return;
+                const first = run[0], last = run[run.length - 1];
+                const opens = first.k0 === 0 || clauses.some(c => c.from === first.k0) || /^(?:that|which|who|whom|whether|[,;:(])$/.test(toks[first.k0 - 1].l);
+                const verbAfter = !!toks[last.k1 + 1] && /^[a-z]/.test(toks[last.k1 + 1].w) && !!claimSynVerbStart(synWs, last.k1 + 1, '?');
+                if (verbAfter && !opens) return;
+                run.forEach(c => used.add(c));
+                out.push({ at: first.at, k0: first.k0, k1: last.k1, words: claimListWords(run.map(c => c.words), 'and', false), kind: 'many', group: true,
+                    members: run, indef: run.some(c => c.indef) });
+            });
+            return out;
+        };
+        const groups = joinedGroups(cands), bareGroups = joinedGroups(bare);
         // A name the box says is no one: "Poe is a raven".
         cands.filter(c => c.name).forEach(c => {
             const k = c.k + 1;
@@ -10490,13 +10527,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             return null;
         };
-        const slots = [];
+        const slots = [], disjoint = [];
         open.forEach(p => {
             const subj = object(p) && p.ii >= 0 ? nearSubject(p) || subjectOf(p.ii) : null;
             const not = subj && subj.pron && subj.pron.kind === p.kind ? slots.find(x => x.members.includes(subj.pron)) || null : null;
             let slot = slots.find(x => x.kind === p.kind && x.not === not);
             if (!slot) slots.push(slot = { kind: p.kind, not, members: [], exclude: [] });
             slot.members.push(p);
+            // An object and the pronoun that is its clause's subject: no one
+            // in both (r27.241).
+            if (subj && subj.pron) disjoint.push([p, subj.pron]);
             if (subj && subj.cand) slot.exclude.push(subj.cand);
             // "The bad feeling it produces": what a relative clause says
             // something of is not that clause's own "it" (r27.108) -- a clause
@@ -10573,22 +10613,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (first.dem) return first.dem.filter((c, i) => c.indef || first.dem.findIndex(d => !d.indef && d.words.toLowerCase() === c.words.toLowerCase()) === i);
             let list = cands.filter(c => c.at < first.at && (c.at >= frameEnd || c.name) && (fits[x.kind].includes(c.kind) || ((x.kind === 'n' || x.kind === 'q') && c.thingToo)) &&
                 !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase()) && !(c.sex && (x.kind === 'm' || x.kind === 'f') && c.sex !== x.kind));
+            // Joined by "and": many (r27.241). Not for "their": "Bob and Mary's
+            // dog" may be read two ways. Never with the subject of the
+            // pronoun's own clause.
+            const plain = x.kind === 'p' && !x.members.some(p => p.l === 'their');
+            const fit = g => g.at < first.at && g.k1 < first.k && g.members.every(c => c.at >= frameEnd || c.name) &&
+                !g.members.some(c => x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase()));
+            if (plain) list = list.concat(groups.filter(fit));
             // "Bob makes cakes and sells them": "cakes" (r27.109).
             if (x.kind === 'p' && !list.some(c => c.kind === 'many'))
-                list = list.concat(bare.filter(c => c.at < first.at && c.at >= frameEnd && !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase())));
-            // "They both", "them all", "they are each": many, never one --
-            // "Bob both left" is no reading (r27.240).
-            if (x.kind === 'p' && x.members.some(p => /^(?:they|them)$/.test(p.l) && !!toks[p.k + 1] &&
-                (/^(?:both|all|each)$/.test(toks[p.k + 1].l) || (/^(?:are|were)$/.test(toks[p.k + 1].l) && !!toks[p.k + 2] && /^(?:both|all|each)$/.test(toks[p.k + 2].l)))))
-                list = list.filter(c => c.kind === 'many');
+                list = list.concat(bare.filter(c => c.at < first.at && c.at >= frameEnd && !x.exclude.some(e => e.words.toLowerCase() === c.words.toLowerCase())),
+                    plain ? bareGroups.filter(g => fit(g) && g.at >= frameEnd) : []);
             // "They like him", where "him" is Bob: "they" is not Bob too --
-            // that would be "himself" (r27.240; it had offered "Bob like Bob").
+            // that would be "himself" (r27.240; it had offered "Bob like Bob"),
+            // nor any group he is in (r27.241).
             if (x.kind === 'p') x.members.forEach(p => {
                 if (p.l !== 'they') return;
                 nameSites.forEach(site => {
-                    const k = toks.findIndex(y => y.at === site.at);
+                    const k = toks.findIndex(y => y.at === site.at), b = String(site.becomes).toLowerCase();
                     if (k > p.k && innerOf(k) === p.ii && (/^him$/i.test(site.word) || (/^her$/i.test(site.word) && CLAIM_PRONOUN_TAIL.test(t.slice(site.at + 3)))))
-                        list = list.filter(c => c.words.toLowerCase() !== String(site.becomes).toLowerCase());
+                        list = list.filter(c => c.words.toLowerCase() !== b && !(c.group && c.members.some(m => m.words.toLowerCase() === b)));
                 });
             });
             // Inside brackets -- a linked box's words, read as the box is
@@ -10638,6 +10682,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     const opener = cands.find(c => c.k0 === before.from && c.name);
                     list = list.concat([{ at: toks[before.from].at, words: 'the fact that ' + (opener || /^I\b/.test(said2) ? said2 : said2.charAt(0).toLowerCase() + said2.slice(1)), fact: said2 }]);
                 }
+            }
+            if (x.kind === 'p') {
+                // The people named apart before it, together: "Bob met Al, and
+                // they left" may be Bob and Al (r27.241). Not for "their".
+                if (plain) {
+                    const people = list.filter(c => c.kind === 'person' && !c.group);
+                    const named = people.filter((c, i) => people.findIndex(d => d.words.toLowerCase() === c.words.toLowerCase()) === i);
+                    const key = cs => cs.map(c => c.words.toLowerCase()).sort().join('\u0001');
+                    if (named.length > 1 && !list.some(g => g.group && key(g.members) === key(named)))
+                        list = list.concat([{ at: named[0].at, k0: named[0].k0, k1: named[named.length - 1].k1, words: claimListWords(named.map(c => c.words), 'and', false),
+                            kind: 'many', group: true, apart: true, members: named }]);
+                }
+                // "They both", "them all", "they are each": many, never one --
+                // "Bob both left" is no reading (r27.240).
+                if (x.members.some(p => /^(?:they|them)$/.test(p.l) && !!toks[p.k + 1] &&
+                    (/^(?:both|all|each)$/.test(toks[p.k + 1].l) || (/^(?:are|were)$/.test(toks[p.k + 1].l) && !!toks[p.k + 2] && /^(?:both|all|each)$/.test(toks[p.k + 2].l)))))
+                    list = list.filter(c => c.kind === 'many');
+                // Many first, as "they" is; then the people named apart,
+                // together; then one, for "they" said of one -- each in the
+                // order the box names them (r27.241; the user: the plural first).
+                const rank = c => c.apart ? 1 : c.kind === 'many' ? 0 : 2;
+                list = list.map((c, i) => [c, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[0].at - b[0].at || b[0].k1 - a[0].k1 || a[1] - b[1]).map(a => a[0]);
             }
             return list;
         });
@@ -10745,12 +10811,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const say = c => c.fact ? 'what ' + quote(c.fact) + ' says' : quote(c.words);
         const picks = [];
         (function pick(k, chosen) {
-            if (picks.length >= 4) return;
+            // One "they" may be read six ways: "Bob met Al and Cy, and they
+            // left" -- Al and Cy, or Bob, Al, and Cy, or one of the three
+            // (r27.241).
+            if (picks.length >= (slots.length === 1 && slots[0].kind === 'p' ? 6 : 4)) return;
             if (k === slots.length) { picks.push(chosen); return; }
             choices[k].forEach(c => {
                 // ("That road" may be what an "it" is.)
                 const two = (a, b) => a !== b && !(/^[nq]$/.test(a) && /^[nq]$/.test(b)) && !/^d:/.test(a) && !/^d:/.test(b);
                 if (chosen.some((d, i) => (two(slots[i].kind, slots[k].kind) || slots[k].not === slots[i] || slots[i].not === slots[k]) && same(c, d))) return;
+                // A group and its clause-mate share no one: "Bob met Al, and
+                // they thanked him" is never "Bob and Al thanked Bob" (r27.241).
+                const of = g => g.group ? g.members : [g];
+                if (chosen.some((d, i) => (slots[k].not === slots[i] || slots[i].not === slots[k] || disjoint.some(([q, r]) =>
+                    (slots[k].members.includes(q) && slots[i].members.includes(r)) || (slots[i].members.includes(q) && slots[k].members.includes(r)))) &&
+                    of(c).some(m => of(d).some(n => same(m, n))))) return;
                 pick(k + 1, chosen.concat([c]));
             });
         })(0, []);
@@ -10819,15 +10894,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         };
         const rewrite = edits => { let out = '', at = 0; edits.forEach(e => { out += t.slice(at, e.at) + e.say; at = e.end; }); return out + t.slice(at); };
         const texts = picks.map(chosen => rewrite(editsOf(chosen))).filter(x => x !== t).concat(ambientText ? [ambientText] : []);
-        // What to say of the first that may be more than one.
-        const many = slots.findIndex((x, i) => choices[i].length > 1);
+        // What to say of the first that may be more than one -- of what the
+        // readings take: in "Bob met Al, and they thanked him", "they" is
+        // never "Bob and Al" (r27.241).
+        const used = slots.map((x, i) => choices[i].filter(c => picks.some(ch => ch[i] === c)));
+        const many = slots.findIndex((x, i) => used[i].length > 1);
         const ambientSay = !ambientText ? '' : /^(?:late|early|noon|midnight|night|day|morning|evening|time|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/.test(slots[0].members[0].ambient) ? 'the time'
             : /^(?:dark|light|quiet|noisy)$/.test(slots[0].members[0].ambient) ? 'the surroundings' : 'the weather';
         const message = ambientText
             ? quote(slots[0].members[0].w) + ' may be ' + choices[0].slice(0, 3).map(say).join(' or ') + (choices[0].length > 3 ? ', or more' : '') +
                 (choices[0].length > 1 ? ', or ' : ' or ') + ambientSay
             : many >= 0
-            ? quote(slots[many].members[0].w) + ' may be ' + choices[many].slice(0, 3).map(say).join(' or ') + (choices[many].length > 3 ? ', or more' : '')
+            ? quote(slots[many].members[0].w) + ' may be ' + used[many].slice(0, 3).map(say).join(' or ') + (used[many].length > 3 ? ', or more' : '')
             : quote(slots[0].members[0].w) + ' can only be ' + say(choices[0][0]) + ', which the check does not read into the box as it stands: write it in';
         // One reading only: the box is read with it in, and says so. After an
         // indefinite that cannot be joined so ("A teacher left and Bob praised

@@ -405,8 +405,8 @@ console.log('\n-- 17. a plural after its verb, with no determiner --');
     const alone = read('Bob sells them.');
     ok(alone.notes.some(n => /“them” is not “Bob”/.test(n)) && !/bob sells bob/.test(alone.said), '"Bob sells them": "them" is not Bob, and nothing else is there ("bob sells" had been)', J(alone));
     const pets = read('Bob likes the cats and the dogs and feeds them.');
-    ok(pets.notes.includes('ambiguous: “them” may be “the cats” or “the dogs”'),
-        '"likes the cats and the dogs and feeds them": "the cats" or "the dogs" -- not Bob, who feeds; "the dogs" has no verb of its own, so it is no subject', J(pets));
+    ok(pets.notes.includes('ambiguous: “them” may be “the cats and the dogs” or “the cats” or “the dogs”'),
+        '"likes the cats and the dogs and feeds them": the two together, or "the cats" or "the dogs" (r27.241) -- not Bob, who feeds; "the dogs" has no verb of its own, so it is no subject', J(pets));
     const ravens = read('Black ravens fly and they caw.'), programs = read('Computer programs are formal and they lack semantics.');
     ok(ravens.notes.some(n => /“they” as “black ravens”/.test(n)) && programs.notes.some(n => /“they” as “computer programs”/.test(n)),
         'a capital before its noun is no name: "they" is "black ravens", "computer programs" (it had been asked whether it was "Black", "Computer")', J([ravens, programs]));
@@ -424,7 +424,7 @@ console.log('\n-- 17. a plural after its verb, with no determiner --');
         !kept.some(r => r.notes.some(n => /may be/.test(n))) &&
         kept[1].notes.includes('unread: "he" is read as "Brown", the one name this claim gives') && kept[2].notes.includes('unread: "he" is read as "Young", the one name this claim gives'),
         'as before: "Ravens eat worms and they fly" is the ravens, the worms not asked about; "Brown left", "Young sings": names, "he" read as each, and said so (r27.212)', J(kept));
-    ok(read('Bob makes cakes and they sell well.').notes.includes('ambiguous: “they” may be “Bob” or “cakes”'), '"... and they sell well": Bob or the cakes, asked');
+    ok(read('Bob makes cakes and they sell well.').notes.includes('ambiguous: “they” may be “cakes” or “Bob”'), '"... and they sell well": the cakes or Bob, asked, the plural first (r27.241)');
 }
 
 console.log('\n-- 18. "fake ones in it": in its own clause --');

@@ -4,6 +4,28 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: "they": the plural readings, and first (r27.241)
+
+The user:
+* Of how to fix "they": "a". Keep asking wherever singular "they" is possible, with the plural reading first. These are the second and third fixes.
+
+Changes:
+* Names and phrases joined by "and" are many, and what "they" or "them" may be. "Bob and Ann left, and they cried" had asked "Bob or Ann?", never "Bob and Ann". "The cat and the dog fought, and they slept" had said "they" had nothing to refer to; it is read with "the cat and the dog". So "Al, Cy, and Dee", and plurals with no determiner: "cats and dogs".
+* Not where "and" joins two clauses: "Bob met Al and Cy left" names no "Al and Cy".
+* The people named apart before it are, together, what "they" or "them" may be: "Bob met Al, and they left" may be Bob and Al. So "Bob met Al, and Cy thanked them", never with Cy, who thanks them. "Bob met Al, and they both left" is read with "Bob and Al", the one it can be.
+* A group and the other pronoun in its clause share no one: "Bob met Al, and they thanked him" is never "Bob and Al thanked Bob". The question names only what its readings take.
+* Not for "their": "Bob loves Mary and their dog", read with both, would be "Bob loves Mary and Bob and Mary's dog", which can itself be read two ways. So "Bob and Ann love their dog" still asks "Bob or Ann?".
+* The readings come in that order: many first, as "they" is; then the people named apart, together; then one, for "they" said of one. "Bob eats worms and they fly" asks about the worms before Bob.
+* One "they" may be read up to six ways: "Bob met Al and Cy, and they left" may be "Al and Cy", or "Bob, Al, and Cy", or any one of the three. Other questions keep four.
+
+Tests:
+* New in syntax-r27-test.js, which has 302 checks: the plural first; "Bob and Ann"; "the cat and the dog"; the people named apart, together; "they both"; "and" joining two clauses; "their", as before; "cats and dogs"; a group and the other pronoun in its clause.
+* Changed: three checks that had the singular reading first, or no group: "Bob grades papers and Mary returns them", in syntax-r27-test.js; "Bob makes cakes and they sell well" and "Bob likes the cats and the dogs and feeds them", in anaphora-r27-test.js.
+* Take-one-out: each of the 9 changes is caught by syntax-r27-test.js.
+* Three corpus sentences of 4542 read differently, by default and with Semantic mode on: "Bob likes the cats and the dogs and feeds them" offers the two together first, and two others ask about the plural first ("Bob makes cakes and they sell well": the cakes, then Bob).
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: "they" read as one, in grammatical English (r27.240)
 
 The user:

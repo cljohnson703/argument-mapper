@@ -1943,7 +1943,7 @@ console.log('\n-- r27.229: a plural after a verb no list knows: "Bob grades pape
     ok(papers.includes('read with “them” as “papers”, the one it can be in this box'),
         '"Bob grades papers and returns them": "them" is the papers -- "grades", which no list knows as a verb, is one after its subject (it had had nothing to refer to)', J(papers));
     const two = ev(`return parseClaimFull('Bob grades papers and Mary returns them.').notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message; });`);
-    ok(J(two) === J(['“them” may be “Bob” or “papers”']), '"Bob grades papers and Mary returns them": "them" may be Bob or the papers, and is asked (it had been read as Bob)', J(two));
+    ok(J(two) === J(['“them” may be “papers” or “Bob”']), '"Bob grades papers and Mary returns them": "them" may be the papers or Bob, and is asked (it had been read as Bob), the plural first (r27.241)', J(two));
     const before = notes('Ravens eat worms and they fly.');
     ok(before.includes('read with “they” as “ravens”, the one it can be in this box'), 'a plural before it still comes first, as since r27.109: "Ravens eat worms and they fly" (r27.236: "ravens", the kind -- it had been one "Ravens", a name)', J(before));
 }
@@ -2179,6 +2179,47 @@ console.log('\n-- r27.240: "they" read as one, in grammatical English --');
     ok(dogs.readings.includes('Dogs and cats fight, and dogs bite.') && !dogs.readings.some(r => /Dogs bites|and Dogs bite/.test(r)) &&
         names.readings.includes('Williams and Ann left, and Williams cried.'),
         '"Dogs and cats fight": "Dogs" is no name, so no "Dogs bites"; "Williams and Ann left": names, as before', J([dogs, names]));
+}
+
+console.log('\n-- r27.241: "they" -- the plural readings, and first --');
+{
+    // The user, of "they": "a" -- fixes 2 and 3: names and phrases joined by
+    // "and", and the people named apart, are what "they" may be; the plural
+    // readings come first.
+    const they = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var n = r.notes.filter(function (n) { return /“(?:they|them|their)”/.test(claimUnmarked(n.message || '')); });
+        return { key: r.form ? claimUnmarked(claimKey(r.form)) : null, notes: n.map(function (n) { return n.kind + ': ' + claimUnmarked(n.message); }),
+            readings: [].concat.apply([], n.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) {
+                return n.readings.map(function (l) { return claimReadingWords(l, ${J(t)}); }); })) };`);
+    const worms = they('Bob eats worms and they fly.');
+    ok(J(worms.notes) === J(['ambiguous: “they” may be “worms” or “Bob”']) && J(worms.readings) === J(['Bob eats worms and worms fly.', 'Bob eats worms and Bob flies.']),
+        '"Bob eats worms and they fly": the plural first, as "they" is (it had asked about Bob first)', J(worms));
+    const pair = they('Bob and Ann left, and they cried.');
+    ok(J(pair.notes) === J(['ambiguous: “they” may be “Bob and Ann” or “Bob” or “Ann”']) && pair.readings[0] === 'Bob and Ann left, and Bob and Ann cried.',
+        '"Bob and Ann left, and they cried": "Bob and Ann" first (it had asked "Bob or Ann?" only)', J(pair));
+    const animals = they('The cat and the dog fought, and they slept.');
+    ok(J(animals.notes) === J(['unread: read with “they” as “the cat and the dog”, the one it can be in this box']) &&
+        animals.key === 'C[C[P:the cat|~did fought;P:the dog|~did fought];C[P:the cat|~did slept;P:the dog|~did slept]]',
+        '"The cat and the dog fought, and they slept": the two, read in (it had said "they" had nothing to refer to)', J(animals));
+    const apart = they('Bob met Al, and they left.'), three = they('Bob met Al and Cy, and they left.'), thanked = they('Bob met Al, and Cy thanked them.');
+    ok(J(apart.notes) === J(['ambiguous: “they” may be “Bob and Al” or “Bob” or “Al”']) &&
+        J(three.readings) === J(['Bob met Al and Cy, and Al and Cy left.', 'Bob met Al and Cy, and Bob, Al, and Cy left.', 'Bob met Al and Cy, and Bob left.',
+            'Bob met Al and Cy, and Al left.', 'Bob met Al and Cy, and Cy left.']) &&
+        J(thanked.notes) === J(['ambiguous: “them” may be “Bob and Al” or “Bob” or “Al”']),
+        'the people named apart, together: "Bob and Al"; "Al and Cy", or all three, then each, five readings; never Cy, who thanks them', J([apart, three, thanked]));
+    const both = they('Bob met Al, and they both left.');
+    ok(J(both.notes) === J(['unread: read with “they” as “Bob and Al”, the one it can be in this box']) && both.key === 'C[P:bob|~did met al;C[P:bob|~did left;P:al|~did left]]',
+        '"they both left": Bob and Al, the one it can be', J(both));
+    const clauses = they('Bob met Al and Cy left, and they cried.'), their = they('Bob loves Mary and their dog.');
+    ok(clauses.notes.length === 1 && !/“Al and Cy”/.test(clauses.notes[0]) && J(their.notes) === J(['ambiguous: “their” may be “Bob” or “Mary”']),
+        'not where "and" joins two clauses ("Bob met Al and Cy left"); not for "their", as before', J([clauses, their]));
+    const bare = they('Bob likes cats and dogs, and they like him.'), dogs = they('Dogs and cats fight, and they bite.');
+    ok(J(bare.notes) === J(['ambiguous: “they” may be “cats and dogs” or “cats” or “dogs”']) && dogs.readings[0] === 'Dogs and cats fight, and dogs and cats bite.',
+        'plurals with no determiner too: "cats and dogs", "dogs and cats"', J([bare, dogs]));
+    const thank = they('Bob met Al, and they thanked him.'), three2 = they('Bob and Al met Cy, and they thanked him.');
+    ok(J(thank.notes) === J(['ambiguous: “they” may be “Bob” or “Al”']) && J(thank.readings) === J(['Bob met Al, and Bob thanked Al.', 'Bob met Al, and Al thanked Bob.']) &&
+        three2.readings[0] === 'Bob and Al met Cy, and Bob and Al thanked Cy.' && !three2.readings.some(r => /, and (?:Bob and Al|Bob, Al, and Cy) thanked (?:Bob|Al)\./.test(r)),
+        'a group and its clause-mate share no one: never "Bob and Al thanked Bob"; the question names only what the readings take', J([thank, three2]));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
