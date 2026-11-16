@@ -1945,7 +1945,7 @@ console.log('\n-- r27.229: a plural after a verb no list knows: "Bob grades pape
     const two = ev(`return parseClaimFull('Bob grades papers and Mary returns them.').notes.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) { return n.message; });`);
     ok(J(two) === J(['“them” may be “Bob” or “papers”']), '"Bob grades papers and Mary returns them": "them" may be Bob or the papers, and is asked (it had been read as Bob)', J(two));
     const before = notes('Ravens eat worms and they fly.');
-    ok(before.includes('read with “they” as “Ravens”, the one it can be in this box'), 'a plural before it still comes first, as since r27.109: "Ravens eat worms and they fly"', J(before));
+    ok(before.includes('read with “they” as “ravens”, the one it can be in this box'), 'a plural before it still comes first, as since r27.109: "Ravens eat worms and they fly" (r27.236: "ravens", the kind -- it had been one "Ravens", a name)', J(before));
 }
 
 console.log('\n-- r27.230: names joined in a relative clause; "a car that Mary bought and Bob sold" --');
@@ -2070,6 +2070,17 @@ console.log('\n-- r27.235: "and finally", "and still"; "and so", "and therefore"
     ok(infer.every(n => n.includes(whole)), '"Mary cried, and so Bob left": a whole inference, as "Mary cried, so Bob left" is (it had been one claim about Mary)', J(infer));
     const not = [notes('Bob bought eggs, milk and so on.'), notes('Bob left and so did Mary.'), notes('B bolds the selected words, and the box stays open: the press keeps its focus, and so the keyboard.')];
     ok(not.every(n => !n.includes(whole)), 'not "and so on", "and so did Mary", nor "and so the keyboard", with no clause after "so"', J(not));
+}
+
+console.log('\n-- r27.236: a capitalized plural opening the box is no name --');
+{
+    const notes = t => ev(`return parseClaimFull(${J(t)}).notes.map(function (n) { return n.message; });`);
+    const kinds = [notes('Students write essays and teachers grade them.'), notes('Dogs bark and they bite.')];
+    ok(kinds[0].includes('read with “them” as “students”, the one it can be in this box') && kinds[1].includes('read with “they” as “dogs”, the one it can be in this box') &&
+        !kinds.some(n => n.some(m => /“Students”|“Dogs”/.test(m))),
+        '"Students write essays and teachers grade them": "them" is the students, a kind (it had been one "Students", a person); so "Dogs bark and they bite"', J(kinds));
+    const name = notes('Williams left, and he cried.');
+    ok(name.includes('"he" is read as "Williams", the one name this claim gives'), 'not before a verb either may take: "Williams left" is a name\'s', J(name));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.235';
+    const APP_BUILD = '2026-11-16 r27.236';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10066,7 +10066,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // "Clark Kent" is one.
             // "Ravens are black": a plural before "are", no name.
             const opensClause = k === 0 || clauses.some(c => c.from === k);
-            if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && /^(?:are|were|have|do)$/.test(toks[k + 1].l) && claimPluralWord(x.l)) { last = null; }
+            // So before any verb only a plural takes: "Students write essays"
+            // (r27.236; "them" after it had been one "Students"). Not one either
+            // may take: "Williams left" is a name's.
+            if (/^[A-Z][a-z]/.test(x.w) && opensClause && toks[k + 1] && claimPluralWord(x.l) && (/^(?:are|were|have|do)$/.test(toks[k + 1].l) ||
+                (!!claimSynVerbStart(synWs, k + 1, 'pl') && !claimSynVerbStart(synWs, k + 1, 'sg')))) { last = null; }
             // "Black ravens fly", "Real experiences are", "Computer programs
             // are formal": a capital that opens a clause is no name before its
             // noun -- after an adjective, a noun no list knows as a verb (in

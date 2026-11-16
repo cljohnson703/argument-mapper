@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: a capitalized plural opening the box is no name (r27.236)
+
+The user:
+* Of five bugs found and not fixed, this the fourth: "Can you fix these?"
+
+Changes:
+* "Students write essays and teachers grade them" had read "them" as one "Students", a person whose name opened the box. A plural with a capital that opens the box, before a verb only a plural takes ("write", not "writes"), is no name. "Them" is the students, a kind. So "Dogs bark and they bite", and "Ravens eat worms and they fly", whose "they" is the ravens as before, now as a kind.
+* Before a verb either may take, it is a name, as before: "Williams left, and he cried".
+* One sentence is worse for it. "Students write essays and they pass" had been two claims only because "they" was the person "Students". With "they" as the students, it reads as "Bob writes essays and students pass" already did: one claim, because "pass" is no verb the word lists know. That is a gap in the lists' verbs, here as before.
+
+Tests:
+* Changed, failing on r27.235 as written: syntax-r27-test.js, "Ravens eat worms and they fly", now "ravens".
+* New in syntax-r27-test.js, which has 280 checks: "Students write essays and teachers grade them" and "Dogs bark and they bite"; "Williams left, and he cried", as before.
+* Take-one-out: the change is caught by syntax-r27-test.js.
+* 1 sentence of 4542 in the corpus reads differently, by default and with Semantic mode on: "Ravens eat worms and they fly", whose note now names "ravens", the kind.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: "and finally", "and still"; "and so", "and therefore" (r27.235)
 
 The user:
