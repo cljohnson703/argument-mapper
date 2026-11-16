@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 16: names joined in a relative clause in the subject (r27.237)
+
+The user:
+* Of five bugs found and not fixed, this the fifth: "Can you fix these?"
+
+Changes:
+* "The dog that Bob and Ann walked barked" had been two claims, "the dog that Bob barked" and "Ann walked barked": the "and" inside the relative clause was taken to join two subjects. It is one claim about one thing, the dog, read as "The dog that Bob walked barked" is.
+* An "and" right after "that", "which" or "who" and a name or a pronoun, with no verb yet in the clause, is inside the clause. So "The man who Mary and Ann met left", which had been two claims, and "The dog that both Bob and Ann walked barked", which had not been read.
+* A clause that is whole before the "and" joins two subjects, as before: "The raven that Mary saw and the crow flew".
+* Not yet: "Some dog that Bob and Ann love barks" says wrongly that its "that" clause says what is thought or said; and under "some" or "every", "dog that Bob and Ann walked" is one kind, not taken apart, where "dog that Bob walked" is.
+
+Tests:
+* New in syntax-r27-test.js, which has 282 checks: three subjects with names joined in their clause; one with a clause whole before the "and", as before.
+* Take-one-out: the change is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: a capitalized plural opening the box is no name (r27.236)
 
 The user:

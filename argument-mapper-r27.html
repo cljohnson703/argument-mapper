@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.236';
+    const APP_BUILD = '2026-11-16 r27.237';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -19868,6 +19868,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         else if (after('or') > 0) { kind = 'or'; split = after('or'); }
         else if (after('and') > 0) { kind = 'and'; split = after('and'); }
         if (!kind) return undefined;
+        // "The dog that Bob and Ann walked": a join right after "that",
+        // "which" or "who" and a name, the clause with no verb yet, is inside
+        // the clause -- no two subjects (r27.237; it had been "the dog that
+        // Bob", and "Ann walked"). "The raven that Mary saw and the crow" are
+        // two: the clause is whole before the "and".
+        { const rel = words.findIndex((w, i) => i > 0 && /^(?:that|which|who|whom)$/.test(w)), between = rel > 0 ? subjectTokens.slice(rel + 1, split) : [];
+          const name = t => /^/.test(String(t)) || /^(?:i|we|you|he|she|they)$/.test(claimWord(t));
+          if (rel > 0 && rel < split && (between.length === 1 ? name(between[0]) : between.length === 2 && claimWord(between[0]) === 'both' && name(between[1]))) return undefined; }
         // "A series of lights and circuitry": the nouns of a relation, one subject.
         if (words.slice(0, split).some(w => CLAIM_RELATION_WORDS.has(w))) return undefined;
         // "Black and white ravens", "a black and white raven": adjectives joined

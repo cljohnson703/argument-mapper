@@ -2083,6 +2083,17 @@ console.log('\n-- r27.236: a capitalized plural opening the box is no name --');
     ok(name.includes('"he" is read as "Williams", the one name this claim gives'), 'not before a verb either may take: "Williams left" is a name\'s', J(name));
 }
 
+console.log('\n-- r27.237: names joined in a relative clause in the subject --');
+{
+    const key = t => ev(`state.logic = { base: 'standard', rules: { semantic: false } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const one = ['The dog that Bob and Ann walked barked.', 'The man who Mary and Ann met left.', 'The dog that both Bob and Ann walked barked.'].map(key);
+    ok(J(one) === J(['P:the dog that bob and ann walked|~did barked', 'P:the man who mary and ann met|~did left', 'P:the dog that both bob and ann walked|~did barked']),
+        '"The dog that Bob and Ann walked barked": one thing, the dog, as "the dog that Bob walked" is (it had been "the dog that Bob barked" and "Ann walked barked")', J(one));
+    const two = key('The raven that Mary saw and the crow flew.');
+    ok(two === 'C[P:the raven that mary saw|~did flew;P:the crow|~did flew]', 'a clause whole before the "and" joins two subjects, as before: "the raven that Mary saw and the crow"', two);
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
