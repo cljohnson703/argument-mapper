@@ -2993,7 +2993,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-19 r27.244';
+    const APP_BUILD = '2026-11-19 r27.245';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10949,15 +10949,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // dance"). Only a plain verb in the present with nothing after it
             // but the "and": in "they eat worms and fish", "fish" may be what
             // is eaten; after "can", "will" or a past, the verbs are as they are.
-            if (!out.length || CLAIM_TO_SINGULAR[l]) return out;
+            if (!out.length || CLAIM_TO_SINGULAR[l] && l !== 'have') return out;
             const adverb = y => /^(?:not|never|also|then|still|really|just|always|often|usually|sometimes|rarely|seldom|even|only|already|again|now|soon|later|once|ever|too)$/.test(y.l) ||
                 (/^[a-z]{3,}ly$/.test(y.l) && !claimSynWord(y.l).verb);
-            for (let i = j + 1; ;) {
+            let i = j + 1, object = false;
+            for (;;) {
                 while (toks[i] && adverb(toks[i])) i++;
                 if (!toks[i]) break;
                 if (toks[i].l === ',') { i++; if (toks[i] && /^(?:and|or)$/.test(toks[i].l)) i++; }
                 else if (/^(?:and|or)$/.test(toks[i].l)) i++;
-                else break;
+                else { object = true; break; }
                 while (toks[i] && adverb(toks[i])) i++;
                 const w = toks[i];
                 if (!w || !/^[a-z][a-z'-]*$/.test(w.w) || claimSynClosed(w.l) || CLAIM_PRONOUN_KIND[w.l] || CLAIM_VERB_MARKERS.has(w.l) ||
@@ -10966,6 +10967,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     claimSynVerbStart(synWs, i + 1, 'pl') === 'strong') break;
                 out.push({ at: w.at, end: w.at + w.w.length, say: claimThirdPerson(w.l) });
                 i++;
+            }
+            // After a thing, a deed "and" joins at the clause's end agrees as
+            // well: "they eat worms and sing", "they have wings and fly", read
+            // as Bob, are "Bob eats worms and sings", "Bob has wings and
+            // flies" (r27.245), as the claim is read -- not "and fish", which
+            // may be a thing eaten.
+            if (object) {
+                let a = i;
+                while (toks[a] && /^[a-z]/i.test(toks[a].w) && toks[a].l !== 'and') a++;
+                let b = a + 2;
+                while (toks[b] && adverb(toks[b])) b++;
+                const w = toks[a + 1];
+                if (a > i && toks[a] && toks[a].l === 'and' && w && /^[a-z][a-z'-]*$/.test(w.w) && (!toks[b] || !/^[a-z]/i.test(toks[b].w)) &&
+                    claimPlainThing(toks.slice(i, a).map(x => x.l)) && claimDeedWord(w.l)) out.push({ at: w.at, end: w.at + w.w.length, say: claimThirdPerson(w.l) });
             }
             return out;
         };
@@ -12331,6 +12346,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         let groups, alt = null;
         if (!parts.some(claimLooksLikeClause) && !parts.slice(1).some(claimContinuesPhrase)) {
             groups = parts.map((p, i) => ({ text: p, sep: i ? seps[i - 1] : null }));
+            // A noun phrase with no verb of its own, after a part with a verb
+            // after its subject, is that verb's: "the road lies near the hill
+            // and the river" (r27.245; "the river" had been a claim of its
+            // own, where the lists do not know the verb).
+            for (let i = 1; i < groups.length; i++) {
+                const tk = claimTokens(groups[i].text.trim()), w = claimSynWords(tk), before = claimSynWords(claimTokens(groups[i - 1].text.trim()));
+                if (w.length > 1 && (w[0].det || w[0].poss || w[0].quant || w[0].num) && claimSynNounPhrases(w, 0).some(o => o.end === w.length) && claimSynClauseStart(tk) !== true &&
+                    claimSynNounPhrases(before, 0).some(o => o.end < before.length && claimSynVerbStart(before, o.end, o.number))) {
+                    groups[i - 1] = { text: groups[i - 1].text + groups[i].sep + groups[i].text, sep: groups[i - 1].sep };
+                    groups.splice(i, 1); i--;
+                }
+            }
         } else {
             // "Bob met Al and Cy and Al met Dee": the "and" before "Cy" may
             // join two clauses -- "Cy and Al met Dee" -- or two names, whom
@@ -19087,6 +19114,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // after "and", a second thing, or a second deed (r27.244).
     const CLAIM_THING_OR_DEED = new Set(('fish dance work help sleep talk play drink study rest sweat dust film iron exercise research ' +
         'worry hope change care trade love smoke paint travel').split(' '));
+    // Words in -s that are both a plural thing and a deed done with nothing
+    // after it: after a verb in -s and its object, a second thing, or a
+    // second deed -- "Bob eats worms and flies" (r27.245).
+    const CLAIM_THINGS_OR_DOES = new Set(('flies dances drinks plays paints films works watches cooks talks walks runs races fights waves jumps ' +
+        'swings falls calls visits votes rides drives climbs dives kicks lies sails laughs smiles cries shouts dreams hikes trades travels ' +
+        'changes hopes worries loves cares studies exercises irons smokes fishes').split(' '));
     const claimSynKnownVerb = w => CLAIM_ATTITUDE_VERBS.has(w) || CLAIM_TOGETHER_VERBS.has(w) || CLAIM_USE_UP_VERBS.has(w) ||
         CLAIM_PAST_UNCHANGED.has(w) || /^(?:exist|matter|follow|entail|imply|require|need|make|give|take|cause|produce|create|allow|prevent|depend|involve|include|contain|mean|show|prove|suggest|support|explain|justify|determine|affect|influence|lead|bring|keep|let|seem|appear|become|remain|want|love|hate|fear|see|hear|feel|find|get|go|come|run|move|grow|die|live|work|happen|occur|arise|result|obtain|hold|apply|fail|succeed|begin|end|change|increase|decrease|reduce|destroy|win|lose|rule|help|harm|fly|swim|sing|dance|sleep|eat|drink|walk|talk|speak|write|read|cry|laugh|smile|leave|arrive|stay|wait|sit|stand|fall|rise|think|know|say|tell|ask|answer|carry|bark|bite|chase|catch|kill|love|like|own|use|build|break|open|close|pay|buy|sell|send|teach|learn|play|work|rain|snow|shine|burn|freeze|melt|survive|perish|reign|prevail|persist|suffer|enjoy|praise|blame|hurt|hit|meet|marry|visit|admire|respect|trust|doubt|deny|affirm|assert|claim|argue|conclude|infer|reason|occupy|soothe|reflect|absorb|attract|repel|expand|evaporate|dissolve|consist|belong|differ|resemble|weigh|lack)$/.test(w);
     // A word's parts of speech, as { noun, plural, adj, past, s, base, ... }.
@@ -19544,6 +19577,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     function claimSynVerbJoins(raw, from, copula, number) {
         const ws = claimSynWords(raw), inner = claimSynInnerJoins(ws, 0), out = [];
         let that = false, piece = from;
+        // A verb with no ending first ("eat"): its subject is many, or "I" or
+        // "you", so a word in -s after its "and" is none of its verbs --
+        // "frogs eat worms and flies" is flies eaten (r27.245; it had been
+        // "frogs fly").
+        const many = number === 'pl' && !!ws[from] && !!ws[from].verb && !ws[from].s && !ws[from].past && !ws[from].aux && !ws[from].closed;
         for (let c = from; c < ws.length; c++) {
             const y = ws[c];
             if (y.w === 'that' && c > from && ws[c - 1] && (ws[c - 1].verb || ws[c - 1].adj || ws[c - 1].aux || /,$/.test(ws[c - 1].t))) that = true;
@@ -19561,7 +19599,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             while (ws[q] && ws[q].adj && !ws[q].noun && !ws[q].closed) q++;
             const bare = !objectAfter && number === 'sg' && !!ws[v] && !!ws[v].s && !CLAIM_SYN_PLURAL_MODIFIERS.has(ws[v].w) &&
                 !!ws[q] && /^[a-z]/.test(ws[q].w || '') && ws[q].noun && ws[q].plural && !ws[q].knownVerb && !ws[q].closed && !ws[q].name && !ws[q].pro;
-            const start = claimSynVerbStart(ws, c + 1, number === 'sg' ? 'sg' : '?');
+            const start = claimSynVerbStart(ws, c + 1, number === 'sg' ? 'sg' : many ? 'pl' : '?');
             let join = copula || start === 'strong' || (start === 'weak' && ws[v] && (ws[v].s || ws[v].past) && (objectAfter || bare));
             // A plain word after the "and", nothing after it, may be a noun
             // the object before it is joined with ("love music and dance") --
@@ -19575,6 +19613,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             // routinely consulted" -- "reliably" is no part of its own (r27.119).
             // Adverbs in -ly only: "is not even or odd" is not so joined.
             if (join && c > piece && ws.slice(piece, c).every(x => x.adv && !x.noun && !x.adj && /^[a-z]{3,}ly$/.test(x.w) && !CLAIM_SYN_LY_WORDS.has(x.w))) join = false;
+            // After a verb in -s and its object, a last word in -s that is
+            // both a plural thing and a deed is no sure verb: "Bob eats worms
+            // and flies" is asked (claimObjectJoins; r27.245) -- nor in a
+            // property's words, whose first verb has lost its ending.
+            if (join && !copula && (number === 'sg' || number === 'prop') && v === c + 1 && !ws[v + 1] && CLAIM_THINGS_OR_DOES.has(ws[v].w) && !ws[v].name &&
+                c - piece > 1 && ws[c - 1] && (ws[c - 1].noun || ws[c - 1].name || ws[c - 1].pro)) join = false;
             if (join) { out.push(c); piece = c + 1; }
         }
         return out;
@@ -20322,6 +20366,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     const CLAIM_TOGETHER_OBJECT_VERBS = new Set(('mix combine compare contrast connect join link separate distinguish differentiate blend merge ' +
         'unite reunite reconcile match pair balance mingle juxtapose relate associate confuse exchange swap switch interchange equate fuse ' +
         'integrate coordinate harmonize harmonise introduce weigh divide alternate average add multiply intersect correlate').split(' '));
+    // A plain thing after a verb: a whole noun phrase, ending on its noun --
+    // not "fish raw". Before its noun only a determiner, a possessive, a
+    // number, the adjectives the lists know, or the words of one name.
+    function claimPlainThing(c) {
+        const ws = c.map(claimWord), last = ws[ws.length - 1];
+        if (!c.length) return false;
+        if (c.length === 1 && /^(?:him|her|them|me|us|you|it)$/.test(last)) return true;
+        if (CLAIM_FUNCTION_WORDS.has(last) || CLAIM_PRONOUN_KIND[last] || claimKnownAdjective(last) && !CLAIM_INVARIANT_NOUNS.has(last)) return false;
+        const before = (w, i) => /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their|some|many|few|several|two|three|four|five|six|seven|eight|nine|ten)$/.test(w) ||
+            /'s$/.test(w) || claimKnownAdjective(w) || /^/.test(c[i]) && /^/.test(c[i + 1]);
+        return ws.slice(0, -1).every(before) && claimSynNounPhrases(claimSynWords(c), 0).some(o => o.end === c.length);
+    }
+    // A deed done with nothing after it, in the plain present ("sing"), and
+    // no thing: not "fish", which may be eaten (r27.244, r27.245).
+    function claimDeedWord(t) {
+        const y = claimSynWord(t), w = claimWord(t);
+        return !!y.knownVerb && !y.s && !y.past && !y.adj && !y.name && !claimPluralWord(w) && !CLAIM_THING_OR_DEED.has(w);
+    }
     // "Eat worms and fish", "met Al and Cy": what "and" joins after a verb,
     // in a verb phrase with no helping verb and no "not" (r27.244). Things,
     // each the verb's object -- "Bob met Al, Cy and Dee" is that he met each
@@ -20329,12 +20391,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // plain verb (a plural's), a word that is a deed and no thing is a second
     // deed ("eat worms and sing"), and one that may be either is asked. The
     // claim, an answer, or null where nothing is so joined.
-    function claimObjectJoins(raw, term, s, vp) {
+    function claimObjectJoins(raw, term, s, vp, having) {
         const toks = raw.map(t => t.replace(/,+$/, '')), comma = raw.map(t => /,$/.test(t));
         const v = claimWord(toks[0] || ''), vy = claimSynWord(toks[0] || '');
-        if (!v || CLAIM_VERB_MARKERS.has(v) || CLAIM_FUNCTION_WORDS.has(v) || /^(?:be|been|being)$/.test(v) || claimKnownAdjective(v)) return null;
-        const past = claimPastStem(v) !== null, sg = claimEndsInS(toks[0]) && !past;
-        if (!(vy.knownVerb || past)) return null;
+        if (!v || !having && (CLAIM_VERB_MARKERS.has(v) || CLAIM_FUNCTION_WORDS.has(v) || /^(?:be|been|being)$/.test(v) || claimKnownAdjective(v))) return null;
+        // "Have" with a thing after it, a verb of its own (r27.245): "had" its
+        // past, "has" its form in -s.
+        const past = having ? v === 'had' : claimPastStem(v) !== null, sg = having ? v === 'has' : claimEndsInS(toks[0]) && !past;
+        if (!(vy.knownVerb || past || having)) return null;
         const ands = toks.map((t, i) => i > 0 && claimWord(t) === 'and' ? i : -1).filter(i => i > 0);
         if (ands.length !== 1 || toks.slice(1).some(t => /^(?:or|nor|but|then|so|that|which|who|whom|whose|whether|if|when|because|than|to|together|each|both)$/.test(claimWord(t)) && t !== toks[1])) return null;
         let from = 1, marked = false;
@@ -20347,37 +20411,35 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         if (at < a) conj.push(toks.slice(at, a));
         conj.push(toks.slice(a + 1));
         if (conj.length < 2 || conj.some(c => !c.length)) return null;
-        // A plain list of things: each a whole noun phrase, ending on its
-        // noun -- not "fish raw".
-        // Before its noun only a determiner, a possessive, a number, the
-        // adjectives the lists know, or the words of one name.
-        const thing = c => {
-            const ws = c.map(claimWord), last = ws[ws.length - 1];
-            if (c.length === 1 && /^(?:him|her|them|me|us|you|it)$/.test(last)) return true;
-            if (CLAIM_FUNCTION_WORDS.has(last) || CLAIM_PRONOUN_KIND[last] || claimKnownAdjective(last) && !CLAIM_INVARIANT_NOUNS.has(last)) return false;
-            const before = (w, i) => /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their|some|many|few|several|two|three|four|five|six|seven|eight|nine|ten)$/.test(w) ||
-                /'s$/.test(w) || claimKnownAdjective(w) || /^/.test(c[i]) && /^/.test(c[i + 1]);
-            return ws.slice(0, -1).every(before) && claimSynNounPhrases(claimSynWords(c), 0).some(o => o.end === c.length);
-        };
+        // A plain list of things: each a whole noun phrase (claimPlainThing).
+        const thing = claimPlainThing;
         if (!conj.slice(0, -1).every(thing)) return null;
         const said = claimTokens(s), subj = said.slice(0, Math.max(0, said.length - vp.length)), who = subj.join(' ') || term;
         const objText = (marked ? 'both ' : '') + (conj.length === 2 ? conj.map(c => c.join(' ')).join(' and ') : claimListWords(conj.map(c => c.join(' ')), 'and', false));
         const last = conj[conj.length - 1], w = claimWord(last[0]), wy = claimSynWord(last[0]);
-        // After a plain verb, a deed of the subject's own: "Ravens eat worms
-        // and sing" -- or a thing or a deed, asked ("... and fish").
-        if (!sg && !past && conj.length === 2 && last.length === 1 && !marked) {
-            const deeds = () => {
-                const one = verbPhraseProp([toks[0]].concat(conj[0])), two = verbPhraseProp(last);
-                return one && two ? claimList('and', [applyClaimProp(one, term), applyClaimProp(two, term)]) : null;
-            };
-            if (CLAIM_THING_OR_DEED.has(w)) {
-                const things = who + ' ' + toks[0] + ' both ' + conj[0].join(' ') + ' and ' + w;
-                const done = who + ' ' + toks[0] + ' ' + conj[0].join(' ') + ', and ' + who + ' ' + w;
-                return claimAmbiguous('"' + toks[0] + ' ' + conj[0].join(' ') + ' and ' + w + '" may join two things, or two things done', [
-                    { label: things, build: () => readClaim(things) }, { label: done, build: () => readClaim(done) }], false, { part: s }) || null;
-            }
-            if (wy.knownVerb && !wy.s && !wy.past && !wy.adj && !claimPluralWord(w)) return deeds();
+        const deeds = () => {
+            const one = verbPhraseProp([toks[0]].concat(conj[0])), two = verbPhraseProp(last);
+            return one && two ? claimList('and', [applyClaimProp(one, term), applyClaimProp(two, term)]) : null;
+        };
+        // A word that may be a thing or a deed, asked: after a plain verb,
+        // "... and fish"; after a verb in -s, "... and flies" (r27.245). Not a
+        // name: "... and Fish" is someone eaten (r27.245; it had been asked).
+        const either = !sg && !past ? CLAIM_THING_OR_DEED : sg ? CLAIM_THINGS_OR_DOES : null;
+        if (either && either.has(w) && !wy.name && conj.length === 2 && last.length === 1 && !marked) {
+            const things = who + ' ' + toks[0] + ' both ' + conj[0].join(' ') + ' and ' + w;
+            const done = who + ' ' + toks[0] + ' ' + conj[0].join(' ') + ', and ' + who + ' ' + w;
+            return claimAmbiguous('"' + toks[0] + ' ' + conj[0].join(' ') + ' and ' + w + '" may join two things, or two things done', [
+                { label: things, build: () => readClaim(things) }, { label: done, build: () => readClaim(done) }], false, { part: s }) || { readWhole: true };
         }
+        // After a plain verb, a deed of the subject's own: "Ravens eat worms
+        // and sing".
+        if (!sg && !past && conj.length === 2 && last.length === 1 && !marked && claimDeedWord(last[0])) return deeds();
+        // After "have" and a thing, a verb that agrees with its subject is a
+        // deed of its own: "frogs have legs and swim", "Bob has wings and
+        // swims", "Bob had dinner and left" (r27.245; "have" had been said
+        // again before it: "frogs have swim", "Bob had left").
+        if (having && conj.length === 2 && !marked && !wy.name && !wy.closed && (past ? !!wy.past && (!!wy.knownVerb || last.length > 1)
+            : sg ? !!wy.s && !!wy.knownVerb : claimDeedWord(last[0]))) return deeds();
         if (!conj.every(thing)) return null;
         const each = () => {
             const preds = conj.map(c => { const prop = verbPhraseProp([toks[0]].concat(c)); return prop ? applyClaimProp(prop, term) : null; });
@@ -20413,6 +20475,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         else if ((m = text.match(/^either\s+(.+?)\s+or\s+(.+)$/))) { kind = 'or'; parts = [m[1], m[2]]; marked = true; }
         else if ((m = text.match(/^both\s+(.+?)\s+and\s+(.+)$/))) { kind = 'and'; parts = [m[1], m[2]]; marked = true; }
         else {
+            // "Have" with a thing after it is a verb of its own, not a helping
+            // verb said again before each part: "frogs have legs and swim" is
+            // "frogs swim" (r27.245; it had been "frogs have swim").
+            if (head.length === 1 && !negated && !spreadAnyway && /^(?:have|has|had)$/.test(lead)) {
+                const b = claimSynWord(words[1] || '');
+                if (b.w && !b.past && !b.participle && !b.ing && !b.aux && !/^(?:to|not|been|got|gotten)$/.test(b.w) && !(b.adv && !b.noun)) {
+                    const joined = claimObjectJoins(raw, term, s, vp, true);
+                    // Asked and not answered: as written, whole.
+                    if (joined && !joined.readWhole) return joined;
+                    if (joined) { const prop = verbPhraseProp(vp); return prop ? applyClaimProp(prop, term) : null; }
+                }
+            }
             // Where its "and"s and "or"s join, by the phrases (stage three of
             // the syntax tree): before a verb group, verbs ("likes tea and
             // hates milk"); after "is", what is said of the subject ("is black
@@ -20473,7 +20547,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // and fish": "a").
         if (!kind && !head.length && !negated && !spreadAnyway) {
             const joined = claimObjectJoins(raw, term, s, vp);
-            if (joined) return joined;
+            if (joined) return joined.readWhole ? whole() : joined;
         }
         if (!kind) return whole();
         // "Acquires knowledge-how when she exits the room and sees a ripe red

@@ -2295,6 +2295,72 @@ console.log('\n-- r27.244: "eat worms and fish": two things, or two things done 
         'a thing that is also a deed is the deed only where it ends its clause after its subject ("..., and ravens fish"): "tuna fish swim", "time travel" are things, as before', J(compounds));
 }
 
+console.log('\n-- r27.245: "flies", a thing or a deed; "have", a verb of its own; "the river", no claim --');
+{
+    // The user, of five slips found beside r27.244: "a", all five.
+    const key = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)}); return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const asked = t => ev(`state.logic = { base: 'standard', rules: { semantic: 'always' } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var amb = r.notes.filter(function (n) { return n.kind === 'ambiguous' && !/may mean all of them/.test(n.message); });
+        var out = { q: amb.map(function (n) { return claimUnmarked(n.message); }),
+            back: amb.length ? amb[0].readings.map(function (l) { var f = parseClaimFull(l); return [claimReadingWords(l, ${J(t)}), f.form ? claimUnmarked(claimKey(f.form)) : null,
+                f.notes.filter(function (n) { return n.kind === 'ambiguous' && !/may mean all of them/.test(n.message); }).length]; }) : [] };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return out;`);
+    const they = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var n = r.notes.filter(function (n) { return n.kind === 'ambiguous' && /“(?:they|them)”/.test(claimUnmarked(n.message || '')); });
+        return [].concat.apply([], n.map(function (n) { return (n.readings || []).map(function (l) { return claimReadingWords(l, ${J(t)}); }); }));`);
+    const step = (prem, concl, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(concl)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(prem)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st ? [st.rule ? st.rule.name : null, st.why ? st.why.text || '' : ''] : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    // 1. "Frogs eat worms and flies": flies eaten, never "frogs fly".
+    const many = ['Frogs eat worms and flies.', 'I eat worms and flies.'].map(key), frogs = step(['Frogs eat worms and flies.'], 'Frogs fly.', false),
+        frogsEat = step(['Frogs eat worms and flies.'], 'Frogs eat flies.', false);
+    ok(J(many) === J(['C[P:frogs|~eat worms;P:frogs|~eat flies]', 'C[P:i|~eat worms;P:i|~eat flies]']) && frogs[0] === null && frogsEat[0] === 'conjunction elimination',
+        'after a verb with no ending, a word in -s is no verb of its subject: "Frogs eat worms and flies" is flies eaten, and "so frogs fly" is no step (it had been conjunction elimination)', J([many, frogs, frogsEat]));
+    // 2. "Bob eats worms and flies": asked, as "Ravens eat worms and fish" is.
+    const flies = asked('Bob eats worms and flies.');
+    ok(J(flies.q) === J(['"eats worms and flies" may join two things, or two things done']) &&
+        J(flies.back) === J([['Bob eats both worms and flies.', 'C[P:bob|~eat worms;P:bob|~eat flies]', 0], ['Bob eats worms, and Bob flies.', 'C[P:bob|~eat worms;P:bob|~fly]', 0]]) &&
+        key('Bob eats worms and flies.') === 'P:bob|~eat worms and flies',
+        '"Bob eats worms and flies": a word in -s that is both a plural thing and a deed is asked after a verb in -s, each reading reading back; as written, whole', J(flies));
+    const sure = ['Bob eats worms and swims.', 'Bob eats worms and flies south.', 'Bob writes poems, essays and plays.', 'Bob eats both worms and flies.', 'Every frog eats worms and flies.'].map(key);
+    ok(J(sure) === J(['C[P:bob|~eat worms;P:bob|~swim]', 'C[P:bob|~eat worms;P:bob|~fly south]', 'C[P:bob|~write poems;P:bob|~write essays;P:bob|~write plays]',
+        'C[P:bob|~eat worms;P:bob|~eat flies]', 'U:=frog|~eat worms and flies']),
+        'not asked where grammar settles it: a deed and no thing ("swims"), a phrase after it ("flies south"), a list of three ("poems, essays and plays", the plays written; it had been "Bob plays"), "both"; after "every", whole', J(sure));
+    const fliesNever = step(['Bob eats worms and flies.'], 'Bob flies.', false), fliesTurns = step(['Bob eats worms and flies.'], 'Bob flies.', true);
+    ok(/Written “Bob eats worms, and Bob flies”, the step follows by conjunction elimination/.test(fliesNever[1]) &&
+        /^Did you mean “Bob eats both worms and flies” or “Bob eats worms, and Bob flies”\?/.test(fliesTurns[1]),
+        '"so Bob flies": the wording that gives it, never asking; asked where a step turns on it (it had been conjunction elimination, unasked)', J([fliesNever, fliesTurns]));
+    // 3. "Have" with a thing after it.
+    const have = ['Frogs have legs and swim.', 'Bob has wings and swims.', 'Bob had dinner and left.', 'Bob has a dog and a cat.', 'Bob has eaten worms and fish.',
+        'Bob has wings and flies.', 'Frogs have legs and fish.'].map(key);
+    ok(J(have) === J(['C[P:frogs|~have legs;P:frogs|~swim]', 'C[P:bob|~have wings;P:bob|~swim]', 'C[P:bob|~had dinner;P:bob|~did left]', 'C[P:bob|~have dog;P:bob|~have cat]',
+        'P:bob|~have eaten worms and fish', 'P:bob|~have wings and flies', 'P:frogs|~have legs and fish']),
+        '"have" with a thing after it is a verb of its own: "frogs swim" (it had been "frogs have swim"), "Bob left" (it had been "Bob had left"), things each its object; a helping "have" as before; "flies", "fish" asked, whole as written', J(have));
+    const wings = asked('Bob has wings and flies.'), swim = step(['Frogs have legs and swim.'], 'Frogs swim.', false), left = step(['Bob had dinner and left.'], 'Bob left.', false);
+    ok(J(wings.q) === J(['"has wings and flies" may join two things, or two things done']) &&
+        J(wings.back) === J([['Bob has both wings and flies.', 'C[P:bob|~have wings;P:bob|~have flies]', 0], ['Bob has wings, and Bob flies.', 'C[P:bob|~have wings;P:bob|~fly]', 0]]) &&
+        swim[0] === 'conjunction elimination' && left[0] === 'conjunction elimination',
+        '"Bob has wings and flies" is asked (it had been "Bob has flies"); "so frogs swim" and "so Bob left" are conjunction elimination', J([wings, swim, left]));
+    // 4. "The road lies near the hill and the river".
+    const road = ['The road lies near the hill and the river.', 'The road lies between the hill and the river.', 'The river flows near the hill and the town.', 'P and Q.',
+        'Bob left and the dog barked.'].map(key);
+    ok(J(road) === J(['P:the road|~lie near the hill and the river', 'P:the road|~lie between the hill and the river', 'P:the river|~flow near the hill and the town', 'C[A:p;A:q]',
+        'C[P:bob|~did left;P:the dog|~did barked]']),
+        'a noun phrase with no verb, after a part with a verb after its subject, is that verb\'s: "the river" is no claim of its own (it had been, where the lists do not know the verb); clauses and letters as before', J(road));
+    // 5. The read-back, with "they" as Bob.
+    const backs = [['Bob eats worms, and they eat worms and sing.', 'Bob eats worms, and Bob eats worms and sings.'],
+        ['Bob eats worms, and they have wings and fly.', 'Bob eats worms, and Bob has wings and flies.'],
+        ['Bob eats worms, and they eat worms and sing loudly.', 'Bob eats worms, and Bob eats worms and sings loudly.'],
+        ['Bob eats worms, and they eat worms and fish.', 'Bob eats worms, and Bob eats worms and fish.'],
+        ['Bob eats worms, and they have eaten and slept.', 'Bob eats worms, and Bob has eaten and slept.']].map(([t, want]) => [t, they(t).includes(want)]);
+    ok(backs.every(b => b[1]), 'read with "they" as Bob, a deed after a thing agrees: "Bob eats worms and sings" (it had been "and sing"), "Bob has wings and flies"; "and fish", which may be eaten, as it is; a helping "have" as before', J(backs));
+    // r27.244's own slip: a capital inside the sentence is a name.
+    const named = asked('Ravens eat worms and Fish.');
+    ok(!named.q.length && key('Ravens eat worms and Fish.') === 'C[P:ravens|~eat worms;P:ravens|~eat fish]',
+        '"Ravens eat worms and Fish": a capital inside the sentence is a name, someone eaten -- not asked (r27.244 had asked whether "Fish" was a deed)', J(named));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

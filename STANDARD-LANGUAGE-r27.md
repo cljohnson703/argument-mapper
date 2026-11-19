@@ -4,6 +4,28 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 19: "flies", a thing or a deed; "have", a verb of its own (r27.245)
+
+The user:
+* Of five older slips found beside r27.244: "a", fix all five.
+* Go live with r27.244: "a" (done).
+
+Changes:
+* "Frogs eat worms and flies. So frogs fly." had been conjunction elimination. After a verb with no ending ("eat"), the subject is many, or "I" or "you", so a word in -s after its "and" is none of its verbs: the flies are eaten. "Frogs eat flies" follows; "frogs fly" does not.
+* "Bob eats worms and flies" may be flies eaten, or Bob flying, and both are English, so it is asked, as "Ravens eat worms and fish" is: "Bob eats both worms and flies", or "Bob eats worms, and Bob flies". Each reading reads back asking nothing more. So for words in -s that are both a plural thing and a deed: "flies", "dances", "drinks", "plays", "works", "watches" and the like. Never asking, it is read as written, whole, and a step that needs one reading is given the wording that would give it. It had been "Bob flies", unasked.
+* Where grammar settles it, nothing is asked: "Bob eats worms and swims" is two deeds, as before; "... and flies south" is a deed; "Bob writes poems, essays and plays" is three things written (it had been "Bob plays"); "Bob eats both worms and flies" is two things. After "every", the list is read whole, as before.
+* "Have" with a thing after it is a verb of its own, not a helping verb said again before each part: "Frogs have legs and swim" gives "frogs swim" (it had been "frogs have swim", so "frogs swim" did not follow); "Bob had dinner and left" gives "Bob left" (it had been "Bob had left"); "Bob has wings and flies" is asked (it had been "Bob has flies"). Things after it are each its object, as after any verb since r27.244: "Bob has a dog and a cat" gives "Bob has a cat". A helping "have" is as before: "Bob has eaten worms and fish".
+* "The road lies near the hill and the river" had been two claims, the second "the river" alone, wherever the lists did not know the verb ("lies", "flows", "winds", "stretches"). A noun phrase with no verb of its own, after a part with a verb after its subject, is that verb's: one claim. Clauses ("Bob left and the dog barked") and letters ("P and Q") are split as before.
+* Read with "they" as Bob, a deed after a thing agrees: "Bob eats worms, and they eat worms and sing" offers "Bob eats worms and sings" (it had been "... and sing"), and "they have wings and fly", "Bob has wings and flies". "And fish", which may be a thing eaten, is as it is.
+* r27.244's own slip: "Ravens eat worms and Fish" had been asked, as if "Fish" might be a deed. A capital inside the sentence is a name: someone eaten, never asked.
+
+Tests:
+* New in syntax-r27-test.js, which has 320 checks: "frogs eat worms and flies", and no "so frogs fly"; "Bob eats worms and flies", asked, its readings, and the steps it gives; where grammar settles it; "have" with a thing after it, and its steps; "lies near the hill and the river", with clauses and letters as before; the read-back with "they"; "and Fish".
+* Take-one-out: each of the 13 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 92 suites pass, and so does the public build's smoke test.
+
 ### November 19: "eat worms and fish": two things, or two things done (r27.244)
 
 The user:
