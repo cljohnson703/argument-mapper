@@ -2993,7 +2993,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-19 r27.243';
+    const APP_BUILD = '2026-11-19 r27.244';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -19082,6 +19082,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         CLAIM_SYN_PREPOSITIONS.has(w) || CLAIM_SYN_CONJUNCTIONS.has(w) || CLAIM_SYN_OPENERS.has(w) || CLAIM_RELATIVES.has(w) ||
         CLAIM_VERB_MARKERS.has(w) || CLAIM_SYN_NUMBERS.test(w) || (CLAIM_SYN_ADVERBS.has(w) && !CLAIM_SYN_ORDINALS.has(w));
     // Verbs the lists know, by their plain form.
+    // Words that are both a thing that stands with no "a" -- a mass noun, or
+    // a plural that looks singular -- and a deed done with nothing after it:
+    // after "and", a second thing, or a second deed (r27.244).
+    const CLAIM_THING_OR_DEED = new Set(('fish dance work help sleep talk play drink study rest sweat dust film iron exercise research ' +
+        'worry hope change care trade love smoke paint travel').split(' '));
     const claimSynKnownVerb = w => CLAIM_ATTITUDE_VERBS.has(w) || CLAIM_TOGETHER_VERBS.has(w) || CLAIM_USE_UP_VERBS.has(w) ||
         CLAIM_PAST_UNCHANGED.has(w) || /^(?:exist|matter|follow|entail|imply|require|need|make|give|take|cause|produce|create|allow|prevent|depend|involve|include|contain|mean|show|prove|suggest|support|explain|justify|determine|affect|influence|lead|bring|keep|let|seem|appear|become|remain|want|love|hate|fear|see|hear|feel|find|get|go|come|run|move|grow|die|live|work|happen|occur|arise|result|obtain|hold|apply|fail|succeed|begin|end|change|increase|decrease|reduce|destroy|win|lose|rule|help|harm|fly|swim|sing|dance|sleep|eat|drink|walk|talk|speak|write|read|cry|laugh|smile|leave|arrive|stay|wait|sit|stand|fall|rise|think|know|say|tell|ask|answer|carry|bark|bite|chase|catch|kill|love|like|own|use|build|break|open|close|pay|buy|sell|send|teach|learn|play|work|rain|snow|shine|burn|freeze|melt|survive|perish|reign|prevail|persist|suffer|enjoy|praise|blame|hurt|hit|meet|marry|visit|admire|respect|trust|doubt|deny|affirm|assert|claim|argue|conclude|infer|reason|occupy|soothe|reflect|absorb|attract|repel|expand|evaporate|dissolve|consist|belong|differ|resemble|weigh|lack)$/.test(w);
     // A word's parts of speech, as { noun, plural, adj, past, s, base, ... }.
@@ -19658,6 +19663,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "Every student read the book": after one, "read" is no present (r27.96).
         if (number === 'sg' && CLAIM_PAST_UNCHANGED.has(y.w)) return 'strong';
         if (!y.s && y.verb && (number === 'pl' || number === 'you' || number === '?')) return y.knownVerb ? 'strong' : 'weak';
+        // A word that is a thing or a deed, ending its clause after its
+        // subject, is the deed: "..., and ravens fish" (r27.244) -- not "tuna
+        // fish swim", "time travel is possible", where a verb follows.
+        if (CLAIM_THING_OR_DEED.has(y.w) && i > 0 && !ws[i + 1] && (number === 'pl' || number === 'you' || number === '?')) return 'strong';
         return null;
     }
     // Where the subject ends and its verb group begins, read by phrases: the
@@ -20308,6 +20317,83 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // black and small" is "is black" and "is small"; so "flies and sings", "is
     // neither black nor white", "is black and not small". "Is not black or
     // white" is ambiguous: not black-or-white, or not black -- or white?
+    // Verbs said of what they join together, not of each: "mixes flour and
+    // water" is no "mixes water" -- asked, each or together (r27.244).
+    const CLAIM_TOGETHER_OBJECT_VERBS = new Set(('mix combine compare contrast connect join link separate distinguish differentiate blend merge ' +
+        'unite reunite reconcile match pair balance mingle juxtapose relate associate confuse exchange swap switch interchange equate fuse ' +
+        'integrate coordinate harmonize harmonise introduce weigh divide alternate average add multiply intersect correlate').split(' '));
+    // "Eat worms and fish", "met Al and Cy": what "and" joins after a verb,
+    // in a verb phrase with no helping verb and no "not" (r27.244). Things,
+    // each the verb's object -- "Bob met Al, Cy and Dee" is that he met each
+    // -- but a verb said of things together ("mix", "compare") asks; after a
+    // plain verb (a plural's), a word that is a deed and no thing is a second
+    // deed ("eat worms and sing"), and one that may be either is asked. The
+    // claim, an answer, or null where nothing is so joined.
+    function claimObjectJoins(raw, term, s, vp) {
+        const toks = raw.map(t => t.replace(/,+$/, '')), comma = raw.map(t => /,$/.test(t));
+        const v = claimWord(toks[0] || ''), vy = claimSynWord(toks[0] || '');
+        if (!v || CLAIM_VERB_MARKERS.has(v) || CLAIM_FUNCTION_WORDS.has(v) || /^(?:be|been|being)$/.test(v) || claimKnownAdjective(v)) return null;
+        const past = claimPastStem(v) !== null, sg = claimEndsInS(toks[0]) && !past;
+        if (!(vy.knownVerb || past)) return null;
+        const ands = toks.map((t, i) => i > 0 && claimWord(t) === 'and' ? i : -1).filter(i => i > 0);
+        if (ands.length !== 1 || toks.slice(1).some(t => /^(?:or|nor|but|then|so|that|which|who|whom|whose|whether|if|when|because|than|to|together|each|both)$/.test(claimWord(t)) && t !== toks[1])) return null;
+        let from = 1, marked = false;
+        if (claimWord(toks[1]) === 'both') { from = 2; marked = true; }
+        const a = ands[0];
+        if (a <= from || a >= toks.length - 1) return null;
+        const conj = [];
+        let at = from;
+        for (let i = from; i < a; i++) if (comma[i]) { conj.push(toks.slice(at, i + 1)); at = i + 1; }
+        if (at < a) conj.push(toks.slice(at, a));
+        conj.push(toks.slice(a + 1));
+        if (conj.length < 2 || conj.some(c => !c.length)) return null;
+        // A plain list of things: each a whole noun phrase, ending on its
+        // noun -- not "fish raw".
+        // Before its noun only a determiner, a possessive, a number, the
+        // adjectives the lists know, or the words of one name.
+        const thing = c => {
+            const ws = c.map(claimWord), last = ws[ws.length - 1];
+            if (c.length === 1 && /^(?:him|her|them|me|us|you|it)$/.test(last)) return true;
+            if (CLAIM_FUNCTION_WORDS.has(last) || CLAIM_PRONOUN_KIND[last] || claimKnownAdjective(last) && !CLAIM_INVARIANT_NOUNS.has(last)) return false;
+            const before = (w, i) => /^(?:the|a|an|this|that|these|those|my|your|his|her|its|our|their|some|many|few|several|two|three|four|five|six|seven|eight|nine|ten)$/.test(w) ||
+                /'s$/.test(w) || claimKnownAdjective(w) || /^/.test(c[i]) && /^/.test(c[i + 1]);
+            return ws.slice(0, -1).every(before) && claimSynNounPhrases(claimSynWords(c), 0).some(o => o.end === c.length);
+        };
+        if (!conj.slice(0, -1).every(thing)) return null;
+        const said = claimTokens(s), subj = said.slice(0, Math.max(0, said.length - vp.length)), who = subj.join(' ') || term;
+        const objText = (marked ? 'both ' : '') + (conj.length === 2 ? conj.map(c => c.join(' ')).join(' and ') : claimListWords(conj.map(c => c.join(' ')), 'and', false));
+        const last = conj[conj.length - 1], w = claimWord(last[0]), wy = claimSynWord(last[0]);
+        // After a plain verb, a deed of the subject's own: "Ravens eat worms
+        // and sing" -- or a thing or a deed, asked ("... and fish").
+        if (!sg && !past && conj.length === 2 && last.length === 1 && !marked) {
+            const deeds = () => {
+                const one = verbPhraseProp([toks[0]].concat(conj[0])), two = verbPhraseProp(last);
+                return one && two ? claimList('and', [applyClaimProp(one, term), applyClaimProp(two, term)]) : null;
+            };
+            if (CLAIM_THING_OR_DEED.has(w)) {
+                const things = who + ' ' + toks[0] + ' both ' + conj[0].join(' ') + ' and ' + w;
+                const done = who + ' ' + toks[0] + ' ' + conj[0].join(' ') + ', and ' + who + ' ' + w;
+                return claimAmbiguous('"' + toks[0] + ' ' + conj[0].join(' ') + ' and ' + w + '" may join two things, or two things done', [
+                    { label: things, build: () => readClaim(things) }, { label: done, build: () => readClaim(done) }], false, { part: s }) || null;
+            }
+            if (wy.knownVerb && !wy.s && !wy.past && !wy.adj && !claimPluralWord(w)) return deeds();
+        }
+        if (!conj.every(thing)) return null;
+        const each = () => {
+            const preds = conj.map(c => { const prop = verbPhraseProp([toks[0]].concat(c)); return prop ? applyClaimProp(prop, term) : null; });
+            return preds.every(Boolean) ? claimList('and', preds) : null;
+        };
+        const base = past ? claimPastStem(v) : sg ? baseClaimVerb(v) : v;
+        const bases = [base, CLAIM_IRREGULAR_PAST[v], v.replace(/ed$/, ''), v.replace(/d$/, ''), v.replace(/es$/, ''), v.replace(/s$/, '')].filter(Boolean);
+        if (bases.some(b => CLAIM_TOGETHER_OBJECT_VERBS.has(b)) && !marked) {
+            const apart = conj.map(c => who + ' ' + toks[0] + ' ' + c.join(' '));
+            const eachSaid = apart.length === 2 ? apart.join(', and ') : claimListWords(apart, 'and', false);
+            const together = who + ' ' + toks[0] + ' ' + objText + ' together';
+            return claimAmbiguous('"' + toks[0] + ' ' + objText + '" can be said of each, or of them together', [
+                { label: eachSaid, build: () => readClaim(eachSaid) }, { label: together, build: () => readClaim(together) }], false, { part: s }) || null;
+        }
+        return each();
+    }
     function readVerbPhraseOf(term, vp, s, spreadAnyway) {
         const raw = vp.filter(t => t.replace(/,+$/, ''));
         const words = raw.map(t => t.replace(/,+$/, ''));
@@ -20382,6 +20468,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
         }
         const whole = () => { const prop = verbPhraseProp(vp); return prop ? applyClaimProp(prop, term) : null; };
+        // What "and" joins after a verb's object: things, each its object, or
+        // a deed of the subject's own (r27.244; the user, of "they eat worms
+        // and fish": "a").
+        if (!kind && !head.length && !negated && !spreadAnyway) {
+            const joined = claimObjectJoins(raw, term, s, vp);
+            if (joined) return joined;
+        }
         if (!kind) return whole();
         // "Acquires knowledge-how when she exits the room and sees a ripe red
         // tomato": what follows a "when" clause's "and" goes with that clause

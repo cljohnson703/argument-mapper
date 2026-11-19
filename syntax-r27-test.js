@@ -148,10 +148,10 @@ console.log('\n-- coordination (stage two) --');
     // Not where a verb group, or a noun phrase with no verb of its own, follows.
     ok(key('Mary sings and dances.') === 'C[P:mary|~sing;P:mary|~dance]' &&
         key('Mary walked to the store and bought milk.') === 'C[P:mary|~did walked to the store;P:mary|~did bought milk]' &&
-        key('Mary fed the dog and the cat.') === 'P:mary|~did fed the dog and the cat' &&
-        key('Mary likes tea and coffee.') === 'P:mary|~like tea and coffee' &&
+        key('Mary fed the dog and the cat.') === 'C[P:mary|~did fed the dog;P:mary|~did fed the cat]' &&
+        key('Mary likes tea and coffee.') === 'C[P:mary|~like tea;P:mary|~like coffee]' &&
         key('Poe is black and small.') === 'C[P:poe|=black;P:poe|=small]',
-        'verbs joined under one subject, and nouns or adjectives joined, stay in their clause');
+        'verbs joined under one subject, and nouns or adjectives joined, stay in their clause (things joined after a verb, each its object: r27.244)');
     ok(key('The man who sings and dances left.') === 'P:the man who sings and dances|~did left' &&
         key('Mary neither sang nor danced.') === 'C[N(P:mary|~did sang);N(P:mary|~did danced)]',
         'the "and" of a relative clause stays in it ("the man who sings and dances"); "neither ... nor" joins verbs');
@@ -185,8 +185,8 @@ console.log('\n-- forms from the tree (stage three) --');
     // Verb phrases: split only where a verb group follows the "and".
     ok(key('Mary likes tea and coffee and hates milk.') === 'C[P:mary|~like tea and coffee;P:mary|~hate milk]' &&
         key('Mary saw Bob and Ann and left.') === 'C[P:mary|~did saw bob and ann;P:mary|~did left]' &&
-        key('Mary likes cats and dogs.') === 'P:mary|~like cats and dogs',
-        'verbs joined under one subject are split where a verb follows the "and", not inside an object ("tea and coffee")');
+        key('Mary likes cats and dogs.') === 'C[P:mary|~like cats;P:mary|~like dogs]',
+        'verbs joined under one subject are split where a verb follows the "and", not inside an object ("tea and coffee"), which says each is liked (r27.244)');
     // Joined subjects: where one whole noun phrase ends and the next begins.
     ok(key('Poe, Fido and Rex fly.') === 'C[P:poe|~fly;P:fido|~fly;P:rex|~fly]' &&
         key('Poe, Fido, and Rex fly.') === 'C[P:poe|~fly;P:fido|~fly;P:rex|~fly]' &&
@@ -309,10 +309,10 @@ console.log('\n-- an object that may be shared (r27.64) --');
 console.log('\n-- misreadings found beside it (r27.64) --');
 {
     const step = (ps, c) => ev(`var r = certifyStep(${J(ps)}.map(function (t) { return parseClaim(t); }), [parseClaim(${J(c)})], false); return r ? r.name : null;`);
-    ok(key('Mary loves music and dance.') === 'P:mary|~love music and dance' && step(['Mary loves music and dance.'], 'Mary dances.') === null &&
+    ok(key('Mary loves music and dance.') === 'C[P:mary|~love music;P:mary|~love dance]' && step(['Mary loves music and dance.'], 'Mary dances.') === null &&
         step(['Every raven loves music and dance.'], 'Every raven dances.') === null && step(['Mary fears change and hope.'], 'Mary hopes.') === null &&
-        key('Mary loves Bob and fear.') === 'P:mary|~love bob and fear' && key('Poe loves art and sings.') === 'C[P:poe|~love art;P:poe|~sing]',
-        'after a verb in -s a plain word is no verb: "Mary loves music and dance" does not give "Mary dances" (it had)');
+        key('Mary loves Bob and fear.') === 'C[P:mary|~love bob;P:mary|~love fear]' && key('Poe loves art and sings.') === 'C[P:poe|~love art;P:poe|~sing]',
+        'after a verb in -s a plain word is no verb: "Mary loves music and dance" does not give "Mary dances" (it had), but music and dance are each loved (r27.244)');
     ok(key('Some raven arrives and loves Mary.') === 'E:=raven|~arrive and loves mary' && !/love\|/.test(key('No raven sings and dances.')),
         '"some raven arrives and loves Mary" joins two verbs, not "some raven" and "loves" (it had read "some loves Mary")', key('Some raven arrives and loves Mary.'));
     ok(key('The raven that washes and dries the dishes flies.') === 'P:the raven that washes and dries the dishes|~fly',
@@ -2244,6 +2244,55 @@ console.log('\n-- r27.242: the verbs "and" joins agree; "they are students" is m
         J(worms.notes) === J(['unread: read with “they” as “worms”, the one it can be in this box']) &&
         /nothing before it in this box is many/.test(alone.notes.join(' ')) && withCy.readings.includes('Bob met Al, and Bob is friends with Cy.'),
         '"they are students" is many: "Bob and Al", "worms" -- never "Bob is students" (it had been offered); with only Bob, nothing; "friends with Cy" may be one', J([students, worms, alone, withCy]));
+}
+
+console.log('\n-- r27.244: "eat worms and fish": two things, or two things done --');
+{
+    // The user, of "they eat worms and fish": "a" -- ask which reading where
+    // both are grammatical, and let "eats worms and fish" give "eats fish",
+    // asking "each, or together?" for verbs like "mix" and "compare".
+    const key = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)}); return r.form ? claimUnmarked(claimKey(r.form)) : null;`);
+    const asked = t => ev(`state.logic = { base: 'standard', rules: { semantic: 'always' } }; claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var amb = r.notes.filter(function (n) { return n.kind === 'ambiguous' && !/may mean all of them/.test(n.message); });
+        var out = { q: amb.map(function (n) { return claimUnmarked(n.message); }),
+            back: amb.length ? amb[0].readings.map(function (l) { var f = parseClaimFull(l); return [claimReadingWords(l, ${J(t)}), f.form ? claimUnmarked(claimKey(f.form)) : null,
+                f.notes.filter(function (n) { return n.kind === 'ambiguous' && !/may mean all of them/.test(n.message); }).length]; }) : [] };
+        state.logic = { base: 'standard', rules: { semantic: true } }; claimRulesCache = null; return out;`);
+    const fish = asked('Ravens eat worms and fish.');
+    ok(J(fish.q) === J(['"eat worms and fish" may join two things, or two things done']) &&
+        J(fish.back) === J([['Ravens eat both worms and fish.', 'C[P:ravens|~eat worms;P:ravens|~eat fish]', 0], ['Ravens eat worms, and ravens fish.', 'C[P:ravens|~eat worms;P:ravens|~fish]', 0]]) &&
+        key('Ravens eat worms and fish.') === 'P:ravens|~eat worms and fish',
+        '"Ravens eat worms and fish": two things eaten, or eating and fishing -- asked, each reading reading back; as written, whole (it had been whole, and never asked)', J(fish));
+    const deeds = ['Ravens eat worms and sing.', 'Ravens eat worms and swim.'].map(key);
+    ok(J(deeds) === J(['C[P:ravens|~eat worms;P:ravens|~sing]', 'C[P:ravens|~eat worms;P:ravens|~swim]']),
+        'a deed and no thing after "and" is a second deed: "eat worms and sing", "and swim" (they had been one predicate)', J(deeds));
+    const things = ['Bob eats worms and fish.', 'Bob met Al, Cy and Dee.', 'Bob likes red apples and green pears.', "Bob fed Mary's dog and the cat."].map(key);
+    ok(J(things) === J(['C[P:bob|~eat worms;P:bob|~eat fish]', 'C[P:bob|~did met al;P:bob|~did met cy;P:bob|~did met dee]',
+        'C[P:bob|~like red apples;P:bob|~like green pears]', "C[P:bob|~did fed mary's dog;P:bob|~did fed the cat]"]),
+        'things joined after a verb are each its object: "Bob eats worms and fish" is that he eats each ("fishes" would be the deed)', J(things));
+    const whole = ['Bob does not eat worms and fish.', 'Bob eats worms and fish raw.', 'Bob gave Mary a book and a pen.', 'Bob has eaten worms and fish.', 'Bob likes apple pie and ice cream.'].map(key);
+    ok(J(whole) === J(['N(P:bob|~eat worms and fish)', 'P:bob|~eat worms and fish raw', 'P:bob|~did gave mary book and pen', 'P:bob|~have eaten worms and fish', 'P:bob|~like apple pie and ice cream']),
+        'not under "not", nor with a helping verb, nor where a phrase follows ("fish raw"), nor two objects ("gave Mary a book"), nor nouns before nouns', J(whole));
+    const mix = asked('Bob mixed flour and water.');
+    ok(J(mix.q) === J(['"mixed flour and water" can be said of each, or of them together']) &&
+        J(mix.back) === J([['Bob mixed flour, and Bob mixed water.', 'C[P:bob|~did mixed flour;P:bob|~did mixed water]', 0], ['Bob mixed flour and water together.', 'P:bob|~did mixed flour and water together', 0]]) &&
+        key('Bob mixed flour and water.') === 'P:bob|~did mixed flour and water',
+        '"mixed flour and water": a verb said of things together asks, each or together; as written, whole', J(mix));
+    const step = (prem, concl, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(concl)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(prem)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st ? [st.rule ? st.rule.name : null, st.why ? st.why.text || '' : ''] : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const eats = step(['Bob eats worms and fish.'], 'Bob eats fish.', false), met = step(['Bob met Al, Cy and Dee.'], 'Bob met Cy.', false),
+        mixNever = step(['Bob mixed flour and water.'], 'Bob mixed water.', false), mixTurns = step(['Bob mixed flour and water.'], 'Bob mixed water.', true),
+        fishTurns = step(['They eat worms and fish.'], 'They fish.', true);
+    ok(eats[0] === 'conjunction elimination' && met[0] === 'conjunction elimination' &&
+        /Written “Bob mixed flour, and Bob mixed water”, the step follows by conjunction elimination/.test(mixNever[1]) &&
+        /^Did you mean “Bob mixed flour, and Bob mixed water” or “Bob mixed flour and water together”\?/.test(mixTurns[1]) &&
+        /^Did you mean “They eat both worms and fish” or “They eat worms, and they fish”\?/.test(fishTurns[1]),
+        'so "Bob eats worms and fish" gives "Bob eats fish", and "met Al, Cy and Dee" "met Cy"; "mixed water" asks where a step turns on it, the wording given never asking; "they fish" asks', J([eats, met, mixNever, mixTurns, fishTurns]));
+    const compounds = ['Tuna fish swim.', 'Time travel is possible.', 'Health care costs money.', 'Ravens eat worms, and ravens fish.'].map(key);
+    ok(J(compounds) === J(['P:tuna fish|~swim', 'P:time travel|=possible', 'P:health care|~cost money', 'C[P:ravens|~eat worms;P:ravens|~fish]']),
+        'a thing that is also a deed is the deed only where it ends its clause after its subject ("..., and ravens fish"): "tuna fish swim", "time travel" are things, as before', J(compounds));
 }
 
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));

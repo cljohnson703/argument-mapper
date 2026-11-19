@@ -4,6 +4,29 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 19: "eat worms and fish": two things, or two things done (r27.244)
+
+The user:
+* Of "They eat worms and fish", which the app had read neither way: "a". Ask which reading where both are grammatical, and let "eats worms and fish" give "eats fish", asking "each, or together?" for verbs like "mix" and "compare".
+* Go live with r27.243: "a" (done).
+
+Changes:
+* "Ravens eat worms and fish" had been one predicate, "eat worms and fish", read no way: neither "ravens eat fish" nor "ravens fish" followed. "Fish" may be a second thing eaten, or a second thing done, and both are English, so it is asked: "Ravens eat both worms and fish", or "Ravens eat worms, and ravens fish". Each reading reads back asking nothing more. So for words that are both a thing that stands with no "a" and a deed: "dance", "work", "help", "drink", "sleep", "play" and the like. Never asking, it is read as written, whole.
+* Such a word ending its clause after its subject is the deed there, so that "Ravens eat worms, and ravens fish" is two claims. Where a verb follows, it is a thing, as before: "Tuna fish swim", "Time travel is possible", "Health care costs money".
+* A word that is a deed and no such thing is a second deed: "Ravens eat worms and sing" and "... and swim", which had been one predicate, are two claims. A singular verb settles it: "Bob eats worms and fish" is two things eaten, since the deed would be "fishes"; "Bob eats worms and swims" is two deeds, as before.
+* Things joined after a verb are each its object: "Bob eats worms and fish" gives "Bob eats fish", and "Bob met Al, Cy and Dee" gives "Bob met Cy", by conjunction elimination; "Bob eats worms" and "Bob eats fish" give "Bob eats worms and fish".
+* Not under "not", nor with a helping verb ("has eaten worms and fish"), nor where a phrase follows the last thing ("eats worms and fish raw"), nor where what follows the verb is no plain list of things ("gave Mary a book and a pen", "likes apple pie and ice cream").
+* A verb said of things together is asked, each or together: "Bob mixed flour and water" may be "Bob mixed flour, and Bob mixed water", or "Bob mixed flour and water together". So "compare", "combine", "connect", "join", "separate", "match" and the like. Where a step turns on it ("so Bob mixed water"), it asks; never asking, the hint gives the wording each way.
+* Not yet: things joined inside a longer verb phrase ("likes tea and coffee and hates milk"), or after "every" or "some" ("every raven eats worms and fish"), are read whole, as before.
+
+Tests:
+* New in syntax-r27-test.js, which has 311 checks: "eat worms and fish", asked, and its readings; "eat worms and sing", "and swim"; things joined after a verb, each its object; where nothing is so joined; "mixed flour and water", asked; the steps they give; "tuna fish swim" and "time travel", read as before.
+* Changed: three checks that had things joined after a verb as one object ("Mary likes tea and coffee", "Mary likes cats and dogs", "Mary loves music and dance"): each is now its object. "Mary loves music and dance" still does not give "Mary dances".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* 24 corpus sentences of 4542 read differently, by default and with Semantic mode on, each a list of things after a verb that is now each its object: "Mary likes tea and coffee", "Bob met Al, Cy and Dee", "We saw big dogs and small ones" and the like.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 92 suites pass, and so does the public build's smoke test.
+
 ### November 19: branches above (r27.243)
 
 The user:
