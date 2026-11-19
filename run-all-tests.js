@@ -61,6 +61,7 @@ const SUITES = [
     'stringmode-r27-positions-test.js',
     'notes-r27-stand-alone-test.js',
     'drop-r27-parent-test.js',
+    'orientation-r27-branches-test.js',
     'file-r27-open-link-test.js',
     'logic-r27-deductive-test.js',
     'logic-r27-english-test.js',

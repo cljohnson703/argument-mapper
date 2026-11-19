@@ -4,6 +4,33 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 19: branches above (r27.243)
+
+The user:
+* "I'd like to be able to invert the tree as well. Some prefer to have the branches at the top rather than the bottom."
+* Of which orientations to build: "b", Branches Above only, for now.
+* Of whose setting it is: "a", each viewer's own.
+* Of the control: "a, but only so long as it doesn't require extra length in the panel".
+
+Changes:
+* A View button turns the map over: each tree's main contention at the bottom, and what answers a box above it, as in a proof. Pressed again, the map is as before.
+* It is each viewer's own way of showing the map, kept in the browser as the toolbar's place is, never in the map: collaborators each see the map their own way, and a new page opens as the browser left it.
+* A full "Branches: Below" button would have taken a row of its own in the View panel, so the button is a small picture of the tree after Theme, as the inference colors' button is. Its tip names it, "Branches: Below" or "Branches: Above", and the picture turns over when pressed. The panel is as long as before, with the toolbar at the side or on top.
+* Each tree turns over about its main contention, which stays where it stands; where the Depth view lines rows up across trees, about that first row. No stored place changes, so a box dropped or detached lands where it is let go, and collaborators' maps are untouched.
+* The lines are worked out as if the tree hung down and drawn turned over, as the boxes are: arrows point down, co-premises' forks sit under them, and a dragged branch takes its lines with it. Focus mode dims and lights them as before. Saved pictures and PDFs are drawn as the map is shown.
+* The Depth view counts its rows upward from the contention. A step's tag sits on the fork under its group, a verdict under its box, and a theorem's tag on a box's top edge, where nothing arrives; crowded tags step down, away from the boxes.
+* The + buttons on a selected box: what is added goes above it, a parent below it.
+* The arrow keys follow the screen: up goes to a reason, down to what it supports. Alt+Down adds a parent, and Add Parent, its tip, the box's menu and Help say so ("Add a box below the selected group").
+* A box dropped above another becomes its reason, and dropped below it, its parent; the bar shows on the edge it is dropped at.
+
+Tests:
+* New: orientation-r27-branches-test.js, 21 checks: the button and its keeping; the layout, mirrored about the root; the lines in their turned group, the arrow ending on the contention's top; their styles; the Depth view's rows; the step, verdict and theorem tags, and crowded tags; the + buttons, near the window's edge too; the arrow keys and Alt+Down; the words; drops; a dragged branch's lines, alone and in a selection.
+* Take-one-out: each of the 29 changes is caught by orientation-r27-branches-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Checked in a browser: the map below and above in both themes, two trees, the Depth view, the step tags with Deductive on, the arrow keys, switching back, a saved picture, and the toolbar's height in both layouts at four widths.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 92 suites pass, and so does the public build's smoke test.
+
 ### November 19: "they sing and dance", "they are students" (r27.242)
 
 The user:

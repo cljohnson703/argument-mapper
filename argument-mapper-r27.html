@@ -688,9 +688,9 @@
 
     #lines-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
     /* Line highlighting: dim unrelated lines when a node is selected */
-    #lines-svg > path { transition: opacity 0.2s; }
-    #lines-svg.has-highlight > path { opacity: 0.1; }
-    #lines-svg.has-highlight > path.line-hl { opacity: 1; }
+    #lines-svg > path, #lines-svg > g > path { transition: opacity 0.2s; }
+    #lines-svg.has-highlight > path, #lines-svg.has-highlight > g > path { opacity: 0.1; }
+    #lines-svg.has-highlight > path.line-hl, #lines-svg.has-highlight > g > path.line-hl { opacity: 1; }
     /* Node dimming: dim unrelated nodes when a node is selected */
     .node { transition: opacity 0.2s; }
     #surface.has-node-highlight .node { opacity: 0.12; }
@@ -1391,6 +1391,15 @@
     /* Dropped above a box, the dragged box becomes its parent: the bar is on top. */
     .drop-parent { box-shadow: inset 0 6px 0 var(--color-selected) !important; }
     .drop-copremise-left { box-shadow: inset 6px 0 0 var(--color-selected) !important; }
+    /* Branches above: a child is dropped above, a parent below (r27.243). */
+    body.branches-above .drop-child { box-shadow: inset 0 6px 0 var(--color-selected) !important; }
+    body.branches-above .drop-parent { box-shadow: inset 0 -6px 0 var(--color-selected) !important; }
+    /* Branches: Below or Above -- a small picture of the tree, its name in
+       its tip, so that the View panel grows no longer (r27.243; the user: "only
+       so long as it doesn't require extra length in the panel"). */
+    #branches-btn { padding-left: 10px; padding-right: 10px; }
+    #branches-btn svg { display: inline-block; vertical-align: middle; width: 18px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; transition: transform 0.15s; }
+    body.branches-above #branches-btn svg { transform: scaleY(-1); }
     .drop-copremise-right { box-shadow: inset -6px 0 0 var(--color-selected) !important; }
     .drop-sibling-left { box-shadow: -6px 0 0 var(--color-selected) !important; }
     .drop-sibling-right { box-shadow: 6px 0 0 var(--color-selected) !important; }
@@ -2365,6 +2374,7 @@
             <button id="labels-btn" onclick="cycleLabels()" title="Box labels: none, simple or detailed (L)">Labels <span class="hotkey">L</span></button>
             <button id="depth-btn" onclick="toggleDepthLabels()" title="Show how deep each box is in the map (D)">Depth <span class="hotkey">D</span></button>
             <button onclick="toggleTheme()" title="Switch between light and dark (T)">Theme <span class="hotkey">T</span></button>
+            <button id="branches-btn" onclick="toggleBranches()" aria-pressed="false" aria-label="Branches: Below" title="Branches: Below. Click to put them above, the main contention at the bottom"><svg viewBox="0 0 18 14" aria-hidden="true" focusable="false"><rect x="6" y="0.7" width="6" height="3.6" rx="1"/><path d="M9 4.3V7M4 7H14M4 7V9.7M14 7V9.7"/><rect x="1" y="9.7" width="6" height="3.6" rx="1"/><rect x="11" y="9.7" width="6" height="3.6" rx="1"/></svg></button>
             <button onclick="cycleEvaluation()" title="Mark the selected box for review: Note, Minor or Major (E)">Evaluate <span class="hotkey">E</span></button>
             <button id="minimap-btn" onclick="toggleMinimap()" title="Show or hide the minimap (M)">Minimap <span class="hotkey">M</span></button>
             <div class="logic-row">
@@ -2983,7 +2993,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-19 r27.242';
+    const APP_BUILD = '2026-11-19 r27.243';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -5654,6 +5664,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         return out;
     }
     let layoutMode = 'compact'; // 'compact' | 'spread'
+    // Branches above (r27.243; the user: "Some prefer to have the branches at
+    // the top rather than the bottom"): each viewer's own way of showing the
+    // map, kept in this browser as the toolbar's place is -- never in the
+    // map, which everyone who shares it sees as they choose.
+    let branchesAbove = (() => { try { return localStorage.getItem('argmap-branches') === 'above'; } catch (_) { return false; } })();
+    // With branches above, each laid-out box's mirror line (layoutAll): what
+    // reads the page in the map's own terms turns a box back about it.
+    let mirrorAxis = {};
     let spreadGaps = {};       // node.id → per-adjacent-box gap vector for Spread
     let currentDepthGrid = null;
 
@@ -5785,6 +5803,33 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         btn.appendChild(hotkey);
         btn.classList.toggle('active', layoutMode === 'spread');
         render();
+    }
+
+    // --- Branches below or above (r27.243) ---
+    // The key that adds a parent: toward where a parent stands.
+    function parentKeyLabel() { return branchesAbove ? 'Alt+↓' : 'Alt+↑'; }
+    function toggleBranches() {
+        branchesAbove = !branchesAbove;
+        try { localStorage.setItem('argmap-branches', branchesAbove ? 'above' : 'below'); } catch (_) {}
+        applyBranchesUi();
+        render();
+    }
+    function applyBranchesUi() {
+        document.body.classList.toggle('branches-above', branchesAbove);
+        const btn = document.getElementById('branches-btn');
+        if (btn) {
+            const name = 'Branches: ' + (branchesAbove ? 'Above' : 'Below');
+            btn.setAttribute('aria-pressed', branchesAbove ? 'true' : 'false');
+            btn.setAttribute('aria-label', name);
+            btn.title = name + (branchesAbove ? '. Click to put them below, the main contention on top' : '. Click to put them above, the main contention at the bottom');
+            btn.classList.toggle('active', branchesAbove);
+        }
+        const parentBtn = document.getElementById('btn-add-parent');
+        const hk = parentBtn && parentBtn.querySelector('.hotkey');
+        if (hk) hk.textContent = platformShortcutLabel(parentKeyLabel());
+        document.querySelectorAll('#help-panel kbd').forEach(k => {
+            if (/^(?:Alt|⌥)\+[↑↓]$/.test(k.textContent)) k.textContent = platformShortcutLabel(parentKeyLabel());
+        });
     }
 
     // --- Theme (dark / light) ---
@@ -7774,6 +7819,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             document.getElementById('toolbar-toggle').innerText = '◀';
         } catch (__) {}
     }
+
+    // Branches below or above, as this browser last had them (r27.243).
+    applyBranchesUi();
 
     // --- Mobile detection: force left-toolbar layout on small touch devices ---
     const _mobileQuery = window.matchMedia('(max-width: 600px), (pointer: coarse) and (max-height: 600px)');
@@ -27955,8 +28003,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const kind = selKind ? selKind.kind : 'support', side = selKind ? selKind.side : 'main';
             paintAsBox(parentBtn, kind, side);
             parentBtn.title = kind === 'note' ? 'A note has nothing above it'
-                : kind === 'contention' ? 'Add a new main contention above this one (Alt+↑)'
-                : 'Add a box above the selected group, for it to support (Alt+↑)';
+                : kind === 'contention' ? 'Add a new main contention ' + (branchesAbove ? 'below' : 'above') + ' this one (' + parentKeyLabel() + ')'
+                : 'Add a box ' + (branchesAbove ? 'below' : 'above') + ' the selected group, for it to support (' + parentKeyLabel() + ')';
         }
         const add = document.getElementById('btn-add-obj');
         if (add) {
@@ -28110,8 +28158,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const standsAlone = ctx.node.type === 'note';
 
         // ---- Below: add-child button(s) ----
-        const belowY = toSurfY(nodeRect.bottom) + GAP;
-        if (!standsAlone && nodeRect.bottom + 8 < cvRect.bottom - 10) {  // viewport check
+        // Branches above (r27.243): what is added goes above the box, and a
+        // parent below it.
+        const flipActions = branchesAbove;
+        const belowY = flipActions ? toSurfY(nodeRect.top) - GAP : toSurfY(nodeRect.bottom) + GAP;
+        if (!standsAlone && (flipActions ? nodeRect.top - 8 > cvRect.top + 10 : nodeRect.bottom + 8 < cvRect.bottom - 10)) {  // viewport check
             const below = document.createElement('div');
             below.className = 'node-action-container' + (nodeActionExpanded ? ' node-action-expanded' : '');
 
@@ -28162,7 +28213,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const nodeCenterX = toSurfX(nodeRect.left + nodeRect.width / 2);
             below.style.left = nodeCenterX + 'px';
             below.style.top  = belowY + 'px';
-            below.style.transform = 'translateX(-50%)';
+            below.style.transform = flipActions ? 'translate(-50%, -100%)' : 'translateX(-50%)';
             surfaceEl.appendChild(below);
         }
 
@@ -28171,13 +28222,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // it. It looks like the box, as the co-premise buttons do: the parent
         // is what the box's group was.
         if (!standsAlone) {
-            if (nodeRect.top - 8 > cvRect.top + 10) {           // viewport check
+            if (flipActions ? nodeRect.bottom + 8 < cvRect.bottom - 10 : nodeRect.top - 8 > cvRect.top + 10) {           // viewport check
                 const above = document.createElement('div');
                 above.className = 'node-action-container';
                 const btn = document.createElement('button');
                 btn.className = 'node-action-btn action-parent' + coPremiseActionClass(computeArgumentKinds(state.trees).get(ctx.node.id));
                 btn.textContent = '+';
-                btn.title = platformShortcutLabel('Parent (Alt+↑)');
+                btn.title = platformShortcutLabel('Parent (' + parentKeyLabel() + ')');
                 btn.dataset.side = 'above';
                 btn.onmousedown = (e) => e.stopPropagation();
                 btn.onclick = (e) => {
@@ -28187,8 +28238,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 };
                 above.appendChild(btn);
                 above.style.left = toSurfX(nodeRect.left + nodeRect.width / 2) + 'px';
-                above.style.top = (toSurfY(nodeRect.top) - GAP) + 'px';
-                above.style.transform = 'translate(-50%, -100%)';
+                above.style.top = (flipActions ? toSurfY(nodeRect.bottom) + GAP : toSurfY(nodeRect.top) - GAP) + 'px';
+                above.style.transform = flipActions ? 'translateX(-50%)' : 'translate(-50%, -100%)';
                 surfaceEl.appendChild(above);
             }
         }
@@ -30465,6 +30516,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
     // Collect a connected tree's IDs for render-only whole-tree operations.
+    // A connector copied out of the lines' drawing, in the turn its tree is
+    // drawn with (r27.243: with branches above, each tree's lines sit in a
+    // group that turns them over).
+    function turnedLine(src, line) {
+        const g = src.parentNode;
+        if (!g || String(g.tagName).toLowerCase() !== 'g' || !g.getAttribute('transform')) return line;
+        const w = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        w.setAttribute('transform', g.getAttribute('transform'));
+        w.appendChild(line);
+        return w;
+    }
     function getTreeNodeIds(tree) {
         const ids = [];
         (function walk(n) { ids.push(n.id); (n.children || []).forEach(walk); })(tree);
@@ -30590,6 +30652,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 allPos[tree.id].x = tree.x;
                 allPos[tree.id].y = tree.y;
             }
+        });
+
+        // Branches above (r27.243): each tree turned over -- its main
+        // contention at the bottom and what answers a box above it, as in a
+        // proof. Each box is mirrored about its tree's root, which so stays
+        // where it stands, or, where the Depth view lines rows up across
+        // trees, about that first row: no stored place changes.
+        mirrorAxis = {};
+        if (branchesAbove) state.trees.forEach(tree => {
+            if (!allPos[tree.id]) return;
+            const hOf = id => (geom[id] || { h: 60 }).h;
+            const A = depthGrid && !tree.freePosition ? 2 * depthGrid[0] + (depthGrid._maxH[0] || hOf(tree.id))
+                : 2 * allPos[tree.id].y + hOf(tree.id);
+            getTreeNodeIds(tree).forEach(id => {
+                if (!allPos[id]) return;
+                allPos[id].y = A - allPos[id].y - hOf(id);
+                mirrorAxis[id] = A;
+            });
         });
 
         // Apply positions and per-tree z-index
@@ -30809,7 +30889,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         const svgDefs = origSvg.querySelector('defs');
         if (svgDefs) overlaySvg.appendChild(svgDefs.cloneNode(true));
         let hasClonedPaths = false;
-        origSvg.querySelectorAll(':scope > path').forEach(path => {
+        origSvg.querySelectorAll(':scope > path, :scope > g > path').forEach(path => {
             const pp = path.getAttribute('data-parent');
             const pc = path.getAttribute('data-child');
             const pf = path.getAttribute('data-fork');
@@ -30818,7 +30898,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (internalEdge || (pf && movingIds.has(pf))) {
                 const line = path.cloneNode(true);
                 if ((pc && !kept.has(pc)) || (pf && !kept.has(pf))) line.classList.add('drag-branch');
-                overlaySvg.appendChild(line);
+                overlaySvg.appendChild(turnedLine(path, line));
                 hasClonedPaths = true;
             }
         });
@@ -30988,7 +31068,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // For partial drags, also include lines FROM the parent node
         // (which isn't in subtreeIds) TO children that are.
         let hasClonedPaths = false;
-        origSvg.querySelectorAll(':scope > path').forEach(p => {
+        origSvg.querySelectorAll(':scope > path, :scope > g > path').forEach(p => {
             const pp = p.getAttribute('data-parent');
             const pc = p.getAttribute('data-child');
             const pf = p.getAttribute('data-fork');
@@ -30998,7 +31078,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 const line = p.cloneNode(true);
                 // A line to a box below the dragged ones is the branch's.
                 if ((pc && subtreeIds.has(pc) && pc !== node.id) || (pf && pf !== node.id)) line.classList.add('drag-branch');
-                overlaySvg.appendChild(line);
+                overlaySvg.appendChild(turnedLine(p, line));
                 hasClonedPaths = true;
             }
         });
@@ -31096,6 +31176,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // Shift drops free; so does anything carrying a note, which connects
         // to nothing -- wherever it is dropped, it simply moves there.
         if (opts.shift || opts.carriesNote) return { type: 'detach' };
+        // Branches above (r27.243): what hangs above a box is its child, and
+        // what stands below it its parent -- the same test, the page turned
+        // over.
+        if (branchesAbove && !opts.turned) {
+            const turn = r => Object.assign({}, r, { top: -(r.top + r.h) });
+            const back = new Map(), turned = targets.map(T => { const U = turn(T); back.set(U, T); return U; });
+            const res = classifyDrop(turn(G), turned, Object.assign({}, opts, { turned: true }));
+            if (res && res.T) res.T = back.get(res.T) || res.T;
+            return res;
+        }
         const gcx = G.left + G.w / 2, gcy = G.top + G.h / 2;
         let best = null, refused = false;
 
@@ -32102,6 +32192,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         const surface = document.getElementById('surface');
         const surfaceBox = surface.getBoundingClientRect();
+        // Branches above (r27.243): each line is worked out as if its tree
+        // hung down -- every box read back in that turn, about the line its
+        // tree is mirrored on -- and drawn in a group that turns it over, as
+        // the boxes are.
+        const rectOf = el => {
+            const r = el.getBoundingClientRect();
+            const g = branchesAbove ? el.closest('.node-group') : null;
+            const A = g ? mirrorAxis[g.id.replace('group-', '')] : undefined;
+            if (A === undefined) return r;
+            const top = surfaceBox.top + A * zoomLevel - (r.bottom - surfaceBox.top);
+            return { left: r.left, right: r.right, width: r.width, height: r.height, top, bottom: top + r.height, x: r.left, y: top };
+        };
+        const turns = {};
+        let drawLayer = null;
+        const layerFor = tree => {
+            const A = branchesAbove ? mirrorAxis[tree.id] : undefined;
+            if (A === undefined) return null;
+            if (!turns[A]) {
+                turns[A] = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                turns[A].setAttribute('transform', `matrix(1 0 0 -1 0 ${A})`);
+                svg.appendChild(turns[A]);
+            }
+            return turns[A];
+        };
         // A connector and its arrowhead take the color of the child's argument.
         // Every relation ends in the same arrowhead: the colors say which is
         // an attack. A weak branch -- a weak objection or rebuttal and
@@ -32120,7 +32234,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             path.setAttribute("d", d); path.setAttribute("stroke", color); path.setAttribute("stroke-width", "2");
             path.setAttribute("fill", "none"); if (markerEndId) path.setAttribute("marker-end", `url(#${markerEndId})`);
             if (attrs) Object.entries(attrs).forEach(([k, v]) => path.setAttribute(k, v));
-            svg.appendChild(path);
+            (drawLayer || svg).appendChild(path);
         }
 
         // Render with the same channel spacing that layout reserves.
@@ -32165,10 +32279,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (node.texts.length > 1) {
                 const color = getColorForType(lineColorOf(node));
                 const statements = groupEl.querySelectorAll('.node');
-                const groupTop = (groupEl.getBoundingClientRect().top - surfaceBox.top) / zoomLevel;
+                const groupTop = (rectOf(groupEl).top - surfaceBox.top) / zoomLevel;
                 let firstX = null, lastX = null, outerLeft = null, outerRight = null;
                 statements.forEach(stmt => {
-                    const sBox = stmt.getBoundingClientRect();
+                    const sBox = rectOf(stmt);
                     const sX = ((sBox.left - surfaceBox.left) / zoomLevel) + (sBox.width / zoomLevel) / 2;
                     if (firstX === null) {
                         firstX = sX;
@@ -32184,7 +32298,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             visibleChildren(node).forEach(drawForks);
         }
-        state.trees.forEach(drawForks);
+        state.trees.forEach(tree => { drawLayer = layerFor(tree); drawForks(tree); });
+        drawLayer = null;
 
         // Each statement box is a distinct routing parent. Its children share
         // one bend band; different statement fans never merge their rules.
@@ -32229,10 +32344,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (fk) {
                     childStart[childNode.id] = { x: fk.midX, y: fk.barY };
                 } else if (childGroup) {
-                    const cBox = childGroup.querySelector('.node').getBoundingClientRect();
+                    const cBox = rectOf(childGroup.querySelector('.node'));
                     childStart[childNode.id] = {
                         x: ((cBox.left - surfaceBox.left) / zoomLevel) + (cBox.width / zoomLevel) / 2,
-                        y: (childGroup.getBoundingClientRect().top - surfaceBox.top) / zoomLevel
+                        y: (rectOf(childGroup).top - surfaceBox.top) / zoomLevel
                     };
                 }
             });
@@ -32254,7 +32369,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (!childGroup) return;
                 const statements = Array.from(childGroup.querySelectorAll('.node'));
                 statements.forEach(statement => {
-                    const rect = statement.getBoundingClientRect();
+                    const rect = rectOf(statement);
                     plan.staticRects.push({
                         x0: (rect.left - surfaceBox.left) / zoomLevel,
                         x1: (rect.right - surfaceBox.left) / zoomLevel,
@@ -32263,10 +32378,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     });
                 });
                 if ((childNode.texts || []).length > 1 && statements.length) {
-                    const groupTop = (childGroup.getBoundingClientRect().top - surfaceBox.top) / zoomLevel;
+                    const groupTop = (rectOf(childGroup).top - surfaceBox.top) / zoomLevel;
                     const barY = groupTop - 15;
                     const centers = statements.map(statement => {
-                        const rect = statement.getBoundingClientRect();
+                        const rect = rectOf(statement);
                         return ((rect.left - surfaceBox.left) / zoomLevel) +
                             (rect.width / zoomLevel) / 2;
                     });
@@ -32283,7 +32398,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             Object.keys(fanMap).forEach(bIdx => {
                 const fan = fanMap[bIdx];
                 const tBoxEl = parentStatements[bIdx] || parentStatements[0];
-                const tBox = tBoxEl.getBoundingClientRect();
+                const tBox = rectOf(tBoxEl);
                 const tLeft = (tBox.left - surfaceBox.left) / zoomLevel;
                 const tWidth = tBox.width / zoomLevel;
                 const targetY = (tBox.bottom - surfaceBox.top) / zoomLevel;
@@ -32332,7 +32447,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     staticRects: [], staticSegments: [],
                     parentObstacleRects: Array.from(parentStatements).map((statement, index) => {
                         if (index === Number(bIdx)) return null;
-                        const rect = statement.getBoundingClientRect();
+                        const rect = rectOf(statement);
                         return {
                             x0: (rect.left - surfaceBox.left) / zoomLevel,
                             x1: (rect.right - surfaceBox.left) / zoomLevel,
@@ -32433,7 +32548,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 routeConnections(childNode);
             });
         }
-        state.trees.forEach(tree => routeConnections(tree));
+        state.trees.forEach(tree => { drawLayer = layerFor(tree); routeConnections(tree); });
+        drawLayer = null;
 
         updateLineHighlights();
     }
@@ -34284,7 +34400,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const lbl = document.createElement('div');
             lbl.className = 'depth-label';
             lbl.textContent = `Depth ${d}`;
-            lbl.dataset.surfaceY = grid[d];
+            // Branches above: each row mirrored about the first (r27.243).
+            lbl.dataset.surfaceY = branchesAbove ? 2 * grid[0] + (grid._maxH[0] || 60) - grid[d] - (grid._maxH[d] || 60) : grid[d];
             lbl.dataset.surfaceH = grid._maxH[d] || 60;
             container.appendChild(lbl);
         }
@@ -36086,7 +36203,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (!box) { tag.remove(); return; }
             tag.style.maxWidth = Math.max(24, box.offsetWidth - 24) + 'px';
             tag.style.left = (box.offsetLeft + (box.offsetWidth - tag.offsetWidth)/2) + 'px';
-            tag.style.top = (box.offsetTop + box.offsetHeight - tag.offsetHeight/2) + 'px';
+            // Branches above: on the top edge, where nothing arrives (r27.243).
+            tag.style.top = (branchesAbove ? box.offsetTop - tag.offsetHeight/2 : box.offsetTop + box.offsetHeight - tag.offsetHeight/2) + 'px';
         });
     }
     function refreshDerivationTags() {
@@ -36197,15 +36315,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (tag.classList.contains('verdict-tag')) {
                 const box = boxes.find(b => b.getAttribute('data-node-idx') === tag.dataset.verdictIdx) || boxes[0];
                 tag.style.left = (box.offsetLeft + box.offsetWidth / 2 - tag.offsetWidth / 2) + 'px';
-                tag.style.top = (box.offsetTop - tag.offsetHeight - 8) + 'px';
+                // Branches above: just under it, where its line leaves (r27.243).
+                tag.style.top = (branchesAbove ? box.offsetTop + box.offsetHeight + 8 : box.offsetTop - tag.offsetHeight - 8) + 'px';
                 placed.push({ tag, group, w: tag.offsetWidth, h: tag.offsetHeight });
                 return;
             }
             const first = boxes[0], last = boxes[boxes.length - 1];
             const cx = (first.offsetLeft + last.offsetLeft + last.offsetWidth) / 2;
             const w = tag.offsetWidth, h = tag.offsetHeight;
-            let top = -15 - h / 2;
-            group.querySelectorAll('.implicit-tag').forEach(it => {
+            // Branches above: on the fork under the boxes, clear of the
+            // IMPLICIT tags on their top borders (r27.243).
+            let top = branchesAbove ? group.offsetHeight + 15 - h / 2 : -15 - h / 2;
+            if (!branchesAbove) group.querySelectorAll('.implicit-tag').forEach(it => {
                 const box = it.previousElementSibling;
                 if (!box || !box.classList.contains('node')) return;
                 // The IMPLICIT tag's CSS sets it 10px in from the box's right
@@ -36236,7 +36357,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                     me.x0 < r.x1 + DERIVATION_TAG_GAP && r.x0 < me.x1 + DERIVATION_TAG_GAP &&
                     me.y0 < r.y1 + DERIVATION_TAG_GAP && r.y0 < me.y1 + DERIVATION_TAG_GAP);
                 if (!hit) break;
-                placed[i].tag.style.top = ((parseFloat(placed[i].tag.style.top) || 0) - (me.y1 - hit.y0 + DERIVATION_TAG_GAP)) + 'px';
+                // Away from the boxes: down, with branches above (r27.243).
+                placed[i].tag.style.top = ((parseFloat(placed[i].tag.style.top) || 0) +
+                    (branchesAbove ? hit.y1 - me.y0 + DERIVATION_TAG_GAP : -(me.y1 - hit.y0 + DERIVATION_TAG_GAP))) + 'px';
             }
         }
     }
@@ -37617,7 +37740,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 html += `<button class="ctx-item" onclick="ctxAction(()=>addCoPremise('right'))" ${argDis}><span class="ctx-dot" style="background:${ctxSupportColor(ctxSide)}"></span>Right co-premise<span class="ctx-key">Tab</span></button>`;
             }
             // A parent takes the box's place, as what the box was, so its dot is the box's.
-            html += `<button class="ctx-item" onclick="ctxAction(()=>addParent())" ${argDis}><span class="ctx-dot" style="background:${ctxSupportColor(ctxSide)}"></span>Parent<span class="ctx-key">Alt+↑</span></button>`;
+            html += `<button class="ctx-item" onclick="ctxAction(()=>addParent())" ${argDis}><span class="ctx-dot" style="background:${ctxSupportColor(ctxSide)}"></span>Parent<span class="ctx-key">${parentKeyLabel()}</span></button>`;
             // A note is not a child: it goes beside the box (see addNote).
             html += `<button class="ctx-item" onclick="ctxAction(()=>addNote())" ${dis}><span class="ctx-dot" style="background:var(--accent-note)"></span>Add Note<span class="ctx-key">Alt+Enter</span></button>`;
             html += '<div class="ctx-divider"></div>';
@@ -38147,7 +38270,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             if (letter === 'c') { e.preventDefault(); recenter(); return; }
             if (presentMode || collabReadOnly()) return;
             // Alt+Up: a parent above the selected box -- from its text field too.
-            if (e.code === 'ArrowUp') {
+            // Branches above, Alt+Down: the parent is below (r27.243).
+            if (e.code === (branchesAbove ? 'ArrowDown' : 'ArrowUp')) {
                 const inBox = boxEditor.isOpen(document.activeElement);
                 if (isTyping && !inBox) return;
                 e.preventDefault();
@@ -38275,13 +38399,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             }
             if (code === 'ArrowUp') {
                 e.preventDefault();
-                if (!presentMode && selectedIds.length) navigateSelection('up');
+                // Branches above: up goes to what answers the box (r27.243).
+                if (!presentMode && selectedIds.length) navigateSelection(branchesAbove ? 'down' : 'up');
                 else document.getElementById('canvas').scrollTop -= PAN_STEP;
                 return;
             }
             if (code === 'ArrowDown') {
                 e.preventDefault();
-                if (!presentMode && selectedIds.length) navigateSelection('down');
+                if (!presentMode && selectedIds.length) navigateSelection(branchesAbove ? 'up' : 'down');
                 else document.getElementById('canvas').scrollTop += PAN_STEP;
                 return;
             }
