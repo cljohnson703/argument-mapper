@@ -2222,6 +2222,30 @@ console.log('\n-- r27.241: "they" -- the plural readings, and first --');
         'a group and its clause-mate share no one: never "Bob and Al thanked Bob"; the question names only what the readings take', J([thank, three2]));
 }
 
+console.log('\n-- r27.242: the verbs "and" joins agree; "they are students" is many --');
+{
+    // The user, of "Bob sings and dance" and "Bob is students": "a", fix them.
+    const they = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)});
+        var n = r.notes.filter(function (n) { return /“(?:they|them)”/.test(claimUnmarked(n.message || '')); });
+        return { key: r.form ? claimUnmarked(claimKey(r.form)) : null, notes: n.map(function (n) { return n.kind + ': ' + claimUnmarked(n.message); }),
+            readings: [].concat.apply([], n.filter(function (n) { return n.kind === 'ambiguous'; }).map(function (n) {
+                return (n.readings || []).map(function (l) { return claimReadingWords(l, ${J(t)}); }); })) };`);
+    const joined = [['Bob eats worms and they sing and dance.', 'Bob eats worms and Bob sings and dances.'],
+        ['Bob eats worms and they sing, dance and fly.', 'Bob eats worms and Bob sings, dances and flies.'],
+        ['Bob eats worms and they often sing and always dance.', 'Bob eats worms and Bob often sings and always dances.'],
+        ['Bob eats worms and they can sing and dance.', 'Bob eats worms and Bob can sing and dance.'],
+        ['Bob eats worms and they sang and danced.', 'Bob eats worms and Bob sang and danced.'],
+        ['Bob eats worms and they eat worms and fish.', 'Bob eats worms and Bob eats worms and fish.'],
+        ['Bob eats worms and they sing and fish swim.', 'Bob eats worms and Bob sings and fish swim.']].map(([t, want]) => [t, they(t).readings.includes(want)]);
+    ok(joined.every(a => a[1]), 'each verb "and" joins to the first agrees ("Bob sings and dances"; it had been "Bob sings and dance"); not after "can" or a past, nor after an object ("eats worms and fish"), nor a noun with its own verb ("and fish swim")', J(joined));
+    const students = they('Bob met Al, and they are students.'), worms = they('Bob eats worms, and they are students.'), alone = they('Bob left, and they are students.'),
+        withCy = they('Bob met Al, and they are friends with Cy.');
+    ok(J(students.notes) === J(['unread: read with “they” as “Bob and Al”, the one it can be in this box']) && students.key === 'C[P:bob|~did met al;C[P:bob|=student;P:al|=student]]' &&
+        J(worms.notes) === J(['unread: read with “they” as “worms”, the one it can be in this box']) &&
+        /nothing before it in this box is many/.test(alone.notes.join(' ')) && withCy.readings.includes('Bob met Al, and Bob is friends with Cy.'),
+        '"they are students" is many: "Bob and Al", "worms" -- never "Bob is students" (it had been offered); with only Bob, nothing; "friends with Cy" may be one', J([students, worms, alone, withCy]));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

@@ -2983,7 +2983,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-16 r27.241';
+    const APP_BUILD = '2026-11-19 r27.242';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -10699,6 +10699,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                 if (x.members.some(p => /^(?:they|them)$/.test(p.l) && !!toks[p.k + 1] &&
                     (/^(?:both|all|each)$/.test(toks[p.k + 1].l) || (/^(?:are|were)$/.test(toks[p.k + 1].l) && !!toks[p.k + 2] && /^(?:both|all|each)$/.test(toks[p.k + 2].l)))))
                     list = list.filter(c => c.kind === 'many');
+                // "They are students": a plural noun after "are" or "were" makes
+                // "they" many -- one is "a student" (r27.242; "Bob eats worms, and
+                // they are students" had offered "Bob is students"). Not
+                // "friends with": "Bob is friends with Al" is English.
+                const pluralNoun = y => !!y && /^[a-z][a-z'-]*$/.test(y.w) && claimPluralWord(y.l) && !/'s$/.test(y.l) && !CLAIM_SINGULAR_IN_S.has(y.l) &&
+                    !CLAIM_S_NOUNS.has(y.l) && !CLAIM_EITHER_NUMBER.has(y.l) && !CLAIM_INVARIANT_NOUNS.has(y.l) && !!claimSynWord(y.l).noun && !claimSynWord(y.l).adj;
+                const manyAfter = p => {
+                    if (p.l !== 'they' || !toks[p.k + 1] || !/^(?:are|were)$/.test(toks[p.k + 1].l)) return false;
+                    let i = p.k + 2;
+                    while (toks[i] && /^(?:not|never|also|still|always|now|really|just|truly|certainly)$/.test(toks[i].l)) i++;
+                    if (toks[i] && /^(?:the|these|those|my|our|your|their|his|her|its|some|many|two|three|four|five|good|bad|great|real|true|close)$/.test(toks[i].l) && !pluralNoun(toks[i])) i++;
+                    for (let n = 0; n < 3 && toks[i]; n++, i++) {
+                        if (pluralNoun(toks[i])) return !(toks[i + 1] && toks[i + 1].l === 'with');
+                        if (!/^[a-z][a-z'-]*$/.test(toks[i].w) || claimSynClosed(toks[i].l) || !claimSynWord(toks[i].l).adj) return false;
+                    }
+                    return false;
+                };
+                if (x.members.some(manyAfter)) list = list.filter(c => c.kind === 'many');
                 // Many first, as "they" is; then the people named apart,
                 // together; then one, for "they" said of one -- each in the
                 // order the box names them (r27.241; the user: the plural first).
@@ -10877,7 +10895,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             const v = toks[j];
             if (!v || !/^[a-z][a-z'\u2019-]*$/.test(v.w)) return [];
             const l = v.l, say = CLAIM_TO_SINGULAR[l] || (CLAIM_VERB_MARKERS.has(l) || claimPastStem(l) !== null || CLAIM_PAST_UNCHANGED.has(l) || claimEndsInS(l) || claimSynClosed(l) ? null : claimThirdPerson(l));
-            return say && say !== l ? [{ at: v.at, end: v.at + v.w.length, say: /\u2019/.test(v.w) ? say.replace(/'/g, '\u2019') : say }] : [];
+            const out = say && say !== l ? [{ at: v.at, end: v.at + v.w.length, say: /\u2019/.test(v.w) ? say.replace(/'/g, '\u2019') : say }] : [];
+            // "They sing and dance": each verb "and" or "or" joins to it agrees
+            // too -- "Bob sings and dances" (r27.242; it had been "Bob sings and
+            // dance"). Only a plain verb in the present with nothing after it
+            // but the "and": in "they eat worms and fish", "fish" may be what
+            // is eaten; after "can", "will" or a past, the verbs are as they are.
+            if (!out.length || CLAIM_TO_SINGULAR[l]) return out;
+            const adverb = y => /^(?:not|never|also|then|still|really|just|always|often|usually|sometimes|rarely|seldom|even|only|already|again|now|soon|later|once|ever|too)$/.test(y.l) ||
+                (/^[a-z]{3,}ly$/.test(y.l) && !claimSynWord(y.l).verb);
+            for (let i = j + 1; ;) {
+                while (toks[i] && adverb(toks[i])) i++;
+                if (!toks[i]) break;
+                if (toks[i].l === ',') { i++; if (toks[i] && /^(?:and|or)$/.test(toks[i].l)) i++; }
+                else if (/^(?:and|or)$/.test(toks[i].l)) i++;
+                else break;
+                while (toks[i] && adverb(toks[i])) i++;
+                const w = toks[i];
+                if (!w || !/^[a-z][a-z'-]*$/.test(w.w) || claimSynClosed(w.l) || CLAIM_PRONOUN_KIND[w.l] || CLAIM_VERB_MARKERS.has(w.l) ||
+                    !(claimSynWord(w.l).verb || claimSynWord(w.l).knownVerb) || claimPastStem(w.l) !== null || claimEndsInS(w.l) ||
+                    // "and fish swim": a noun with its own verb after it.
+                    claimSynVerbStart(synWs, i + 1, 'pl') === 'strong') break;
+                out.push({ at: w.at, end: w.at + w.w.length, say: claimThirdPerson(w.l) });
+                i++;
+            }
+            return out;
         };
         const editsOf = chosen => {
             // Joined, the comma before "and" goes too: "A teacher left and cried".

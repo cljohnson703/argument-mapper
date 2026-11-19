@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 19: "they sing and dance", "they are students" (r27.242)
+
+The user:
+* Of two readings that were not grammatical English, "Bob sings and dance" and "Bob is students": "a", fix them as r27.242.
+* Go live with r27.240 and r27.241: "a" (done).
+
+Changes:
+* "Bob eats worms and they sing and dance", read with "they" as Bob, had been "Bob sings and dance". Each verb that "and" or "or" joins to the first agrees too: "Bob sings and dances", "Bob sings, dances and flies", "Bob often sings and always dances".
+* Only where the first verb has nothing after it but the "and": in "they eat worms and fish", "fish" may be what is eaten, so it stays. Nor a noun with its own verb: "and fish swim". After "can", "will" or a past, the verbs stay as they are: "Bob can sing and dance", "Bob sang and danced".
+* "Bob eats worms, and they are students" had offered "Bob is students". A plural noun after "are" or "were" makes "they" many (one would be "a student"), so "they" there is never one person: "Bob met Al, and they are students" is read with "Bob and Al"; "Bob left, and they are students" has nothing for "they" to refer to. "Friends with" may be said of one: "Bob is friends with Cy".
+
+Tests:
+* New in syntax-r27-test.js, which has 304 checks: the verbs "and" joins, in seven sentences; "they are students", in four.
+* Take-one-out: each of the 2 changes is caught by syntax-r27-test.js.
+* No sentence in the corpus reads differently (0 of 4542), by default or with Semantic mode on.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 91 suites pass, and so does the public build's smoke test.
+
 ### November 16: "they": the plural readings, and first (r27.241)
 
 The user:
