@@ -4,6 +4,24 @@ The current package uses classical inference rules plus the map's rules for obje
 
 ## September 2026 audit
 
+### November 22: "Ravens", a name by its capital or by its verb (r27.246)
+
+The user:
+* Of names: "I think (a)", the improbable ones asked about too where a step turns on them; and "What if someone is named 'Ravens'?"
+* Go live with r27.245: "a" (done).
+
+Changes:
+* A capital inside the sentence is a name, in a clause of its own as well: "Bob met Ravens, and Ravens ate worms" is of the one Bob met, twice. The second had been ravens, asked all, some or most.
+* A word in -s that opens a sentence, with a verb in -s after it, is one, named so, as grammar has it: "Ravens flies, and dogs bark" is two claims, and "Ravens flies" follows by conjunction elimination. It had been "Ravens flies, and dogs", which bark. So too "Poe is black. James flies." (it had been "Poe is james fly"), "Ravens flies and swims" (which had not been read) and "Ravens loves Bob, and Bob loves Ravens".
+* A plural verb is read as before ("Ravens fly" is ravens), and so is a noun after the word: "Ravens flies are common", "Sales taxes rise".
+
+Tests:
+* New in syntax-r27-test.js, which has 324 checks: "Bob met Ravens, and Ravens ate worms"; a word in -s opening a sentence before a verb in -s; a plural verb and a noun after the word, as before; "so Ravens flies", and no step from "Ravens fly, and dogs bark".
+* Take-one-out: each of the 4 changes is caught by syntax-r27-test.js.
+* 2 corpus sentences of 4542 read differently, by default and with Semantic mode on, both a name inside the sentence no longer asked all, some or most: "Jones is late and Jones cried" (it had asked whether "Jones" meant all of them), and a key's name, "Ctrl+Shift+S", in a help sentence.
+* Not run here: the student corpus, the fallacy corpus, the soundness sweep and the highlighter audit (dev-tools/ is not in this checkout).
+* All 92 suites pass, and so does the public build's smoke test.
+
 ### November 19: "flies", a thing or a deed; "have", a verb of its own (r27.245)
 
 The user:

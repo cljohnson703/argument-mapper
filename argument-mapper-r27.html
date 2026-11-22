@@ -2993,7 +2993,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // Build marker so you can verify which version is actually loaded:
     //   in the console, `__argmap.build`  (or just check that
     //   `typeof __argmap.parseSel === 'function'` -- the old build has neither).
-    const APP_BUILD = '2026-11-19 r27.245';
+    const APP_BUILD = '2026-11-22 r27.246';
     // How long a display name stays reserved after its holder's last
     // activity. Sign-out releases it immediately; this only governs holders
     // who vanish (closed incognito windows, crashed browsers, ghosts).
@@ -19414,7 +19414,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // A sentence letter: "P and Q".
         if (/^[a-z]$/.test(ws[0].w) && (ws.length === 1 || ws[1].conj || /^[,;]$/.test(ws[1].t) || /,$/.test(ws[0].t))) return true;
         if (claimSynVerbStart(ws, 0, '?') === 'strong' && !ws[0].noun && !ws[0].name && !ws[0].pro && !ws[0].det && !ws[0].quant) return false;
-        const phrases = claimSynNounPhrases(ws, 0);
+        const phrases = claimSynOpeningPhrases(ws, tokens);
         if (!phrases.length) return null;
         // Words joined by "and" take "are", not "is": "Cy, and Al is tall" has
         // no subject "Cy and Al", and begins no clause (r27.125).
@@ -19721,7 +19721,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     // past after it ("the price increases were large").
     function claimSynSubjectEnd(tokens) {
         const ws = claimSynWords(tokens);
-        return claimSynChoose(ws, claimSynNounPhrases(ws, 0));
+        return claimSynChoose(ws, claimSynOpeningPhrases(ws, tokens));
+    }
+    // The noun phrases that open the words, and "Ravens flies, and dogs
+    // bark": a word in -s that opens a sentence with its capital, a verb in
+    // -s after it, may be one, named Ravens, as grammar has it -- a phrase of
+    // one word, singular, first -- not only a plural before a noun ("ravens
+    // flies") with the verb "bark" (r27.246; the user: "What if someone is
+    // named 'Ravens'?").
+    function claimSynOpeningPhrases(ws, tokens) {
+        const phrases = claimSynNounPhrases(ws, 0), y = ws[0], z = ws[1], t = String(tokens[0] || '');
+        if (y && z && y.s && !y.name && !y.closed && !y.poss && z.s && z.knownVerb && !z.aux && !z.closed && !CLAIM_SYN_PLURAL_MODIFIERS.has(y.w) &&
+            !!claimBoxRaw && /^[a-z][a-z'-]*$/.test(y.w) && /^[a-z]/.test(t) && new RegExp('(?:^|[.!?;:]\\s+)\\W*' + y.w.charAt(0).toUpperCase() + y.w.slice(1) + '\\b').test(claimBoxRaw))
+            phrases.unshift({ end: 1, number: 'sg' });
+        return phrases;
     }
     // A clause by its phrases: a noun phrase that opens it, and a sure verb
     // group after it (a helping verb, a past, a verb the lists know).
@@ -20021,14 +20034,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         // "Ravens are black" says something of ravens in general, and "it rains"
         // of nothing: neither names one thing a quantifier's case can be about.
         const bare = !/^(?:the|this|that|these|those|my|your|his|her|its|our|their)$/.test(first);
-        if ((bare && claimPluralWord(subjectTokens[headAt]) && pluralVerb && !nameInS) || /^(?:it|there)$/.test(claimWord(term))) {
+        // A capital inside the sentence is a name: "Bob met Ravens, and Ravens
+        // ate worms" (r27.246; the second had been ravens).
+        const named = /^/.test(subjectTokens[headAt] || '');
+        if ((bare && claimPluralWord(subjectTokens[headAt]) && pluralVerb && !nameInS && !named) || /^(?:it|there)$/.test(claimWord(term))) {
             claimNoIndividual(form);
         }
         // A predicate that splits ("are non-physical events": not physical,
         // and events) is said of the subject all the same.
         const predicationOf = f => f && (f.kind === 'not' ? claimPredicationOf(f.inner) : claimPredicationOf(f));
         const predicated = predicationOf(form) || (form.kind === 'and' && !form.iff && (form.parts || []).length > 1 && form.parts.every(predicationOf));
-        const generic = claimEndsInS(lead[lead.length - 1]) &&
+        const generic = !named && claimEndsInS(lead[lead.length - 1]) &&
             (lead.length === 1 || claimAdjectivesBefore(lead, 0) === lead.length - 1 ||    // "black ravens fly"
              (lead.length <= 3 && lead.every(t => /^[a-z][a-z-]*$/.test(t) && !CLAIM_FUNCTION_WORDS.has(t) && !CLAIM_VERB_MARKERS.has(t) &&
                  !/^(?:one|two|three|four|five|six|seven|eight|nine|ten|twelve|hundred|thousand|million|certain|such|various|numerous|countless)$/.test(t))));   // "color sensations"

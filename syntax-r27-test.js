@@ -2361,6 +2361,31 @@ console.log('\n-- r27.245: "flies", a thing or a deed; "have", a verb of its own
         '"Ravens eat worms and Fish": a capital inside the sentence is a name, someone eaten -- not asked (r27.244 had asked whether "Fish" was a deed)', J(named));
 }
 
+console.log('\n-- r27.246: "Ravens", a name by its capital or by its verb --');
+{
+    // The user, of names: "(a)" -- and "What if someone is named 'Ravens'?"
+    const read = t => ev(`claimRulesCache = null; var r = parseClaimFull(${J(t)}), f = r.form;
+        return [f ? claimUnmarked(claimKey(f)) : null, f ? (f.parts || [f]).map(function (p) { return p.noIndividual ? 'many' : 'one'; }).join(',') : null,
+            r.notes.filter(function (n) { return n.kind === 'ambiguous'; }).length];`);
+    const step = (prem, concl, sem) => ev(`state.logic = { base: 'standard', rules: { semantic: ${J(sem)} } }; deductiveCache.clear(); claimRulesCache = null;
+        try { var trees = [{ id: 'M', type: 'contention', texts: [${J(concl)}], collapsed: [], children: [{ id: 'S', type: 'support', texts: ${J(prem)}, collapsed: [], children: [] }] }];
+            var st = collectDeductiveSteps(trees)[0]; return st ? [st.rule ? st.rule.name : null, st.why ? st.why.text || '' : ''] : null; }
+        finally { state.logic = { base: 'standard', rules: { semantic: true } }; deductiveCache.clear(); claimRulesCache = null; }`);
+    const inside = read('Bob met Ravens, and Ravens ate worms.');
+    ok(J(inside) === J(['C[P:bob|~did met ravens;P:ravens|~did ate worms]', 'one,one', 0]),
+        'a capital inside the sentence is a name: in "Bob met Ravens, and Ravens ate worms" the second is the one Bob met (it had been ravens, asked all, some or most)', J(inside));
+    const verb = ['Ravens flies, and dogs bark.', 'Poe is black. James flies.', 'Ravens flies and swims.', 'Ravens loves Bob, and Bob loves Ravens.'].map(read);
+    ok(J(verb) === J([['C[P:ravens|~fly;P:dogs|~bark]', 'one,many', 1], ['C[P:poe|=black;P:james|~fly]', 'one,one', 0], ['C[P:ravens|~fly;P:ravens|~swim]', 'one,one', 0],
+        ['C[P:ravens|~love bob;P:bob|~love ravens]', 'one,one', 0]]),
+        'a word in -s that opens a sentence, a verb in -s after it, is one, named so: "Ravens flies, and dogs bark" is two claims (it had been "Ravens flies, and dogs", that bark), "Poe is black. James flies" (it had been "Poe is james fly")', J(verb));
+    const as = ['Ravens fly, and dogs bark.', 'Ravens flies are common.', 'Sales taxes rise.', 'Dogs bark.'].map(read);
+    ok(J(as) === J([['C[P:ravens|~fly;P:dogs|~bark]', 'many,many', 2], ['P:ravens flies|=common', 'many', 0], ['P:sales taxes|~rise', 'many', 1], ['P:dogs|~bark', 'many', 1]]),
+        'a plural verb is as before, and so is a noun after the word ("ravens flies are", "sales taxes")', J(as));
+    const ce = step(['Ravens flies, and dogs bark.'], 'Ravens flies.', false), none = step(['Ravens fly, and dogs bark.'], 'Ravens flies.', false);
+    ok(ce[0] === 'conjunction elimination' && none[0] === null,
+        '"so Ravens flies": conjunction elimination from "Ravens flies, and dogs bark" (it had failed), and no step from "Ravens fly, and dogs bark"', J([ce, none]));
+}
+
 ok(!errors.length, 'no JSDOM script errors', errors.slice(0, 3).join(' | '));
 console.log('\n' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
